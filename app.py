@@ -58,27 +58,30 @@ def home():
     ads = con.execute("SELECT * FROM ads WHERE status='OPEN'").fetchall()
     con.close()
 
-    return render_template("index.html", ads=ads)
+    current_user = session.get("user")
+
+    return render_template("index.html", ads=ads, user=current_user)
 
 
 @app.route("/create_ad", methods=["GET", "POST"])
 def create_ad():
     if request.method == "POST":
-        con = connect()
+        user_name = request.form.get("user")
+        amount = request.form.get("amount")
+        price = request.form.get("price")
+        payment = request.form.get("payment")
 
+        if not user_name or not amount or not price or not payment:
+            return redirect("/create_ad")
+
+        con = connect()
         con.execute(
             """
         INSERT INTO ads
         (user, amount, price, payment, status)
         VALUES (?, ?, ?, ?, ?)
         """,
-            (
-                request.form["user"],
-                request.form["amount"],
-                request.form["price"],
-                request.form["payment"],
-                "OPEN",
-            ),
+            (user_name, float(amount), float(price), payment, "OPEN"),
         )
 
         con.commit()
@@ -95,13 +98,19 @@ def buy(id):
 
     ad = con.execute("SELECT * FROM ads WHERE id=?", (id,)).fetchone()
 
+    if not ad or ad["status"] != "OPEN":
+        con.close()
+        return redirect("/")
+
+    buyer_name = session.get("user", "Buyer")
+
     con.execute(
         """
     INSERT INTO trades
     (buyer, seller, amount, price, status, proof)
     VALUES (?, ?, ?, ?, ?, ?)
     """,
-        ("Buyer", ad["user"], ad["amount"], ad["price"], "WAITING_PAYMENT", ""),
+        (buyer_name, ad["user"], ad["amount"], ad["price"], "WAITING_PAYMENT", ""),
     )
 
     con.execute("UPDATE ads SET status='CLOSED' WHERE id=?", (id,))
@@ -119,15 +128,23 @@ def trade(id):
     trade_item = con.execute("SELECT * FROM trades WHERE id=?", (id,)).fetchone()
     con.close()
 
+    if not trade_item:
+        return redirect("/")
+
     return render_template("trade.html", trade=trade_item)
 
 
 @app.route("/upload_payment/<int:id>", methods=["POST"])
 def upload_payment(id):
+    if "proof" not in request.files:
+        return redirect("/trade/" + str(id))
+
     file = request.files["proof"]
 
-    filename = secure_filename(file.filename)
+    if file.filename == "":
+        return redirect("/trade/" + str(id))
 
+    filename = secure_filename(file.filename)
     file.save(os.path.join(UPLOAD_FOLDER, filename))
 
     con = connect()
