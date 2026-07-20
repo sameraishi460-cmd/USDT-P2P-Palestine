@@ -5,87 +5,153 @@
 
 <meta charset="UTF-8">
 
-<title>الملف الشخصي</title>
+<title>حسابي</title>
 
 
 <style>
 
 body{
-    font-family:Arial;
-    background:#f5f5f5;
+
+background:#0b1220;
+color:white;
+font-family:tahoma;
+padding:20px;
+
 }
+
+
+
+.container{
+
+max-width:1000px;
+margin:auto;
+
+}
+
 
 
 .box{
 
-    background:white;
-    width:90%;
-    max-width:500px;
-    margin:40px auto;
-    padding:25px;
-    border-radius:20px;
-    box-shadow:0 0 10px #ccc;
+background:#1e293b;
+padding:20px;
+border-radius:18px;
+margin-bottom:20px;
 
 }
+
 
 
 h2{
 
-    text-align:center;
+color:#22c55e;
 
 }
+
+
+
+.info{
+
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+gap:15px;
+
+}
+
 
 
 .item{
 
-    background:#eee;
-    padding:12px;
-    margin:10px 0;
-    border-radius:10px;
+background:#111827;
+padding:15px;
+border-radius:12px;
 
 }
 
 
-button{
 
-    width:100%;
-    padding:12px;
-    background:#16a34a;
-    color:white;
-    border:0;
-    border-radius:10px;
-    font-size:16px;
+.btn{
+
+display:inline-block;
+padding:10px 18px;
+background:#2563eb;
+color:white;
+text-decoration:none;
+border-radius:10px;
+
+}
+
+
+
+.green{
+
+background:#16a34a;
 
 }
 
 
-a{
 
-    text-decoration:none;
+.card{
+
+background:#111827;
+padding:15px;
+border-radius:12px;
+margin:10px 0;
 
 }
+
+
+
+.status{
+
+color:#22c55e;
+font-weight:bold;
+
+}
+
+
+
+.back{
+
+margin-bottom:20px;
+
+}
+
 
 </style>
-
 
 </head>
 
 
+
 <body>
+
+
+<div class="container">
+
+
+
+<a class="btn back" href="/">
+الرئيسية
+</a>
+
 
 
 <div class="box">
 
 
 <h2>
-👤 الملف الشخصي
+👤 معلومات الحساب
 </h2>
 
+
+<div class="info">
 
 
 <div class="item">
 
-اسم المستخدم:
+اسم المستخدم
+
+<br>
 
 <b>
 {{user.username}}
@@ -95,72 +161,266 @@ a{
 
 
 
-
 <div class="item">
 
-رقم الهاتف:
+الهاتف
 
 <br>
 
+<b>
 {{user.phone}}
+</b>
 
 </div>
 
 
 
-
 <div class="item">
 
-البنك / طريقة الدفع:
+البنك
 
 <br>
 
+<b>
 {{user.bank}}
+</b>
 
 </div>
 
 
 
-
 <div class="item">
 
-محفظة USDT:
+المحفظة
 
 <br>
+
+<b>
 
 {{user.wallet}}
 
+</b>
+
 </div>
+
+
+</div>
+
+
+<br>
+
+
+<a class="btn" href="/edit_profile">
+
+تعديل البيانات
+
+</a>
+
+
+</div>
+
+
+
+
+
+<div class="box">
+
+
+<h2>
+💰 صفقات USDT
+</h2>
+
+
+
+{% for t in trades %}
+
+
+<div class="card">
+
+
+الصفقة رقم:
+{{t.id}}
+
+<br>
+
+
+الكمية:
+
+{{t.amount}} USDT
+
+
+<br>
+
+
+السعر:
+
+{{t.price}}
+
+
+<br>
+
+
+الحالة:
+
+<span class="status">
+
+{{t.status}}
+
+</span>
+
+
+</div>
+
+
+{% else %}
+
+
+لا يوجد صفقات
+
+
+{% endfor %}
+
+
+
+</div>
+
+
+
+
+
+
+
+<div class="box">
+
+
+<h2>
+🤝 صفقات المقابلات الشخصية
+</h2>
+
+
+
+{% for c in cash_trades %}
+
+
+<div class="card">
+
+
+رقم الصفقة:
+
+{{c.id}}
+
+
+<br>
+
+
+الكمية:
+
+{{c.amount}} USDT
+
+
+<br>
+
+
+السعر:
+
+{{c.price}}
+
+
+<br>
+
+
+الحالة:
+
+<span class="status">
+
+{{c.status}}
+
+</span>
+
+
+</div>
+
+
+{% else %}
+
+
+لا يوجد صفقات مقابلات
+
+
+{% endfor %}
+
+
+</div>
+
+
+
+
+
+
+
+<div class="box">
+
+
+<h2>
+📢 إعلاناتي
+</h2>
+
+
+{% for a in ads %}
+
+
+
+<div class="card">
+
+
+كمية:
+
+{{a.amount}} USDT
+
+
+<br>
+
+
+السعر:
+
+{{a.price}}
+
+
+<br>
+
+
+الحالة:
+
+{{a.status}}
+
+
+
+</div>
+
+
+
+{% else %}
+
+
+لا يوجد إعلانات
+
+
+{% endfor %}
 
 
 
 <br>
 
 
-<a href="/create_ad">
+<a class="btn green" href="/create_ad">
 
-<button>
-
-➕ إنشاء إعلان بيع USDT
-
-</button>
+إضافة إعلان جديد
 
 </a>
 
 
 
-<br><br>
-
-
-<a href="/">
-
-<button>
-
-العودة للرئيسية
-
-</button>
-
-</a>
+</div>
 
 
 
