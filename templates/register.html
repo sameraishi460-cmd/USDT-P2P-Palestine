@@ -2,54 +2,55 @@
 <html lang="ar" dir="rtl">
 
 <head>
-
 <meta charset="UTF-8">
-
-<title>
-إنشاء حساب
-</title>
-
+<title>إنشاء حساب</title>
 <link rel="stylesheet" href="/static/style.css">
-
 </head>
 
 
 <body>
 
-
 <div class="container">
 
-
 <div class="header">
-
-<h2>
-👤 إنشاء حساب جديد
-</h2>
-
+<h2>👤 إنشاء حساب</h2>
 </div>
-
 
 
 <div class="card">
 
-
 <form method="POST">
 
 
-<input
-type="text"
+<input 
 name="username"
 placeholder="اسم المستخدم"
 required>
 
 
-
-<input
+<input 
 type="password"
 name="password"
 placeholder="كلمة المرور"
 required>
 
+
+<input 
+name="phone"
+placeholder="رقم الهاتف"
+required>
+
+
+<input 
+name="bank"
+placeholder="حساب البنك أو IBAN"
+required>
+
+
+<input 
+name="wallet"
+placeholder="عنوان محفظة USDT"
+required>
 
 
 <button>
@@ -59,28 +60,9 @@ required>
 
 </form>
 
-
 </div>
 
-
-
-<div class="card">
-
-<a href="/login">
-
-<button>
-لدي حساب - تسجيل دخول
-</button>
-
-</a>
-
 </div>
-
-
-
-</div>
-
 
 </body>
-
 </html>
