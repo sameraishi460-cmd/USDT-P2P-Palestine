@@ -1,10 +1,13 @@
 <!DOCTYPE html>
 <html lang="ar">
 <head>
+
 <meta charset="UTF-8">
+
 <title>إنشاء إعلان</title>
 
 <style>
+
 body{
     font-family:Arial;
     direction:rtl;
@@ -14,10 +17,10 @@ body{
 
 .box{
     background:white;
-    padding:20px;
-    border-radius:10px;
     max-width:500px;
     margin:auto;
+    padding:20px;
+    border-radius:12px;
 }
 
 input,select,button{
@@ -32,64 +35,112 @@ button{
     color:white;
     border:0;
 }
+
 </style>
 
 </head>
 
+
 <body>
+
 
 <div class="box">
 
+
 <h2>🇵🇸 إنشاء إعلان USDT</h2>
+
 
 <form method="POST">
 
-<label>نوع الإعلان</label>
+
+<label>
+نوع الإعلان
+</label>
+
 
 <select name="type">
-<option value="SELL">بيع USDT</option>
-<option value="BUY">شراء USDT</option>
+
+<option value="SELL">
+بيع USDT
+</option>
+
+<option value="BUY">
+شراء USDT
+</option>
+
 </select>
 
 
-<label>الكمية USDT</label>
 
-<input 
-type="number" 
+<label>
+كمية USDT
+</label>
+
+
+<input
+type="number"
 name="amount"
-placeholder="مثال: 100"
+placeholder="مثال 100"
 required>
 
 
-<label>السعر بالشيكل</label>
 
-<input 
-type="number" 
+<label>
+السعر بالشيكل
+</label>
+
+
+<input
+type="number"
 name="price"
-placeholder="مثال: 300"
+placeholder="مثال 300"
 required>
 
 
-<label>طريقة الدفع</label>
+
+<label>
+طريقة الدفع
+</label>
+
 
 <select name="payment">
 
-<option>Reflect</option>
 
-<option>Apple Pay</option>
+<option>
+Reflect
+</option>
 
-<option>Google Pay</option>
 
-<option>بنك فلسطين</option>
+<option>
+Apple Pay
+</option>
 
-<option>تحويل بنكي</option>
 
-<option>نقدي</option>
+<option>
+Google Pay
+</option>
+
+
+<option>
+بنك فلسطين
+</option>
+
+
+<option>
+تحويل بنكي
+</option>
+
+
+<option>
+نقدي
+</option>
+
 
 </select>
 
 
-<button type="submit">
+
+<button>
 نشر الإعلان
 </button>
 
@@ -97,7 +148,9 @@ required>
 </form>
 
 
+
 </div>
+
 
 </body>
 </html>
