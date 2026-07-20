@@ -3,14 +3,14 @@ import sqlite3
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-app.secret_key = "USDT_P2P_SECRET"
+
+app.secret_key = "USDT_P2P_Palestine"
 
 
 def connect():
     db = sqlite3.connect("database.db")
     db.row_factory = sqlite3.Row
     return db
-
 
 
 def setup():
@@ -58,13 +58,12 @@ def setup():
 
 
 
-
 @app.route("/")
 def home():
 
-    db=connect()
+    db = connect()
 
-    ads=db.execute(
+    ads = db.execute(
         "SELECT * FROM ads WHERE status='OPEN'"
     ).fetchall()
 
@@ -77,32 +76,38 @@ def home():
 
 
 
-
 @app.route("/register", methods=["GET","POST"])
 def register():
 
-    if request.method=="POST":
+    if request.method == "POST":
 
-        username=request.form["username"]
-        email=request.form["email"]
+        username = request.form["username"]
+        email = request.form["email"]
 
-        password=generate_password_hash(
+        password = generate_password_hash(
             request.form["password"]
         )
 
-        db=connect()
+
+        db = connect()
 
         db.execute(
-        """
-        INSERT INTO users
-        (username,email,password)
-        VALUES(?,?,?)
-        """,
-        (username,email,password)
+            """
+            INSERT INTO users
+            (username,email,password)
+            VALUES(?,?,?)
+            """,
+            (
+                username,
+                email,
+                password
+            )
         )
+
 
         db.commit()
         db.close()
+
 
         return redirect("/login")
 
@@ -111,22 +116,23 @@ def register():
 
 
 
-
-
 @app.route("/login", methods=["GET","POST"])
 def login():
 
-    if request.method=="POST":
+    if request.method == "POST":
 
-        email=request.form["email"]
-        password=request.form["password"]
+        email = request.form["email"]
+        password = request.form["password"]
 
 
-        db=connect()
+        db = connect()
 
-        user=db.execute(
-        "SELECT * FROM users WHERE email=?",
-        (email,)
+        user = db.execute(
+            """
+            SELECT * FROM users
+            WHERE email=?
+            """,
+            (email,)
         ).fetchone()
 
 
@@ -138,39 +144,40 @@ def login():
             password
         ):
 
-            session["user"]=user["username"]
+            session["user"] = user["username"]
 
             return redirect("/")
 
 
-        return "خطأ في البيانات"
+        return "بيانات الدخول غير صحيحة"
 
 
     return render_template("login.html")
     @app.route("/create_ad", methods=["GET","POST"])
 def create_ad():
+
     if "user" not in session:
         return redirect("/login")
 
 
-    if request.method=="POST":
+    if request.method == "POST":
 
-        db=connect()
+        db = connect()
 
         db.execute(
-        """
-        INSERT INTO ads
-        (user,type,amount,price,payment,status)
-        VALUES(?,?,?,?,?,?)
-        """,
-        (
-        session["user"],
-        request.form["type"],
-        request.form["amount"],
-        request.form["price"],
-        request.form["payment"],
-        "OPEN"
-        )
+            """
+            INSERT INTO ads
+            (user,type,amount,price,payment,status)
+            VALUES(?,?,?,?,?,?)
+            """,
+            (
+                session["user"],
+                request.form["type"],
+                request.form["amount"],
+                request.form["price"],
+                request.form["payment"],
+                "OPEN"
+            )
         )
 
         db.commit()
@@ -183,8 +190,6 @@ def create_ad():
 
 
 
-
-
 @app.route("/buy/<int:id>")
 def buy(id):
 
@@ -192,50 +197,51 @@ def buy(id):
         return redirect("/login")
 
 
-    db=connect()
+    db = connect()
 
 
-    ad=db.execute(
-    "SELECT * FROM ads WHERE id=?",
-    (id,)
+    ad = db.execute(
+        "SELECT * FROM ads WHERE id=?",
+        (id,)
     ).fetchone()
 
 
     if not ad:
+        db.close()
         return "الإعلان غير موجود"
 
 
 
-    fee = ad["amount"] * 0.02
+    fee = float(ad["amount"]) * 0.02
 
 
-    cur=db.execute(
-    """
-    INSERT INTO trades
-    (buyer,seller,amount,price,fee,status)
-    VALUES(?,?,?,?,?,?)
-    """,
-    (
-    session["user"],
-    ad["user"],
-    ad["amount"],
-    ad["price"],
-    fee,
-    "WAITING_PAYMENT"
+    result = db.execute(
+        """
+        INSERT INTO trades
+        (buyer,seller,amount,price,fee,status)
+        VALUES(?,?,?,?,?,?)
+        """,
+        (
+            session["user"],
+            ad["user"],
+            ad["amount"],
+            ad["price"],
+            fee,
+            "WAITING_PAYMENT"
+        )
     )
-    )
 
 
-    trade_id=cur.lastrowid
+    trade_id = result.lastrowid
 
 
     db.execute(
-    """
-    UPDATE ads
-    SET status='CLOSED'
-    WHERE id=?
-    """,
-    (id,)
+        """
+        UPDATE ads
+        SET status='CLOSED'
+        WHERE id=?
+        """,
+        (id,)
     )
 
 
@@ -244,28 +250,25 @@ def buy(id):
 
 
     return redirect(
-        "/trade/"+str(trade_id)
+        "/trade/" + str(trade_id)
     )
-
-
 
 
 
 @app.route("/trade/<int:id>")
 def trade(id):
 
-    db=connect()
+    db = connect()
 
-    trade=db.execute(
-    "SELECT * FROM trades WHERE id=?",
-    (id,)
+    trade = db.execute(
+        """
+        SELECT * FROM trades
+        WHERE id=?
+        """,
+        (id,)
     ).fetchone()
 
     db.close()
-
-
-    if not trade:
-        return "لا توجد صفقة"
 
 
     return render_template(
@@ -275,20 +278,18 @@ def trade(id):
 
 
 
-
-
 @app.route("/paid/<int:id>")
 def paid(id):
 
-    db=connect()
+    db = connect()
 
     db.execute(
-    """
-    UPDATE trades
-    SET status='PAYMENT_SENT'
-    WHERE id=?
-    """,
-    (id,)
+        """
+        UPDATE trades
+        SET status='PAYMENT_SENT'
+        WHERE id=?
+        """,
+        (id,)
     )
 
     db.commit()
@@ -296,25 +297,23 @@ def paid(id):
 
 
     return redirect(
-        "/trade/"+str(id)
+        "/trade/" + str(id)
     )
-
-
 
 
 
 @app.route("/dispute/<int:id>")
 def dispute(id):
 
-    db=connect()
+    db = connect()
 
     db.execute(
-    """
-    UPDATE trades
-    SET status='DISPUTE'
-    WHERE id=?
-    """,
-    (id,)
+        """
+        UPDATE trades
+        SET status='DISPUTE'
+        WHERE id=?
+        """,
+        (id,)
     )
 
     db.commit()
@@ -322,6 +321,26 @@ def dispute(id):
 
 
     return redirect(
-        "/trade/"+str(id)
+        "/trade/" + str(id)
+    )
+
+
+
+@app.route("/logout")
+def logout():
+
+    session.clear()
+
+    return redirect("/")
+
+
+
+if __name__ == "__main__":
+
+    setup()
+
+    app.run(
+        host="0.0.0.0",
+        port=5000
     )
     
