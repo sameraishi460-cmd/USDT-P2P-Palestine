@@ -1,4 +1,4 @@
- """from flask import Flask, render_template, request, redirect, sessio
+ from flask import Flask, render_template, request, redirect, sessio
 import sqlite3
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -24,7 +24,7 @@ def setup():
     )
     \"\"\")
 
-    db.execute(\"\"\"
+    db.execute(\"\""
     CREATE TABLE IF NOT EXISTS ads(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user TEXT,
