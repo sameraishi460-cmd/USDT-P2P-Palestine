@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="ar">
+
 <head>
 
 <meta charset="UTF-8">
 
-<title>Admin</title>
+<title>لوحة الإدارة</title>
+
 
 <style>
 
@@ -15,14 +17,23 @@ background:#f5f5f5;
 padding:20px;
 }
 
+
 .box{
+
 background:white;
 padding:15px;
-border-radius:10px;
+border-radius:12px;
 margin-bottom:15px;
+
+}
+
+
+h2{
+text-align:center;
 }
 
 </style>
+
 
 </head>
 
@@ -31,60 +42,53 @@ margin-bottom:15px;
 
 
 <h2>
-🇵🇸 لوحة الإدارة
+🇵🇸 لوحة إدارة USDT P2P
 </h2>
 
 
 
-{% for trade in trades %}
+{% if trades %}
+
+
+{% for t in trades %}
 
 
 <div class="box">
 
 
 <h3>
-صفقة رقم {{trade.id}}
+صفقة رقم {{t.id}}
 </h3>
 
 
 <p>
 المشتري:
-{{trade.buyer}}
+{{t.buyer}}
 </p>
 
 
 <p>
 البائع:
-{{trade.seller}}
+{{t.seller}}
 </p>
 
 
 <p>
 الكمية:
-{{trade.amount}} USDT
+{{t.amount}} USDT
 </p>
 
 
 <p>
 السعر:
-{{trade.price}} شيكل
+{{t.price}} شيكل
 </p>
 
 
 <p>
 الحالة:
-{{trade.status}}
+{{t.status}}
 </p>
-
-
-{% if trade.proof %}
-
-<p>
-إثبات الدفع:
-{{trade.proof}}
-</p>
-
-{% endif %}
 
 
 </div>
@@ -94,5 +98,20 @@ margin-bottom:15px;
 
 
 
+{% else %}
+
+
+<div class="box">
+
+لا يوجد صفقات
+
+</div>
+
+
+{% endif %}
+
+
+
 </body>
+
 </html>
