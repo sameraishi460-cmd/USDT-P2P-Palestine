@@ -1,107 +1,74 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
-
+<html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>الصفقة</title>
+<title>صفقة USDT P2P</title>
 
 <style>
-
 body{
-font-family:Arial;
-background:#f2f2f2;
-padding:20px;
+    font-family: Arial;
+    direction: rtl;
+    background:#f5f5f5;
+    padding:20px;
 }
 
 .box{
-background:white;
-padding:20px;
-border-radius:10px;
+    background:white;
+    padding:20px;
+    border-radius:10px;
+    max-width:500px;
+    margin:auto;
 }
 
 button{
-padding:12px;
-background:green;
-color:white;
-border:0;
-border-radius:5px;
-margin:5px;
+    background:#0084ff;
+    color:white;
+    border:0;
+    padding:12px;
+    width:100%;
+    border-radius:8px;
+    font-size:16px;
 }
-
 </style>
 
 </head>
 
-
 <body>
-
-
-<h1>🤝 تفاصيل الصفقة</h1>
-
 
 <div class="box">
 
+<h2>🇵🇸 USDT P2P</h2>
 
-<h3>
-رقم الصفقة: {{trade.id}}
-</h3>
+<p>رقم الصفقة: {{trade.id}}</p>
 
+<p>المشتري: {{trade.buyer}}</p>
 
-<p>
-المشتري: {{trade.buyer}}
-</p>
+<p>البائع: {{trade.seller}}</p>
 
+<p>الكمية: {{trade.amount}} USDT</p>
 
-<p>
-البائع: {{trade.seller}}
-</p>
+<p>السعر: {{trade.price}} شيكل</p>
 
-
-<p>
-الكمية:
-{{trade.amount}} USDT
-</p>
-
-
-<p>
-السعر:
-{{trade.price}} شيكل
-</p>
-
-
-<p>
-عمولة المنصة:
-{{trade.fee}} USDT
-</p>
-
+<p>عمولة المنصة: {{trade.fee}} USDT</p>
 
 <p>
 الحالة:
-{{trade.status}}
+<b>{{trade.status}}</b>
 </p>
 
 
+{% if trade.status == "WAITING_PAYMENT" %}
 
+<a href="/paid/{{trade.id}}">
 <button>
 تم الدفع
 </button>
+</a>
 
-
-<button>
-فتح نزاع
-</button>
+{% endif %}
 
 
 </div>
 
-
-<br>
-
-<a href="/">
-العودة
-</a>
-
-
 </body>
-
 </html>
