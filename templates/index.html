@@ -1,21 +1,18 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
+
 <head>
-
 <meta charset="UTF-8">
-
-<title>USDT P2P Palestine</title>
+<title>🇵🇸 USDT P2P Palestine</title>
 
 <style>
-
 body{
 font-family:Arial;
-direction:rtl;
 background:#f5f5f5;
 padding:20px;
 }
 
-.box{
+.card{
 background:white;
 padding:15px;
 border-radius:12px;
@@ -30,101 +27,57 @@ padding:10px;
 border-radius:8px;
 }
 
-a{
-text-decoration:none;
-}
-
-.top{
-display:flex;
-justify-content:space-between;
-margin-bottom:20px;
-}
-
 </style>
 
 </head>
 
 <body>
 
-
-<div class="top">
-
 <h2>🇵🇸 USDT P2P Palestine</h2>
 
-<a href="/create_ad">
+<a href="/add">
 <button>
-إضافة إعلان
+إنشاء إعلان تجريبي
 </button>
 </a>
 
-</div>
 
-
-
-{% if ads %}
+<h3>
+الإعلانات
+</h3>
 
 
 {% for ad in ads %}
 
-
-<div class="box">
-
-
-<h3>
-{{ad.type}}
-</h3>
-
+<div class="card">
 
 <p>
-👤 {{ad.user}}
+البائع: {{ad.user}}
 </p>
 
-
 <p>
-💰 {{ad.amount}} USDT
+الكمية: {{ad.amount}} USDT
 </p>
 
-
 <p>
-💵 {{ad.price}} شيكل
+السعر: {{ad.price}} شيكل
 </p>
 
-
 <p>
-💳 {{ad.payment}}
+الدفع: {{ad.payment}}
 </p>
 
 
 <a href="/buy/{{ad.id}}">
-
 <button>
 شراء
 </button>
-
 </a>
 
 
 </div>
 
-
 {% endfor %}
-
-
-
-{% else %}
-
-
-<div class="box">
-
-<h3>
-لا يوجد إعلانات
-</h3>
-
-</div>
-
-
-{% endif %}
-
 
 
 </body>
