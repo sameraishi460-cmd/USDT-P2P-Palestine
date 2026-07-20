@@ -2,53 +2,120 @@
 <html lang="ar" dir="rtl">
 
 <head>
+
 <meta charset="UTF-8">
-<title>الصفقة</title>
+
+<title>
+تفاصيل الصفقة
+</title>
+
+<link rel="stylesheet" href="/static/style.css">
+
 </head>
+
 
 <body>
 
-<h1>تفاصيل الصفقة</h1>
+
+<div class="container">
+
+
+<div class="header">
+
+<h2>
+🤝 تفاصيل الصفقة
+</h2>
+
+</div>
+
+
+
+<div class="card">
+
 
 <p>
-البائع:
-{{ trade.seller }}
+👤 المشتري:
+{{trade.buyer}}
 </p>
 
 
 <p>
-الكمية:
-{{ trade.amount }} USDT
+👤 البائع:
+{{trade.seller}}
 </p>
 
 
 <p>
-الحالة:
-{{ trade.status }}
+💰 الكمية:
+{{trade.amount}} USDT
 </p>
+
+
+<p class="price">
+💵 السعر:
+{{trade.price}}
+</p>
+
+
+<p>
+📌 الحالة:
+{{trade.status}}
+</p>
+
+
+
+</div>
+
+
+
+<div class="card">
+
+
+<h3>
+📤 رفع إثبات الدفع
+</h3>
 
 
 <form action="/upload_payment/{{trade.id}}" method="POST" enctype="multipart/form-data">
 
-<h3>
-رفع إثبات الدفع
-</h3>
 
-<input type="file" name="proof">
+<input 
+type="file"
+name="proof"
+required>
 
-<br><br>
 
 <button>
-إرسال
+إرسال الإثبات
 </button>
+
 
 </form>
 
 
+</div>
+
+
+
+<div class="card">
+
+
 <a href="/confirm/{{trade.id}}">
-تأكيد الاستلام
+
+<button>
+✅ تأكيد استلام USDT
+</button>
+
 </a>
 
 
+</div>
+
+
+
+</div>
+
+
 </body>
+
 </html>
