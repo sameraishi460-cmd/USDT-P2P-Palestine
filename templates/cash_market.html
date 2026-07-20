@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+
+<meta charset="UTF-8">
+
+<title>مقابلات USDT</title>
+
+
+<style>
+
+body{
+
+font-family:Arial;
+background:#f1f3f5;
+margin:0;
+
+}
+
+
+.header{
+
+background:#2b8a3e;
+color:white;
+padding:20px;
+text-align:center;
+
+}
+
+
+
+.container{
+
+width:90%;
+max-width:900px;
+margin:20px auto;
+
+}
+
+
+
+.card{
+
+background:white;
+padding:20px;
+margin-bottom:15px;
+border-radius:15px;
+box-shadow:0 5px 15px #ddd;
+
+}
+
+
+
+.btn{
+
+display:block;
+background:#2b8a3e;
+color:white;
+text-decoration:none;
+padding:12px;
+border-radius:10px;
+text-align:center;
+margin-top:15px;
+
+}
+
+
+
+.info{
+
+background:#f8f9fa;
+padding:10px;
+border-radius:10px;
+
+}
+
+
+
+.back{
+
+background:#495057;
+
+}
+
+
+</style>
+
+
+</head>
+
+
+
+<body>
+
+
+
+<div class="header">
+
+<h1>
+🤝 مقابلات USDT
+</h1>
+
+<p>
+شراء وبيع نقدي وجهاً لوجه
+</p>
+
+
+</div>
+
+
+
+
+
+<div class="container">
+
+
+<a class="btn" href="/create_cash_ad">
+
+➕ إنشاء إعلان مقابلة
+
+</a>
+
+
+
+<h2>
+
+الإعلانات المتاحة
+
+</h2>
+
+
+
+
+{% if ads %}
+
+
+
+{% for ad in ads %}
+
+
+
+<div class="card">
+
+
+<h3>
+
+بيع {{ad.amount}} USDT
+
+</h3>
+
+
+
+<div class="info">
+
+
+<p>
+
+👤 البائع:
+
+{{ad.user}}
+
+</p>
+
+
+
+<p>
+
+💵 الكمية:
+
+{{ad.amount}} USDT
+
+</p>
+
+
+
+<p>
+
+💰 السعر:
+
+{{ad.price}}
+
+</p>
+
+
+
+<p>
+
+📍 المدينة:
+
+{{ad.city}}
+
+</p>
+
+
+
+<p>
+
+📌 مكان اللقاء:
+
+{{ad.location}}
+
+</p>
+
+
+
+<p>
+
+📝 ملاحظات:
+
+{{ad.notes}}
+
+</p>
+
+
+
+<p>
+
+رسوم الإعلان:
+
+{{ad.fee}} USDT
+
+</p>
+
+
+</div>
+
+
+
+
+
+<a class="btn" href="/cash_buy/{{ad.id}}">
+
+طلب مقابلة
+
+</a>
+
+
+
+</div>
+
+
+
+{% endfor %}
+
+
+
+{% else %}
+
+
+<div class="card">
+
+لا توجد إعلانات مقابلات حالياً
+
+</div>
+
+
+
+{% endif %}
+
+
+
+
+<a class="btn back" href="/">
+
+⬅ العودة للصفحة الرئيسية
+
+</a>
+
+
+
+</div>
+
+
+
+
+</body>
+
+</html>
