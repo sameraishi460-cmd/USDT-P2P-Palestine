@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+<meta charset="UTF-8">
+<title>الصفقة</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:#f2f2f2;
+padding:20px;
+}
+
+.box{
+background:white;
+padding:20px;
+border-radius:10px;
+}
+
+button{
+padding:12px;
+background:green;
+color:white;
+border:0;
+border-radius:5px;
+margin:5px;
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<h1>🤝 تفاصيل الصفقة</h1>
+
+
+<div class="box">
+
+
+<h3>
+رقم الصفقة: {{trade.id}}
+</h3>
+
+
+<p>
+المشتري: {{trade.buyer}}
+</p>
+
+
+<p>
+البائع: {{trade.seller}}
+</p>
+
+
+<p>
+الكمية:
+{{trade.amount}} USDT
+</p>
+
+
+<p>
+السعر:
+{{trade.price}} شيكل
+</p>
+
+
+<p>
+عمولة المنصة:
+{{trade.fee}} USDT
+</p>
+
+
+<p>
+الحالة:
+{{trade.status}}
+</p>
+
+
+
+<button>
+تم الدفع
+</button>
+
+
+<button>
+فتح نزاع
+</button>
+
+
+</div>
+
+
+<br>
+
+<a href="/">
+العودة
+</a>
+
+
+</body>
+
+</html>
