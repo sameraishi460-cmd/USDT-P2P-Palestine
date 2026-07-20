@@ -7,67 +7,43 @@
 
 <title>لوحة الأدمن</title>
 
-
 <style>
 
 body{
-    font-family:Arial;
-    background:#f2f2f2;
+font-family:Arial;
+background:#f5f5f5;
+padding:20px;
 }
 
 
-.container{
+.box{
 
-    width:95%;
-    max-width:900px;
-    margin:30px auto;
-
-}
-
-
-.card{
-
-    background:white;
-    padding:20px;
-    margin-bottom:15px;
-    border-radius:15px;
-    box-shadow:0 0 8px #ccc;
+background:white;
+padding:20px;
+margin-bottom:15px;
+border-radius:10px;
 
 }
 
 
 button{
 
-    background:#16a34a;
-    color:white;
-    border:0;
-    padding:10px 15px;
-    border-radius:8px;
-    cursor:pointer;
+background:#008000;
+color:white;
+border:none;
+padding:10px;
+border-radius:5px;
 
 }
 
 
-.red{
+a{
 
-    background:#dc2626;
-
-}
-
-
-
-.info{
-
-    background:#eee;
-    padding:10px;
-    border-radius:10px;
-    margin:8px 0;
+text-decoration:none;
 
 }
-
 
 </style>
-
 
 </head>
 
@@ -75,126 +51,100 @@ button{
 <body>
 
 
-<div class="container">
-
-
-<h2>🔐 لوحة تحكم الأدمن</h2>
-
-
-<a href="/admin_logout">
-تسجيل خروج
-</a>
+<h2>
+لوحة تحكم الأدمن
+</h2>
 
 
 
-{% for trade in trades %}
+{% for t in trades %}
 
 
-<div class="card">
+<div class="box">
 
 
 <h3>
-صفقة رقم {{trade.id}}
+صفقة رقم {{t.id}}
 </h3>
 
 
-<div class="info">
-
-
+<p>
 البائع:
-{{trade.seller}}
+{{t.seller}}
+</p>
 
-<br>
 
-
+<p>
 المشتري:
-{{trade.buyer}}
+{{t.buyer}}
+</p>
 
 
-<br>
-
-
+<p>
 الكمية:
-{{trade.amount}} USDT
+{{t.amount}} USDT
+</p>
 
 
-<br>
-
-
+<p>
 السعر:
-{{trade.price}}
+{{t.price}}
+</p>
 
 
-</div>
+<p>
+الحالة:
+{{t.status}}
+</p>
 
 
-
-
-<div class="info">
-
-
-حالة الصفقة:
-
-<b>
-{{trade.status}}
-</b>
-
-
-<br>
-
-
+<p>
 حالة الضمان:
-
-<b>
-{{trade.escrow_status}}
-</b>
+{{t.escrow_status}}
+</p>
 
 
-<br>
+{% if t.proof %}
+
+<p>
+إثبات الدفع:
+</p>
+
+<img 
+src="/uploads/{{t.proof}}"
+width="250"
+>
 
 
-النزاع:
-
-<b>
-{{trade.dispute}}
-</b>
-
-
-
-</div>
-
+{% endif %}
 
 
 
+<br><br>
 
-{% if trade.escrow_status == "WAITING_DEPOSIT" %}
 
-
-<a href="/escrow_confirm/{{trade.id}}">
+<a href="/escrow_confirm/{{t.id}}">
 
 <button>
-✅ تأكيد وصول USDT للمنصة
+تم استلام USDT من البائع
 </button>
 
 </a>
 
 
-{% endif %}
+
+<br><br>
 
 
+<a href="/cancel_trade/{{t.id}}">
 
+<button style="background:red">
 
+إلغاء الصفقة
 
-{% if trade.proof %}
+</button>
 
-<p>
-📄 تم رفع إثبات الدفع:
-{{trade.proof}}
-</p>
-
-
-{% endif %}
-
+</a>
 
 
 
@@ -203,9 +153,6 @@ button{
 
 {% endfor %}
 
-
-
-</div>
 
 
 </body>
