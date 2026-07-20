@@ -2,51 +2,68 @@
 <html lang="ar" dir="rtl">
 
 <head>
+
 <meta charset="UTF-8">
-<title>تفاصيل الصفقة</title>
+
+<title>الصفقة</title>
 
 <style>
 
 body{
-    font-family: Arial;
-    background:#f5f5f5;
+font-family:Arial;
+background:#f5f5f5;
+padding:20px;
 }
+
 
 .box{
-    background:white;
-    width:90%;
-    max-width:500px;
-    margin:40px auto;
-    padding:25px;
-    border-radius:15px;
-    box-shadow:0 0 10px #ccc;
+
+background:white;
+padding:20px;
+border-radius:10px;
+margin-bottom:20px;
+
 }
 
-h2{
-    text-align:center;
+
+.wallet{
+
+background:#fff3cd;
+padding:15px;
+border-radius:8px;
+word-break:break-all;
+
 }
 
-.info{
-    background:#eee;
-    padding:10px;
-    border-radius:10px;
-    margin:10px 0;
+
+.message{
+
+background:#eee;
+padding:10px;
+margin:5px;
+border-radius:8px;
+
 }
+
+
+input,button{
+
+padding:10px;
+width:100%;
+margin-top:10px;
+
+}
+
 
 button{
-    width:100%;
-    padding:12px;
-    border:0;
-    border-radius:10px;
-    margin-top:10px;
-    background:#16a34a;
-    color:white;
-    font-size:16px;
+
+background:#008000;
+color:white;
+border:none;
+border-radius:5px;
+
 }
 
-.red{
-    background:#dc2626;
-}
 
 </style>
 
@@ -58,110 +75,163 @@ button{
 
 <div class="box">
 
+<h2>صفقة USDT</h2>
 
-<h2>🔐 صفقة USDT</h2>
 
-
-<div class="info">
-
-<b>البائع:</b>
-
+<p>
+البائع:
 {{trade.seller}}
+</p>
 
-<br>
 
-<b>المشتري:</b>
-
+<p>
+المشتري:
 {{trade.buyer}}
+</p>
 
-<br>
 
-<b>الكمية:</b>
-
+<p>
+الكمية:
 {{trade.amount}} USDT
+</p>
 
-<br>
 
-<b>السعر:</b>
-
+<p>
+السعر:
 {{trade.price}}
+</p>
+
+
+<p>
+حالة الصفقة:
+{{trade.status}}
+</p>
+
+
+<p>
+حالة الضمان:
+{{trade.escrow_status}}
+</p>
+
 
 </div>
 
 
 
 
-<div class="info">
 
-<h3>مرحلة الضمان Escrow</h3>
+<div class="box">
 
 
-حالة الضمان:
+<h3>
+إرسال USDT إلى محفظة المنصة (Escrow)
+</h3>
+
+
+<div class="wallet">
+
+
+<p>
+الشبكة:
+</p>
 
 <b>
-{{trade.escrow_status}}
+{{trade.platform_network}}
 </b>
 
 
 <br><br>
 
 
-محفظة المنصة للإيداع:
-
-<br>
-
-<small>
-{{trade.platform_wallet}}
-</small>
-
-
-</div>
-
-
-
-
-
-{% if trade.escrow_status == "WAITING_DEPOSIT" %}
-
 <p>
-يرجى من البائع إرسال USDT إلى محفظة المنصة ثم انتظار التأكيد.
+عنوان المحفظة:
 </p>
 
 
-{% endif %}
-
-
-
-
-{% if trade.status != "COMPLETED" %}
-
-
-<a href="/cancel_trade/{{trade.id}}">
-
-<button class="red">
-إلغاء الصفقة
-</button>
-
-</a>
-
-
-
-<a href="/dispute/{{trade.id}}">
-
-<button>
-فتح نزاع
-</button>
-
-</a>
-
-
-{% endif %}
-
-
-
+<b>
+{{trade.platform_wallet}}
+</b>
 
 
 </div>
+
+
+
+<p>
+بعد إرسال USDT قم برفع إثبات التحويل.
+</p>
+
+
+
+<form action="/upload_payment/{{trade.id}}" method="POST" enctype="multipart/form-data">
+
+
+<input type="file" name="proof">
+
+
+<button>
+رفع إثبات التحويل
+</button>
+
+
+</form>
+
+
+</div>
+
+
+
+
+
+<div class="box">
+
+
+<h3>
+المحادثة
+</h3>
+
+
+{% for m in messages %}
+
+<div class="message">
+
+<b>
+{{m.sender}}
+</b>
+
+<br>
+
+{{m.message}}
+
+</div>
+
+
+{% endfor %}
+
+
+
+<form method="POST">
+
+
+<input 
+type="text"
+name="message"
+placeholder="اكتب رسالة"
+>
+
+
+<button>
+إرسال
+</button>
+
+
+</form>
+
+
+</div>
+
+
+
 
 
 </body>
