@@ -165,9 +165,3 @@ def logout():
 if __name__ == "__main__":
     setup()
     app.run(host="0.0.0.0", port=5000)
-"""
-
-path = Path("/mnt/data/app.py")
-path.write_text(code, encoding="utf-8")
-
-str(path)
