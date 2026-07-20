@@ -4,7 +4,11 @@ import os
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
+
 app.secret_key = "USDT_SECRET_KEY"
+
+ADMIN_USER = "admin"
+ADMIN_PASS = "SA526614@mer"
 
 UPLOAD_FOLDER = "uploads"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
@@ -112,8 +116,8 @@ def login():
         if user:
             session["user"] = username
             return redirect("/")
-        else:
-            return "بيانات الدخول غير صحيحة"
+
+        return "بيانات الدخول خطأ"
 
     return render_template("login.html")
 
@@ -205,13 +209,7 @@ def trade(id):
 
 @app.route("/upload_payment/<int:id>", methods=["POST"])
 def upload_payment(id):
-    if "proof" not in request.files:
-        return redirect("/trade/" + str(id))
-
     file = request.files["proof"]
-
-    if file.filename == "":
-        return redirect("/trade/" + str(id))
 
     filename = secure_filename(file.filename)
 
@@ -253,8 +251,26 @@ def confirm(id):
     return redirect("/trade/" + str(id))
 
 
+@app.route("/admin_login", methods=["GET", "POST"])
+def admin_login():
+    if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
+
+        if username == ADMIN_USER and password == ADMIN_PASS:
+            session["admin"] = True
+            return redirect("/admin")
+        else:
+            return "بيانات الأدمن خطأ"
+
+    return render_template("admin_login.html")
+
+
 @app.route("/admin")
 def admin():
+    if not session.get("admin"):
+        return redirect("/admin_login")
+
     con = connect()
 
     trades = con.execute("SELECT * FROM trades").fetchall()
@@ -262,6 +278,12 @@ def admin():
     con.close()
 
     return render_template("admin.html", trades=trades)
+
+
+@app.route("/admin_logout")
+def admin_logout():
+    session.pop("admin", None)
+    return redirect("/admin_login")
 
 
 if __name__ == "__main__":
