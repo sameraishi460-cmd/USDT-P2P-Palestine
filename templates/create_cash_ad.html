@@ -5,16 +5,26 @@
 
 <meta charset="UTF-8">
 
-<title>إنشاء إعلان مقابلة</title>
+<title>إضافة إعلان مقابلة</title>
 
 
 <style>
 
 body{
 
-font-family:Arial;
-background:#f1f3f5;
-margin:0;
+background:#0b1220;
+color:white;
+font-family:tahoma;
+padding:20px;
+
+}
+
+
+
+.container{
+
+max-width:600px;
+margin:auto;
 
 }
 
@@ -22,13 +32,9 @@ margin:0;
 
 .box{
 
-width:90%;
-max-width:500px;
-background:white;
-margin:40px auto;
+background:#1e293b;
 padding:25px;
-border-radius:15px;
-box-shadow:0 5px 20px #ddd;
+border-radius:18px;
 
 }
 
@@ -37,7 +43,7 @@ box-shadow:0 5px 20px #ddd;
 h2{
 
 text-align:center;
-color:#2b8a3e;
+color:#22c55e;
 
 }
 
@@ -56,10 +62,22 @@ input,textarea{
 
 width:100%;
 padding:12px;
-margin-top:5px;
-border:1px solid #ddd;
+margin-top:8px;
 border-radius:10px;
-box-sizing:border-box;
+border:0;
+background:#111827;
+color:white;
+
+}
+
+
+
+.note{
+
+background:#064e3b;
+padding:15px;
+border-radius:10px;
+margin:20px 0;
 
 }
 
@@ -68,24 +86,22 @@ box-sizing:border-box;
 button{
 
 width:100%;
-padding:13px;
-margin-top:20px;
-background:#2b8a3e;
-color:white;
+padding:14px;
 border:0;
 border-radius:10px;
-font-size:16px;
+background:#16a34a;
+color:white;
+font-size:18px;
+margin-top:20px;
 
 }
 
 
 
-.note{
+a{
 
-background:#e7f5ff;
-padding:15px;
-border-radius:10px;
-margin-top:15px;
+color:white;
+text-decoration:none;
 
 }
 
@@ -93,13 +109,13 @@ margin-top:15px;
 
 .back{
 
-display:block;
-text-align:center;
-margin-top:15px;
-text-decoration:none;
+display:inline-block;
+background:#2563eb;
+padding:10px 15px;
+border-radius:10px;
+margin-bottom:20px;
 
 }
-
 
 
 </style>
@@ -112,41 +128,25 @@ text-decoration:none;
 <body>
 
 
+<div class="container">
+
+
+<a class="back" href="/cash_market">
+رجوع
+</a>
+
+
 
 <div class="box">
 
 
 <h2>
-
-🤝 إعلان مقابلة USDT
-
+🤝 إعلان مقابلة شخصية
 </h2>
 
 
 
-
-<div class="note">
-
-رسوم نشر الإعلان:
-
-<b>
-
-{{fee}} USDT
-
-</b>
-
-<br><br>
-
-سيتم احتساب العمولة على الإعلان.
-
-</div>
-
-
-
-
-
-
-<form method="POST">
+<form method="post">
 
 
 
@@ -157,7 +157,7 @@ text-decoration:none;
 </label>
 
 
-<input
+<input 
 
 type="number"
 
@@ -178,7 +178,7 @@ required>
 </label>
 
 
-<input
+<input 
 
 type="number"
 
@@ -186,9 +186,10 @@ step="0.01"
 
 name="price"
 
-placeholder="مثال: 500"
+placeholder="مثال: 1850 شيكل"
 
 required>
+
 
 
 
@@ -200,9 +201,7 @@ required>
 </label>
 
 
-<input
-
-type="text"
+<input 
 
 name="city"
 
@@ -221,13 +220,11 @@ required>
 </label>
 
 
-<input
-
-type="text"
+<input 
 
 name="location"
 
-placeholder="مثال: مول أو مكان عام"
+placeholder="مثال: مول / كافيه / منطقة عامة"
 
 required>
 
@@ -237,7 +234,7 @@ required>
 
 <label>
 
-ملاحظات إضافية
+ملاحظات
 
 </label>
 
@@ -248,9 +245,33 @@ name="notes"
 
 rows="4"
 
-placeholder="أوقات التواجد أو شروط اللقاء">
+placeholder="أي تفاصيل إضافية">
 
 </textarea>
+
+
+
+
+
+<div class="note">
+
+
+عمولة المنصة الحالية:
+
+<b>
+
+{{fee}}
+
+</b>
+
+
+<br>
+
+
+يتم خصمها حسب سياسة المنصة.
+
+</div>
+
 
 
 
@@ -263,23 +284,18 @@ placeholder="أوقات التواجد أو شروط اللقاء">
 
 
 
+
 </form>
-
-
-
-
-<a class="back" href="/cash_market">
-
-⬅ العودة
-
-</a>
 
 
 
 </div>
 
 
+</div>
+
 
 </body>
+
 
 </html>
