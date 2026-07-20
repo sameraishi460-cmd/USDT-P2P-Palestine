@@ -30,7 +30,10 @@ def setup():
     CREATE TABLE IF NOT EXISTS users(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE,
-        password TEXT
+        password TEXT,
+        phone TEXT,
+        bank TEXT,
+        wallet TEXT
     )
     """)
 
@@ -78,19 +81,28 @@ def register():
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
+        phone = request.form["phone"]
+        bank = request.form["bank"]
+        wallet = request.form["wallet"]
 
         con = connect()
 
         try:
             con.execute(
-                "INSERT INTO users(username,password) VALUES(?,?)",
-                (username, password),
+                """
+            INSERT INTO users
+            (username,password,phone,bank,wallet)
+            VALUES(?,?,?,?,?)
+            """,
+                (username, password, phone, bank, wallet),
             )
+
             con.commit()
             con.close()
 
             session["user"] = username
             return redirect("/")
+
         except:
             con.close()
             return "اسم المستخدم موجود"
@@ -107,7 +119,10 @@ def login():
         con = connect()
 
         user = con.execute(
-            "SELECT * FROM users WHERE username=? AND password=?",
+            """
+        SELECT * FROM users
+        WHERE username=? AND password=?
+        """,
             (username, password),
         ).fetchone()
 
@@ -142,10 +157,10 @@ def create_ad():
 
         con.execute(
             """
-            INSERT INTO ads
-            (user,amount,price,payment,status)
-            VALUES(?,?,?,?,?)
-            """,
+        INSERT INTO ads
+        (user,amount,price,payment,status)
+        VALUES(?,?,?,?,?)
+        """,
             (session["user"], float(amount), float(price), payment, "OPEN"),
         )
 
@@ -172,10 +187,10 @@ def buy(id):
 
     cur = con.execute(
         """
-        INSERT INTO trades
-        (buyer,seller,amount,price,status,proof)
-        VALUES(?,?,?,?,?,?)
-        """,
+    INSERT INTO trades
+    (buyer,seller,amount,price,status,proof)
+    VALUES(?,?,?,?,?,?)
+    """,
         (
             session["user"],
             ad["user"],
@@ -207,6 +222,22 @@ def trade(id):
     return render_template("trade.html", trade=trade_item)
 
 
+@app.route("/profile")
+def profile():
+    if "user" not in session:
+        return redirect("/login")
+
+    con = connect()
+
+    user = con.execute(
+        "SELECT * FROM users WHERE username=?", (session["user"],)
+    ).fetchone()
+
+    con.close()
+
+    return render_template("profile.html", user=user)
+
+
 @app.route("/upload_payment/<int:id>", methods=["POST"])
 def upload_payment(id):
     file = request.files["proof"]
@@ -219,10 +250,10 @@ def upload_payment(id):
 
     con.execute(
         """
-        UPDATE trades
-        SET proof=?,status='PAYMENT_SENT'
-        WHERE id=?
-        """,
+    UPDATE trades
+    SET proof=?,status='PAYMENT_SENT'
+    WHERE id=?
+    """,
         (filename, id),
     )
 
