@@ -2,61 +2,137 @@
 <html lang="ar" dir="rtl">
 
 <head>
-<meta charset="UTF-8">
-<title>USDT P2P Palestine</title>
 
-<link rel="stylesheet" href="/static/style.css">
+<meta charset="UTF-8">
+
+<title>🇵🇸 USDT P2P Palestine</title>
+
+
+<style>
+
+body{
+    font-family:Arial;
+    background:#f5f5f5;
+}
+
+
+.container{
+
+    width:95%;
+    max-width:900px;
+    margin:auto;
+
+}
+
+
+.header{
+
+    background:#16a34a;
+    color:white;
+    padding:20px;
+    border-radius:0 0 20px 20px;
+    text-align:center;
+
+}
+
+
+.card{
+
+    background:white;
+    margin-top:20px;
+    padding:20px;
+    border-radius:15px;
+    box-shadow:0 0 10px #ddd;
+
+}
+
+
+button{
+
+    background:#16a34a;
+    color:white;
+    border:0;
+    padding:12px;
+    border-radius:10px;
+    width:100%;
+    font-size:16px;
+
+}
+
+
+a{
+
+    text-decoration:none;
+
+}
+
+
+.top{
+
+    margin-top:20px;
+
+}
+
+
+input{
+
+    width:100%;
+    padding:12px;
+    margin:8px 0;
+    border-radius:8px;
+    border:1px solid #ccc;
+
+}
+
+
+</style>
+
 
 </head>
 
 
-<body>
 
-<div class="container">
+<body>
 
 
 <div class="header">
 
-<h1>🇵🇸 USDT P2P Palestine</h1>
+<h1>
+🇵🇸 USDT P2P Palestine
+</h1>
 
 
-{% if user %}
-
-<p>مرحبا {{user}}</p>
-
-<a href="/logout">
-<button>
-تسجيل خروج
-</button>
-</a>
-
-
-{% else %}
-
-
-<a href="/login">
-<button>
-تسجيل دخول
-</button>
-</a>
-
-<br><br>
-
-<a href="/register">
-<button>
-إنشاء حساب
-</button>
-</a>
-
-
-{% endif %}
+<p>
+منصة تداول USDT بين المستخدمين بأمان
+</p>
 
 
 </div>
 
 
 
+
+<div class="container">
+
+
+
+<div class="top">
+
+
+{% if user %}
+
+
 <div class="card">
+
+مرحباً 👋
+
+<b>
+{{user}}
+</b>
+
+
+<br><br>
+
 
 <a href="/create_ad">
 
@@ -66,65 +142,160 @@
 
 </a>
 
-</div>
+
+<br><br>
 
 
+<a href="/profile">
 
-<h2>
-الإعلانات
-</h2>
-
-
-
-{% for ad in ads %}
-
-
-<div class="card">
-
-<h3>
-🟢 إعلان بيع
-</h3>
-
-
-<p>
-👤 البائع:
-{{ad.user}}
-</p>
-
-
-<p>
-💰 الكمية:
-{{ad.amount}} USDT
-</p>
-
-
-<p class="price">
-💵 السعر:
-{{ad.price}}
-</p>
-
-
-<p>
-💳 الدفع:
-{{ad.payment}}
-</p>
-
-
-<a href="/buy/{{ad.id}}">
 <button>
-شراء الآن
+👤 الملف الشخصي
 </button>
+
+</a>
+
+
+<br><br>
+
+
+<a href="/logout">
+
+<button>
+تسجيل خروج
+</button>
+
 </a>
 
 
 </div>
 
 
+
 {% else %}
 
 
+
 <div class="card">
-لا يوجد إعلانات حاليا
+
+
+<a href="/login">
+
+<button>
+تسجيل دخول
+</button>
+
+</a>
+
+
+<br><br>
+
+
+<a href="/register">
+
+<button>
+إنشاء حساب
+</button>
+
+</a>
+
+
+</div>
+
+
+
+{% endif %}
+
+
+
+</div>
+
+
+
+
+
+<h2>
+الإعلانات المتاحة
+</h2>
+
+
+
+
+{% for ad in ads %}
+
+
+
+<div class="card">
+
+
+<h3>
+💵 بيع USDT
+</h3>
+
+
+<p>
+
+البائع:
+<b>
+{{ad.user}}
+</b>
+
+</p>
+
+
+
+<p>
+
+الكمية:
+
+{{ad.amount}}
+
+USDT
+
+</p>
+
+
+
+<p>
+
+السعر:
+
+{{ad.price}}
+
+</p>
+
+
+
+<p>
+
+طريقة الدفع:
+
+{{ad.payment}}
+
+</p>
+
+
+
+<a href="/buy/{{ad.id}}">
+
+<button>
+شراء
+</button>
+
+</a>
+
+
+</div>
+
+
+
+{% else %}
+
+
+
+<div class="card">
+
+لا توجد إعلانات حالياً
+
 </div>
 
 
@@ -132,7 +303,11 @@
 
 
 
+
 </div>
 
+
 </body>
+
+
 </html>
