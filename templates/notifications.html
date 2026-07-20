@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+<meta charset="UTF-8">
+<title>الإشعارات</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+
+
+<body>
+
+<h1>الإشعارات</h1>
+
+
+{% for n in notifications %}
+
+<div class="box">
+
+<h3>
+{{ n.title }}
+</h3>
+
+<p>
+{{ n.message }}
+</p>
+
+<small>
+{{ n.created }}
+</small>
+
+</div>
+
+
+{% else %}
+
+<p>
+لا يوجد إشعارات
+</p>
+
+{% endfor %}
+
+
+<a href="/dashboard">
+رجوع
+</a>
+
+
+</body>
+
+</html>
