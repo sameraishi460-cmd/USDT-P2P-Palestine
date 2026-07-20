@@ -44,15 +44,15 @@ init()
 @app.route("/")
 def home():
 
-    con=db()
+    con = db()
 
-    ads=con.execute(
+    ads = con.execute(
         "SELECT * FROM ads WHERE status='OPEN'"
     ).fetchall()
 
     con.close()
 
-    return str([dict(x) for x in ads])
+    return render_template("index.html", ads=ads)
 
 
 
