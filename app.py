@@ -1,16 +1,26 @@
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request, redirect, session
 import sqlite3
+import os
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
+app.secret_key = "USDT_SECRET_KEY"
 
-def db():
+UPLOAD_FOLDER = "uploads"
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
+
+def connect():
     con = sqlite3.connect("database.db")
     con.row_factory = sqlite3.Row
     return con
 
 
-def init():
-    con = db()
+def setup():
+    con = connect()
 
     con.execute("""
     CREATE TABLE IF NOT EXISTS ads(
@@ -30,7 +40,8 @@ def init():
         seller TEXT,
         amount REAL,
         price REAL,
-        status TEXT
+        status TEXT,
+        proof TEXT
     )
     """)
 
@@ -38,35 +49,62 @@ def init():
     con.close()
 
 
-init()
+setup()
 
 
 @app.route("/")
 def home():
-
-    con = db()
-
-    ads = con.execute(
-        "SELECT * FROM ads WHERE status='OPEN'"
-    ).fetchall()
-
+    con = connect()
+    ads = con.execute("SELECT * FROM ads WHERE status='OPEN'").fetchall()
     con.close()
 
     return render_template("index.html", ads=ads)
 
 
+@app.route("/create_ad", methods=["GET", "POST"])
+def create_ad():
+    if request.method == "POST":
+        con = connect()
 
-@app.route("/add")
-def add():
+        con.execute(
+            """
+        INSERT INTO ads
+        (user, amount, price, payment, status)
+        VALUES (?, ?, ?, ?, ?)
+        """,
+            (
+                request.form["user"],
+                request.form["amount"],
+                request.form["price"],
+                request.form["payment"],
+                "OPEN",
+            ),
+        )
 
-    con=db()
+        con.commit()
+        con.close()
 
-    con.execute("""
-    INSERT INTO ads
-    (user,amount,price,payment,status)
-    VALUES
-    ('Samer',100,300,'Reflect','OPEN')
-    """)
+        return redirect("/")
+
+    return render_template("create_ad.html")
+
+
+@app.route("/buy/<int:id>")
+def buy(id):
+    con = connect()
+
+    ad = con.execute("SELECT * FROM ads WHERE id=?", (id,)).fetchone()
+
+    con.execute(
+        """
+    INSERT INTO trades
+    (buyer, seller, amount, price, status, proof)
+    VALUES (?, ?, ?, ?, ?, ?)
+    """,
+        ("Buyer", ad["user"], ad["amount"], ad["price"], "WAITING_PAYMENT", ""),
+    )
+
+    con.execute("UPDATE ads SET status='CLOSED' WHERE id=?", (id,))
 
     con.commit()
     con.close()
@@ -74,61 +112,69 @@ def add():
     return redirect("/")
 
 
+@app.route("/trade/<int:id>")
+def trade(id):
+    con = connect()
 
-@app.route("/buy/<int:id>")
-def buy(id):
+    trade_item = con.execute("SELECT * FROM trades WHERE id=?", (id,)).fetchone()
+    con.close()
 
-    con=db()
-
-    ad=con.execute(
-        "SELECT * FROM ads WHERE id=?",
-        (id,)
-    ).fetchone()
+    return render_template("trade.html", trade=trade_item)
 
 
-    con.execute("""
-    INSERT INTO trades
-    (buyer,seller,amount,price,status)
-    VALUES
-    (?,?,?,?,?)
-    """,
-    (
-        "Buyer",
-        ad["user"],
-        ad["amount"],
-        ad["price"],
-        "WAITING_PAYMENT"
-    ))
+@app.route("/upload_payment/<int:id>", methods=["POST"])
+def upload_payment(id):
+    file = request.files["proof"]
 
+    filename = secure_filename(file.filename)
+
+    file.save(os.path.join(UPLOAD_FOLDER, filename))
+
+    con = connect()
 
     con.execute(
-        "UPDATE ads SET status='CLOSED' WHERE id=?",
-        (id,)
+        """
+        UPDATE trades
+        SET proof=?, status='PAYMENT_SENT'
+        WHERE id=?
+        """,
+        (filename, id),
     )
-
 
     con.commit()
     con.close()
 
-    return "تم إنشاء الصفقة"
+    return redirect("/trade/" + str(id))
+
+
+@app.route("/confirm/<int:id>")
+def confirm(id):
+    con = connect()
+
+    con.execute(
+        """
+        UPDATE trades
+        SET status='COMPLETED'
+        WHERE id=?
+        """,
+        (id,),
+    )
+
+    con.commit()
+    con.close()
+
+    return redirect("/trade/" + str(id))
 
 
 @app.route("/admin")
 def admin():
+    con = connect()
 
-    con=db()
-
-    trades=con.execute(
-        "SELECT * FROM trades"
-    ).fetchall()
-
+    trades = con.execute("SELECT * FROM trades").fetchall()
     con.close()
 
-return render_template("index.html", ads=ads)
+    return render_template("admin.html", trades=trades)
 
 
-if __name__=="__main__":
-    app.run(
-        host="0.0.0.0",
-        port=5000
-    )
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)
