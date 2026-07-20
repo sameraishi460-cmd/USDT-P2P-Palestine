@@ -2,7 +2,9 @@ from flask import Flask, render_template, request, redirect, session
 import sqlite3
 import os
 from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
+
 
 app = Flask(__name__)
 
@@ -13,9 +15,8 @@ ADMIN_USER = "admin"
 ADMIN_PASS = "SA526614@mer"
 
 
-PLATFORM_WALLET = "0x659dd7cba24363c903abe3fddfc89eb30ffbf58a"
-PLATFORM_NETWORK = "BNB Smart Chain (BEP20)"
-
+# عمولة إعلان المقابلة الشخصية
+CASH_AD_FEE = 2
 
 
 UPLOAD_FOLDER = "uploads"
@@ -25,7 +26,6 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
-
 
 
 
@@ -40,21 +40,26 @@ def connect():
 
 
 
-
 def setup():
 
     con = connect()
 
 
-
     con.execute("""
     CREATE TABLE IF NOT EXISTS users(
+
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+
         username TEXT UNIQUE,
+
         password TEXT,
+
         phone TEXT,
+
         bank TEXT,
+
         wallet TEXT
+
     )
     """)
 
@@ -62,12 +67,19 @@ def setup():
 
     con.execute("""
     CREATE TABLE IF NOT EXISTS ads(
+
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+
         user TEXT,
+
         amount REAL,
+
         price REAL,
+
         payment TEXT,
+
         status TEXT
+
     )
     """)
 
@@ -75,19 +87,45 @@ def setup():
 
     con.execute("""
     CREATE TABLE IF NOT EXISTS trades(
+
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+
         buyer TEXT,
+
         seller TEXT,
+
         amount REAL,
+
         price REAL,
+
         status TEXT,
+
         proof TEXT,
+
         escrow_status TEXT,
+
         seller_wallet TEXT,
+
         buyer_wallet TEXT,
+
         platform_wallet TEXT,
-        platform_network TEXT,
+
         dispute TEXT
+
+    )
+    """)
+
+
+
+    con.execute("""
+    CREATE TABLE IF NOT EXISTS settings(
+
+        id INTEGER PRIMARY KEY,
+
+        wallet TEXT,
+
+        network TEXT
+
     )
     """)
 
@@ -95,13 +133,72 @@ def setup():
 
     con.execute("""
     CREATE TABLE IF NOT EXISTS messages(
+
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+
         trade_id INTEGER,
+
         sender TEXT,
+
         message TEXT,
+
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+
     )
     """)
+
+
+
+    # إعلانات المقابلات الشخصية
+
+    con.execute("""
+    CREATE TABLE IF NOT EXISTS cash_ads(
+
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+        user TEXT,
+
+        amount REAL,
+
+        price REAL,
+
+        city TEXT,
+
+        location TEXT,
+
+        notes TEXT,
+
+        fee REAL,
+
+        status TEXT
+
+    )
+    """)
+
+
+
+    # صفقات المقابلات
+
+    con.execute("""
+    CREATE TABLE IF NOT EXISTS cash_trades(
+
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+        ad_id INTEGER,
+
+        buyer TEXT,
+
+        seller TEXT,
+
+        amount REAL,
+
+        price REAL,
+
+        status TEXT
+
+    )
+    """)
+
 
 
     con.commit()
@@ -111,7 +208,6 @@ def setup():
 
 
 setup()
-
 
 
 
@@ -133,28 +229,33 @@ def admin_required(f):
 
 
 
-
 @app.route("/")
 def home():
 
     con = connect()
 
+
     ads = con.execute(
         """
         SELECT * FROM ads
+
         WHERE status='OPEN'
         """
     ).fetchall()
+
 
     con.close()
 
 
     return render_template(
-        "index.html",
-        ads=ads,
-        user=session.get("user")
-    )
 
+        "index.html",
+
+        ads=ads,
+
+        user=session.get("user")
+
+    )
 
 
 
@@ -165,56 +266,37 @@ def register():
     if request.method == "POST":
 
         username = request.form["username"]
-        password = request.form["password"]
+        raw_password = request.form["password"]
         phone = request.form["phone"]
         bank = request.form["bank"]
         wallet = request.form["wallet"]
 
+        # تشفير كلمة المرور أمنياً قبل حفظها
+        password = generate_password_hash(raw_password)
 
         con = connect()
 
-
         try:
-
             con.execute(
             """
             INSERT INTO users
-            (username,password,phone,bank,wallet)
-
+            (username, password, phone, bank, wallet)
             VALUES(?,?,?,?,?)
-
             """,
-            (
-                username,
-                password,
-                phone,
-                bank,
-                wallet
+            (username, password, phone, bank, wallet)
             )
-            )
-
 
             con.commit()
-
             con.close()
-
 
             session["user"] = username
-
-
             return redirect("/")
 
-
         except:
-
             con.close()
-
-            return "اسم المستخدم موجود"
-
-
+            return "اسم المستخدم موجود مسبقاً"
 
     return render_template("register.html")
-
 
 
 
@@ -225,51 +307,39 @@ def login():
     if request.method == "POST":
 
         username = request.form["username"]
-        password = request.form["password"]
-
+        raw_password = request.form["password"]
 
         con = connect()
-
 
         user = con.execute(
         """
         SELECT * FROM users
-
-        WHERE username=? AND password=?
-
+        WHERE username=?
         """,
-        (
-            username,
-            password
-        )
+        (username,)
         ).fetchone()
-
 
         con.close()
 
-
-
-        if user:
-
+        # التحقق من كلمة المرور المشفرة
+        if user and check_password_hash(user["password"], raw_password):
             session["user"] = username
-
             return redirect("/")
 
-
         return "بيانات الدخول خطأ"
-
-
 
     return render_template("login.html")
 
 
 
 
-
 @app.route("/logout")
 def logout():
+
     session.pop("user", None)
+
     return redirect("/")
+
 
 
 
@@ -279,44 +349,36 @@ def create_ad():
     if "user" not in session:
         return redirect("/login")
 
-
     if request.method == "POST":
 
-        amount = float(request.form["amount"])
-        price = float(request.form["price"])
-        payment = request.form["payment"]
+        try:
+            amount = float(request.form["amount"])
+            price = float(request.form["price"])
+        except ValueError:
+            return "الرجاء إدخال أرقام صحيحة"
 
+        if amount <= 0 or price <= 0:
+            return "الكمية والسعر يجب أن يكونا أكبر من صفر"
+
+        payment = request.form["payment"]
 
         con = connect()
 
         con.execute(
         """
         INSERT INTO ads
-        (user,amount,price,payment,status)
-
+        (user, amount, price, payment, status)
         VALUES(?,?,?,?,?)
-
         """,
-        (
-            session["user"],
-            amount,
-            price,
-            payment,
-            "OPEN"
+        (session["user"], amount, price, payment, "OPEN")
         )
-        )
-
 
         con.commit()
         con.close()
 
-
         return redirect("/")
 
-
     return render_template("create_ad.html")
-
-
 
 
 
@@ -327,47 +389,35 @@ def buy(id):
     if "user" not in session:
         return redirect("/login")
 
-
     con = connect()
 
-
     ad = con.execute(
-    "SELECT * FROM ads WHERE id=?",
-    (id,)
+        "SELECT * FROM ads WHERE id=?",
+        (id,)
     ).fetchone()
 
-
-
     if not ad:
-
         con.close()
-
         return redirect("/")
 
+    setting = con.execute(
+        "SELECT * FROM settings WHERE id=1"
+    ).fetchone()
 
+    platform_wallet = ""
+    if setting:
+        platform_wallet = setting["wallet"]
 
     cur = con.execute(
     """
     INSERT INTO trades
     (
-    buyer,
-    seller,
-    amount,
-    price,
-    status,
-    proof,
-    escrow_status,
-    seller_wallet,
-    buyer_wallet,
-    platform_wallet,
-    platform_network,
-    dispute
+    buyer, seller, amount, price, status,
+    proof, escrow_status, seller_wallet,
+    buyer_wallet, platform_wallet, dispute
     )
-
-    VALUES(?,?,?,?,?,?,?,?,?,?,?,?)
-
+    VALUES(?,?,?,?,?,?,?,?,?,?,?)
     """,
-
     (
         session["user"],
         ad["user"],
@@ -378,36 +428,22 @@ def buy(id):
         "WAITING_DEPOSIT",
         "",
         "",
-        PLATFORM_WALLET,
-        PLATFORM_NETWORK,
+        platform_wallet,
         "NONE"
     )
-
     )
-
 
     trade_id = cur.lastrowid
 
-
-
     con.execute(
-    """
-    UPDATE ads
-    SET status='CLOSED'
-    WHERE id=?
-
-    """,
-    (id,)
+        "UPDATE ads SET status='CLOSED' WHERE id=?",
+        (id,)
     )
-
 
     con.commit()
     con.close()
 
-
     return redirect("/trade/" + str(trade_id))
-
-
 
 
 
@@ -419,65 +455,38 @@ def trade(id):
     if "user" not in session:
         return redirect("/login")
 
-
     con = connect()
-
-
 
     if request.method == "POST":
 
-        message = request.form["message"]
+        msg = request.form.get("message")
 
-
-        if message.strip():
-
+        if msg and msg.strip():
             con.execute(
             """
             INSERT INTO messages
-            (trade_id,sender,message)
-
+            (trade_id, sender, message)
             VALUES(?,?,?)
-
             """,
-            (
-                id,
-                session["user"],
-                message
+            (id, session["user"], msg.strip())
             )
-            )
-
             con.commit()
 
-
-
     trade_item = con.execute(
-    """
-    SELECT * FROM trades
-    WHERE id=?
-
-    """,
-    (id,)
+        "SELECT * FROM trades WHERE id=?",
+        (id,)
     ).fetchone()
 
-
-
     messages = con.execute(
-    """
-    SELECT * FROM messages
-
-    WHERE trade_id=?
-
-    ORDER BY id ASC
-
-    """,
-    (id,)
+        """
+        SELECT * FROM messages
+        WHERE trade_id=?
+        ORDER BY id ASC
+        """,
+        (id,)
     ).fetchall()
 
-
-
     con.close()
-
-
 
     return render_template(
         "trade.html",
@@ -490,62 +499,38 @@ def trade(id):
 
 
 
-
-
 @app.route("/upload_payment/<int:id>", methods=["POST"])
 def upload_payment(id):
+
+    if "user" not in session:
+        return redirect("/login")
 
     if "proof" not in request.files:
         return redirect("/trade/" + str(id))
 
-
     file = request.files["proof"]
 
-
     if file.filename == "":
-
         return redirect("/trade/" + str(id))
 
-
     filename = secure_filename(file.filename)
-
-
-    file.save(
-        os.path.join(
-            UPLOAD_FOLDER,
-            filename
-        )
-    )
-
+    file.save(os.path.join(UPLOAD_FOLDER, filename))
 
     con = connect()
-
 
     con.execute(
     """
     UPDATE trades
-
-    SET proof=?,
-    status='PAYMENT_SENT'
-
+    SET proof=?, status='PAYMENT_SENT'
     WHERE id=?
-
     """,
-    (
-        filename,
-        id
+    (filename, id)
     )
-    )
-
 
     con.commit()
     con.close()
 
-
     return redirect("/trade/" + str(id))
-
-
-
 
 
 
@@ -558,23 +543,17 @@ def complete_trade(id):
 
     con = connect()
 
-
     con.execute(
     """
     UPDATE trades
-
     SET status='COMPLETED'
-
     WHERE id=?
-
     """,
     (id,)
     )
 
-
     con.commit()
     con.close()
-
 
     return redirect("/trade/" + str(id))
 
@@ -583,6 +562,147 @@ def complete_trade(id):
 
 
 
+# =========================
+# المقابلات الشخصية (Cash Trades)
+# =========================
+
+
+@app.route("/cash_market")
+def cash_market():
+
+    con = connect()
+
+    ads = con.execute(
+        """
+        SELECT * FROM cash_ads
+        WHERE status='OPEN'
+        """
+    ).fetchall()
+
+    con.close()
+
+    return render_template(
+        "cash_market.html",
+        ads=ads,
+        user=session.get("user")
+    )
+
+
+
+
+
+@app.route("/create_cash_ad", methods=["GET","POST"])
+def create_cash_ad():
+
+    if "user" not in session:
+        return redirect("/login")
+
+    if request.method == "POST":
+
+        try:
+            amount = float(request.form["amount"])
+            price = float(request.form["price"])
+        except ValueError:
+            return "الرجاء إدخال أرقام صحيحة"
+
+        city = request.form["city"]
+        location = request.form["location"]
+        notes = request.form["notes"]
+
+        con = connect()
+
+        con.execute(
+        """
+        INSERT INTO cash_ads
+        (user, amount, price, city, location, notes, fee, status)
+        VALUES(?,?,?,?,?,?,?,?)
+        """,
+        (session["user"], amount, price, city, location, notes, CASH_AD_FEE, "OPEN")
+        )
+
+        con.commit()
+        con.close()
+
+        return redirect("/cash_market")
+
+    return render_template(
+        "create_cash_ad.html",
+        fee=CASH_AD_FEE
+    )
+
+
+
+
+@app.route("/cash_buy/<int:id>")
+def cash_buy(id):
+
+    if "user" not in session:
+        return redirect("/login")
+
+    con = connect()
+
+    ad = con.execute(
+        "SELECT * FROM cash_ads WHERE id=?",
+        (id,)
+    ).fetchone()
+
+    if not ad:
+        con.close()
+        return redirect("/cash_market")
+
+    con.execute(
+    """
+    INSERT INTO cash_trades
+    (ad_id, buyer, seller, amount, price, status)
+    VALUES(?,?,?,?,?,?)
+    """,
+    (id, session["user"], ad["user"], ad["amount"], ad["price"], "WAITING_CONFIRM")
+    )
+
+    con.execute(
+        "UPDATE cash_ads SET status='CLOSED' WHERE id=?",
+        (id,)
+    )
+
+    con.commit()
+    con.close()
+
+    return redirect("/profile")
+
+
+
+
+# تأكيد إتمام صفقة المقابلة الشخصية
+@app.route("/complete_cash_trade/<int:id>")
+def complete_cash_trade(id):
+
+    if "user" not in session:
+        return redirect("/login")
+
+    con = connect()
+
+    con.execute(
+    """
+    UPDATE cash_trades
+    SET status='COMPLETED'
+    WHERE id=?
+    """,
+    (id,)
+    )
+
+    con.commit()
+    con.close()
+
+    return redirect("/profile")
+
+
+
+
+
+
+# =========================
+# الملف الشخصي وتعديل البيانات
+# =========================
 
 
 @app.route("/profile")
@@ -591,64 +711,97 @@ def profile():
     if "user" not in session:
         return redirect("/login")
 
-
     con = connect()
 
-
     user = con.execute(
-    """
-    SELECT * FROM users
-    WHERE username=?
-
-    """,
-    (session["user"],)
+        "SELECT * FROM users WHERE username=?",
+        (session["user"],)
     ).fetchone()
 
-
-
     trades = con.execute(
-    """
-    SELECT * FROM trades
-
-    WHERE buyer=? OR seller=?
-
-    """,
-    (
-        session["user"],
-        session["user"]
-    )
+        """
+        SELECT * FROM trades
+        WHERE buyer=? OR seller=?
+        """,
+        (session["user"], session["user"])
     ).fetchall()
 
-
+    cash_trades = con.execute(
+        """
+        SELECT * FROM cash_trades
+        WHERE buyer=? OR seller=?
+        """,
+        (session["user"], session["user"])
+    ).fetchall()
 
     ads = con.execute(
-    """
-    SELECT * FROM ads
-
-    WHERE user=?
-
-    """,
-    (session["user"],)
+        """
+        SELECT * FROM ads
+        WHERE user=?
+        """,
+        (session["user"],)
     ).fetchall()
 
-
-
     con.close()
-
-
 
     return render_template(
         "profile.html",
         user=user,
         trades=trades,
+        cash_trades=cash_trades,
         ads=ads
     )
 
 
 
 
+# مسار تعديل بيانات الحساب والمحفظة الشخصية
+@app.route("/edit_profile", methods=["GET","POST"])
+def edit_profile():
+
+    if "user" not in session:
+        return redirect("/login")
+
+    con = connect()
+
+    if request.method == "POST":
+        phone = request.form["phone"]
+        bank = request.form["bank"]
+        wallet = request.form["wallet"]
+
+        con.execute(
+        """
+        UPDATE users
+        SET phone=?, bank=?, wallet=?
+        WHERE username=?
+        """,
+        (phone, bank, wallet, session["user"])
+        )
+        con.commit()
+        con.close()
+
+        return redirect("/profile")
+
+    user = con.execute(
+        "SELECT * FROM users WHERE username=?",
+        (session["user"],)
+    ).fetchone()
+
+    con.close()
+
+    return render_template(
+        "edit_profile.html",
+        user=user
+    )
 
 
+
+
+
+
+# =========================
+# لوحة تحكم الأدمن
+# =========================
 
 
 @app.route("/admin_login", methods=["GET","POST"])
@@ -661,21 +814,12 @@ def admin_login():
             and
             request.form["password"] == ADMIN_PASS
         ):
-
             session["admin"] = True
-
             return redirect("/admin")
-
 
         return "بيانات الأدمن خطأ"
 
-
-
     return render_template("admin_login.html")
-
-
-
-
 
 
 
@@ -687,20 +831,59 @@ def admin():
     con = connect()
 
     trades = con.execute(
-    "SELECT * FROM trades"
+        "SELECT * FROM trades"
     ).fetchall()
 
+    cash_ads = con.execute(
+        "SELECT * FROM cash_ads"
+    ).fetchall()
+
+    cash_trades = con.execute(
+        "SELECT * FROM cash_trades"
+    ).fetchall()
 
     con.close()
 
-
     return render_template(
         "admin.html",
-        trades=trades
+        trades=trades,
+        cash_ads=cash_ads,
+        cash_trades=cash_trades
     )
 
 
 
+
+@app.route("/admin_wallet", methods=["GET","POST"])
+@admin_required
+def admin_wallet():
+
+    con = connect()
+
+    if request.method == "POST":
+        wallet = request.form["wallet"]
+        network = request.form["network"]
+
+        con.execute(
+        """
+        INSERT OR REPLACE INTO settings
+        (id, wallet, network)
+        VALUES(1, ?, ?)
+        """,
+        (wallet, network)
+        )
+        con.commit()
+
+    setting = con.execute(
+        "SELECT * FROM settings WHERE id=1"
+    ).fetchone()
+
+    con.close()
+
+    return render_template(
+        "admin_wallet.html",
+        setting=setting
+    )
 
 
 
@@ -714,6 +897,48 @@ def admin_logout():
 
 
 
+
+@app.route("/escrow_confirm/<int:id>")
+def escrow_confirm(id):
+
+    con = connect()
+
+    con.execute(
+    """
+    UPDATE trades
+    SET escrow_status='RECEIVED',
+    status='WAITING_PAYMENT'
+    WHERE id=?
+    """,
+    (id,)
+    )
+
+    con.commit()
+    con.close()
+
+    return redirect("/trade/" + str(id))
+
+
+
+
+@app.route("/cancel_trade/<int:id>")
+def cancel_trade(id):
+
+    con = connect()
+
+    con.execute(
+    """
+    UPDATE trades
+    SET status='CANCELLED'
+    WHERE id=?
+    """,
+    (id,)
+    )
+
+    con.commit()
+    con.close()
+
+    return redirect("/trade/" + str(id))
 
 
 
