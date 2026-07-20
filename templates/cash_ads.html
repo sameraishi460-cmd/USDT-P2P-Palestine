@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+<meta charset="UTF-8">
+<title>سوق الكاش</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>سوق USDT كاش</h1>
+
+<a href="/create_cash_ad">
+إنشاء إعلان جديد
+</a>
+
+<hr>
+
+
+{% for ad in ads %}
+
+<div class="box">
+
+<h3>
+{{ ad.amount }} USDT
+</h3>
+
+<p>
+السعر:
+{{ ad.price }}
+</p>
+
+<p>
+المدينة:
+{{ ad.city }}
+</p>
+
+
+<a href="/cash_ad/{{ad.id}}">
+عرض الإعلان
+</a>
+
+
+</div>
+
+{% else %}
+
+<p>
+لا يوجد إعلانات حاليا
+</p>
+
+{% endfor %}
+
+
+<a href="/">
+رجوع
+</a>
+
+
+</div>
+
+</body>
+
+</html>
