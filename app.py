@@ -13,6 +13,9 @@ ADMIN_USER = "admin"
 ADMIN_PASS = "SA526614@mer"
 
 
+PLATFORM_WALLET = "PUT_PLATFORM_WALLET_HERE"
+
+
 UPLOAD_FOLDER = "uploads"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
@@ -26,6 +29,7 @@ def connect():
     con = sqlite3.connect("database.db")
     con.row_factory = sqlite3.Row
     return con
+
 
 
 
@@ -66,6 +70,7 @@ def setup():
         escrow_status TEXT,
         seller_wallet TEXT,
         buyer_wallet TEXT,
+        platform_wallet TEXT,
         dispute TEXT
     )
     """)
@@ -79,12 +84,19 @@ setup()
 
 
 
+
+
 @app.route("/")
 def home():
     con = connect()
+
     ads = con.execute(
-        "SELECT * FROM ads WHERE status='OPEN'"
+        """
+        SELECT * FROM ads
+        WHERE status != 'CLOSED'
+        """
     ).fetchall()
+
     con.close()
 
     return render_template(
@@ -92,6 +104,10 @@ def home():
         ads=ads,
         user=session.get("user")
     )
+
+
+
+
 
 
 
@@ -137,6 +153,9 @@ def register():
 
 
 
+
+
+
 @app.route("/login", methods=["GET","POST"])
 def login():
     if request.method == "POST":
@@ -165,6 +184,8 @@ def login():
         return "بيانات الدخول خطأ"
 
     return render_template("login.html")
+
+
 
 
 
@@ -198,7 +219,7 @@ def create_ad():
             float(amount),
             float(price),
             payment,
-            "WAITING_ESCROW"
+            "OPEN"
         )
         )
 
@@ -208,6 +229,9 @@ def create_ad():
         return redirect("/")
 
     return render_template("create_ad.html")
+
+
+
 
 
 
@@ -250,9 +274,10 @@ def buy(id):
         escrow_status,
         seller_wallet,
         buyer_wallet,
+        platform_wallet,
         dispute
     )
-    VALUES(?,?,?,?,?,?,?,?,?,?)
+    VALUES(?,?,?,?,?,?,?,?,?,?,?)
     """,
     (
         session["user"],
@@ -264,6 +289,7 @@ def buy(id):
         "WAITING_DEPOSIT",
         seller["wallet"] if seller else "",
         buyer["wallet"] if buyer else "",
+        PLATFORM_WALLET,
         "NONE"
     )
     )
@@ -271,8 +297,12 @@ def buy(id):
     trade_id = cur.lastrowid
 
     con.execute(
-        "UPDATE ads SET status='CLOSED' WHERE id=?",
-        (id,)
+    """
+    UPDATE ads
+    SET status='CLOSED'
+    WHERE id=?
+    """,
+    (id,)
     )
 
     con.commit()
@@ -282,13 +312,18 @@ def buy(id):
 
 
 
+
+
+
 @app.route("/trade/<int:id>")
 def trade(id):
     con = connect()
 
     trade_item = con.execute(
-        "SELECT * FROM trades WHERE id=?",
-        (id,)
+    """
+    SELECT * FROM trades WHERE id=?
+    """,
+    (id,)
     ).fetchone()
 
     con.close()
@@ -297,6 +332,10 @@ def trade(id):
         "trade.html",
         trade=trade_item
     )
+
+
+
+
 
 
 
@@ -328,6 +367,10 @@ def upload_payment(id):
 
 
 
+
+
+
+
 @app.route("/confirm/<int:id>")
 def confirm(id):
     con = connect()
@@ -346,10 +389,13 @@ def confirm(id):
 
 
 
+
+
+
+
 @app.route("/escrow_confirm/<int:id>")
 def escrow_confirm(id):
     con = connect()
-
     con.execute(
     """
     UPDATE trades
@@ -359,7 +405,6 @@ def escrow_confirm(id):
     """,
     (id,)
     )
-
     con.commit()
     con.close()
 
@@ -367,10 +412,13 @@ def escrow_confirm(id):
 
 
 
+
+
+
+
 @app.route("/cancel_trade/<int:id>")
 def cancel_trade(id):
     con = connect()
-
     con.execute(
     """
     UPDATE trades
@@ -380,7 +428,6 @@ def cancel_trade(id):
     """,
     (id,)
     )
-
     con.commit()
     con.close()
 
@@ -388,10 +435,13 @@ def cancel_trade(id):
 
 
 
+
+
+
+
 @app.route("/dispute/<int:id>")
 def dispute(id):
     con = connect()
-
     con.execute(
     """
     UPDATE trades
@@ -400,11 +450,41 @@ def dispute(id):
     """,
     (id,)
     )
-
     con.commit()
     con.close()
 
     return redirect("/trade/" + str(id))
+
+
+
+
+
+
+
+@app.route("/profile")
+def profile():
+    if "user" not in session:
+        return redirect("/login")
+
+    con = connect()
+
+    user = con.execute(
+    """
+    SELECT * FROM users
+    WHERE username=?
+    """,
+    (session["user"],)
+    ).fetchone()
+
+    con.close()
+
+    return render_template(
+        "profile.html",
+        user=user
+    )
+
+
+
 
 
 
@@ -425,6 +505,10 @@ def admin_login():
 
 
 
+
+
+
+
 @app.route("/admin")
 def admin():
     if not session.get("admin"):
@@ -433,7 +517,7 @@ def admin():
     con = connect()
 
     trades = con.execute(
-        "SELECT * FROM trades"
+    "SELECT * FROM trades"
     ).fetchall()
 
     con.close()
@@ -445,10 +529,35 @@ def admin():
 
 
 
+
+
+
 @app.route("/admin_logout")
 def admin_logout():
     session.pop("admin", None)
     return redirect("/admin_login")
+
+
+
+
+
+
+
+@app.route("/check_ads")
+def check_ads():
+    con = connect()
+
+    ads = con.execute(
+    "SELECT * FROM ads"
+    ).fetchall()
+
+    con.close()
+
+    return str([dict(x) for x in ads])
+
+
+
+
 
 
 
