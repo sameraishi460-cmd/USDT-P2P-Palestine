@@ -668,6 +668,43 @@ def cash_buy(id):
 
 
 # =========================
+# CASH MEETING PAGE
+# =========================
+
+
+@app.route("/cash_trade/<int:id>")
+@login_required
+def cash_trade_page(id):
+  con = connect()
+
+  trade = con.execute(
+      """
+      SELECT *
+      FROM cash_trades
+      WHERE id=?
+      """,
+      (id,),
+  ).fetchone()
+
+  if not trade:
+    con.close()
+    return "المقابلة غير موجودة"
+
+  ad = con.execute(
+      """
+      SELECT *
+      FROM cash_ads
+      WHERE id=?
+      """,
+      (trade["ad_id"],),
+  ).fetchone()
+
+  con.close()
+
+  return render_template("cash_trade.html", trade=trade, ad=ad)
+
+
+# =========================
 # ADMIN PANEL SYSTEM
 # =========================
 
