@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+
+<meta charset="UTF-8">
+<title>لوحة الإدارة</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:#f2f2f2;
+padding:20px;
+}
+
+.box{
+background:white;
+padding:15px;
+margin:15px 0;
+border-radius:10px;
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<h1>🛠 لوحة الإدارة</h1>
+
+
+<div class="box">
+
+<h2>
+المستخدمون
+</h2>
+
+{% for user in users %}
+
+<p>
+{{user.username}} - {{user.email}}
+</p>
+
+{% endfor %}
+
+</div>
+
+
+
+<div class="box">
+
+<h2>
+الإعلانات
+</h2>
+
+
+{% for ad in ads %}
+
+<p>
+{{ad.user}} |
+{{ad.amount}} USDT |
+{{ad.status}}
+</p>
+
+{% endfor %}
+
+
+</div>
+
+
+
+
+<div class="box">
+
+<h2>
+الصفقات
+</h2>
+
+
+{% for trade in trades %}
+
+<p>
+
+رقم:
+{{trade.id}}
+
+<br>
+
+المبلغ:
+{{trade.amount}} USDT
+
+<br>
+
+العمولة:
+{{trade.fee}} USDT
+
+<br>
+
+الحالة:
+{{trade.status}}
+
+</p>
+
+<hr>
+
+{% endfor %}
+
+
+</div>
+
+
+
+</body>
+
+</html>
