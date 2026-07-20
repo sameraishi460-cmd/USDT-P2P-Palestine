@@ -4,25 +4,25 @@
 <head>
 <meta charset="UTF-8">
 <title>USDT P2P Palestine</title>
+
 <link rel="stylesheet" href="/static/style.css">
+
 </head>
+
 
 <body>
 
 <div class="container">
 
-<div class="logo">
-🇵🇸 USDT P2P Palestine
-</div>
 
+<div class="header">
 
-<div class="card">
+<h1>🇵🇸 USDT P2P Palestine</h1>
+
 
 {% if user %}
 
-<p>
-👤 مرحبا {{user}}
-</p>
+<p>مرحبا {{user}}</p>
 
 <a href="/logout">
 <button>
@@ -30,15 +30,9 @@
 </button>
 </a>
 
+
 {% else %}
 
-<a href="/register">
-<button>
-إنشاء حساب
-</button>
-</a>
-
-<br><br>
 
 <a href="/login">
 <button>
@@ -46,7 +40,17 @@
 </button>
 </a>
 
+<br><br>
+
+<a href="/register">
+<button>
+إنشاء حساب
+</button>
+</a>
+
+
 {% endif %}
+
 
 </div>
 
@@ -55,9 +59,11 @@
 <div class="card">
 
 <a href="/create_ad">
+
 <button>
-+ إنشاء إعلان بيع USDT
+➕ إنشاء إعلان بيع USDT
 </button>
+
 </a>
 
 </div>
@@ -72,32 +78,41 @@
 
 {% for ad in ads %}
 
+
 <div class="card">
 
 <h3>
 🟢 إعلان بيع
 </h3>
 
-<p>
-البائع: {{ad.user}}
-</p>
 
 <p>
-الكمية: {{ad.amount}} USDT
+👤 البائع:
+{{ad.user}}
 </p>
+
+
+<p>
+💰 الكمية:
+{{ad.amount}} USDT
+</p>
+
 
 <p class="price">
-{{ad.price}} شيكل
+💵 السعر:
+{{ad.price}}
 </p>
 
+
 <p>
-الدفع: {{ad.payment}}
+💳 الدفع:
+{{ad.payment}}
 </p>
 
 
 <a href="/buy/{{ad.id}}">
 <button>
-شراء
+شراء الآن
 </button>
 </a>
 
@@ -107,11 +122,14 @@
 
 {% else %}
 
+
 <div class="card">
-لا يوجد إعلانات
+لا يوجد إعلانات حاليا
 </div>
 
+
 {% endfor %}
+
 
 
 </div>
