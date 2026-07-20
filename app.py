@@ -15,8 +15,8 @@ ADMIN_USER = "admin"
 ADMIN_PASS = "SA526614@mer"
 
 
-# عمولة إعلان المقابلة الشخصية
-CASH_AD_FEE = 2
+# عمولة افتراضية في حال لم يتم تعديلها من قاعدة البيانات
+DEFAULT_CASH_AD_FEE = 2
 
 
 UPLOAD_FOLDER = "uploads"
@@ -47,19 +47,12 @@ def setup():
 
     con.execute("""
     CREATE TABLE IF NOT EXISTS users(
-
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-
         username TEXT UNIQUE,
-
         password TEXT,
-
         phone TEXT,
-
         bank TEXT,
-
         wallet TEXT
-
     )
     """)
 
@@ -67,19 +60,12 @@ def setup():
 
     con.execute("""
     CREATE TABLE IF NOT EXISTS ads(
-
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-
         user TEXT,
-
         amount REAL,
-
         price REAL,
-
         payment TEXT,
-
         status TEXT
-
     )
     """)
 
@@ -87,31 +73,18 @@ def setup():
 
     con.execute("""
     CREATE TABLE IF NOT EXISTS trades(
-
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-
         buyer TEXT,
-
         seller TEXT,
-
         amount REAL,
-
         price REAL,
-
         status TEXT,
-
         proof TEXT,
-
         escrow_status TEXT,
-
         seller_wallet TEXT,
-
         buyer_wallet TEXT,
-
         platform_wallet TEXT,
-
         dispute TEXT
-
     )
     """)
 
@@ -119,13 +92,9 @@ def setup():
 
     con.execute("""
     CREATE TABLE IF NOT EXISTS settings(
-
         id INTEGER PRIMARY KEY,
-
         wallet TEXT,
-
         network TEXT
-
     )
     """)
 
@@ -133,71 +102,72 @@ def setup():
 
     con.execute("""
     CREATE TABLE IF NOT EXISTS messages(
-
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-
         trade_id INTEGER,
-
         sender TEXT,
-
         message TEXT,
-
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-
     )
     """)
 
 
-
-    # إعلانات المقابلات الشخصية
 
     con.execute("""
     CREATE TABLE IF NOT EXISTS cash_ads(
-
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-
         user TEXT,
-
         amount REAL,
-
         price REAL,
-
         city TEXT,
-
         location TEXT,
-
         notes TEXT,
-
         fee REAL,
-
         status TEXT
-
     )
     """)
 
 
-
-    # صفقات المقابلات
 
     con.execute("""
     CREATE TABLE IF NOT EXISTS cash_trades(
-
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-
         ad_id INTEGER,
-
         buyer TEXT,
-
         seller TEXT,
-
         amount REAL,
-
         price REAL,
-
         status TEXT
-
     )
     """)
+
+
+
+    # جدول التحكم بالعمولة الديناميكية
+    con.execute("""
+    CREATE TABLE IF NOT EXISTS commission(
+        id INTEGER PRIMARY KEY,
+        cash_fee REAL
+    )
+    """)
+
+
+
+    check = con.execute(
+        "SELECT * FROM commission WHERE id=1"
+    ).fetchone()
+
+
+
+    if not check:
+
+        con.execute(
+        """
+        INSERT INTO commission
+        (id, cash_fee)
+        VALUES(1, ?)
+        """,
+        (DEFAULT_CASH_AD_FEE,)
+        )
 
 
 
@@ -234,27 +204,20 @@ def home():
 
     con = connect()
 
-
     ads = con.execute(
         """
         SELECT * FROM ads
-
         WHERE status='OPEN'
         """
     ).fetchall()
-
 
     con.close()
 
 
     return render_template(
-
         "index.html",
-
         ads=ads,
-
         user=session.get("user")
-
     )
 
 
@@ -271,7 +234,7 @@ def register():
         bank = request.form["bank"]
         wallet = request.form["wallet"]
 
-        # تشفير كلمة المرور أمنياً قبل حفظها
+        # تشفير كلمة المرور أمنياً
         password = generate_password_hash(raw_password)
 
         con = connect()
@@ -321,7 +284,6 @@ def login():
 
         con.close()
 
-        # التحقق من كلمة المرور المشفرة
         if user and check_password_hash(user["password"], raw_password):
             session["user"] = username
             return redirect("/")
@@ -597,19 +559,36 @@ def create_cash_ad():
     if "user" not in session:
         return redirect("/login")
 
+
+    con = connect()
+
+
+    commission = con.execute(
+        "SELECT cash_fee FROM commission WHERE id=1"
+    ).fetchone()
+
+
+    fee = commission["cash_fee"] if commission else DEFAULT_CASH_AD_FEE
+
+
+
     if request.method == "POST":
 
         try:
             amount = float(request.form["amount"])
             price = float(request.form["price"])
+
         except ValueError:
+            con.close()
             return "الرجاء إدخال أرقام صحيحة"
+
+
 
         city = request.form["city"]
         location = request.form["location"]
         notes = request.form["notes"]
 
-        con = connect()
+
 
         con.execute(
         """
@@ -617,17 +596,33 @@ def create_cash_ad():
         (user, amount, price, city, location, notes, fee, status)
         VALUES(?,?,?,?,?,?,?,?)
         """,
-        (session["user"], amount, price, city, location, notes, CASH_AD_FEE, "OPEN")
+        (
+            session["user"],
+            amount,
+            price,
+            city,
+            location,
+            notes,
+            fee,
+            "OPEN"
         )
+        )
+
 
         con.commit()
         con.close()
 
+
         return redirect("/cash_market")
+
+
+
+    con.close()
+
 
     return render_template(
         "create_cash_ad.html",
-        fee=CASH_AD_FEE
+        fee=fee
     )
 
 
@@ -672,7 +667,6 @@ def cash_buy(id):
 
 
 
-# تأكيد إتمام صفقة المقابلة الشخصية
 @app.route("/complete_cash_trade/<int:id>")
 def complete_cash_trade(id):
 
@@ -755,7 +749,6 @@ def profile():
 
 
 
-# مسار تعديل بيانات الحساب والمحفظة الشخصية
 @app.route("/edit_profile", methods=["GET","POST"])
 def edit_profile():
 
@@ -842,14 +835,43 @@ def admin():
         "SELECT * FROM cash_trades"
     ).fetchall()
 
+    commission = con.execute(
+        "SELECT cash_fee FROM commission WHERE id=1"
+    ).fetchone()
+
     con.close()
+
+    current_fee = commission["cash_fee"] if commission else DEFAULT_CASH_AD_FEE
 
     return render_template(
         "admin.html",
         trades=trades,
         cash_ads=cash_ads,
-        cash_trades=cash_trades
+        cash_trades=cash_trades,
+        current_fee=current_fee
     )
+
+
+
+
+@app.route("/update_commission", methods=["POST"])
+@admin_required
+def update_commission():
+
+    try:
+        new_fee = float(request.form["new_fee"])
+    except ValueError:
+        return "الرجاء إدخال رقم صحيح للعمولة"
+
+    con = connect()
+    con.execute(
+        "UPDATE commission SET cash_fee=? WHERE id=1",
+        (new_fee,)
+    )
+    con.commit()
+    con.close()
+
+    return redirect("/admin")
 
 
 
