@@ -2,80 +2,179 @@
 <html lang="ar" dir="rtl">
 
 <head>
+
 <meta charset="UTF-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>USDT Exchange</title>
 
+
 <style>
 
+*{
+box-sizing:border-box;
+font-family:Arial;
+}
+
+
 body{
-    font-family:Arial;
-    background:#f5f5f5;
-    margin:0;
-    padding:20px;
+
+margin:0;
+background:#0b0f14;
+color:white;
+
 }
 
-
-.container{
-    max-width:800px;
-    margin:auto;
-}
 
 
 .header{
-    background:white;
-    padding:20px;
-    border-radius:12px;
-    text-align:center;
+
+background:#111820;
+padding:20px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+
 }
 
 
-button{
-    padding:10px 18px;
-    border:0;
-    border-radius:8px;
-    background:#008000;
-    color:white;
-    cursor:pointer;
+.logo{
+
+font-size:24px;
+font-weight:bold;
+color:#00d084;
+
 }
 
 
-.ads{
-    background:white;
-    margin-top:20px;
-    padding:20px;
-    border-radius:12px;
+
+.menu a{
+
+color:white;
+text-decoration:none;
+margin:5px;
+
 }
 
 
-.ad{
-    border:1px solid #ddd;
-    padding:15px;
-    border-radius:8px;
-    margin-bottom:10px;
+
+.container{
+
+max-width:900px;
+margin:auto;
+padding:20px;
+
 }
 
 
-.admin-btn{
+
+.hero{
+
+background:linear-gradient(135deg,#111820,#16242f);
+padding:30px;
+border-radius:20px;
+text-align:center;
+margin-bottom:20px;
+
+}
+
+
+
+.hero h1{
+
+color:#00d084;
+
+}
+
+
+
+.btn{
+
+display:inline-block;
+background:#00d084;
+color:#000;
+padding:12px 20px;
+border-radius:10px;
+text-decoration:none;
+font-weight:bold;
+margin:5px;
+
+}
+
+
+
+.btn.red{
+
+background:#ff4747;
+color:white;
+
+}
+
+
+
+.card{
+
+background:#111820;
+padding:20px;
+border-radius:15px;
+margin-bottom:15px;
+border:1px solid #1f2b36;
+
+}
+
+
+
+.card span{
+
+color:#00d084;
+font-weight:bold;
+
+}
+
+
+
+.buy{
+
+background:#00d084;
+color:#000;
+padding:10px;
+border-radius:8px;
+display:block;
+text-align:center;
+text-decoration:none;
+margin-top:15px;
+
+}
+
+
+
+.admin{
 
 position:fixed;
-left:15px;
 bottom:15px;
+left:15px;
 
 background:#333;
 color:white;
 
-padding:7px 12px;
+padding:8px 14px;
+
+border-radius:20px;
 
 font-size:12px;
 
-border-radius:20px;
+text-decoration:none;
 
 }
 
 
-a{
-text-decoration:none;
+.footer{
+
+text-align:center;
+color:#777;
+margin-top:30px;
+
 }
 
 
@@ -87,58 +186,41 @@ text-decoration:none;
 <body>
 
 
-<div class="container">
-
 
 <div class="header">
 
-<h2>
-منصة USDT
-</h2>
+
+<div class="logo">
+
+USDT Exchange
+
+</div>
+
+
+<div class="menu">
 
 
 {% if user %}
 
-<p>
-أهلاً {{user}}
-</p>
-
-
 <a href="/profile">
-<button>
-ملفي
-</button>
-</a>
-
-
-<a href="/create_ad">
-<button>
-بيع USDT
-</button>
+حسابي
 </a>
 
 
 <a href="/logout">
-<button style="background:red">
 خروج
-</button>
 </a>
 
 
 {% else %}
 
-
 <a href="/login">
-<button>
 دخول
-</button>
 </a>
 
 
 <a href="/register">
-<button>
-إنشاء حساب
-</button>
+حساب جديد
 </a>
 
 
@@ -148,56 +230,110 @@ text-decoration:none;
 </div>
 
 
+</div>
 
 
-<div class="ads">
 
 
-<h3>
+
+<div class="container">
+
+
+
+<div class="hero">
+
+
+<h1>
+تبادل USDT بسهولة وأمان
+</h1>
+
+
+<p>
+منصة بيع وشراء USDT مع نظام ضمان Escrow
+</p>
+
+
+
+{% if user %}
+
+
+<a class="btn" href="/create_ad">
+بيع USDT
+</a>
+
+
+{% else %}
+
+
+<a class="btn" href="/register">
+ابدأ الآن
+</a>
+
+
+{% endif %}
+
+
+
+</div>
+
+
+
+
+
+<h2>
 الإعلانات المتاحة
-</h3>
+</h2>
+
 
 
 
 {% if ads %}
 
 
+
 {% for ad in ads %}
 
 
-<div class="ad">
+<div class="card">
 
 
 <p>
-البائع: {{ad.user}}
+👤 البائع:
+<span>
+{{ad.user}}
+</span>
 </p>
 
 
 <p>
-الكمية:
+💰 الكمية:
+<span>
 {{ad.amount}} USDT
+</span>
 </p>
 
 
 <p>
-السعر:
+💵 السعر:
+<span>
 {{ad.price}}
+</span>
 </p>
 
 
 <p>
-الدفع:
+💳 الدفع:
+<span>
 {{ad.payment}}
+</span>
 </p>
 
 
-<a href="/buy/{{ad.id}}">
 
-<button>
-شراء
-</button>
-
+<a class="buy" href="/buy/{{ad.id}}">
+شراء USDT
 </a>
+
 
 
 </div>
@@ -206,12 +342,15 @@ text-decoration:none;
 {% endfor %}
 
 
+
 {% else %}
 
 
-<p>
+<div class="card">
+
 لا توجد إعلانات حالياً
-</p>
+
+</div>
 
 
 {% endif %}
@@ -222,16 +361,24 @@ text-decoration:none;
 
 
 
-</div>
 
 
-
-
-<a class="admin-btn" href="/admin_login">
+<a class="admin" href="/admin_login">
 
 Admin
 
 </a>
+
+
+
+
+
+<div class="footer">
+
+USDT Exchange © 2026
+
+</div>
+
 
 
 </body>
