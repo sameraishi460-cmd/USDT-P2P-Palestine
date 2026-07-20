@@ -30,136 +30,54 @@ border:0;
 padding:12px;
 width:100%;
 border-radius:8px;
-margin-top:10px;
-}
-
-input{
-width:100%;
-padding:10px;
-margin-top:10px;
 }
 
 </style>
 
 </head>
 
-
 <body>
-
 
 <div class="box">
 
-
 <h2>🇵🇸 USDT P2P</h2>
 
+<p>رقم الصفقة: {{trade.id}}</p>
 
-<p>
-رقم الصفقة:
-{{trade.id}}
-</p>
+<p>المشتري: {{trade.buyer}}</p>
 
+<p>البائع: {{trade.seller}}</p>
 
-<p>
-المشتري:
-{{trade.buyer}}
-</p>
+<p>الكمية: {{trade.amount}} USDT</p>
 
-
-<p>
-البائع:
-{{trade.seller}}
-</p>
-
-
-<p>
-الكمية:
-{{trade.amount}} USDT
-</p>
-
-
-<p>
-السعر:
-{{trade.price}} شيكل
-</p>
-
-
-<p>
-العمولة:
-{{trade.fee}} USDT
-</p>
-
+<p>السعر: {{trade.price}} شيكل</p>
 
 <h3>
-الحالة:
-{{trade.status}}
+الحالة: {{trade.status}}
 </h3>
 
 
-
-{% if trade.status == "WAITING_PAYMENT" %}
-
-
-<form 
-action="/upload_payment/{{trade.id}}"
-method="POST"
-enctype="multipart/form-data">
-
-
-<label>
-ارفع إثبات الدفع
-</label>
-
-
-<input 
-type="file"
-name="proof"
-required>
-
-
-<button>
-تم الدفع
-</button>
-
-
-</form>
-
-
-{% endif %}
-
-
-
-
-{% if trade.status == "PAYMENT_SENT" %}
-
+{% if trade.status != "COMPLETED" %}
 
 <a href="/confirm/{{trade.id}}">
-
 <button>
-تأكيد استلام USDT
+تأكيد إتمام الصفقة
 </button>
-
 </a>
 
-
 {% endif %}
-
-
 
 
 {% if trade.status == "COMPLETED" %}
-
 
 <h2>
 ✅ الصفقة مكتملة
 </h2>
 
-
 {% endif %}
 
 
-
 </div>
-
 
 </body>
 </html>
