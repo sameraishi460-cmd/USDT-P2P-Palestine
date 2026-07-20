@@ -5,11 +5,76 @@
 
 <meta charset="UTF-8">
 
-<title>
-دخول الإدارة
-</title>
+<title>دخول الأدمن</title>
 
-<link rel="stylesheet" href="/static/style.css">
+
+<style>
+
+body{
+    font-family:Arial;
+    background:#111827;
+}
+
+
+.box{
+
+    background:white;
+    width:90%;
+    max-width:450px;
+    margin:50px auto;
+    padding:30px;
+    border-radius:20px;
+    box-shadow:0 0 15px #000;
+
+}
+
+
+h2{
+
+    text-align:center;
+    color:#111827;
+
+}
+
+
+
+input{
+
+    width:100%;
+    padding:12px;
+    margin:10px 0;
+    border-radius:10px;
+    border:1px solid #ccc;
+
+}
+
+
+
+button{
+
+    width:100%;
+    padding:13px;
+    background:#2563eb;
+    color:white;
+    border:0;
+    border-radius:10px;
+    font-size:17px;
+
+}
+
+
+
+a{
+
+    display:block;
+    text-align:center;
+    margin-top:15px;
+
+}
+
+
+</style>
+
 
 </head>
 
@@ -17,50 +82,62 @@
 <body>
 
 
-<div class="container">
+<div class="box">
 
-
-<div class="header">
 
 <h2>
-⚙️ دخول الأدمن
+🔐 لوحة تحكم الأدمن
 </h2>
 
-</div>
-
-
-
-<div class="card">
 
 
 <form method="POST">
 
 
-<input 
-type="text"
+<input
+
 name="username"
+
 placeholder="اسم المستخدم"
-required>
+
+required
+
+>
 
 
 
 <input
+
 type="password"
+
 name="password"
-placeholder="كلمة السر"
-required>
+
+placeholder="كلمة المرور"
+
+required
+
+>
 
 
 
 <button>
-دخول لوحة الإدارة
+
+دخول
+
 </button>
+
 
 
 </form>
 
 
-</div>
+
+<a href="/">
+
+العودة للرئيسية
+
+</a>
+
 
 
 </div>
