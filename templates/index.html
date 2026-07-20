@@ -1,84 +1,40 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-
 <head>
 <meta charset="UTF-8">
-<title>🇵🇸 USDT P2P Palestine</title>
-
-<style>
-body{
-font-family:Arial;
-background:#f5f5f5;
-padding:20px;
-}
-
-.card{
-background:white;
-padding:15px;
-border-radius:12px;
-margin-bottom:15px;
-}
-
-button{
-background:#0084ff;
-color:white;
-border:0;
-padding:10px;
-border-radius:8px;
-}
-
-</style>
-
+<title>USDT P2P Palestine</title>
 </head>
 
 <body>
 
-<h2>🇵🇸 USDT P2P Palestine</h2>
+<h1>🇵🇸 USDT P2P Palestine</h1>
 
-<a href="/add">
-<button>
-إنشاء إعلان تجريبي
-</button>
+<a href="/create_ad">
+<button>إنشاء إعلان</button>
 </a>
 
-
-<h3>
-الإعلانات
-</h3>
-
+<h2>الإعلانات</h2>
 
 {% for ad in ads %}
 
-<div class="card">
+<div>
+<hr>
+<p>البائع: {{ ad.user }}</p>
+<p>الكمية: {{ ad.amount }} USDT</p>
+<p>السعر: {{ ad.price }}</p>
+<p>الدفع: {{ ad.payment }}</p>
 
-<p>
-البائع: {{ad.user}}
-</p>
-
-<p>
-الكمية: {{ad.amount}} USDT
-</p>
-
-<p>
-السعر: {{ad.price}} شيكل
-</p>
-
-<p>
-الدفع: {{ad.payment}}
-</p>
-
-
-<a href="/buy/{{ad.id}}">
-<button>
-شراء
-</button>
+<a href="/buy/{{ ad.id }}">
+<button>شراء</button>
 </a>
-
 
 </div>
 
-{% endfor %}
+{% else %}
 
+<p>لا يوجد إعلانات حاليا</p>
+
+{% endfor %}
 
 </body>
 </html>
