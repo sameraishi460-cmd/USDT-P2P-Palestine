@@ -215,7 +215,7 @@ def admin_required(f):
     con.close()
 
     if not user or user["status"] != "ADMIN":
-      return "غير مصرح"
+      return "غير مصرح", 403
 
     return f(*args, **kwargs)
 
@@ -230,8 +230,13 @@ def admin_required(f):
 @app.route("/register", methods=["GET", "POST"])
 def register():
   if request.method == "POST":
-    username = request.form["username"]
-    password = generate_password_hash(request.form["password"])
+    username = request.form.get("username", "").strip()
+    raw_password = request.form.get("password", "")
+
+    if not username or not raw_password:
+      return "الرجاء إدخال اسم المستخدم وكلمة المرور"
+
+    password = generate_password_hash(raw_password)
     con = connect()
     try:
       con.execute(
@@ -242,17 +247,22 @@ def register():
       con.close()
       session["user"] = username
       return redirect("/dashboard")
-    except:
+    except sqlite3.IntegrityError:
       con.close()
-      return "اسم المستخدم موجود"
+      return "اسم المستخدم موجود مسبقاً"
+    except Exception as e:
+      con.close()
+      return f"حدث خطأ ما: {e}"
+
   return render_template("register.html")
 
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
   if request.method == "POST":
-    username = request.form["username"]
-    password = request.form["password"]
+    username = request.form.get("username", "")
+    password = request.form.get("password", "")
+
     con = connect()
     user = con.execute(
         "SELECT * FROM users WHERE username=?", (username,)
@@ -260,6 +270,8 @@ def login():
     con.close()
 
     if user and check_password_hash(user["password"], password):
+      if user["status"] == "BANNED":
+        return "هذا الحساب محظور"
       session["user"] = username
       return redirect("/dashboard")
     return "بيانات الدخول خاطئة"
@@ -324,9 +336,13 @@ def home():
 @login_required
 def create_ad():
   if request.method == "POST":
-    title = request.form["title"]
-    amount = float(request.form["amount"])
-    price = float(request.form["price"])
+    title = request.form.get("title", "")
+    try:
+      amount = float(request.form.get("amount", 0))
+      price = float(request.form.get("price", 0))
+    except ValueError:
+      return "الرجاء إدخال أرقام صحيحة للمبلغ والسعر"
+
     payment = request.form.get("payment", "")
 
     con = connect()
@@ -374,6 +390,10 @@ def buy(id):
     con.close()
     return "الإعلان غير موجود"
 
+  if ad["user"] == session["user"]:
+    con.close()
+    return "لا يمكنك الشراء من إعلانك الخاص"
+
   fee = get_trade_fee(ad["price"])
   cur = con.execute(
       "INSERT INTO trades (ad_id,buyer,seller,amount,price,fee,status) VALUES(?,?,?,?,?,?,?)",
@@ -395,10 +415,11 @@ def trade(id):
   con = connect()
   if request.method == "POST":
     message = request.form.get("message")
-    if message:
+    receiver = request.form.get("receiver")
+    if message and receiver:
       con.execute(
           "INSERT INTO messages (sender,receiver,text) VALUES(?,?,?)",
-          (session["user"], request.form["receiver"], message),
+          (session["user"], receiver, message),
       )
       con.commit()
 
@@ -520,8 +541,11 @@ def chat(username):
 @app.route("/send_message", methods=["POST"])
 @login_required
 def send_message():
-  receiver = request.form["receiver"]
-  text = request.form["text"]
+  receiver = request.form.get("receiver")
+  text = request.form.get("text")
+  if not receiver or not text:
+    return redirect(request.referrer or "/")
+
   con = connect()
   con.execute(
       "INSERT INTO messages (sender,receiver,text) VALUES(?,?,?)",
@@ -540,7 +564,11 @@ def send_message():
 @app.route("/review/<int:trade_id>", methods=["POST"])
 @login_required
 def review(trade_id):
-  rating = int(request.form.get("rating", 5))
+  try:
+    rating = int(request.form.get("rating", 5))
+  except ValueError:
+    rating = 5
+
   comment = request.form.get("comment", "")
   con = connect()
 
@@ -592,11 +620,15 @@ def cash_ads():
 @login_required
 def create_cash_ad():
   if request.method == "POST":
-    amount = float(request.form["amount"])
-    price = float(request.form["price"])
-    city = request.form["city"]
-    location = request.form["location"]
-    notes = request.form["notes"]
+    try:
+      amount = float(request.form.get("amount", 0))
+      price = float(request.form.get("price", 0))
+    except ValueError:
+      return "الرجاء إدخال بيانات صحيحة"
+
+    city = request.form.get("city", "")
+    location = request.form.get("location", "")
+    notes = request.form.get("notes", "")
 
     con = connect()
     fee = con.execute("SELECT cash_fee FROM commission WHERE id=1").fetchone()[
@@ -621,6 +653,10 @@ def cash_buy(id):
     con.close()
     return "الإعلان غير موجود"
 
+  if ad["user"] == session["user"]:
+    con.close()
+    return "لا يمكنك الشراء من إعلانك الخاص"
+
   con.execute(
       "INSERT INTO cash_trades (ad_id,buyer,seller,amount,price) VALUES(?,?,?,?,?)",
       (id, session["user"], ad["user"], ad["amount"], ad["price"]),
@@ -639,8 +675,8 @@ def cash_buy(id):
 @app.route("/admin_login", methods=["GET", "POST"])
 def admin_login():
   if request.method == "POST":
-    username = request.form["username"]
-    password = request.form["password"]
+    username = request.form.get("username", "")
+    password = request.form.get("password", "")
     con = connect()
     user = con.execute(
         "SELECT * FROM users WHERE username=?", (username,)
@@ -679,8 +715,12 @@ def admin():
 @app.route("/admin_commission", methods=["POST"])
 @admin_required
 def admin_commission():
-  trade_fee = float(request.form["trade_fee"])
-  cash_fee = float(request.form["cash_fee"])
+  try:
+    trade_fee = float(request.form.get("trade_fee", 1))
+    cash_fee = float(request.form.get("cash_fee", 2))
+  except ValueError:
+    return "قيم غير صالحة"
+
   con = connect()
   con.execute(
       "UPDATE commission SET trade_fee=?, cash_fee=? WHERE id=1",
@@ -743,7 +783,8 @@ def stats():
   completed = con.execute(
       "SELECT COUNT(*) FROM trades WHERE status='COMPLETED'"
   ).fetchone()[0]
-  profit = con.execute("SELECT total FROM platform_profit WHERE id=1").fetchone()[0]
+  profit_row = con.execute("SELECT total FROM platform_profit WHERE id=1").fetchone()
+  profit = profit_row[0] if profit_row else 0
   con.close()
   return jsonify(
       {"users": users, "trades": trades, "completed": completed, "profit": profit}
@@ -754,7 +795,7 @@ def stats():
 @admin_required
 def admin_backup():
   shutil.copy("database.db", "database_backup.db")
-  return "تم أخذ نسخة احتياطية"
+  return "تم أخذ نسخة احتياطية بنجاح"
 
 
 # =========================
