@@ -1,83 +1,54 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
+
 <head>
-
 <meta charset="UTF-8">
-
-<title>صفقة USDT</title>
-
-<style>
-
-body{
-font-family:Arial;
-direction:rtl;
-background:#f5f5f5;
-padding:20px;
-}
-
-.box{
-background:white;
-padding:20px;
-border-radius:12px;
-max-width:500px;
-margin:auto;
-}
-
-button{
-background:#0084ff;
-color:white;
-border:0;
-padding:12px;
-width:100%;
-border-radius:8px;
-}
-
-</style>
-
+<title>الصفقة</title>
 </head>
 
 <body>
 
-<div class="box">
+<h1>تفاصيل الصفقة</h1>
 
-<h2>🇵🇸 USDT P2P</h2>
+<p>
+البائع:
+{{ trade.seller }}
+</p>
 
-<p>رقم الصفقة: {{trade.id}}</p>
 
-<p>المشتري: {{trade.buyer}}</p>
+<p>
+الكمية:
+{{ trade.amount }} USDT
+</p>
 
-<p>البائع: {{trade.seller}}</p>
 
-<p>الكمية: {{trade.amount}} USDT</p>
+<p>
+الحالة:
+{{ trade.status }}
+</p>
 
-<p>السعر: {{trade.price}} شيكل</p>
+
+<form action="/upload_payment/{{trade.id}}" method="POST" enctype="multipart/form-data">
 
 <h3>
-الحالة: {{trade.status}}
+رفع إثبات الدفع
 </h3>
 
+<input type="file" name="proof">
 
-{% if trade.status != "COMPLETED" %}
+<br><br>
+
+<button>
+إرسال
+</button>
+
+</form>
+
 
 <a href="/confirm/{{trade.id}}">
-<button>
-تأكيد إتمام الصفقة
-</button>
+تأكيد الاستلام
 </a>
 
-{% endif %}
-
-
-{% if trade.status == "COMPLETED" %}
-
-<h2>
-✅ الصفقة مكتملة
-</h2>
-
-{% endif %}
-
-
-</div>
 
 </body>
 </html>
