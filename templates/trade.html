@@ -30,39 +30,65 @@ button{
     padding:12px;
     width:100%;
     border-radius:8px;
+    margin-top:10px;
 }
 
 input{
     width:100%;
     padding:10px;
-    margin:10px 0;
+    margin-top:10px;
+}
+
+img{
+    max-width:100%;
+    border-radius:10px;
 }
 
 </style>
 
 </head>
 
-
 <body>
-
 
 <div class="box">
 
+<h2>🇵🇸 USDT P2P Palestine</h2>
 
-<h2>🇵🇸 USDT P2P</h2>
+
+<p>
+رقم الصفقة:
+{{trade.id}}
+</p>
 
 
-<p>رقم الصفقة: {{trade.id}}</p>
+<p>
+المشتري:
+{{trade.buyer}}
+</p>
 
-<p>المشتري: {{trade.buyer}}</p>
 
-<p>البائع: {{trade.seller}}</p>
+<p>
+البائع:
+{{trade.seller}}
+</p>
 
-<p>الكمية: {{trade.amount}} USDT</p>
 
-<p>السعر: {{trade.price}} شيكل</p>
+<p>
+الكمية:
+{{trade.amount}} USDT
+</p>
 
-<p>عمولة المنصة: {{trade.fee}} USDT</p>
+
+<p>
+السعر:
+{{trade.price}} شيكل
+</p>
+
+
+<p>
+عمولة المنصة:
+{{trade.fee}} USDT
+</p>
 
 
 <h3>
@@ -74,15 +100,13 @@ input{
 
 {% if trade.status == "WAITING_PAYMENT" %}
 
-
 <form 
-action="/upload_payment/{{trade.id}}" 
+action="/upload_payment/{{trade.id}}"
 method="POST"
 enctype="multipart/form-data">
 
-
 <label>
-ارفع إثبات الدفع
+رفع إثبات الدفع
 </label>
 
 
@@ -93,27 +117,50 @@ required>
 
 
 <button>
-تم الدفع ورفع الإثبات
+تم الدفع
 </button>
 
-
 </form>
+
+{% endif %}
+
+
+
+
+{% if trade.proof %}
+
+<h3>
+إثبات الدفع:
+</h3>
+
+
+<img src="/uploads/{{trade.proof}}">
 
 
 {% endif %}
 
 
 
-{% if trade.proof %}
 
-<p>
-تم رفع الإثبات:
-</p>
+{% if trade.status == "PAYMENT_SENT" %}
 
-<img 
-src="/uploads/{{trade.proof}}" 
-width="100%">
+<a href="/confirm/{{trade.id}}">
 
+<button>
+تأكيد استلام USDT وإغلاق الصفقة
+</button>
+
+</a>
+
+{% endif %}
+
+
+
+{% if trade.status == "COMPLETED" %}
+
+<h2>
+✅ الصفقة مكتملة
+</h2>
 
 {% endif %}
 
