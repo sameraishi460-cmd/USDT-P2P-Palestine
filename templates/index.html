@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+<meta charset="UTF-8">
+<title>USDT P2P Palestine</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:#f2f2f2;
+padding:20px;
+}
+
+.card{
+background:white;
+padding:15px;
+margin:15px 0;
+border-radius:10px;
+}
+
+button{
+background:green;
+color:white;
+border:0;
+padding:10px;
+border-radius:5px;
+}
+
+a{
+text-decoration:none;
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<h1>🇵🇸 USDT P2P Palestine</h1>
+
+
+{% if session.user %}
+
+<h3>
+مرحبا {{session.user}}
+</h3>
+
+
+<a href="/create_ad">
+<button>
+إنشاء إعلان
+</button>
+</a>
+
+
+<a href="/logout">
+تسجيل خروج
+</a>
+
+
+{% else %}
+
+
+<a href="/login">
+<button>
+دخول
+</button>
+</a>
+
+
+<a href="/register">
+<button>
+تسجيل حساب
+</button>
+</a>
+
+
+{% endif %}
+
+
+<hr>
+
+
+<h2>
+الإعلانات
+</h2>
+
+
+
+{% for ad in ads %}
+
+
+<div class="card">
+
+
+<h3>
+{{ad.type}}
+</h3>
+
+
+<p>
+👤 {{ad.user}}
+</p>
+
+
+<p>
+💰 {{ad.amount}} USDT
+</p>
+
+
+<p>
+💵 {{ad.price}} شيكل
+</p>
+
+
+<p>
+💳 {{ad.payment}}
+</p>
+
+
+
+<a href="/buy/{{ad.id}}">
+<button>
+شراء
+</button>
+</a>
+
+
+</div>
+
+
+
+{% else %}
+
+<p>
+لا يوجد إعلانات
+</p>
+
+
+{% endfor %}
+
+
+
+</body>
+
+</html>
