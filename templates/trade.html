@@ -5,64 +5,93 @@
 
 <meta charset="UTF-8">
 
-<title>الصفقة</title>
+<title>صفقة USDT</title>
 
 <style>
 
 body{
-font-family:Arial;
-background:#f5f5f5;
-padding:20px;
+    font-family:Arial;
+    background:#f3f5f8;
+    margin:0;
 }
 
 
 .box{
 
-background:white;
-padding:20px;
-border-radius:10px;
-margin-bottom:20px;
+    width:90%;
+    max-width:600px;
+    background:white;
+    margin:30px auto;
+    padding:25px;
+    border-radius:15px;
+    box-shadow:0 5px 20px #ddd;
 
 }
+
+
+h2{
+
+    text-align:center;
+    color:#1c7ed6;
+
+}
+
+
+
+.info{
+
+    background:#f8f9fa;
+    padding:15px;
+    border-radius:10px;
+    margin-bottom:15px;
+
+}
+
 
 
 .wallet{
 
-background:#fff3cd;
-padding:15px;
-border-radius:8px;
-word-break:break-all;
+    background:#e7f5ff;
+    padding:15px;
+    border-radius:10px;
+    word-break:break-all;
 
 }
 
-
-.message{
-
-background:#eee;
-padding:10px;
-margin:5px;
-border-radius:8px;
-
-}
-
-
-input,button{
-
-padding:10px;
-width:100%;
-margin-top:10px;
-
-}
 
 
 button{
 
-background:#008000;
-color:white;
-border:none;
-border-radius:5px;
+    background:#1c7ed6;
+    color:white;
+    border:0;
+    padding:12px;
+    border-radius:10px;
+    cursor:pointer;
+    width:100%;
 
 }
+
+
+
+input{
+
+    width:100%;
+    padding:10px;
+    margin-top:10px;
+}
+
+
+
+.message{
+
+    background:#f1f3f5;
+    padding:10px;
+    border-radius:8px;
+    margin:5px;
+
+}
+
 
 
 </style>
@@ -70,128 +99,151 @@ border-radius:5px;
 </head>
 
 
+
 <body>
 
 
 <div class="box">
 
-<h2>صفقة USDT</h2>
+
+<h2>
+💵 صفقة USDT
+</h2>
 
 
-<p>
-البائع:
+
+<div class="info">
+
+<b>البائع:</b>
+
 {{trade.seller}}
-</p>
+
+<br><br>
 
 
-<p>
-المشتري:
+<b>المشتري:</b>
+
 {{trade.buyer}}
-</p>
+
+<br><br>
 
 
-<p>
-الكمية:
+<b>الكمية:</b>
+
 {{trade.amount}} USDT
-</p>
-
-
-<p>
-السعر:
-{{trade.price}}
-</p>
-
-
-<p>
-حالة الصفقة:
-{{trade.status}}
-</p>
-
-
-<p>
-حالة الضمان:
-{{trade.escrow_status}}
-</p>
-
-
-</div>
-
-
-
-
-
-<div class="box">
-
-
-<h3>
-إرسال USDT إلى محفظة المنصة (Escrow)
-</h3>
-
-
-<div class="wallet">
-
-
-<p>
-الشبكة:
-</p>
-
-<b>
-{{trade.platform_network}}
-</b>
 
 
 <br><br>
 
 
-<p>
-عنوان المحفظة:
-</p>
+<b>السعر:</b>
 
-
-<b>
-{{trade.platform_wallet}}
-</b>
+{{trade.price}}
 
 
 </div>
 
 
 
-<p>
-بعد إرسال USDT قم برفع إثبات التحويل.
+
+
+<h3>
+🔐 مرحلة الضمان Escrow
+</h3>
+
+
+
+<div class="info">
+
+حالة الضمان:
+
+<b>
+{{trade.escrow_status}}
+</b>
+
+</div>
+
+
+
+
+
+<div class="wallet">
+
+
+<h4>
+محفظة المنصة للإيداع
+</h4>
+
+
+<p id="wallet">
+
+{{trade.platform_wallet}}
+
 </p>
 
 
 
-<form action="/upload_payment/{{trade.id}}" method="POST" enctype="multipart/form-data">
+<button onclick="copyWallet()">
+
+نسخ المحفظة
+
+</button>
+
+
+<br>
+
+
+<p>
+
+الشبكة:
+<br>
+
+<b>
+BSC BEP20
+</b>
+
+</p>
+
+
+</div>
+
+
+
+
+
+<h3>
+إثبات التحويل
+</h3>
+
+
+<form action="/upload_payment/{{trade.id}}" method="post" enctype="multipart/form-data">
 
 
 <input type="file" name="proof">
 
 
 <button>
+
 رفع إثبات التحويل
+
 </button>
 
 
 </form>
 
 
-</div>
 
-
-
-
-
-<div class="box">
 
 
 <h3>
-المحادثة
+💬 المحادثة
+
 </h3>
 
 
+
 {% for m in messages %}
+
 
 <div class="message">
 
@@ -203,6 +255,7 @@ border-radius:5px;
 
 {{m.message}}
 
+
 </div>
 
 
@@ -210,27 +263,63 @@ border-radius:5px;
 
 
 
-<form method="POST">
 
 
-<input 
-type="text"
-name="message"
-placeholder="اكتب رسالة"
->
+<form method="post">
+
+
+<input name="message" placeholder="اكتب رسالة">
 
 
 <button>
+
 إرسال
+
 </button>
 
 
 </form>
 
 
+
+
+
+<br>
+
+
+<a href="/cancel_trade/{{trade.id}}">
+
+<button style="background:#e03131">
+
+إلغاء الصفقة
+
+</button>
+
+</a>
+
+
+
 </div>
 
 
+
+
+
+<script>
+
+
+function copyWallet(){
+
+let text=document.getElementById("wallet").innerText;
+
+navigator.clipboard.writeText(text);
+
+alert("تم نسخ عنوان المحفظة");
+
+}
+
+
+</script>
 
 
 
