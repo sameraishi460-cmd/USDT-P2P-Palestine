@@ -2,14 +2,53 @@
 <html lang="ar" dir="rtl">
 
 <head>
-
 <meta charset="UTF-8">
+<title>تفاصيل الصفقة</title>
 
-<title>
-تفاصيل الصفقة
-</title>
+<style>
 
-<link rel="stylesheet" href="/static/style.css">
+body{
+    font-family: Arial;
+    background:#f5f5f5;
+}
+
+.box{
+    background:white;
+    width:90%;
+    max-width:500px;
+    margin:40px auto;
+    padding:25px;
+    border-radius:15px;
+    box-shadow:0 0 10px #ccc;
+}
+
+h2{
+    text-align:center;
+}
+
+.info{
+    background:#eee;
+    padding:10px;
+    border-radius:10px;
+    margin:10px 0;
+}
+
+button{
+    width:100%;
+    padding:12px;
+    border:0;
+    border-radius:10px;
+    margin-top:10px;
+    background:#16a34a;
+    color:white;
+    font-size:16px;
+}
+
+.red{
+    background:#dc2626;
+}
+
+</style>
 
 </head>
 
@@ -17,99 +56,108 @@
 <body>
 
 
-<div class="container">
+<div class="box">
 
 
-<div class="header">
-
-<h2>
-🤝 تفاصيل الصفقة
-</h2>
-
-</div>
+<h2>🔐 صفقة USDT</h2>
 
 
+<div class="info">
 
-<div class="card">
+<b>البائع:</b>
 
-
-<p>
-👤 المشتري:
-{{trade.buyer}}
-</p>
-
-
-<p>
-👤 البائع:
 {{trade.seller}}
-</p>
 
+<br>
 
-<p>
-💰 الكمية:
+<b>المشتري:</b>
+
+{{trade.buyer}}
+
+<br>
+
+<b>الكمية:</b>
+
 {{trade.amount}} USDT
-</p>
 
+<br>
 
-<p class="price">
-💵 السعر:
+<b>السعر:</b>
+
 {{trade.price}}
-</p>
 
+</div>
+
+
+
+
+<div class="info">
+
+<h3>مرحلة الضمان Escrow</h3>
+
+
+حالة الضمان:
+
+<b>
+{{trade.escrow_status}}
+</b>
+
+
+<br><br>
+
+
+محفظة المنصة للإيداع:
+
+<br>
+
+<small>
+{{trade.platform_wallet}}
+</small>
+
+
+</div>
+
+
+
+
+
+{% if trade.escrow_status == "WAITING_DEPOSIT" %}
 
 <p>
-📌 الحالة:
-{{trade.status}}
+يرجى من البائع إرسال USDT إلى محفظة المنصة ثم انتظار التأكيد.
 </p>
 
 
-
-</div>
-
-
-
-<div class="card">
-
-
-<h3>
-📤 رفع إثبات الدفع
-</h3>
-
-
-<form action="/upload_payment/{{trade.id}}" method="POST" enctype="multipart/form-data">
-
-
-<input 
-type="file"
-name="proof"
-required>
-
-
-<button>
-إرسال الإثبات
-</button>
-
-
-</form>
-
-
-</div>
+{% endif %}
 
 
 
-<div class="card">
+
+{% if trade.status != "COMPLETED" %}
 
 
-<a href="/confirm/{{trade.id}}">
+<a href="/cancel_trade/{{trade.id}}">
 
-<button>
-✅ تأكيد استلام USDT
+<button class="red">
+إلغاء الصفقة
 </button>
 
 </a>
 
 
-</div>
+
+<a href="/dispute/{{trade.id}}">
+
+<button>
+فتح نزاع
+</button>
+
+</a>
+
+
+{% endif %}
+
+
 
 
 
