@@ -5,42 +5,47 @@
 
 <meta charset="UTF-8">
 
-<title>لوحة الأدمن</title>
+<title>لوحة تحكم الأدمن</title>
 
 <style>
 
 body{
-font-family:Arial;
-background:#f5f5f5;
-padding:20px;
+    font-family: Arial;
+    background:#f5f5f5;
+    padding:20px;
+}
+
+
+.container{
+    max-width:800px;
+    margin:auto;
 }
 
 
 .box{
-
-background:white;
-padding:20px;
-margin-bottom:15px;
-border-radius:10px;
-
+    background:white;
+    padding:20px;
+    border-radius:12px;
+    margin-bottom:15px;
 }
 
 
 button{
-
-background:#008000;
-color:white;
-border:none;
-padding:10px;
-border-radius:5px;
-
+    background:#008000;
+    color:white;
+    border:0;
+    padding:10px 15px;
+    border-radius:8px;
 }
 
 
-a{
+.red{
+    background:red;
+}
 
-text-decoration:none;
 
+h2{
+    text-align:center;
 }
 
 </style>
@@ -51,10 +56,28 @@ text-decoration:none;
 <body>
 
 
+<div class="container">
+
+
+<div class="box">
+
 <h2>
 لوحة تحكم الأدمن
 </h2>
 
+
+<p>
+عدد الصفقات:
+{{ trades|length }}
+</p>
+
+
+</div>
+
+
+
+
+{% if trades %}
 
 
 {% for t in trades %}
@@ -93,7 +116,7 @@ text-decoration:none;
 
 
 <p>
-الحالة:
+حالة الصفقة:
 {{t.status}}
 </p>
 
@@ -107,26 +130,18 @@ text-decoration:none;
 {% if t.proof %}
 
 <p>
-إثبات الدفع:
+إثبات التحويل:
+{{t.proof}}
 </p>
-
-<img 
-src="/uploads/{{t.proof}}"
-width="250"
->
-
 
 {% endif %}
 
 
 
-<br><br>
-
-
 <a href="/escrow_confirm/{{t.id}}">
 
 <button>
-تم استلام USDT من البائع
+تأكيد وصول USDT
 </button>
 
 </a>
@@ -136,12 +151,11 @@ width="250"
 <br><br>
 
 
+
 <a href="/cancel_trade/{{t.id}}">
 
-<button style="background:red">
-
+<button class="red">
 إلغاء الصفقة
-
 </button>
 
 </a>
@@ -153,6 +167,25 @@ width="250"
 
 {% endfor %}
 
+
+
+{% else %}
+
+
+<div class="box">
+
+<p>
+لا توجد صفقات حالياً
+</p>
+
+</div>
+
+
+{% endif %}
+
+
+
+</div>
 
 
 </body>
