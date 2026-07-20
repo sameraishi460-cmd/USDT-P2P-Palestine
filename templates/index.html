@@ -5,47 +5,35 @@
 
 <meta charset="UTF-8">
 
-<title>USDT Exchange</title>
+<title>USDT Market</title>
 
 
 <style>
 
 body{
-
-font-family:Arial;
-background:#f1f3f5;
-margin:0;
-
+    margin:0;
+    font-family:tahoma;
+    background:#0b1220;
+    color:white;
 }
 
 
 .header{
 
-background:#0b7285;
-color:white;
+background:#111827;
 padding:20px;
-text-align:center;
+display:flex;
+justify-content:space-between;
+align-items:center;
 
 }
 
 
-.container{
+.logo{
 
-width:90%;
-max-width:900px;
-margin:20px auto;
-
-}
-
-
-
-.card{
-
-background:white;
-padding:20px;
-border-radius:15px;
-margin-bottom:15px;
-box-shadow:0 5px 15px #ddd;
+font-size:25px;
+font-weight:bold;
+color:#22c55e;
 
 }
 
@@ -53,14 +41,95 @@ box-shadow:0 5px 15px #ddd;
 
 .btn{
 
-display:block;
-background:#0b7285;
+background:#2563eb;
+padding:10px 18px;
+border-radius:10px;
 color:white;
+text-decoration:none;
+margin:5px;
+
+}
+
+
+.green{
+
+background:#16a34a;
+
+}
+
+
+
+.container{
+
+max-width:1100px;
+margin:auto;
+padding:20px;
+
+}
+
+
+
+.hero{
+
+background:#1e293b;
+padding:30px;
+border-radius:20px;
+text-align:center;
+margin-bottom:25px;
+
+}
+
+
+
+.cards{
+
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+gap:20px;
+
+}
+
+
+
+.card{
+
+background:#1e293b;
+padding:20px;
+border-radius:18px;
+
+}
+
+
+
+.price{
+
+font-size:25px;
+color:#22c55e;
+
+}
+
+
+
+.buy{
+
+display:block;
+text-align:center;
+margin-top:15px;
+background:#16a34a;
 padding:12px;
 border-radius:10px;
 text-decoration:none;
+color:white;
+
+}
+
+
+
+.footer{
+
 text-align:center;
-margin-top:10px;
+margin-top:40px;
+opacity:.6;
 
 }
 
@@ -69,34 +138,12 @@ margin-top:10px;
 .admin{
 
 position:fixed;
-
 left:15px;
-
 bottom:15px;
-
-background:#343a40;
-
-color:white;
-
-padding:8px 12px;
-
-border-radius:50px;
-
-font-size:13px;
-
-text-decoration:none;
+font-size:12px;
+opacity:.5;
 
 }
-
-
-
-.top{
-
-text-align:center;
-margin:20px;
-
-}
-
 
 
 </style>
@@ -105,62 +152,33 @@ margin:20px;
 </head>
 
 
-
 <body>
 
 
 
 <div class="header">
 
-<h1>
-💵 USDT Exchange
-</h1>
 
-<p>
-شراء وبيع USDT بأمان
-</p>
+<div class="logo">
 
+USDT Market
 
 </div>
 
 
 
-
-
-<div class="top">
+<div>
 
 
 {% if user %}
 
-
-<a class="btn" href="/create_ad">
-
-➕ إنشاء إعلان بيع
-
-</a>
-
-
-
 <a class="btn" href="/profile">
-
-👤 ملفي الشخصي
-
+حسابي
 </a>
-
-
-
-<a class="btn" href="/cash_market">
-
-🤝 مقابلات شخصية
-
-</a>
-
 
 
 <a class="btn" href="/logout">
-
-تسجيل خروج
-
+خروج
 </a>
 
 
@@ -168,28 +186,22 @@ margin:20px;
 
 
 <a class="btn" href="/login">
-
-تسجيل دخول
-
+دخول
 </a>
 
 
-
-<a class="btn" href="/register">
-
+<a class="btn green" href="/register">
 إنشاء حساب
-
 </a>
-
 
 
 {% endif %}
 
 
-
 </div>
 
 
+</div>
 
 
 
@@ -198,76 +210,26 @@ margin:20px;
 <div class="container">
 
 
-<h2>
-📢 إعلانات USDT
-</h2>
+<div class="hero">
 
 
-
-{% if ads %}
-
-
-
-{% for ad in ads %}
+<h1>
+شراء وبيع USDT بسهولة
+</h1>
 
 
+<p>
+تداول آمن - ضمان Escrow - مقابلات شخصية
+</p>
 
-<div class="card">
 
-
-<h3>
-
+<a class="btn green" href="/create_ad">
 بيع USDT
-
-</h3>
-
-
-<p>
-
-البائع:
-<b>
-{{ad.user}}
-</b>
-
-</p>
+</a>
 
 
-<p>
-
-الكمية:
-
-{{ad.amount}}
-
-USDT
-
-</p>
-
-
-
-<p>
-
-السعر:
-
-{{ad.price}}
-
-</p>
-
-
-
-<p>
-
-الدفع:
-
-{{ad.payment}}
-
-</p>
-
-
-
-<a class="btn" href="/buy/{{ad.id}}">
-
-شراء
-
+<a class="btn" href="/cash_market">
+مقابلات شخصية
 </a>
 
 
@@ -275,7 +237,64 @@ USDT
 
 
 
-{% endfor %}
+
+
+<h2>
+إعلانات البيع
+</h2>
+
+
+
+<div class="cards">
+
+
+
+{% for ad in ads %}
+
+
+<div class="card">
+
+
+<h3>
+البائع:
+{{ad.user}}
+</h3>
+
+
+<p>
+الكمية:
+<b>
+{{ad.amount}}
+USDT
+</b>
+
+</p>
+
+
+<p class="price">
+
+{{ad.price}}
+
+</p>
+
+
+<p>
+
+طريقة الدفع:
+{{ad.payment}}
+
+</p>
+
+
+
+<a class="buy" href="/buy/{{ad.id}}">
+
+شراء الآن
+
+</a>
+
+
+</div>
 
 
 
@@ -289,8 +308,7 @@ USDT
 </div>
 
 
-
-{% endif %}
+{% endfor %}
 
 
 
@@ -299,17 +317,23 @@ USDT
 
 
 
+</div>
+
+
+
+<div class="footer">
+
+USDT Market © 2026
+
+</div>
 
 
 
 <a class="admin" href="/admin_login">
 
-⚙️ Admin
+Admin
 
 </a>
-
-
-
 
 
 </body>
