@@ -4,18 +4,22 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 
-app.secret_key = "USDT_P2P_Palestine"
+app.secret_key = "USDT_P2P_Palestine_SECRET"
 
 
 def connect():
+
     db = sqlite3.connect("database.db")
     db.row_factory = sqlite3.Row
+
     return db
+
 
 
 def setup():
 
     db = connect()
+
 
     db.execute("""
     CREATE TABLE IF NOT EXISTS users(
@@ -58,6 +62,7 @@ def setup():
 
 
 
+
 @app.route("/")
 def home():
 
@@ -68,6 +73,7 @@ def home():
     ).fetchall()
 
     db.close()
+
 
     return render_template(
         "index.html",
@@ -82,6 +88,7 @@ def register():
     if request.method == "POST":
 
         username = request.form["username"]
+
         email = request.form["email"]
 
         password = generate_password_hash(
@@ -90,6 +97,7 @@ def register():
 
 
         db = connect()
+
 
         db.execute(
             """
@@ -112,7 +120,10 @@ def register():
         return redirect("/login")
 
 
-    return render_template("register.html")
+
+    return render_template(
+        "register.html"
+    )
 
 
 
@@ -122,10 +133,12 @@ def login():
     if request.method == "POST":
 
         email = request.form["email"]
+
         password = request.form["password"]
 
 
         db = connect()
+
 
         user = db.execute(
             """
@@ -149,11 +162,15 @@ def login():
             return redirect("/")
 
 
-        return "بيانات الدخول غير صحيحة"
+        return "بيانات خاطئة"
 
 
-    return render_template("login.html")
-    @app.route("/create_ad", methods=["GET","POST"])def create_ad():
+
+    return render_template(
+        "login.html"
+    )
+    @app.route("/create_ad", methods=["GET","POST"])
+def create_ad():
 
     if "user" not in session:
         return redirect("/login")
@@ -198,7 +215,6 @@ def buy(id):
 
     db = connect()
 
-
     ad = db.execute(
         "SELECT * FROM ads WHERE id=?",
         (id,)
@@ -208,7 +224,6 @@ def buy(id):
     if not ad:
         db.close()
         return "الإعلان غير موجود"
-
 
 
     fee = float(ad["amount"]) * 0.02
@@ -248,9 +263,7 @@ def buy(id):
     db.close()
 
 
-    return redirect(
-        "/trade/" + str(trade_id)
-    )
+    return redirect("/trade/" + str(trade_id))
 
 
 
@@ -260,67 +273,15 @@ def trade(id):
     db = connect()
 
     trade = db.execute(
-        """
-        SELECT * FROM trades
-        WHERE id=?
-        """,
+        "SELECT * FROM trades WHERE id=?",
         (id,)
     ).fetchone()
 
     db.close()
 
-
     return render_template(
         "trade.html",
         trade=trade
-    )
-
-
-
-@app.route("/paid/<int:id>")
-def paid(id):
-
-    db = connect()
-
-    db.execute(
-        """
-        UPDATE trades
-        SET status='PAYMENT_SENT'
-        WHERE id=?
-        """,
-        (id,)
-    )
-
-    db.commit()
-    db.close()
-
-
-    return redirect(
-        "/trade/" + str(id)
-    )
-
-
-
-@app.route("/dispute/<int:id>")
-def dispute(id):
-
-    db = connect()
-
-    db.execute(
-        """
-        UPDATE trades
-        SET status='DISPUTE'
-        WHERE id=?
-        """,
-        (id,)
-    )
-
-    db.commit()
-    db.close()
-
-
-    return redirect(
-        "/trade/" + str(id)
     )
 
 
@@ -342,4 +303,3 @@ if __name__ == "__main__":
         host="0.0.0.0",
         port=5000
     )
-    
