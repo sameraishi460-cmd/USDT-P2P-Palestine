@@ -5,177 +5,115 @@
 
 <meta charset="UTF-8">
 
-<title>🇵🇸 USDT P2P Palestine</title>
-
+<title>USDT Exchange</title>
 
 <style>
 
 body{
-    font-family:Arial;
-    background:#f5f5f5;
+    font-family: Arial;
+    background:#f4f4f4;
+    padding:20px;
 }
 
 
 .container{
-
-    width:95%;
-    max-width:900px;
+    max-width:700px;
     margin:auto;
-
 }
 
 
-.header{
-
-    background:#16a34a;
-    color:white;
-    padding:20px;
-    border-radius:0 0 20px 20px;
-    text-align:center;
-
-}
-
-
-.card{
-
+.box{
     background:white;
-    margin-top:20px;
     padding:20px;
-    border-radius:15px;
-    box-shadow:0 0 10px #ddd;
-
+    border-radius:10px;
+    margin-bottom:15px;
 }
 
 
 button{
-
-    background:#16a34a;
+    background:#008000;
     color:white;
-    border:0;
-    padding:12px;
-    border-radius:10px;
-    width:100%;
-    font-size:16px;
+    border:none;
+    padding:10px 20px;
+    border-radius:6px;
+    cursor:pointer;
+}
 
+
+.admin{
+    background:#333;
 }
 
 
 a{
-
     text-decoration:none;
-
 }
 
 
-.top{
-
-    margin-top:20px;
-
-}
-
-
-input{
-
-    width:100%;
-    padding:12px;
-    margin:8px 0;
+.ad{
+    border:1px solid #ddd;
+    padding:15px;
+    margin-top:10px;
     border-radius:8px;
-    border:1px solid #ccc;
-
 }
 
 
 </style>
 
-
 </head>
 
 
-
 <body>
-
-
-<div class="header">
-
-<h1>
-🇵🇸 USDT P2P Palestine
-</h1>
-
-
-<p>
-منصة تداول USDT بين المستخدمين بأمان
-</p>
-
-
-</div>
-
-
 
 
 <div class="container">
 
 
 
-<div class="top">
+<div class="box">
+
+
+<h2>
+منصة تداول USDT
+</h2>
+
 
 
 {% if user %}
 
-
-<div class="card">
-
-مرحباً 👋
-
-<b>
-{{user}}
-</b>
-
-
-<br><br>
-
-
-<a href="/create_ad">
-
-<button>
-➕ إنشاء إعلان بيع USDT
-</button>
-
-</a>
-
-
-<br><br>
+<p>
+مرحباً {{user}}
+</p>
 
 
 <a href="/profile">
 
 <button>
-👤 الملف الشخصي
+الملف الشخصي
 </button>
 
 </a>
 
 
-<br><br>
+<a href="/create_ad">
+
+<button>
+إنشاء إعلان بيع
+</button>
+
+</a>
 
 
 <a href="/logout">
 
-<button>
+<button style="background:red">
 تسجيل خروج
 </button>
 
 </a>
 
 
-</div>
-
-
-
 {% else %}
-
-
-
-<div class="card">
 
 
 <a href="/login">
@@ -187,8 +125,6 @@ input{
 </a>
 
 
-<br><br>
-
 
 <a href="/register">
 
@@ -199,80 +135,68 @@ input{
 </a>
 
 
-</div>
-
-
-
 {% endif %}
 
 
 
+<br><br>
+
+
+<a href="/admin_login">
+
+<button class="admin">
+دخول الأدمن
+</button>
+
+</a>
+
+
 </div>
 
 
 
 
 
-<h2>
+<div class="box">
+
+
+<h3>
 الإعلانات المتاحة
-</h2>
+</h3>
 
 
+
+{% if ads %}
 
 
 {% for ad in ads %}
 
 
-
-<div class="card">
-
-
-<h3>
-💵 بيع USDT
-</h3>
+<div class="ad">
 
 
 <p>
-
 البائع:
-<b>
 {{ad.user}}
-</b>
-
 </p>
 
 
-
 <p>
-
 الكمية:
-
-{{ad.amount}}
-
-USDT
-
+{{ad.amount}} USDT
 </p>
 
 
-
 <p>
-
 السعر:
-
 {{ad.price}}
-
 </p>
-
 
 
 <p>
-
 طريقة الدفع:
-
 {{ad.payment}}
-
 </p>
-
 
 
 <a href="/buy/{{ad.id}}">
@@ -287,20 +211,23 @@ USDT
 </div>
 
 
+{% endfor %}
+
+
 
 {% else %}
 
 
-
-<div class="card">
-
+<p>
 لا توجد إعلانات حالياً
+</p>
+
+
+{% endif %}
+
+
 
 </div>
-
-
-{% endfor %}
-
 
 
 
@@ -308,6 +235,5 @@ USDT
 
 
 </body>
-
 
 </html>
