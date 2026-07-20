@@ -5,11 +5,69 @@
 
 <meta charset="UTF-8">
 
-<title>
-لوحة الإدارة
-</title>
+<title>لوحة الأدمن</title>
 
-<link rel="stylesheet" href="/static/style.css">
+
+<style>
+
+body{
+    font-family:Arial;
+    background:#f2f2f2;
+}
+
+
+.container{
+
+    width:95%;
+    max-width:900px;
+    margin:30px auto;
+
+}
+
+
+.card{
+
+    background:white;
+    padding:20px;
+    margin-bottom:15px;
+    border-radius:15px;
+    box-shadow:0 0 8px #ccc;
+
+}
+
+
+button{
+
+    background:#16a34a;
+    color:white;
+    border:0;
+    padding:10px 15px;
+    border-radius:8px;
+    cursor:pointer;
+
+}
+
+
+.red{
+
+    background:#dc2626;
+
+}
+
+
+
+.info{
+
+    background:#eee;
+    padding:10px;
+    border-radius:10px;
+    margin:8px 0;
+
+}
+
+
+</style>
+
 
 </head>
 
@@ -20,13 +78,12 @@
 <div class="container">
 
 
-<div class="header">
+<h2>🔐 لوحة تحكم الأدمن</h2>
 
-<h2>
-⚙️ لوحة الإدارة
-</h2>
 
-</div>
+<a href="/admin_logout">
+تسجيل خروج
+</a>
 
 
 
@@ -37,59 +94,109 @@
 
 
 <h3>
-صفقة رقم #{{trade.id}}
+صفقة رقم {{trade.id}}
 </h3>
 
 
-<p>
-👤 المشتري:
-{{trade.buyer}}
-</p>
+<div class="info">
 
 
-<p>
-👤 البائع:
+البائع:
 {{trade.seller}}
-</p>
+
+<br>
 
 
-<p>
-💰 الكمية:
+المشتري:
+{{trade.buyer}}
+
+
+<br>
+
+
+الكمية:
 {{trade.amount}} USDT
-</p>
 
 
-<p>
-💵 السعر:
+<br>
+
+
+السعر:
 {{trade.price}}
-</p>
-
-
-<p>
-📌 الحالة:
-{{trade.status}}
-</p>
-
-
-{% if trade.proof %}
-
-<p>
-📎 إثبات الدفع:
-{{trade.proof}}
-</p>
-
-{% endif %}
 
 
 </div>
 
 
-{% else %}
 
 
-<div class="card">
+<div class="info">
 
-لا يوجد صفقات
+
+حالة الصفقة:
+
+<b>
+{{trade.status}}
+</b>
+
+
+<br>
+
+
+حالة الضمان:
+
+<b>
+{{trade.escrow_status}}
+</b>
+
+
+<br>
+
+
+النزاع:
+
+<b>
+{{trade.dispute}}
+</b>
+
+
+
+</div>
+
+
+
+
+
+{% if trade.escrow_status == "WAITING_DEPOSIT" %}
+
+
+<a href="/escrow_confirm/{{trade.id}}">
+
+<button>
+✅ تأكيد وصول USDT للمنصة
+</button>
+
+</a>
+
+
+{% endif %}
+
+
+
+
+
+{% if trade.proof %}
+
+<p>
+📄 تم رفع إثبات الدفع:
+{{trade.proof}}
+</p>
+
+
+{% endif %}
+
+
+
 
 </div>
 
