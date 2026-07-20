@@ -4,10 +4,9 @@ import os
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 
-
 app = Flask(__name__)
-app.secret_key = "USDT_P2P_Palestine_SECRET"
 
+app.secret_key = "USDT_P2P_Palestine_SECRET"
 
 UPLOAD_FOLDER = "uploads"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
@@ -19,8 +18,11 @@ if not os.path.exists(UPLOAD_FOLDER):
 
 
 def connect():
+
     db = sqlite3.connect("database.db")
+
     db.row_factory = sqlite3.Row
+
     return db
 
 
@@ -28,6 +30,7 @@ def connect():
 def setup():
 
     db = connect()
+
 
     db.execute("""
     CREATE TABLE IF NOT EXISTS users(
@@ -67,6 +70,7 @@ def setup():
 
 
     db.commit()
+
     db.close()
 
 
@@ -93,10 +97,118 @@ def home():
 
 
 
+@app.route("/register", methods=["GET","POST"])
+def register():
+
+    if request.method == "POST":
+
+        db = connect()
+
+        db.execute(
+            """
+            INSERT INTO users
+            (username,email,password)
+            VALUES(?,?,?)
+            """,
+            (
+                request.form["username"],
+                request.form["email"],
+                generate_password_hash(
+                    request.form["password"]
+                )
+            )
+        )
+
+        db.commit()
+
+        db.close()
+
+        return redirect("/login")
+
+
+    return render_template("register.html")
+
+
+
+@app.route("/login", methods=["GET","POST"])
+def login():
+
+    if request.method == "POST":
+
+        db = connect()
+
+        user = db.execute(
+            "SELECT * FROM users WHERE email=?",
+            (request.form["email"],)
+        ).fetchone()
+
+        db.close()
+
+
+        if user and check_password_hash(
+            user["password"],
+            request.form["password"]
+        ):
+
+            session["user"] = user["username"]
+
+            return redirect("/")
+
+
+        return "بيانات الدخول غير صحيحة"
+
+
+    return render_template("login.html")
+
+
+
+@app.route("/create_ad", methods=["GET","POST"])
+def create_ad():
+
+    if "user" not in session:
+
+        return redirect("/login")
+
+
+    if request.method == "POST":
+
+        db = connect()
+
+
+        db.execute(
+            """
+            INSERT INTO ads
+            (user,type,amount,price,payment,status)
+            VALUES(?,?,?,?,?,?)
+            """,
+            (
+                session["user"],
+                request.form["type"],
+                request.form["amount"],
+                request.form["price"],
+                request.form["payment"],
+                "OPEN"
+            )
+        )
+
+
+        db.commit()
+
+        db.close()
+
+
+        return redirect("/")
+
+
+    return render_template("create_ad.html")
+
+
+
 @app.route("/buy/<int:id>")
 def buy(id):
 
     if "user" not in session:
+
         return redirect("/login")
 
 
@@ -109,11 +221,25 @@ def buy(id):
     ).fetchone()
 
 
+
+    if not ad:
+
+        db.close()
+
+        return "الإعلان غير موجود"
+
+
+
     if ad["user"] == session["user"]:
+
+        db.close()
+
         return "لا يمكنك شراء إعلانك"
 
 
+
     fee = float(ad["amount"]) * 0.02
+
 
 
     result = db.execute(
@@ -134,7 +260,9 @@ def buy(id):
     )
 
 
+
     trade_id = result.lastrowid
+
 
 
     db.execute(
@@ -143,8 +271,11 @@ def buy(id):
     )
 
 
+
     db.commit()
+
     db.close()
+
 
 
     return redirect(
@@ -165,6 +296,7 @@ def trade(id):
 
     db.close()
 
+
     return render_template(
         "trade.html",
         trade=trade
@@ -178,16 +310,17 @@ def upload_payment(id):
     file = request.files["proof"]
 
 
-    filename = secure_filename(file.filename)
-
-
-    path = os.path.join(
-        app.config["UPLOAD_FOLDER"],
-        filename
+    filename = secure_filename(
+        file.filename
     )
 
 
-    file.save(path)
+    file.save(
+        os.path.join(
+            app.config["UPLOAD_FOLDER"],
+            filename
+        )
+    )
 
 
     db = connect()
@@ -207,12 +340,49 @@ def upload_payment(id):
 
 
     db.commit()
+
     db.close()
 
 
     return redirect(
         "/trade/" + str(id)
     )
+
+
+
+@app.route("/confirm/<int:id>")
+def confirm(id):
+
+    db = connect()
+
+
+    db.execute(
+        """
+        UPDATE trades
+        SET status='COMPLETED'
+        WHERE id=?
+        """,
+        (id,)
+    )
+
+
+    db.commit()
+
+    db.close()
+
+
+    return redirect(
+        "/trade/" + str(id)
+    )
+
+
+
+@app.route("/logout")
+def logout():
+
+    session.clear()
+
+    return redirect("/")
 
 
 
