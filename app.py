@@ -3,7 +3,7 @@ import sqlite3
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-app.secret_key = "USDT_P2P_Palestine"
+app.secret_key = "USDT_P2P_Palestine_SECRET"
 
 
 def connect():
@@ -63,10 +63,7 @@ def home():
     ).fetchall()
     db.close()
 
-    return render_template(
-        "index.html",
-        ads=ads
-    )
+    return render_template("index.html", ads=ads)
 
 
 @app.route("/register", methods=["GET","POST"])
@@ -77,10 +74,7 @@ def register():
         db = connect()
 
         db.execute(
-            """
-            INSERT INTO users(username,email,password)
-            VALUES(?,?,?)
-            """,
+            "INSERT INTO users(username,email,password) VALUES(?,?,?)",
             (
                 request.form["username"],
                 request.form["email"],
@@ -116,12 +110,10 @@ def login():
             user["password"],
             request.form["password"]
         ):
-
             session["user"] = user["username"]
             return redirect("/")
 
         return "بيانات الدخول غير صحيحة"
-
 
     return render_template("login.html")
 
@@ -182,6 +174,11 @@ def buy(id):
         return "الإعلان غير موجود"
 
 
+    if ad["user"] == session["user"]:
+        db.close()
+        return "لا يمكنك شراء إعلانك الخاص"
+
+
     fee = float(ad["amount"]) * 0.02
 
 
@@ -215,9 +212,7 @@ def buy(id):
     db.close()
 
 
-    return redirect(
-        "/trade/" + str(trade_id)
-    )
+    return redirect("/trade/" + str(trade_id))
 
 
 @app.route("/trade/<int:id>")
@@ -232,7 +227,6 @@ def trade(id):
 
     db.close()
 
-
     return render_template(
         "trade.html",
         trade=trade
@@ -241,9 +235,7 @@ def trade(id):
 
 @app.route("/logout")
 def logout():
-
     session.clear()
-
     return redirect("/")
 
 
