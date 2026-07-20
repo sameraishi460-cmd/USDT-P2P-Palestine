@@ -5,34 +5,44 @@
 
 <meta charset="UTF-8">
 
-<title>صفقة USDT</title>
+<title>تفاصيل الصفقة</title>
+
 
 <style>
 
 body{
-    font-family:Arial;
-    background:#f3f5f8;
-    margin:0;
+
+background:#0b1220;
+color:white;
+font-family:tahoma;
+padding:20px;
+
 }
+
+
+.container{
+
+max-width:900px;
+margin:auto;
+
+}
+
 
 
 .box{
 
-    width:90%;
-    max-width:600px;
-    background:white;
-    margin:30px auto;
-    padding:25px;
-    border-radius:15px;
-    box-shadow:0 5px 20px #ddd;
+background:#1e293b;
+padding:20px;
+border-radius:18px;
+margin-bottom:20px;
 
 }
 
 
+
 h2{
 
-    text-align:center;
-    color:#1c7ed6;
+color:#22c55e;
 
 }
 
@@ -40,10 +50,10 @@ h2{
 
 .info{
 
-    background:#f8f9fa;
-    padding:15px;
-    border-radius:10px;
-    margin-bottom:15px;
+background:#111827;
+padding:15px;
+border-radius:12px;
+line-height:2;
 
 }
 
@@ -51,50 +61,82 @@ h2{
 
 .wallet{
 
-    background:#e7f5ff;
-    padding:15px;
-    border-radius:10px;
-    word-break:break-all;
+background:#064e3b;
+padding:15px;
+border-radius:12px;
+word-break:break-all;
 
 }
 
 
 
-button{
+.btn{
 
-    background:#1c7ed6;
-    color:white;
-    border:0;
-    padding:12px;
-    border-radius:10px;
-    cursor:pointer;
-    width:100%;
+padding:12px 20px;
+border-radius:10px;
+text-decoration:none;
+color:white;
+display:inline-block;
+margin:5px;
+
+}
+
+
+.green{
+
+background:#16a34a;
+
+}
+
+
+.red{
+
+background:#dc2626;
+
+}
+
+
+.blue{
+
+background:#2563eb;
 
 }
 
 
 
-input{
+input,textarea{
 
-    width:100%;
-    padding:10px;
-    margin-top:10px;
+width:90%;
+padding:12px;
+border-radius:10px;
+border:0;
+margin:5px;
+
 }
 
 
 
 .message{
 
-    background:#f1f3f5;
-    padding:10px;
-    border-radius:8px;
-    margin:5px;
+background:#111827;
+padding:10px;
+border-radius:10px;
+margin:8px 0;
 
 }
 
 
 
+.time{
+
+opacity:.5;
+font-size:12px;
+
+}
+
+
 </style>
+
 
 </head>
 
@@ -103,106 +145,127 @@ input{
 <body>
 
 
+<div class="container">
+
+
+
 <div class="box">
 
 
 <h2>
-💵 صفقة USDT
+💱 صفقة USDT
 </h2>
 
 
-
 <div class="info">
 
-<b>البائع:</b>
 
+البائع:
+<b>
 {{trade.seller}}
+</b>
 
-<br><br>
+
+<br>
 
 
-<b>المشتري:</b>
-
+المشتري:
+<b>
 {{trade.buyer}}
+</b>
 
-<br><br>
+
+<br>
 
 
-<b>الكمية:</b>
-
+الكمية:
+<b>
 {{trade.amount}} USDT
+</b>
 
 
-<br><br>
+<br>
 
 
-<b>السعر:</b>
-
+السعر:
+<b>
 {{trade.price}}
+</b>
 
 
-</div>
+<br>
+
+
+حالة الصفقة:
+<b>
+{{trade.status}}
+</b>
 
 
 
+<br>
 
-
-<h3>
-🔐 مرحلة الضمان Escrow
-</h3>
-
-
-
-<div class="info">
 
 حالة الضمان:
 
 <b>
+
 {{trade.escrow_status}}
+
 </b>
+
 
 </div>
 
 
+</div>
+
+
+
+
+
+
+
+
+<div class="box">
+
+
+<h2>
+🔐 ضمان Escrow
+</h2>
+
+
+
+<p>
+
+قم بتحويل USDT إلى محفظة المنصة ثم انتظر تأكيد الأدمن.
+
+</p>
 
 
 
 <div class="wallet">
 
 
-<h4>
-محفظة المنصة للإيداع
-</h4>
+محفظة المنصة:
 
+<br><br>
 
-<p id="wallet">
 
 {{trade.platform_wallet}}
 
-</p>
 
 
+<br><br>
 
-<button onclick="copyWallet()">
-
-نسخ المحفظة
-
-</button>
-
-
-<br>
-
-
-<p>
 
 الشبكة:
-<br>
 
-<b>
-BSC BEP20
-</b>
+BNB Smart Chain (BEP20)
 
-</p>
+
+</div>
+
 
 
 </div>
@@ -211,9 +274,15 @@ BSC BEP20
 
 
 
-<h3>
-إثبات التحويل
-</h3>
+
+
+<div class="box">
+
+
+<h2>
+📤 إثبات الدفع
+</h2>
+
 
 
 <form action="/upload_payment/{{trade.id}}" method="post" enctype="multipart/form-data">
@@ -222,9 +291,12 @@ BSC BEP20
 <input type="file" name="proof">
 
 
-<button>
+<br>
 
-رفع إثبات التحويل
+
+<button class="btn blue">
+
+رفع الإثبات
 
 </button>
 
@@ -232,13 +304,22 @@ BSC BEP20
 </form>
 
 
+</div>
 
 
 
-<h3>
+
+
+
+
+
+<div class="box">
+
+
+<h2>
 💬 المحادثة
 
-</h3>
+</h2>
 
 
 
@@ -247,13 +328,24 @@ BSC BEP20
 
 <div class="message">
 
+
 <b>
 {{m.sender}}
 </b>
 
+
 <br>
 
+
 {{m.message}}
+
+
+<br>
+
+
+<span class="time">
+{{m.timestamp}}
+</span>
 
 
 </div>
@@ -268,10 +360,13 @@ BSC BEP20
 <form method="post">
 
 
-<input name="message" placeholder="اكتب رسالة">
+<textarea name="message" placeholder="اكتب رسالة..."></textarea>
 
 
-<button>
+<br>
+
+
+<button class="btn green">
 
 إرسال
 
@@ -281,19 +376,28 @@ BSC BEP20
 </form>
 
 
+</div>
 
 
 
-<br>
 
 
-<a href="/cancel_trade/{{trade.id}}">
 
-<button style="background:#e03131">
+
+<div class="box">
+
+
+<a class="btn green" href="/complete_trade/{{trade.id}}">
+
+تأكيد إتمام الصفقة
+
+</a>
+
+
+
+<a class="btn red" href="/cancel_trade/{{trade.id}}">
 
 إلغاء الصفقة
-
-</button>
 
 </a>
 
@@ -304,23 +408,7 @@ BSC BEP20
 
 
 
-
-<script>
-
-
-function copyWallet(){
-
-let text=document.getElementById("wallet").innerText;
-
-navigator.clipboard.writeText(text);
-
-alert("تم نسخ عنوان المحفظة");
-
-}
-
-
-</script>
-
+</div>
 
 
 </body>
