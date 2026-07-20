@@ -3,7 +3,7 @@ import sqlite3
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-app.secret_key = "USDT_P2P_Palestine_SECRET"
+app.secret_key = "USDT_P2P_Palestine"
 
 
 def connect():
@@ -52,28 +52,21 @@ def setup():
     db.close()
 
 
-
-# تشغيل إنشاء الجداول مباشرة عند تشغيل Render
 setup()
-
 
 
 @app.route("/")
 def home():
-
     db = connect()
-
     ads = db.execute(
         "SELECT * FROM ads WHERE status='OPEN'"
     ).fetchall()
-
     db.close()
 
     return render_template(
         "index.html",
         ads=ads
     )
-
 
 
 @app.route("/register", methods=["GET","POST"])
@@ -85,8 +78,7 @@ def register():
 
         db.execute(
             """
-            INSERT INTO users
-            (username,email,password)
+            INSERT INTO users(username,email,password)
             VALUES(?,?,?)
             """,
             (
@@ -103,9 +95,7 @@ def register():
 
         return redirect("/login")
 
-
     return render_template("register.html")
-
 
 
 @app.route("/login", methods=["GET","POST"])
@@ -116,15 +106,11 @@ def login():
         db = connect()
 
         user = db.execute(
-            """
-            SELECT * FROM users
-            WHERE email=?
-            """,
+            "SELECT * FROM users WHERE email=?",
             (request.form["email"],)
         ).fetchone()
 
         db.close()
-
 
         if user and check_password_hash(
             user["password"],
@@ -132,15 +118,12 @@ def login():
         ):
 
             session["user"] = user["username"]
-
             return redirect("/")
-
 
         return "بيانات الدخول غير صحيحة"
 
 
     return render_template("login.html")
-
 
 
 @app.route("/create_ad", methods=["GET","POST"])
@@ -179,7 +162,6 @@ def create_ad():
     return render_template("create_ad.html")
 
 
-
 @app.route("/buy/<int:id>")
 def buy(id):
 
@@ -203,7 +185,7 @@ def buy(id):
     fee = float(ad["amount"]) * 0.02
 
 
-    db.execute(
+    result = db.execute(
         """
         INSERT INTO trades
         (buyer,seller,amount,price,fee,status)
@@ -220,12 +202,11 @@ def buy(id):
     )
 
 
+    trade_id = result.lastrowid
+
+
     db.execute(
-        """
-        UPDATE ads
-        SET status='CLOSED'
-        WHERE id=?
-        """,
+        "UPDATE ads SET status='CLOSED' WHERE id=?",
         (id,)
     )
 
@@ -234,8 +215,28 @@ def buy(id):
     db.close()
 
 
-    return redirect("/")
+    return redirect(
+        "/trade/" + str(trade_id)
+    )
 
+
+@app.route("/trade/<int:id>")
+def trade(id):
+
+    db = connect()
+
+    trade = db.execute(
+        "SELECT * FROM trades WHERE id=?",
+        (id,)
+    ).fetchone()
+
+    db.close()
+
+
+    return render_template(
+        "trade.html",
+        trade=trade
+    )
 
 
 @app.route("/logout")
@@ -246,9 +247,7 @@ def logout():
     return redirect("/")
 
 
-
 if __name__ == "__main__":
-
     app.run(
         host="0.0.0.0",
         port=5000
