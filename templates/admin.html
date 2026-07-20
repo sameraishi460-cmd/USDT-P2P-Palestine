@@ -1,117 +1,38 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 
 <head>
-
 <meta charset="UTF-8">
-
-<title>لوحة الإدارة</title>
-
-
-<style>
-
-body{
-font-family:Arial;
-direction:rtl;
-background:#f5f5f5;
-padding:20px;
-}
-
-
-.box{
-
-background:white;
-padding:15px;
-border-radius:12px;
-margin-bottom:15px;
-
-}
-
-
-h2{
-text-align:center;
-}
-
-</style>
-
-
+<title>Admin</title>
 </head>
-
 
 <body>
 
-
-<h2>
-🇵🇸 لوحة إدارة USDT P2P
-</h2>
+<h1>لوحة الإدارة</h1>
 
 
+{% for trade in trades %}
 
-{% if trades %}
-
-
-{% for t in trades %}
-
-
-<div class="box">
-
-
-<h3>
-صفقة رقم {{t.id}}
-</h3>
-
+<hr>
 
 <p>
-المشتري:
-{{t.buyer}}
+رقم الصفقة:
+{{trade.id}}
 </p>
-
-
-<p>
-البائع:
-{{t.seller}}
-</p>
-
-
-<p>
-الكمية:
-{{t.amount}} USDT
-</p>
-
-
-<p>
-السعر:
-{{t.price}} شيكل
-</p>
-
 
 <p>
 الحالة:
-{{t.status}}
+{{trade.status}}
 </p>
 
-
-</div>
+<p>
+الإثبات:
+{{trade.proof}}
+</p>
 
 
 {% endfor %}
 
 
-
-{% else %}
-
-
-<div class="box">
-
-لا يوجد صفقات
-
-</div>
-
-
-{% endif %}
-
-
-
 </body>
-
 </html>
