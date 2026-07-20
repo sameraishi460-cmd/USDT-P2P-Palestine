@@ -5,6 +5,7 @@ import sqlite3
 import os
 import shutil
 from datetime import datetime
+import traceback
 
 
 app = Flask(__name__)
@@ -773,4 +774,7 @@ def admin_backup():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    try:
+        app.run(debug=True)
+    except Exception:
+        traceback.print_exc()
