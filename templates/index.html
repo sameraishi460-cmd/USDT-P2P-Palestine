@@ -2,7 +2,6 @@
 <html lang="ar" dir="rtl">
 
 <head>
-
 <meta charset="UTF-8">
 
 <title>USDT Exchange</title>
@@ -10,51 +9,73 @@
 <style>
 
 body{
-    font-family: Arial;
-    background:#f4f4f4;
+    font-family:Arial;
+    background:#f5f5f5;
+    margin:0;
     padding:20px;
 }
 
 
 .container{
-    max-width:700px;
+    max-width:800px;
     margin:auto;
 }
 
 
-.box{
+.header{
     background:white;
     padding:20px;
-    border-radius:10px;
-    margin-bottom:15px;
+    border-radius:12px;
+    text-align:center;
 }
 
 
 button{
+    padding:10px 18px;
+    border:0;
+    border-radius:8px;
     background:#008000;
     color:white;
-    border:none;
-    padding:10px 20px;
-    border-radius:6px;
     cursor:pointer;
 }
 
 
-.admin{
-    background:#333;
-}
-
-
-a{
-    text-decoration:none;
+.ads{
+    background:white;
+    margin-top:20px;
+    padding:20px;
+    border-radius:12px;
 }
 
 
 .ad{
     border:1px solid #ddd;
     padding:15px;
-    margin-top:10px;
     border-radius:8px;
+    margin-bottom:10px;
+}
+
+
+.admin-btn{
+
+position:fixed;
+left:15px;
+bottom:15px;
+
+background:#333;
+color:white;
+
+padding:7px 12px;
+
+font-size:12px;
+
+border-radius:20px;
+
+}
+
+
+a{
+text-decoration:none;
 }
 
 
@@ -69,47 +90,38 @@ a{
 <div class="container">
 
 
-
-<div class="box">
-
+<div class="header">
 
 <h2>
-منصة تداول USDT
+منصة USDT
 </h2>
-
 
 
 {% if user %}
 
 <p>
-مرحباً {{user}}
+أهلاً {{user}}
 </p>
 
 
 <a href="/profile">
-
 <button>
-الملف الشخصي
+ملفي
 </button>
-
 </a>
 
 
 <a href="/create_ad">
-
 <button>
-إنشاء إعلان بيع
+بيع USDT
 </button>
-
 </a>
 
 
 <a href="/logout">
-
 <button style="background:red">
-تسجيل خروج
+خروج
 </button>
-
 </a>
 
 
@@ -117,38 +129,20 @@ a{
 
 
 <a href="/login">
-
 <button>
-تسجيل دخول
+دخول
 </button>
-
 </a>
 
 
-
 <a href="/register">
-
 <button>
 إنشاء حساب
 </button>
-
 </a>
 
 
 {% endif %}
-
-
-
-<br><br>
-
-
-<a href="/admin_login">
-
-<button class="admin">
-دخول الأدمن
-</button>
-
-</a>
 
 
 </div>
@@ -156,8 +150,7 @@ a{
 
 
 
-
-<div class="box">
+<div class="ads">
 
 
 <h3>
@@ -176,8 +169,7 @@ a{
 
 
 <p>
-البائع:
-{{ad.user}}
+البائع: {{ad.user}}
 </p>
 
 
@@ -194,7 +186,7 @@ a{
 
 
 <p>
-طريقة الدفع:
+الدفع:
 {{ad.payment}}
 </p>
 
@@ -214,7 +206,6 @@ a{
 {% endfor %}
 
 
-
 {% else %}
 
 
@@ -232,6 +223,15 @@ a{
 
 
 </div>
+
+
+
+
+<a class="admin-btn" href="/admin_login">
+
+Admin
+
+</a>
 
 
 </body>
