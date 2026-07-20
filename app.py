@@ -124,7 +124,7 @@ def admin():
 
     con.close()
 
-    return str([dict(x) for x in trades])
+return render_template("index.html", ads=ads)
 
 
 if __name__=="__main__":
