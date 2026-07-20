@@ -606,13 +606,21 @@ def review(trade_id):
 # =========================
 
 
-@app.route("/cash_ads")
-def cash_ads():
+@app.route("/cash_market")
+def cash_market():
   con = connect()
+
   ads = con.execute(
-      "SELECT * FROM cash_ads WHERE status='OPEN' ORDER BY id DESC"
+      """
+        SELECT *
+        FROM cash_ads
+        WHERE status='OPEN'
+        ORDER BY id DESC
+        """
   ).fetchall()
+
   con.close()
+
   return render_template("cash_ads.html", ads=ads)
 
 
@@ -640,7 +648,7 @@ def create_cash_ad():
     )
     con.commit()
     con.close()
-    return redirect("/cash_ads")
+    return redirect("/cash_market")
   return render_template("create_cash_ad.html")
 
 
