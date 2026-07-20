@@ -150,7 +150,7 @@ def buy(id):
     db.close()
 
     return redirect("/")
-    @app.route("/trade/<int:id>")
+ @app.route("/trade/<int:id>")
 def trade(id):
 
     db = connect()
@@ -168,15 +168,12 @@ def trade(id):
     )
 
 
-
 @app.route("/upload_payment/<int:id>", methods=["POST"])
 def upload_payment(id):
 
     file = request.files["proof"]
 
-    filename = secure_filename(
-        file.filename
-    )
+    filename = secure_filename(file.filename)
 
     file.save(
         os.path.join(
@@ -185,30 +182,21 @@ def upload_payment(id):
         )
     )
 
-
     db = connect()
 
     db.execute(
         """
         UPDATE trades
-        SET proof=?,
-        status='PAYMENT_SENT'
+        SET proof=?, status='PAYMENT_SENT'
         WHERE id=?
         """,
-        (
-            filename,
-            id
-        )
+        (filename, id)
     )
 
     db.commit()
     db.close()
 
-
-    return redirect(
-        "/trade/" + str(id)
-    )
-
+    return redirect("/trade/" + str(id))
 
 
 @app.route("/confirm/<int:id>")
@@ -217,23 +205,14 @@ def confirm(id):
     db = connect()
 
     db.execute(
-        """
-        UPDATE trades
-        SET status='COMPLETED'
-        WHERE id=?
-        """,
+        "UPDATE trades SET status='COMPLETED' WHERE id=?",
         (id,)
     )
 
     db.commit()
-
     db.close()
 
-
-    return redirect(
-        "/trade/" + str(id)
-    )
-
+    return redirect("/trade/" + str(id))
 
 
 @app.route("/admin")
@@ -247,12 +226,10 @@ def admin():
 
     db.close()
 
-
     return render_template(
         "admin.html",
         trades=trades
     )
-
 
 
 @app.route("/logout")
@@ -261,7 +238,6 @@ def logout():
     session.clear()
 
     return redirect("/")
-
 
 
 if __name__ == "__main__":
