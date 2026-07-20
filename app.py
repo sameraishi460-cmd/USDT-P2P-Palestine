@@ -153,8 +153,7 @@ def login():
 
 
     return render_template("login.html")
-    @app.route("/create_ad", methods=["GET","POST"])
-def create_ad():
+    @app.route("/create_ad", methods=["GET","POST"])def create_ad():
 
     if "user" not in session:
         return redirect("/login")
