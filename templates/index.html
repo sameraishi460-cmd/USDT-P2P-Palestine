@@ -1,40 +1,92 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
+
 <head>
 <meta charset="UTF-8">
-<title>USDT P2P Palestine</title>
+<title>🇵🇸 USDT P2P Palestine</title>
+<link rel="stylesheet" href="/static/style.css">
 </head>
 
 <body>
 
-<h1>🇵🇸 USDT P2P Palestine</h1>
+<div class="container">
+
+<div class="logo">
+🇵🇸 USDT P2P Palestine
+</div>
+
 
 <a href="/create_ad">
-<button>إنشاء إعلان</button>
+<button>
++ إنشاء إعلان بيع
+</button>
 </a>
 
-<h2>الإعلانات</h2>
+
+<h2>
+الإعلانات المتاحة
+</h2>
+
 
 {% for ad in ads %}
 
-<div>
-<hr>
-<p>البائع: {{ ad.user }}</p>
-<p>الكمية: {{ ad.amount }} USDT</p>
-<p>السعر: {{ ad.price }}</p>
-<p>الدفع: {{ ad.payment }}</p>
+<div class="card">
 
-<a href="/buy/{{ ad.id }}">
-<button>شراء</button>
+
+<h3>
+🟢 بيع USDT
+</h3>
+
+
+<p>
+👤 البائع:
+{{ad.user}}
+</p>
+
+
+<p>
+💰 الكمية:
+{{ad.amount}} USDT
+</p>
+
+
+<p class="price">
+💵 السعر:
+{{ad.price}} شيكل
+</p>
+
+
+<p>
+💳 الدفع:
+{{ad.payment}}
+</p>
+
+
+<a href="/buy/{{ad.id}}">
+<button>
+شراء الآن
+</button>
 </a>
+
 
 </div>
 
+
 {% else %}
 
-<p>لا يوجد إعلانات حاليا</p>
+
+<div class="card">
+
+لا يوجد إعلانات حاليا
+
+</div>
+
 
 {% endfor %}
+
+
+
+</div>
 
 </body>
 </html>
