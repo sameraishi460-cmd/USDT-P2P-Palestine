@@ -5,19 +5,26 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
+
 app.secret_key = "USDT_P2P_SECRET"
 
 UPLOAD_FOLDER = "uploads"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
+
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
 
+
 def connect():
+
     db = sqlite3.connect("database.db")
+
     db.row_factory = sqlite3.Row
+
     return db
+
 
 
 def setup():
@@ -33,6 +40,7 @@ def setup():
     )
     """)
 
+
     db.execute("""
     CREATE TABLE IF NOT EXISTS ads(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -44,6 +52,7 @@ def setup():
         status TEXT
     )
     """)
+
 
     db.execute("""
     CREATE TABLE IF NOT EXISTS trades(
@@ -58,11 +67,14 @@ def setup():
     )
     """)
 
+
     db.commit()
     db.close()
 
 
+
 setup()
+
 
 
 @app.route("/")
@@ -82,22 +94,23 @@ def home():
     )
 
 
-@app.route("/trade/<int:id>")
-def trade(id):
+
+@app.route("/admin")
+def admin():
 
     db = connect()
 
-    trade = db.execute(
-        "SELECT * FROM trades WHERE id=?",
-        (id,)
-    ).fetchone()
+    trades = db.execute(
+        "SELECT * FROM trades ORDER BY id DESC"
+    ).fetchall()
 
     db.close()
 
     return render_template(
-        "trade.html",
-        trade=trade
+        "admin.html",
+        trades=trades
     )
+
 
 
 @app.route("/upload_payment/<int:id>", methods=["POST"])
@@ -122,7 +135,8 @@ def upload_payment(id):
     db.execute(
         """
         UPDATE trades
-        SET proof=?,status='PAYMENT_SENT'
+        SET proof=?,
+        status='PAYMENT_SENT'
         WHERE id=?
         """,
         (
@@ -131,7 +145,9 @@ def upload_payment(id):
         )
     )
 
+
     db.commit()
+
     db.close()
 
 
@@ -156,6 +172,7 @@ def confirm(id):
     )
 
     db.commit()
+
     db.close()
 
 
@@ -164,7 +181,30 @@ def confirm(id):
     )
 
 
+
+@app.route("/trade/<int:id>")
+def trade(id):
+
+    db = connect()
+
+    trade = db.execute(
+        "SELECT * FROM trades WHERE id=?",
+        (id,)
+    ).fetchone()
+
+
+    db.close()
+
+
+    return render_template(
+        "trade.html",
+        trade=trade
+    )
+
+
+
 if __name__ == "__main__":
+
     app.run(
         host="0.0.0.0",
         port=5000
