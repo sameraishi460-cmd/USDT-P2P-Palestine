@@ -52,12 +52,21 @@ def setup():
     db.close()
 
 
+
+# تشغيل إنشاء الجداول مباشرة عند تشغيل Render
+setup()
+
+
+
 @app.route("/")
 def home():
+
     db = connect()
+
     ads = db.execute(
         "SELECT * FROM ads WHERE status='OPEN'"
     ).fetchall()
+
     db.close()
 
     return render_template(
@@ -66,7 +75,8 @@ def home():
     )
 
 
-@app.route("/register", methods=["GET", "POST"])
+
+@app.route("/register", methods=["GET","POST"])
 def register():
 
     if request.method == "POST":
@@ -97,7 +107,8 @@ def register():
     return render_template("register.html")
 
 
-@app.route("/login", methods=["GET", "POST"])
+
+@app.route("/login", methods=["GET","POST"])
 def login():
 
     if request.method == "POST":
@@ -105,7 +116,10 @@ def login():
         db = connect()
 
         user = db.execute(
-            "SELECT * FROM users WHERE email=?",
+            """
+            SELECT * FROM users
+            WHERE email=?
+            """,
             (request.form["email"],)
         ).fetchone()
 
@@ -116,7 +130,9 @@ def login():
             user["password"],
             request.form["password"]
         ):
+
             session["user"] = user["username"]
+
             return redirect("/")
 
 
@@ -126,7 +142,8 @@ def login():
     return render_template("login.html")
 
 
-@app.route("/create_ad", methods=["GET", "POST"])
+
+@app.route("/create_ad", methods=["GET","POST"])
 def create_ad():
 
     if "user" not in session:
@@ -160,6 +177,7 @@ def create_ad():
 
 
     return render_template("create_ad.html")
+
 
 
 @app.route("/buy/<int:id>")
@@ -203,7 +221,11 @@ def buy(id):
 
 
     db.execute(
-        "UPDATE ads SET status='CLOSED' WHERE id=?",
+        """
+        UPDATE ads
+        SET status='CLOSED'
+        WHERE id=?
+        """,
         (id,)
     )
 
@@ -211,7 +233,9 @@ def buy(id):
     db.commit()
     db.close()
 
+
     return redirect("/")
+
 
 
 @app.route("/logout")
@@ -222,9 +246,8 @@ def logout():
     return redirect("/")
 
 
-if __name__ == "__main__":
 
-    setup()
+if __name__ == "__main__":
 
     app.run(
         host="0.0.0.0",
