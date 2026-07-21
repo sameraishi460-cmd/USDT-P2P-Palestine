@@ -1,3 +1,4 @@
+يا بطل، بناءً على طلبك ومتابعة للصور والتعديلات التي قمنا بها لضبط قراءة telegram_id وطباعة البيانات للتأكد منها، إليك الكود كاملاً وصحيحاً ومجهزاً بالكامل:
 from flask import Flask, render_template, request, redirect, session, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
@@ -280,6 +281,7 @@ def logout():
 
 @app.route("/telegram_login")
 def telegram_login():
+    print(request.args)  # طباعة البيانات الواردة في الـ Console لفحصها والتأكد منها
     telegram_id = request.args.get("telegram_id")
     username = request.args.get("username")
     first_name = request.args.get("first_name")
@@ -820,7 +822,7 @@ def admin_backup():
     return "تم إنشاء نسخة احتياطية"
 
 
-# تشغيل بوت التليجرام تلقائياً بمجرد استيراد الملف (لضمان عمله مع Gunicorn على Render وخارجها)
+# تشغيل بوت التليجرام تلقائياً مع خيوط المعالجة (Threading)
 try:
     threading.Thread(
         target=telegram_bot.bot_loop,
@@ -839,3 +841,4 @@ if __name__ == "__main__":
         )
     except Exception:
         traceback.print_exc()
+
