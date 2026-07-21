@@ -5,92 +5,100 @@
 
 <meta charset="UTF-8">
 
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>دفع إعلان مقابلة شخصية</title>
 
 
 <style>
 
 body{
-    font-family:tahoma;
-    background:#0b1220;
-    color:white;
+
+background:#070d18;
+color:white;
+font-family:tahoma;
+padding:20px;
+
 }
+
 
 
 .box{
 
-    background:#1e293b;
-    width:90%;
-    max-width:500px;
-    margin:50px auto;
-    padding:25px;
-    border-radius:20px;
-    text-align:center;
+max-width:500px;
+margin:auto;
+background:#111827;
+padding:25px;
+border-radius:25px;
 
 }
+
 
 
 h2{
-    margin-bottom:20px;
+
+text-align:center;
+color:#22c55e;
+
 }
+
 
 
 .info{
 
-    background:#111827;
-    padding:15px;
-    border-radius:10px;
-    margin-bottom:15px;
+background:#1e293b;
+padding:15px;
+border-radius:15px;
+margin:15px 0;
 
 }
+
 
 
 .wallet{
 
-    background:#020617;
-    padding:15px;
-    border-radius:10px;
-    word-break:break-all;
-    color:#22c55e;
-    font-size:14px;
+background:#334155;
+padding:12px;
+border-radius:12px;
+word-break:break-all;
 
 }
+
 
 
 button{
 
-    background:#16a34a;
-    color:white;
-    border:0;
-    padding:12px;
-    border-radius:10px;
-    width:100%;
-    font-size:16px;
-    margin-top:10px;
+width:100%;
+padding:14px;
+border:0;
+border-radius:12px;
+background:#16a34a;
+color:white;
+font-size:17px;
+margin-top:15px;
 
 }
+
 
 
 .copy{
 
-    background:#2563eb;
+background:#2563eb;
 
 }
+
 
 
 .back{
 
-    display:block;
-    margin-top:15px;
-    color:white;
-
-}
-
-
-#copy_msg{
-
-    color:#22c55e;
-    margin-top:10px;
+display:block;
+text-align:center;
+margin-top:15px;
+background:#475569;
+padding:12px;
+border-radius:12px;
+color:white;
+text-decoration:none;
 
 }
 
@@ -101,50 +109,52 @@ button{
 </head>
 
 
-
 <body>
 
 
 <div class="box">
 
 
+
 <h2>
-💵 دفع إعلان مقابلة شخصية
+
+💳 دفع إعلان مقابلة شخصية
+
 </h2>
+
 
 
 
 <div class="info">
 
-مدة الإعلان:
-
-<br>
-
-{{days}} يوم
+رسوم الإعلان:
 
 <br><br>
 
-رسوم الإعلان:
+<b>
 
-<h2>
 {{fee}} USDT
-</h2>
 
+</b>
 
 </div>
 
 
 
 
-<p>
-أرسل المبلغ إلى محفظة المنصة:
-</p>
 
+<div class="info">
+
+أرسل الدفع إلى محفظة المنصة:
+
+<br><br>
 
 
 <div class="wallet" id="wallet">
 
+
 {{wallet}}
+
 
 </div>
 
@@ -158,11 +168,16 @@ button{
 
 
 
-<p id="copy_msg"></p>
+</div>
+
+
+
+
 
 
 
 <form method="POST" action="/cash_payment_sent">
+
 
 
 <input type="hidden" name="amount" value="{{amount}}">
@@ -175,31 +190,37 @@ button{
 
 <input type="hidden" name="notes" value="{{notes}}">
 
-<input type="hidden" name="fee" value="{{fee}}">
+<input type="hidden" name="plan" value="{{plan}}">
 
-<input type="hidden" name="days" value="{{days}}">
+
+
 
 
 <button>
 
-✅ أرسلت الدفع
+✅ تم إرسال الدفع
 
 </button>
+
 
 
 </form>
 
 
 
+
 <a class="back" href="/">
 
-العودة للرئيسية
+⬅️ الرجوع للرئيسية
 
 </a>
 
 
 
+
 </div>
+
+
 
 
 
@@ -208,14 +229,14 @@ button{
 
 function copyWallet(){
 
-let wallet = document.getElementById("wallet").innerText;
+
+let text=document.getElementById("wallet").innerText;
 
 
-navigator.clipboard.writeText(wallet);
+navigator.clipboard.writeText(text);
 
 
-document.getElementById("copy_msg").innerHTML =
-"✅ تم نسخ عنوان المحفظة";
+alert("تم نسخ عنوان المحفظة ✅");
 
 
 }
@@ -226,6 +247,5 @@ document.getElementById("copy_msg").innerHTML =
 
 
 </body>
-
 
 </html>
