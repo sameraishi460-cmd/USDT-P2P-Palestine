@@ -6,6 +6,8 @@ import os
 import shutil
 from datetime import datetime
 import traceback
+import threading
+import telegram_bot
 
 
 app = Flask(__name__)
@@ -773,8 +775,22 @@ def admin_backup():
     return "تم إنشاء نسخة احتياطية"
 
 
+# تشغيل بوت التليجرام تلقائياً بمجرد استيراد الملف (لضمان عمله مع Gunicorn على Render وخارجها)
+try:
+    threading.Thread(
+        target=telegram_bot.bot_loop,
+        daemon=True
+    ).start()
+except Exception:
+    traceback.print_exc()
+
+
 if __name__ == "__main__":
     try:
-        app.run(debug=True)
+        app.run(
+            host="0.0.0.0",
+            port=5000,
+            debug=False
+        )
     except Exception:
         traceback.print_exc()
