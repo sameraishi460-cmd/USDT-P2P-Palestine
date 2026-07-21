@@ -926,6 +926,24 @@ def admin():
     return render_template("admin.html", users=users, trades=trades, cash_trades=cash_trades, profit=profit, commission=commission)
 
 
+@app.route("/admin_cash_ads")
+@admin_required
+def admin_cash_ads():
+
+    con = connect()
+
+    ads = con.execute(
+        "SELECT * FROM cash_ads ORDER BY id DESC"
+    ).fetchall()
+
+    con.close()
+
+    return render_template(
+        "admin_cash_ads.html",
+        ads=ads
+    )
+
+
 @app.route("/admin_commission", methods=["POST"])
 @admin_required
 def admin_commission():
