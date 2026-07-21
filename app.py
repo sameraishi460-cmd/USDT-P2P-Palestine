@@ -1056,6 +1056,23 @@ def admin_cash_accept(id):
     return redirect("/admin_cash_ads")
 
 
+@app.route("/admin_cash_reject/<int:id>")
+@admin_required
+def admin_cash_reject(id):
+
+    con = connect()
+
+    con.execute(
+        "UPDATE cash_ads SET status='REJECTED' WHERE id=?",
+        (id,)
+    )
+
+    con.commit()
+    con.close()
+
+    return redirect("/admin_cash_ads")
+
+
 # تشغيل بوت التليجرام تلقائياً مع خيوط المعالجة (Threading)
 try:
     threading.Thread(
