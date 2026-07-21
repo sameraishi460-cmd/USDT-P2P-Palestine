@@ -2,311 +2,581 @@
 <html lang="ar" dir="rtl">
 
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>USDT P2P Palestine 🇵🇸</title>
 
 <style>
+
 *{
-    box-sizing:border-box;
+box-sizing:border-box;
 }
 
 body{
-    margin:0;
-    font-family:tahoma, Arial;
-    background:#070d18;
-    color:white;
+margin:0;
+font-family:tahoma;
+background:#050b16;
+color:white;
 }
+
+
+/* HEADER */
 
 .header{
-    background:#111827;
-    padding:18px 25px;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    position:sticky;
-    top:0;
-    z-index:10;
+
+background:#111827;
+padding:18px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+position:sticky;
+top:0;
+z-index:99;
+
 }
+
 
 .logo{
-    font-size:24px;
-    font-weight:bold;
-    color:#22c55e;
+
+font-size:24px;
+font-weight:bold;
+color:#22c55e;
+
 }
+
 
 .logo span{
-    color:white;
+
+color:white;
+
 }
+
 
 .nav a{
-    text-decoration:none;
-    color:white;
-    background:#2563eb;
-    padding:10px 15px;
-    border-radius:12px;
-    margin:3px;
-    display:inline-block;
+
+text-decoration:none;
+color:white;
+padding:10px 15px;
+border-radius:12px;
+background:#2563eb;
+margin:4px;
+display:inline-block;
+
 }
+
 
 .nav .green{
-    background:#16a34a;
+
+background:#16a34a;
+
 }
+
+
+
+/* CONTAINER */
+
 
 .container{
-    max-width:1150px;
-    margin:auto;
-    padding:20px;
+
+max-width:1200px;
+margin:auto;
+padding:20px;
+
 }
+
+
+/* HERO */
+
 
 .hero{
-    background:linear-gradient(135deg,#1e293b,#0f172a);
-    padding:35px 20px;
-    border-radius:25px;
-    text-align:center;
-    margin-top:20px;
+
+background:linear-gradient(135deg,#1e293b,#0f172a);
+padding:40px 20px;
+border-radius:25px;
+text-align:center;
+margin-top:20px;
+
 }
+
 
 .hero h1{
-    font-size:32px;
-    margin-bottom:10px;
+
+font-size:35px;
+
 }
+
 
 .hero p{
-    color:#cbd5e1;
-    font-size:18px;
+
+color:#cbd5e1;
+font-size:18px;
+
 }
 
-.main-buttons{
-    margin-top:25px;
-}
+
+
+/* BUTTONS */
+
 
 .main-buttons a{
-    display:inline-block;
-    padding:15px 30px;
-    border-radius:15px;
-    text-decoration:none;
-    color:white;
-    margin:8px;
-    font-size:18px;
+
+display:inline-block;
+padding:15px 35px;
+border-radius:15px;
+text-decoration:none;
+color:white;
+font-size:18px;
+margin:10px;
+
 }
+
 
 .sell{
-    background:#16a34a;
+
+background:#16a34a;
+
 }
 
-.cash{
-    background:#2563eb;
+
+.meeting{
+
+background:#2563eb;
+
 }
 
-.stats{
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
-    gap:15px;
-    margin-top:25px;
+
+
+/* FEATURES */
+
+
+.features{
+
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+gap:15px;
+margin-top:25px;
+
 }
 
-.stat{
-    background:#1e293b;
-    padding:20px;
-    border-radius:18px;
-    text-align:center;
+
+.feature{
+
+background:#1e293b;
+padding:20px;
+border-radius:18px;
+text-align:center;
+
 }
 
-.stat b{
-    display:block;
-    font-size:28px;
-    color:#22c55e;
+
+.feature b{
+
+display:block;
+font-size:25px;
+color:#22c55e;
+
 }
 
-/* =========================
-   ADS CARDS
-========================= */
 
-.section-title{
-    margin-top:35px;
-    font-size:24px;
+
+/* ADS */
+
+
+.title{
+
+margin-top:35px;
+
 }
+
 
 .cards{
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(270px,1fr));
-    gap:20px;
-    margin-top:20px;
+
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+gap:20px;
+
 }
+
 
 .card{
-    background:#111827;
-    border:1px solid #1f2937;
-    padding:22px;
-    border-radius:22px;
-    transition:.3s;
+
+background:#111827;
+padding:22px;
+border-radius:20px;
+border:1px solid #1f2937;
+
 }
 
-.card:hover{
-    transform:translateY(-5px);
-}
 
 .user{
-    color:#22c55e;
-    font-size:18px;
-    font-weight:bold;
+
+color:#22c55e;
+font-size:18px;
+
 }
 
-.amount{
-    background:#1e293b;
-    padding:12px;
-    border-radius:12px;
-    margin:12px 0;
+
+.info{
+
+background:#1e293b;
+padding:12px;
+border-radius:10px;
+margin:10px 0;
+
 }
+
 
 .price{
-    font-size:26px;
-    color:#22c55e;
-    font-weight:bold;
+
+font-size:28px;
+color:#22c55e;
+font-weight:bold;
+
 }
 
-.payment{
-    color:#cbd5e1;
-    margin:10px 0;
+
+
+.buy{
+
+display:block;
+background:#16a34a;
+padding:13px;
+border-radius:12px;
+text-align:center;
+text-decoration:none;
+color:white;
+
 }
 
-.buy-btn{
-    display:block;
-    text-align:center;
-    background:#16a34a;
-    color:white;
-    padding:14px;
-    border-radius:14px;
-    text-decoration:none;
-    margin-top:15px;
-    font-size:17px;
-}
 
-.buy-btn:hover{
-    background:#15803d;
-}
 
-.empty{
-    background:#1e293b;
-    padding:25px;
-    border-radius:20px;
-    text-align:center;
-}
+/* FOOTER */
+
 
 .footer{
-    text-align:center;
-    margin:40px 0 20px;
-    color:#94a3b8;
+
+text-align:center;
+margin:40px;
+color:#94a3b8;
+
 }
+
+
 
 .admin{
-    position:fixed;
-    bottom:15px;
-    left:15px;
-    font-size:12px;
-    opacity:.5;
-    color:white;
-    text-decoration:none;
+
+position:fixed;
+bottom:10px;
+left:10px;
+font-size:12px;
+opacity:.5;
+
 }
 
-@media(max-width:600px){
-    .header{
-        flex-direction:column;
-        gap:15px;
-    }
-    .hero h1{
-        font-size:25px;
-    }
-    .main-buttons a{
-        display:block;
-        width:100%;
-        margin:10px 0;
-    }
-}
+
 </style>
+
 </head>
+
+
 
 <body>
 
-<!-- HEADER -->
+
+
 <div class="header">
-    <div class="logo">
-        🇵🇸 <span>USDT</span> P2P Palestine
-    </div>
-    <div class="nav">
-        {% if user %}
-        <a href="/profile">👤 حسابي</a>
-        <a href="/notifications">🔔</a>
-        <a href="/logout">🚪 خروج</a>
-        {% else %}
-        <a href="/login">دخول</a>
-        <a class="green" href="/register">إنشاء حساب</a>
-        {% endif %}
-    </div>
+
+
+<div class="logo">
+
+🇵🇸 <span>USDT</span> P2P Palestine
+
 </div>
+
+
+
+<div class="nav">
+
+
+{% if user %}
+
+
+<a href="/dashboard">
+🏠 لوحة التحكم
+</a>
+
+
+<a href="/notifications">
+🔔
+</a>
+
+
+<a href="/logout">
+🚪 خروج
+</a>
+
+
+{% else %}
+
+
+<a href="/login">
+دخول
+</a>
+
+
+<a class="green" href="/register">
+إنشاء حساب
+</a>
+
+
+{% endif %}
+
+
+
+</div>
+
+
+</div>
+
+
+
+
 
 <div class="container">
 
-    <!-- HERO -->
-    <div class="hero">
-        <h1>شراء وبيع USDT بأمان 🇵🇸</h1>
-        <p>منصة تداول محلية مع ضمان Escrow ومقابلات شخصية</p>
-        <div class="main-buttons">
-            <a class="sell" href="/create_ad">🟢 بيع USDT</a>
-            <a class="cash" href="/cash_market">🤝 مقابلات شخصية</a>
-        </div>
-    </div>
 
-    <!-- STATS -->
-    <div class="stats">
-        <div class="stat"><b>24/7</b> دعم المنصة</div>
-        <div class="stat"><b>USDT</b> تداول آمن</div>
-        <div class="stat"><b>Escrow</b> حماية الصفقات</div>
-        <div class="stat"><b>🇵🇸</b> فلسطين</div>
-    </div>
 
-    <h2 class="section-title">🔥 إعلانات بيع USDT</h2>
+<div class="hero">
 
-    <div class="cards">
-        {% for ad in ads %}
-        <div class="card">
-            <div class="user">👤 {{ad.user}}</div>
-            <div class="amount">💰 الكمية: <b>{{ad.amount}} USDT</b></div>
-            <div class="price">{{ad.price}}</div>
-            <div class="payment">💳 طريقة الدفع:<br>{{ad.payment}}</div>
-            <a class="buy-btn" href="/buy/{{ad.id}}">شراء الآن 🚀</a>
-        </div>
-        {% else %}
-        <div class="empty">لا توجد إعلانات حالياً</div>
-        {% endfor %}
-    </div>
+
+<h1>
+شراء وبيع USDT بأمان 🇵🇸
+</h1>
+
+
+<p>
+منصة فلسطينية للتداول مع حماية الصفقات والمقابلات الشخصية
+</p>
+
+
+
+<div class="main-buttons">
+
+
+<a class="sell" href="/create_ad">
+🟢 إنشاء إعلان بيع USDT
+</a>
+
+
+
+<a class="meeting" href="/cash_market">
+🤝 سوق المقابلات الشخصية
+</a>
+
+
 
 </div>
 
-<!-- FOOTER -->
+
+</div>
+
+
+
+
+
+<div class="features">
+
+
+<div class="feature">
+
+<b>🔐</b>
+
+حماية الصفقات
+
+</div>
+
+
+
+<div class="feature">
+
+<b>🤝</b>
+
+مقابلات شخصية
+
+</div>
+
+
+
+<div class="feature">
+
+<b>⚡</b>
+
+تداول سريع
+
+</div>
+
+
+
+<div class="feature">
+
+<b>🇵🇸</b>
+
+داخل فلسطين
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+
+<h2 class="title">
+
+🔥 إعلانات بيع USDT
+
+</h2>
+
+
+
+
+<div class="cards">
+
+
+{% for ad in ads %}
+
+
+<div class="card">
+
+
+<div class="user">
+
+👤 {{ad.user}}
+
+</div>
+
+
+
+<div class="info">
+
+💰 الكمية:
+
+<b>
+{{ad.amount}} USDT
+</b>
+
+</div>
+
+
+
+
+<div class="price">
+
+{{ad.price}}
+
+</div>
+
+
+
+<div class="info">
+
+💳 الدفع:
+
+<br>
+
+{{ad.payment}}
+
+</div>
+
+
+
+
+<a class="buy" href="/buy/{{ad.id}}">
+
+شراء الآن 🚀
+
+</a>
+
+
+
+</div>
+
+
+
+{% else %}
+
+
+
+<div class="card">
+
+لا توجد إعلانات حالياً
+
+</div>
+
+
+
+{% endfor %}
+
+
+
+</div>
+
+
+
+
+</div>
+
+
+
 <div class="footer">
-    USDT P2P Palestine © 2026
-    <br>
-    منصة تداول USDT فلسطينية
+
+USDT P2P Palestine © 2026
+
 </div>
 
-<!-- ADMIN -->
-<a class="admin" href="/admin_login">Admin</a>
 
-<!-- TELEGRAM WEBAPP LOGIN -->
+
+<a class="admin" href="/admin_login">
+Admin
+</a>
+
+
+
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+
 <script>
+
 let tg = window.Telegram.WebApp;
+
 tg.ready();
+
 tg.expand();
 
-let telegramUser = tg.initDataUnsafe.user;
 
-if(telegramUser){
-    window.location.href = "/telegram_auth?id=" + telegramUser.id + "&username=" + (telegramUser.username || "");
+let user = tg.initDataUnsafe.user;
+
+
+if(user){
+
+window.location.href =
+"/telegram_auth?id="
++user.id+
+"&username="
++(user.username || "");
+
 }
+
 </script>
 
+
+
 </body>
+
 </html>
