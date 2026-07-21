@@ -4,16 +4,19 @@
 <head>
 
 <meta charset="UTF-8">
-<title>إعلاناتي</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>إعلاناتي - USDT P2P Palestine</title>
 
 <style>
 
 body{
 background:#050b16;
 color:white;
-font-family:tahoma;
+font-family:tahoma,Arial;
 padding:20px;
 }
+
 
 .container{
 max-width:600px;
@@ -21,28 +24,51 @@ margin:auto;
 }
 
 
+
 .card{
+
 background:#111827;
 padding:20px;
 border-radius:20px;
 margin-bottom:15px;
+
 }
 
 
+
 .info{
+
 background:#1e293b;
 padding:12px;
 border-radius:10px;
 margin:8px 0;
+
 }
+
 
 
 .green{
+
 color:#22c55e;
+font-weight:bold;
+
 }
 
 
+
+.status{
+
+background:#16a34a;
+padding:8px 12px;
+border-radius:10px;
+display:inline-block;
+
+}
+
+
+
 .back{
+
 display:block;
 background:#2563eb;
 padding:12px;
@@ -50,8 +76,37 @@ border-radius:12px;
 text-align:center;
 color:white;
 text-decoration:none;
-margin-bottom:20px;
+margin-bottom:15px;
+
 }
+
+
+
+.create{
+
+display:block;
+background:#16a34a;
+padding:12px;
+border-radius:12px;
+text-align:center;
+color:white;
+text-decoration:none;
+margin-bottom:20px;
+
+}
+
+
+
+.empty{
+
+text-align:center;
+background:#1e293b;
+padding:20px;
+border-radius:15px;
+
+}
+
+
 
 </style>
 
@@ -64,9 +119,17 @@ margin-bottom:20px;
 <div class="container">
 
 
+
 <a class="back" href="/dashboard">
 ⬅️ العودة للوحة التحكم
 </a>
+
+
+
+<a class="create" href="/create_ad">
+➕ إنشاء إعلان USDT جديد
+</a>
+
 
 
 <h2>
@@ -75,7 +138,9 @@ margin-bottom:20px;
 
 
 
+
 {% for ad in ads %}
+
 
 
 <div class="card">
@@ -86,42 +151,92 @@ margin-bottom:20px;
 </h3>
 
 
+
 <div class="info">
+
 💰 الكمية:
+
+<b>
 {{ad.amount}} USDT
+</b>
+
 </div>
 
 
+
 <div class="info">
+
 💵 السعر:
+
+<b>
 {{ad.price}}
+</b>
+
 </div>
+
 
 
 <div class="info">
+
 💳 الدفع:
+
+<br>
+
 {{ad.payment}}
+
 </div>
+
 
 
 <div class="info green">
+
 الحالة:
+
+<br><br>
+
+<span class="status">
+
 {{ad.status}}
+
+</span>
+
 </div>
 
 
+
+{% if ad.created %}
+
+<div class="info">
+
+📅 التاريخ:
+
+{{ad.created}}
+
 </div>
+
+{% endif %}
+
+
+
+</div>
+
+
 
 
 {% else %}
 
 
-<div class="card">
+
+<div class="empty">
+
 لا يوجد لديك إعلانات حالياً
+
 </div>
 
 
+
 {% endfor %}
+
 
 
 
