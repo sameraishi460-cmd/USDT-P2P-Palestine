@@ -1,15 +1,10 @@
 import requests
-import sqlite3
 import time
 
 
-TOKEN = "8064024379:AAE3UZRfkPzhrr98w3WmO0dO5wlIzEugt_w"
-
-ADMIN_CHAT_ID = "5681774891"
+TOKEN = "8881823408:AAFOF1wDyMjrW7hLQAy9hwY2LvzzeddxQbk"
 
 WEBAPP_URL = "https://usdt-p2p-palestine-1.onrender.com/"
-
-DATABASE = "database.db"
 
 
 def send_message(chat_id, text, keyboard=None):
@@ -27,36 +22,13 @@ def send_message(chat_id, text, keyboard=None):
     requests.post(url, json=data)
 
 
-def notify_admin(text):
-    send_message(ADMIN_CHAT_ID, text)
-
-
-
-def get_stats():
-
-    con = sqlite3.connect(DATABASE)
-
-    users = con.execute(
-        "SELECT COUNT(*) FROM users"
-    ).fetchone()[0]
-
-    trades = con.execute(
-        "SELECT COUNT(*) FROM trades"
-    ).fetchone()[0]
-
-    profit = con.execute(
-        "SELECT total FROM platform_profit WHERE id=1"
-    ).fetchone()[0]
-
-    con.close()
-
-    return users, trades, profit
-
-
 
 def bot_loop():
 
     last_update = 0
+
+    print("Bot started...")
+
 
     while True:
 
@@ -67,59 +39,55 @@ def bot_loop():
             "timeout": 30
         }
 
-        r = requests.get(url, params=params).json()
+        try:
+
+            r = requests.get(url, params=params).json()
+
+            for update in r.get("result", []):
+
+                last_update = update["update_id"]
+
+                if "message" in update:
+
+                    chat_id = update["message"]["chat"]["id"]
+
+                    text = update["message"].get("text", "")
 
 
-        for update in r.get("result", []):
+                    if text == "/start":
 
-            last_update = update["update_id"]
-
-            if "message" in update:
-
-                chat_id = update["message"]["chat"]["id"]
-
-                text = update["message"].get("text", "")
-
-
-                if text == "/start":
-
-                    keyboard = {
-                        "inline_keyboard": [
-                            [
-                                {
-                                    "text": "🚀 فتح التطبيق",
-                                    "web_app": {
-                                        "url": WEBAPP_URL
+                        keyboard = {
+                            "inline_keyboard": [
+                                [
+                                    {
+                                        "text": "🚀 فتح التطبيق",
+                                        "web_app": {
+                                            "url": WEBAPP_URL
+                                        }
                                     }
-                                }
+                                ]
                             ]
-                        ]
-                    }
+                        }
 
 
-                    send_message(
-                        chat_id,
-                        "مرحبا بك في منصة USDT P2P فلسطين 🇵🇸\n\nاضغط لفتح التطبيق:",
-                        keyboard
-                    )
+                        send_message(
+                            chat_id,
+                            "أهلاً بك في منصة USDT P2P فلسطين 🇵🇸\n\nاضغط الزر لفتح التطبيق:",
+                            keyboard
+                        )
 
 
-                elif text == "/stats":
+                    else:
 
-                    users, trades, profit = get_stats()
+                        send_message(
+                            chat_id,
+                            "اكتب /start لفتح التطبيق 🚀"
+                        )
 
-                    send_message(
-                        chat_id,
-                        f"""
-📊 إحصائيات المنصة
 
-👤 المستخدمين: {users}
+        except Exception as e:
 
-💰 الصفقات: {trades}
-
-💵 الأرباح: {profit}$
-"""
-                    )
+            print(e)
 
 
         time.sleep(2)
