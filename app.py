@@ -397,8 +397,14 @@ def telegram_auth():
 def home():
     con = connect()
     ads = con.execute("SELECT * FROM ads WHERE status='OPEN' ORDER BY id DESC").fetchall()
+    cash_ads = con.execute("SELECT * FROM cash_ads WHERE status='OPEN' ORDER BY id DESC").fetchall()
     con.close()
-    return render_template("index.html", ads=ads)
+    
+    return render_template(
+        "index.html",
+        ads=ads,
+        cash_ads=cash_ads
+    )
 
 
 @app.route("/create_ad", methods=["GET", "POST"])
