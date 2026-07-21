@@ -528,23 +528,44 @@ def cash_ads():
 @login_required
 def create_cash_ad():
     if request.method == "POST":
-        amount = float(request.form.get("amount", 0))
-        price = float(request.form.get("price", 0))
-        city = request.form.get("city", "")
-        location = request.form.get("location", "")
-        notes = request.form.get("notes", "")
+        amount = request.form.get("amount")
+        price = request.form.get("price")
+        city = request.form.get("city")
+        location = request.form.get("location")
+        notes = request.form.get("notes")
+        plan = request.form.get("plan")
 
-        con = connect()
-        fee = con.execute("SELECT cash_fee FROM commission WHERE id=1").fetchone()
-        cash_fee = fee["cash_fee"] if fee else 0
+        plans = {
+            "week": {
+                "fee": 2,
+                "days": 7
+            },
+            "two_weeks": {
+                "fee": 6,
+                "days": 14
+            },
+            "month": {
+                "fee": 15,
+                "days": 30
+            }
+        }
 
-        con.execute(
-            "INSERT INTO cash_ads (user, amount, price, city, location, notes, fee, status) VALUES(?, ?, ?, ?, ?, ?, ?, ?)",
-            (session["user"], amount, price, city, location, notes, cash_fee, "OPEN")
+        selected = plans.get(plan)
+
+        if not selected:
+            return "مدة الإعلان غير صحيحة"
+
+        return render_template(
+            "cash_payment.html",
+            fee=selected["fee"],
+            days=selected["days"],
+            wallet=PLATFORM_WALLET,
+            amount=amount,
+            price=price,
+            city=city,
+            location=location,
+            notes=notes
         )
-        con.commit()
-        con.close()
-        return redirect("/cash_market")
 
     return render_template("create_cash_ad.html")
 
