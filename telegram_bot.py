@@ -3,24 +3,26 @@ import time
 import os
 
 
-# ضع توكن البوت هنا
-TOKEN = "8881823408:AAFOF1wDyMjrW7hLQAy9hwY2LvzzeddxQbk"
+TOKEN = os.getenv("BOT_TOKEN")
 
-
-# رابط منصتك
 WEBAPP_URL = "https://usdt-p2p-palestine-1.onrender.com/telegram_login"
 
 
-def telegram_api(method, data=None):
+
+def telegram_request(method, data=None):
 
     url = f"https://api.telegram.org/bot{TOKEN}/{method}"
 
     try:
-        r = requests.post(url, json=data, timeout=30)
+        r = requests.post(
+            url,
+            json=data,
+            timeout=30
+        )
         return r.json()
 
     except Exception as e:
-        print("Telegram API Error:", e)
+        print("Telegram Error:", e)
         return {}
 
 
@@ -35,13 +37,22 @@ def send_message(chat_id, text, keyboard=None):
     if keyboard:
         data["reply_markup"] = keyboard
 
-    telegram_api("sendMessage", data)
+    telegram_request(
+        "sendMessage",
+        data
+    )
 
 
 
 def bot_loop():
 
-    print("USDT P2P Telegram Bot Started 🚀")
+    if not TOKEN:
+        print("BOT_TOKEN missing")
+        return
+
+
+    print("Telegram Bot Started 🚀")
+
 
     last_update = 0
 
@@ -50,7 +61,7 @@ def bot_loop():
 
         try:
 
-            response = telegram_api(
+            result = telegram_request(
                 "getUpdates",
                 {
                     "offset": last_update + 1,
@@ -59,7 +70,7 @@ def bot_loop():
             )
 
 
-            for update in response.get("result", []):
+            for update in result.get("result", []):
 
                 last_update = update["update_id"]
 
@@ -68,15 +79,16 @@ def bot_loop():
                     continue
 
 
-                message = update["message"]
+                msg = update["message"]
 
-                chat_id = message["chat"]["id"]
+                chat_id = msg["chat"]["id"]
 
-                text = message.get("text", "")
+                text = msg.get("text", "")
 
 
 
                 if text == "/start":
+
 
                     keyboard = {
                         "inline_keyboard": [
@@ -94,37 +106,28 @@ def bot_loop():
 
                     send_message(
                         chat_id,
-                        """
-🇵🇸 أهلاً بك في منصة USDT P2P فلسطين
-
-شراء وبيع USDT بسهولة وأمان.
-
-اضغط الزر لفتح المنصة 👇
-                        """,
+                        "🇵🇸 أهلاً بك في منصة USDT P2P فلسطين\n\nاضغط لفتح التطبيق:",
                         keyboard
                     )
 
-
-                elif text == "/help":
-
-                    send_message(
-                        chat_id,
-                        """
-الأوامر:
-
-/start فتح المنصة 🚀
-
-/help المساعدة ℹ️
-                        """
-                    )
 
 
                 elif text == "/id":
 
                     send_message(
                         chat_id,
-                        f"Telegram ID الخاص بك:\n{chat_id}"
+                        f"Telegram ID:\n{chat_id}"
                     )
+
+
+
+                elif text == "/help":
+
+                    send_message(
+                        chat_id,
+                        "استخدم /start لفتح المنصة 🚀"
+                    )
+
 
 
                 else:
@@ -137,12 +140,12 @@ def bot_loop():
 
         except Exception as e:
 
-            print("BOT ERROR:", e)
+            print("BOT LOOP ERROR:", e)
 
 
         time.sleep(2)
 
 
 
-if name == "__main__":
+if __name__ == "__main__":
     bot_loop()
