@@ -40,9 +40,11 @@ font-weight:bold;
 color:#22c55e;
 }
 
+
 .logo span{
 color:white;
 }
+
 
 
 .nav a{
@@ -56,9 +58,11 @@ display:inline-block;
 }
 
 
-.nav .green{
-background:#16a34a;
+
+.green{
+background:#16a34a !important;
 }
+
 
 
 .container{
@@ -66,6 +70,7 @@ max-width:1200px;
 margin:auto;
 padding:20px;
 }
+
 
 
 .hero{
@@ -77,6 +82,7 @@ text-align:center;
 margin-top:20px;
 
 }
+
 
 
 .hero h1{
@@ -91,17 +97,18 @@ font-size:18px;
 
 
 
-.main-buttons a{
+.buttons a{
 
 display:inline-block;
 padding:15px 30px;
+margin:10px;
 border-radius:15px;
 text-decoration:none;
 color:white;
-margin:10px;
 font-size:18px;
 
 }
+
 
 
 .sell{
@@ -109,7 +116,7 @@ background:#16a34a;
 }
 
 
-.meeting{
+.cash{
 background:#2563eb;
 }
 
@@ -125,6 +132,7 @@ margin-top:25px;
 }
 
 
+
 .feature{
 
 background:#1e293b;
@@ -135,17 +143,18 @@ text-align:center;
 }
 
 
+
 .feature b{
 
-display:block;
 font-size:28px;
+display:block;
 color:#22c55e;
 
 }
 
 
 
-.section-title{
+.title{
 
 margin-top:40px;
 
@@ -168,7 +177,6 @@ gap:20px;
 background:#111827;
 padding:22px;
 border-radius:22px;
-border:1px solid #1f2937;
 
 }
 
@@ -177,8 +185,8 @@ border:1px solid #1f2937;
 .user{
 
 color:#22c55e;
-font-size:18px;
 font-weight:bold;
+font-size:18px;
 
 }
 
@@ -197,7 +205,7 @@ margin:10px 0;
 
 .price{
 
-font-size:27px;
+font-size:26px;
 color:#22c55e;
 font-weight:bold;
 
@@ -212,21 +220,22 @@ background:#16a34a;
 padding:13px;
 border-radius:12px;
 text-align:center;
-text-decoration:none;
 color:white;
+text-decoration:none;
 
 }
 
 
-.cash-btn{
+
+.meet{
 
 display:block;
 background:#2563eb;
 padding:13px;
 border-radius:12px;
 text-align:center;
-text-decoration:none;
 color:white;
+text-decoration:none;
 
 }
 
@@ -242,7 +251,6 @@ text-align:center;
 }
 
 
-
 .footer{
 
 text-align:center;
@@ -252,31 +260,23 @@ color:#94a3b8;
 }
 
 
-
-.admin{
-
-position:fixed;
-bottom:10px;
-left:10px;
-font-size:12px;
-opacity:.5;
-
-}
-
-
 </style>
 
 </head>
 
 
+
 <body>
+
 
 
 <div class="header">
 
 
 <div class="logo">
+
 🇵🇸 <span>USDT</span> P2P Palestine
+
 </div>
 
 
@@ -287,18 +287,19 @@ opacity:.5;
 {% if user %}
 
 <a href="/dashboard">
-🏠 لوحة التحكم
+👤 حسابي
 </a>
 
 
-<a href="/notifications">
-🔔
+<a href="/">
+📢 الإعلانات
 </a>
 
 
 <a href="/logout">
 🚪 خروج
 </a>
+
 
 
 {% else %}
@@ -325,9 +326,7 @@ opacity:.5;
 
 
 
-
 <div class="container">
-
 
 
 <div class="hero">
@@ -339,20 +338,21 @@ opacity:.5;
 
 
 <p>
-منصة فلسطينية للتداول وحماية الصفقات والمقابلات الشخصية
+منصة فلسطينية لشراء وبيع USDT مع حماية الصفقات والمقابلات الشخصية
 </p>
 
 
-<div class="main-buttons">
+
+<div class="buttons">
 
 
 <a class="sell" href="/create_ad">
-🟢 إعلان بيع USDT
+🟢 إنشاء إعلان USDT
 </a>
 
 
-<a class="meeting" href="/cash_market">
-🤝 إعلان مقابلة شخصية
+<a class="cash" href="/create_cash_ad">
+🤝 إنشاء مقابلة شخصية
 </a>
 
 
@@ -360,7 +360,6 @@ opacity:.5;
 
 
 </div>
-
 
 
 
@@ -389,7 +388,7 @@ opacity:.5;
 
 <div class="feature">
 <b>🇵🇸</b>
-فلسطين
+داخل فلسطين
 </div>
 
 
@@ -399,17 +398,17 @@ opacity:.5;
 
 
 
-<h2 class="section-title">
+
+<h2 class="title">
 📢 الإعلانات المتوفرة
 </h2>
-
-
 
 
 
 <h2>
 🟢 بيع USDT أونلاين
 </h2>
+
 
 
 
@@ -428,8 +427,7 @@ opacity:.5;
 
 
 <div class="info">
-💰 الكمية:
-<b>{{ad.amount}} USDT</b>
+💰 {{ad.amount}} USDT
 </div>
 
 
@@ -439,10 +437,11 @@ opacity:.5;
 
 
 <div class="info">
-💳 الدفع:
-<br>
-{{ad.payment}}
+
+💳 {{ad.payment}}
+
 </div>
+
 
 
 <a class="buy" href="/buy/{{ad.id}}">
@@ -453,29 +452,27 @@ opacity:.5;
 </div>
 
 
+
 {% else %}
 
 
 <div class="empty">
-لا توجد إعلانات USDT حالياً
+لا توجد إعلانات حالياً
 </div>
 
 
 {% endfor %}
 
 
-
 </div>
 
 
 
 
 
-
-<h2 class="section-title">
-🤝 مقابلات شخصية متوفرة
+<h2 class="title">
+🤝 مقابلات شخصية
 </h2>
-
 
 
 
@@ -491,7 +488,6 @@ opacity:.5;
 <div class="user">
 👤 {{cash.user}}
 </div>
-
 
 
 <div class="info">
@@ -512,20 +508,20 @@ opacity:.5;
 
 
 
-<a class="cash-btn" href="/cash_ad/{{cash.id}}">
-طلب مقابلة 🤝
+<a class="meet" href="/cash_ad/{{cash.id}}">
+طلب مقابلة
 </a>
 
 
-</div>
 
+</div>
 
 
 {% else %}
 
 
 <div class="empty">
-لا توجد مقابلات شخصية حالياً
+لا توجد مقابلات حالياً
 </div>
 
 
@@ -534,7 +530,6 @@ opacity:.5;
 
 
 </div>
-
 
 
 
@@ -552,15 +547,8 @@ USDT P2P Palestine © 2026
 
 
 
-
-<a class="admin" href="/admin_login">
-Admin
-</a>
-
-
-
-
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
 
 <script>
 
@@ -571,18 +559,9 @@ tg.ready();
 tg.expand();
 
 
-let user = tg.initDataUnsafe.user;
+// لا تعمل تحويل تلقائي هنا
+// لأنه كان يرجعك للوحة التحكم كل مرة
 
-
-if(user){
-
-window.location.href =
-"/telegram_auth?id="
-+user.id+
-"&username="
-+(user.username || "");
-
-}
 
 </script>
 
