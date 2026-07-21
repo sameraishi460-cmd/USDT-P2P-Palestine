@@ -64,7 +64,6 @@ body{
 
 
 .button{
-
     display:block;
     padding:15px;
     border-radius:15px;
@@ -73,7 +72,6 @@ body{
     color:white;
     background:#2563eb;
     font-size:17px;
-
 }
 
 
@@ -123,13 +121,12 @@ body{
 أهلاً {{ user['username'] }} 👋
 </p>
 
-
 <p>
 🔐 حسابك محفوظ
 </p>
 
-
 </div>
+
 
 
 
@@ -158,6 +155,7 @@ body{
 
 
 
+
 <div class="card">
 
 
@@ -167,10 +165,7 @@ body{
 
 
 <div class="info">
-
-<span>
-الحالة
-</span>
+<span>الحالة</span>
 
 <span>
 
@@ -191,10 +186,7 @@ body{
 
 
 <div class="info">
-
-<span>
-التقييم
-</span>
+<span>التقييم</span>
 
 <span>
 ⭐ {{ user['rating'] }}
@@ -205,10 +197,7 @@ body{
 
 
 <div class="info">
-
-<span>
-الصفقات
-</span>
+<span>الصفقات</span>
 
 <span>
 {{ user['trades_count'] }}
@@ -218,6 +207,7 @@ body{
 
 
 </div>
+
 
 
 
@@ -276,8 +266,15 @@ body{
 <div class="menu">
 
 
+
 <a class="button green" href="/">
 💱 إعلانات USDT
+</a>
+
+
+
+<a class="button gray" href="/my_ads">
+📢 إعلاناتي
 </a>
 
 
