@@ -103,6 +103,20 @@ def setup_database():
     )
     """)
 
+    # CASH AD PAYMENTS
+    con.execute("""
+    CREATE TABLE IF NOT EXISTS cash_ad_payments(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT,
+        amount REAL,
+        plan TEXT,
+        days INTEGER,
+        wallet TEXT,
+        status TEXT DEFAULT 'PENDING',
+        created DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
     # CASH TRADES
     con.execute("""
     CREATE TABLE IF NOT EXISTS cash_trades(
