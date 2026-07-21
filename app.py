@@ -980,31 +980,45 @@ def cash_payment_sent():
     city = request.form.get("city")
     location = request.form.get("location")
     notes = request.form.get("notes")
-    fee = request.form.get("fee")
-    days = request.form.get("days")
+    plan = request.form.get("plan")
+
+    fees = {
+        "week": 2,
+        "two_weeks": 6,
+        "month": 15
+    }
+
+    fee = fees.get(plan, 2)
 
     con = connect()
 
-    con.execute("""
-    INSERT INTO cash_ads
-    (user, amount, price, city, location, notes, fee, status)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    """,
-    (
-        session["user"],
-        amount,
-        price,
-        city,
-        location,
-        notes,
-        fee,
-        "PENDING"
-    ))
+    con.execute(
+        """
+        INSERT INTO cash_ads
+        (user, amount, price, city, location, notes, fee, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            session["user"],
+            amount,
+            price,
+            city,
+            location,
+            notes,
+            fee,
+            "PENDING_PAYMENT"
+        )
+    )
 
     con.commit()
     con.close()
 
-    return render_template("payment_success.html")
+    return """
+    <script>
+    alert('تم إرسال طلب الإعلان للمراجعة ✅');
+    window.location.href='/';
+    </script>
+    """
 
 
 # تشغيل بوت التليجرام تلقائياً مع خيوط المعالجة (Threading)
