@@ -5,7 +5,7 @@ import traceback
 
 TOKEN = "8881823408:AAFOF1wDyMjrW7hLQAy9hwY2LvzzeddxQbk"
 
-WEBAPP_URL = "https://usdt-p2p-palestine-1.onrender.com/telegram_login"
+WEBAPP_URL = "https://usdt-p2p-palestine-1.onrender.com"
 
 
 def send_message(chat_id, text, keyboard=None):
@@ -37,7 +37,6 @@ def bot_loop():
     print("Telegram Bot Started 🚀")
 
     last_update = 0
-
 
     while True:
 
@@ -81,7 +80,7 @@ def bot_loop():
                                 {
                                     "text":"🚀 فتح منصة USDT P2P فلسطين",
                                     "web_app":{
-                                        "url":WEBAPP_URL
+                                        "url": WEBAPP_URL
                                     }
                                 }
                             ]
