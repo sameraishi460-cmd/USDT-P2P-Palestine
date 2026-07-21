@@ -2,65 +2,139 @@
 <html lang="ar" dir="rtl">
 
 <head>
+
 <meta charset="UTF-8">
-<title>سوق الكاش</title>
-<link rel="stylesheet" href="/static/style.css">
+
+<title>مقابلات شخصية - USDT P2P</title>
+
+<style>
+
+body{
+    background:#0b1220;
+    color:white;
+    font-family:tahoma;
+    margin:0;
+}
+
+.container{
+    max-width:1000px;
+    margin:auto;
+    padding:20px;
+}
+
+.card{
+    background:#1e293b;
+    padding:20px;
+    border-radius:18px;
+    margin-bottom:20px;
+}
+
+.title{
+    color:#22c55e;
+    font-size:22px;
+    font-weight:bold;
+}
+
+.info{
+    margin:10px 0;
+}
+
+.btn{
+    display:block;
+    text-align:center;
+    background:#16a34a;
+    color:white;
+    padding:12px;
+    border-radius:10px;
+    text-decoration:none;
+}
+
+.empty{
+    background:#1e293b;
+    padding:20px;
+    border-radius:15px;
+    text-align:center;
+}
+
+</style>
+
 </head>
+
 
 <body>
 
+
 <div class="container">
 
-<h1>سوق USDT كاش</h1>
 
-<a href="/create_cash_ad">
-إنشاء إعلان جديد
-</a>
-
-<hr>
+<h1>
+🤝 إعلانات المقابلات الشخصية
+</h1>
 
 
 {% for ad in ads %}
 
-<div class="box">
 
-<h3>
-{{ ad.amount }} USDT
-</h3>
-
-<p>
-السعر:
-{{ ad.price }}
-</p>
-
-<p>
-المدينة:
-{{ ad.city }}
-</p>
+<div class="card">
 
 
-<a href="/cash_ad/{{ad.id}}">
-عرض الإعلان
+<div class="title">
+🟢 مقابلة شخصية
+</div>
+
+
+<div class="info">
+👤 البائع:
+<b>{{ad.user}}</b>
+</div>
+
+
+<div class="info">
+💰 الكمية:
+<b>{{ad.amount}} USDT</b>
+</div>
+
+
+<div class="info">
+💵 السعر:
+<b>{{ad.price}}</b>
+</div>
+
+
+<div class="info">
+📍 المدينة:
+<b>{{ad.city}}</b>
+</div>
+
+
+<div class="info">
+📌 المكان:
+<b>{{ad.location}}</b>
+</div>
+
+
+<a class="btn" href="/cash_ad/{{ad.id}}">
+عرض التفاصيل
 </a>
 
 
 </div>
 
+
 {% else %}
 
-<p>
-لا يوجد إعلانات حاليا
-</p>
+
+<div class="empty">
+لا توجد إعلانات مقابلة شخصية حالياً
+</div>
+
 
 {% endfor %}
 
 
-<a href="/">
-رجوع
-</a>
-
 
 </div>
+
 
 </body>
 
