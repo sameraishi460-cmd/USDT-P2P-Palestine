@@ -40,14 +40,13 @@ font-weight:bold;
 color:#22c55e;
 }
 
-
 .logo span{
 color:white;
 }
 
 
-
 .nav a{
+
 text-decoration:none;
 color:white;
 padding:10px 15px;
@@ -55,22 +54,24 @@ border-radius:12px;
 background:#2563eb;
 margin:4px;
 display:inline-block;
+
 }
 
 
+.nav .green{
 
-.green{
-background:#16a34a !important;
+background:#16a34a;
+
 }
-
 
 
 .container{
+
 max-width:1200px;
 margin:auto;
 padding:20px;
-}
 
+}
 
 
 .hero{
@@ -84,17 +85,19 @@ margin-top:20px;
 }
 
 
-
 .hero h1{
+
 font-size:35px;
+
 }
 
 
 .hero p{
+
 color:#cbd5e1;
 font-size:18px;
-}
 
+}
 
 
 .buttons a{
@@ -110,16 +113,18 @@ font-size:18px;
 }
 
 
-
 .sell{
+
 background:#16a34a;
+
 }
 
 
 .cash{
-background:#2563eb;
-}
 
+background:#2563eb;
+
+}
 
 
 .features{
@@ -132,7 +137,6 @@ margin-top:25px;
 }
 
 
-
 .feature{
 
 background:#1e293b;
@@ -141,7 +145,6 @@ border-radius:18px;
 text-align:center;
 
 }
-
 
 
 .feature b{
@@ -177,6 +180,7 @@ gap:20px;
 background:#111827;
 padding:22px;
 border-radius:22px;
+border:1px solid #263244;
 
 }
 
@@ -241,6 +245,21 @@ text-decoration:none;
 
 
 
+.details{
+
+display:block;
+background:#475569;
+padding:12px;
+border-radius:12px;
+text-align:center;
+color:white;
+text-decoration:none;
+margin-top:10px;
+
+}
+
+
+
 .empty{
 
 background:#1e293b;
@@ -265,7 +284,6 @@ color:#94a3b8;
 </head>
 
 
-
 <body>
 
 
@@ -286,8 +304,9 @@ color:#94a3b8;
 
 {% if user %}
 
+
 <a href="/dashboard">
-👤 حسابي
+👤 لوحة التحكم
 </a>
 
 
@@ -299,7 +318,6 @@ color:#94a3b8;
 <a href="/logout">
 🚪 خروج
 </a>
-
 
 
 {% else %}
@@ -326,7 +344,9 @@ color:#94a3b8;
 
 
 
+
 <div class="container">
+
 
 
 <div class="hero">
@@ -338,7 +358,7 @@ color:#94a3b8;
 
 
 <p>
-منصة فلسطينية لشراء وبيع USDT مع حماية الصفقات والمقابلات الشخصية
+منصة فلسطينية للتداول مع حماية الصفقات والمقابلات الشخصية
 </p>
 
 
@@ -349,6 +369,7 @@ color:#94a3b8;
 <a class="sell" href="/create_ad">
 🟢 إنشاء إعلان USDT
 </a>
+
 
 
 <a class="cash" href="/create_cash_ad">
@@ -382,17 +403,18 @@ color:#94a3b8;
 
 <div class="feature">
 <b>⚡</b>
-تداول سريع
+سرعة التداول
 </div>
 
 
 <div class="feature">
 <b>🇵🇸</b>
-داخل فلسطين
+فلسطين
 </div>
 
 
 </div>
+
 
 
 
@@ -405,10 +427,10 @@ color:#94a3b8;
 
 
 
+
 <h2>
 🟢 بيع USDT أونلاين
 </h2>
-
 
 
 
@@ -427,7 +449,8 @@ color:#94a3b8;
 
 
 <div class="info">
-💰 {{ad.amount}} USDT
+💰 الكمية:
+{{ad.amount}} USDT
 </div>
 
 
@@ -437,9 +460,9 @@ color:#94a3b8;
 
 
 <div class="info">
-
-💳 {{ad.payment}}
-
+💳 الدفع:
+<br>
+{{ad.payment}}
 </div>
 
 
@@ -457,22 +480,25 @@ color:#94a3b8;
 
 
 <div class="empty">
-لا توجد إعلانات حالياً
+لا توجد إعلانات USDT
 </div>
 
 
 {% endfor %}
 
 
+
 </div>
 
 
 
 
 
+
 <h2 class="title">
-🤝 مقابلات شخصية
+🤝 مقابلات شخصية متوفرة
 </h2>
+
 
 
 
@@ -490,16 +516,23 @@ color:#94a3b8;
 </div>
 
 
+
 <div class="info">
 💰 {{cash.amount}} USDT
 </div>
 
 
+
 <div class="info">
+
 📍 {{cash.city}}
+
 <br>
+
 📌 {{cash.location}}
+
 </div>
+
 
 
 <div class="price">
@@ -509,7 +542,7 @@ color:#94a3b8;
 
 
 <a class="meet" href="/cash_ad/{{cash.id}}">
-طلب مقابلة
+طلب مقابلة 🤝
 </a>
 
 
@@ -517,23 +550,24 @@ color:#94a3b8;
 </div>
 
 
+
 {% else %}
 
 
 <div class="empty">
-لا توجد مقابلات حالياً
+لا توجد مقابلات شخصية حالياً
 </div>
 
 
 {% endfor %}
 
 
-
 </div>
 
 
 
 </div>
+
 
 
 
@@ -544,26 +578,6 @@ color:#94a3b8;
 USDT P2P Palestine © 2026
 
 </div>
-
-
-
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-
-
-<script>
-
-let tg = window.Telegram.WebApp;
-
-tg.ready();
-
-tg.expand();
-
-
-// لا تعمل تحويل تلقائي هنا
-// لأنه كان يرجعك للوحة التحكم كل مرة
-
-
-</script>
 
 
 
