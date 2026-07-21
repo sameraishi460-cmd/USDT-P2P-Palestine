@@ -109,36 +109,10 @@ body{
 </p>
 
 <p>
-🔐 حسابك محفوظ
+🔐 جلسة الحساب محفوظة لمدة 30 يوم
 </p>
 
 </div>
-
-
-
-<div class="menu">
-
-
-<a class="button gray" href="/market">
-🏠 الصفحة الرئيسية والإعلانات
-</a>
-
-
-<a class="button yellow" href="javascript:history.back();">
-⬅️ رجوع
-</a>
-
-
-<a class="button gray" href="javascript:location.reload();">
-🔄 تحديث
-</a>
-
-
-</div>
-
-
-<br>
-
 
 
 
@@ -150,23 +124,14 @@ body{
 
 
 <div class="info">
+<span>الحالة</span>
 
 <span>
-الحالة
-</span>
-
-<span>
-
 {% if user['verified'] == 1 %}
-
 ✅ موثق
-
 {% else %}
-
 ⚠️ غير موثق
-
 {% endif %}
-
 </span>
 
 </div>
@@ -174,34 +139,19 @@ body{
 
 
 <div class="info">
-
-<span>
-التقييم
-</span>
-
-<span>
-⭐ {{ user['rating'] }}
-</span>
-
+<span>التقييم</span>
+<span>⭐ {{ user['rating'] }}</span>
 </div>
 
 
 
 <div class="info">
-
-<span>
-الصفقات
-</span>
-
-<span>
-{{ user['trades_count'] }}
-</span>
-
+<span>الصفقات</span>
+<span>{{ user['trades_count'] }}</span>
 </div>
 
 
 </div>
-
 
 
 
@@ -216,29 +166,14 @@ body{
 
 
 <div class="info">
-
-<span>
-صفقات USDT
-</span>
-
-<span>
-{{ completed }}
-</span>
-
+<span>صفقات USDT</span>
+<span>{{ completed }}</span>
 </div>
 
 
-
 <div class="info">
-
-<span>
-مقابلات مكتملة
-</span>
-
-<span>
-{{ cash_completed }}
-</span>
-
+<span>مقابلات مكتملة</span>
+<span>{{ cash_completed }}</span>
 </div>
 
 
@@ -261,11 +196,9 @@ body{
 <div class="menu">
 
 
-
 <a class="button green" href="/market">
 💱 إعلانات USDT
 </a>
-
 
 
 <a class="button yellow" href="/my_ads">
@@ -273,11 +206,9 @@ body{
 </a>
 
 
-
 <a class="button" href="/create_ad">
 ➕ إنشاء إعلان USDT
 </a>
-
 
 
 <a class="button orange" href="/cash_market">
@@ -285,11 +216,9 @@ body{
 </a>
 
 
-
 <a class="button orange" href="/create_cash_ad">
 📍 إنشاء إعلان مقابلة
 </a>
-
 
 
 <a class="button" href="/profile">
@@ -297,24 +226,24 @@ body{
 </a>
 
 
-
 <a class="button" href="/notifications">
 🔔 الإشعارات
 </a>
 
 
+</div>
+
+</div>
+
+
+
+<div class="card">
 
 <a class="button red" href="/logout">
 🚪 تسجيل خروج
 </a>
 
-
-
 </div>
-
-
-</div>
-
 
 
 </div>
