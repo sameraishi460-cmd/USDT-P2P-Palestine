@@ -280,8 +280,17 @@ def logout():
 
 @app.route("/telegram_login")
 def telegram_login():
-    print(request.args)  # طباعة البيانات الواردة في الـ Console لفحصها والتأكد منها
-    telegram_id = request.args.get("telegram_id")
+    return render_template("telegram_login.html")
+
+
+@app.route("/telegram_webapp")
+def telegram_webapp():
+    return render_template("telegram_webapp.html")
+
+
+@app.route("/telegram_auth")
+def telegram_auth():
+    telegram_id = request.args.get("id")
     username = request.args.get("username")
     first_name = request.args.get("first_name")
 
@@ -295,7 +304,7 @@ def telegram_login():
     ).fetchone()
 
     if not user:
-        final_username = username or f"telegram_{telegram_id}"
+        new_username = username if username else f"telegram_{telegram_id}"
         try:
             con.execute(
                 """
@@ -304,20 +313,19 @@ def telegram_login():
                 VALUES (?, ?, ?)
                 """,
                 (
-                    final_username,
+                    new_username,
                     generate_password_hash("telegram_default_pass"),
                     telegram_id
                 )
             )
             con.commit()
-            user_name_to_session = final_username
+            session["user"] = new_username
         except:
-            user_name_to_session = final_username
+            session["user"] = new_username
     else:
-        user_name_to_session = user["username"]
+        session["user"] = user["username"]
 
     con.close()
-    session["user"] = user_name_to_session
     return redirect("/dashboard")
 
 
