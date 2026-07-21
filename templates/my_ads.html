@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+
+<meta charset="UTF-8">
+<title>إعلاناتي</title>
+
+<style>
+
+body{
+background:#050b16;
+color:white;
+font-family:tahoma;
+padding:20px;
+}
+
+.container{
+max-width:600px;
+margin:auto;
+}
+
+
+.card{
+background:#111827;
+padding:20px;
+border-radius:20px;
+margin-bottom:15px;
+}
+
+
+.info{
+background:#1e293b;
+padding:12px;
+border-radius:10px;
+margin:8px 0;
+}
+
+
+.green{
+color:#22c55e;
+}
+
+
+.back{
+display:block;
+background:#2563eb;
+padding:12px;
+border-radius:12px;
+text-align:center;
+color:white;
+text-decoration:none;
+margin-bottom:20px;
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<div class="container">
+
+
+<a class="back" href="/dashboard">
+⬅️ العودة للوحة التحكم
+</a>
+
+
+<h2>
+📢 إعلاناتي
+</h2>
+
+
+
+{% for ad in ads %}
+
+
+<div class="card">
+
+
+<h3>
+🟢 إعلان USDT
+</h3>
+
+
+<div class="info">
+💰 الكمية:
+{{ad.amount}} USDT
+</div>
+
+
+<div class="info">
+💵 السعر:
+{{ad.price}}
+</div>
+
+
+<div class="info">
+💳 الدفع:
+{{ad.payment}}
+</div>
+
+
+<div class="info green">
+الحالة:
+{{ad.status}}
+</div>
+
+
+</div>
+
+
+{% else %}
+
+
+<div class="card">
+لا يوجد لديك إعلانات حالياً
+</div>
+
+
+{% endfor %}
+
+
+
+</div>
+
+
+</body>
+
+</html>
