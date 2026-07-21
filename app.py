@@ -890,6 +890,24 @@ def admin_commission():
     return redirect("/admin")
 
 
+@app.route("/admin_commission_page")
+@admin_required
+def admin_commission_page():
+
+    con = connect()
+
+    commission = con.execute(
+        "SELECT * FROM commission WHERE id=1"
+    ).fetchone()
+
+    con.close()
+
+    return render_template(
+        "admin_commission.html",
+        commission=commission
+    )
+
+
 @app.route("/admin_verify/<username>")
 @admin_required
 def admin_verify(username):
