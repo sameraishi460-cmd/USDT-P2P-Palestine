@@ -16,16 +16,13 @@ box-sizing:border-box;
 
 body{
 margin:0;
-font-family:tahoma;
+font-family:tahoma,Arial;
 background:#050b16;
 color:white;
 }
 
 
-/* HEADER */
-
 .header{
-
 background:#111827;
 padding:18px;
 display:flex;
@@ -34,28 +31,21 @@ align-items:center;
 position:sticky;
 top:0;
 z-index:99;
-
 }
 
 
 .logo{
-
 font-size:24px;
 font-weight:bold;
 color:#22c55e;
-
 }
 
-
 .logo span{
-
 color:white;
-
 }
 
 
 .nav a{
-
 text-decoration:none;
 color:white;
 padding:10px 15px;
@@ -63,31 +53,19 @@ border-radius:12px;
 background:#2563eb;
 margin:4px;
 display:inline-block;
-
 }
 
 
 .nav .green{
-
 background:#16a34a;
-
 }
-
-
-
-/* CONTAINER */
 
 
 .container{
-
 max-width:1200px;
 margin:auto;
 padding:20px;
-
 }
-
-
-/* HERO */
 
 
 .hero{
@@ -102,53 +80,39 @@ margin-top:20px;
 
 
 .hero h1{
-
 font-size:35px;
-
 }
 
 
 .hero p{
-
 color:#cbd5e1;
 font-size:18px;
-
 }
 
-
-
-/* BUTTONS */
 
 
 .main-buttons a{
 
 display:inline-block;
-padding:15px 35px;
+padding:15px 30px;
 border-radius:15px;
 text-decoration:none;
 color:white;
-font-size:18px;
 margin:10px;
+font-size:18px;
 
 }
 
 
 .sell{
-
 background:#16a34a;
-
 }
 
 
 .meeting{
-
 background:#2563eb;
-
 }
 
-
-
-/* FEATURES */
 
 
 .features{
@@ -174,21 +138,19 @@ text-align:center;
 .feature b{
 
 display:block;
-font-size:25px;
+font-size:28px;
 color:#22c55e;
 
 }
 
 
 
-/* ADS */
+.section-title{
 
-
-.title{
-
-margin-top:35px;
+margin-top:40px;
 
 }
+
 
 
 .cards{
@@ -200,37 +162,42 @@ gap:20px;
 }
 
 
+
 .card{
 
 background:#111827;
 padding:22px;
-border-radius:20px;
+border-radius:22px;
 border:1px solid #1f2937;
 
 }
+
 
 
 .user{
 
 color:#22c55e;
 font-size:18px;
+font-weight:bold;
 
 }
+
 
 
 .info{
 
 background:#1e293b;
 padding:12px;
-border-radius:10px;
+border-radius:12px;
 margin:10px 0;
 
 }
 
 
+
 .price{
 
-font-size:28px;
+font-size:27px;
 color:#22c55e;
 font-weight:bold;
 
@@ -251,8 +218,29 @@ color:white;
 }
 
 
+.cash-btn{
 
-/* FOOTER */
+display:block;
+background:#2563eb;
+padding:13px;
+border-radius:12px;
+text-align:center;
+text-decoration:none;
+color:white;
+
+}
+
+
+
+.empty{
+
+background:#1e293b;
+padding:20px;
+border-radius:15px;
+text-align:center;
+
+}
+
 
 
 .footer{
@@ -281,18 +269,14 @@ opacity:.5;
 </head>
 
 
-
 <body>
-
 
 
 <div class="header">
 
 
 <div class="logo">
-
 🇵🇸 <span>USDT</span> P2P Palestine
-
 </div>
 
 
@@ -301,7 +285,6 @@ opacity:.5;
 
 
 {% if user %}
-
 
 <a href="/dashboard">
 🏠 لوحة التحكم
@@ -334,7 +317,6 @@ opacity:.5;
 {% endif %}
 
 
-
 </div>
 
 
@@ -357,30 +339,28 @@ opacity:.5;
 
 
 <p>
-منصة فلسطينية للتداول مع حماية الصفقات والمقابلات الشخصية
+منصة فلسطينية للتداول وحماية الصفقات والمقابلات الشخصية
 </p>
-
 
 
 <div class="main-buttons">
 
 
 <a class="sell" href="/create_ad">
-🟢 إنشاء إعلان بيع USDT
+🟢 إعلان بيع USDT
 </a>
-
 
 
 <a class="meeting" href="/cash_market">
-🤝 سوق المقابلات الشخصية
+🤝 إعلان مقابلة شخصية
 </a>
 
 
-
 </div>
 
 
 </div>
+
 
 
 
@@ -390,59 +370,46 @@ opacity:.5;
 
 
 <div class="feature">
-
 <b>🔐</b>
-
 حماية الصفقات
-
 </div>
 
 
-
 <div class="feature">
-
 <b>🤝</b>
-
 مقابلات شخصية
-
 </div>
 
 
-
 <div class="feature">
-
 <b>⚡</b>
-
 تداول سريع
-
 </div>
-
 
 
 <div class="feature">
-
 <b>🇵🇸</b>
+فلسطين
+</div>
 
-داخل فلسطين
 
 </div>
 
 
 
-</div>
 
 
-
-
-
-
-
-<h2 class="title">
-
-🔥 إعلانات بيع USDT
-
+<h2 class="section-title">
+📢 الإعلانات المتوفرة
 </h2>
 
+
+
+
+
+<h2>
+🟢 بيع USDT أونلاين
+</h2>
 
 
 
@@ -456,53 +423,98 @@ opacity:.5;
 
 
 <div class="user">
-
 👤 {{ad.user}}
-
 </div>
-
 
 
 <div class="info">
-
 💰 الكمية:
-
-<b>
-{{ad.amount}} USDT
-</b>
-
+<b>{{ad.amount}} USDT</b>
 </div>
-
-
 
 
 <div class="price">
-
 {{ad.price}}
+</div>
 
+
+<div class="info">
+💳 الدفع:
+<br>
+{{ad.payment}}
+</div>
+
+
+<a class="buy" href="/buy/{{ad.id}}">
+شراء الآن 🚀
+</a>
+
+
+</div>
+
+
+{% else %}
+
+
+<div class="empty">
+لا توجد إعلانات USDT حالياً
+</div>
+
+
+{% endfor %}
+
+
+
+</div>
+
+
+
+
+
+
+<h2 class="section-title">
+🤝 مقابلات شخصية متوفرة
+</h2>
+
+
+
+
+<div class="cards">
+
+
+{% for cash in cash_ads %}
+
+
+<div class="card">
+
+
+<div class="user">
+👤 {{cash.user}}
 </div>
 
 
 
 <div class="info">
+💰 {{cash.amount}} USDT
+</div>
 
-💳 الدفع:
 
+<div class="info">
+📍 {{cash.city}}
 <br>
+📌 {{cash.location}}
+</div>
 
-{{ad.payment}}
 
+<div class="price">
+{{cash.price}}
 </div>
 
 
 
-
-<a class="buy" href="/buy/{{ad.id}}">
-
-شراء الآن 🚀
-
+<a class="cash-btn" href="/cash_ad/{{cash.id}}">
+طلب مقابلة 🤝
 </a>
-
 
 
 </div>
@@ -512,13 +524,9 @@ opacity:.5;
 {% else %}
 
 
-
-<div class="card">
-
-لا توجد إعلانات حالياً
-
+<div class="empty">
+لا توجد مقابلات شخصية حالياً
 </div>
-
 
 
 {% endfor %}
@@ -534,11 +542,14 @@ opacity:.5;
 
 
 
+
+
 <div class="footer">
 
 USDT P2P Palestine © 2026
 
 </div>
+
 
 
 
@@ -548,8 +559,8 @@ Admin
 
 
 
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
 
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <script>
 
