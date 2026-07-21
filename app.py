@@ -999,7 +999,38 @@ def edit_profile():
 
 
 # =========================
-# 7. ADMIN PANEL & BACKUP
+# 7. ALL ADS ROUTE
+# =========================
+
+@app.route("/all_ads")
+def all_ads():
+
+    con = connect()
+
+    online = con.execute(
+        "SELECT *, 'online' as type FROM ads ORDER BY id DESC"
+    ).fetchall()
+
+
+    cash = con.execute(
+        "SELECT *, 'cash' as type FROM cash_ads ORDER BY id DESC"
+    ).fetchall()
+
+
+    ads = list(online) + list(cash)
+
+
+    con.close()
+
+
+    return render_template(
+        "all_ads.html",
+        ads=ads
+    )
+
+
+# =========================
+# 8. ADMIN PANEL & BACKUP
 # =========================
 
 @app.route("/admin_login", methods=["GET", "POST"])
