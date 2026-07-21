@@ -436,13 +436,20 @@ def home():
     ).fetchall()
 
 
+    user = None
+
+    if "user" in session:
+        user = session["user"]
+
+
     con.close()
 
 
     return render_template(
         "index.html",
         ads=ads,
-        cash_ads=cash_ads
+        cash_ads=cash_ads,
+        user=user
     )
 
 
