@@ -3,12 +3,10 @@ import time
 import traceback
 
 
-# ضع توكن البوت هنا
 TOKEN = "8881823408:AAFOF1wDyMjrW7hLQAy9hwY2LvzzeddxQbk"
 
-
-# رابط منصة Flask
 WEBAPP_URL = "https://usdt-p2p-palestine-1.onrender.com/telegram_login"
+
 
 
 def send_message(chat_id, text, keyboard=None):
@@ -90,15 +88,11 @@ def bot_loop():
                             [
 
                                 {
-
                                     "text": "🚀 فتح منصة USDT P2P فلسطين",
 
                                     "web_app": {
-
                                         "url": WEBAPP_URL
-
                                     }
-
                                 }
 
                             ]
@@ -108,52 +102,37 @@ def bot_loop():
                     }
 
 
-
                     send_message(
-
                         chat_id,
-
-                        "أهلاً بك في منصة USDT P2P فلسطين 🇵🇸\n\nاضغط الزر لفتح المنصة:",
-
+                        "أهلاً بك في منصة USDT P2P فلسطين 🇵🇸\n\nاضغط الزر لفتح التطبيق:",
                         keyboard
-
                     )
-
 
 
                 elif text == "/help":
 
 
                     send_message(
-
                         chat_id,
-
-                        "الأوامر المتاحة:\n/start فتح المنصة\n/help المساعدة"
-
+                        "الأوامر:\n/start فتح المنصة\n/help المساعدة"
                     )
-
 
 
                 else:
 
 
                     send_message(
-
                         chat_id,
-
-                        "اضغط /start لفتح منصة USDT P2P 🚀"
-
+                        "اكتب /start لفتح المنصة 🚀"
                     )
 
 
 
         except Exception as e:
 
-
             print("Telegram Error:", e)
 
             traceback.print_exc()
-
 
             time.sleep(5)
 
