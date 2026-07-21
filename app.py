@@ -952,6 +952,25 @@ def dashboard():
     return render_template("dashboard.html", user=user, completed=completed, cash_completed=cash_completed)
 
 
+@app.route("/my_ads")
+@login_required
+def my_ads():
+
+    con = connect()
+
+    ads = con.execute(
+        "SELECT * FROM ads WHERE user=? ORDER BY id DESC",
+        (session["user"],)
+    ).fetchall()
+
+    con.close()
+
+    return render_template(
+        "my_ads.html",
+        ads=ads
+    )
+
+
 @app.route("/notifications")
 @login_required
 def notifications():
