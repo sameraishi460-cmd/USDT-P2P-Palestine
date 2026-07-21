@@ -38,16 +38,19 @@ def bot_loop():
 
     last_update = 0
 
+
     while True:
 
         try:
 
             url = f"https://api.telegram.org/bot{TOKEN}/getUpdates"
 
+
             params = {
                 "offset": last_update + 1,
                 "timeout": 30
             }
+
 
             response = requests.get(
                 url,
@@ -56,13 +59,16 @@ def bot_loop():
             ).json()
 
 
+
             for update in response.get("result", []):
+
 
                 last_update = update["update_id"]
 
 
                 if "message" not in update:
                     continue
+
 
 
                 message = update["message"]
@@ -72,54 +78,106 @@ def bot_loop():
                 text = message.get("text","")
 
 
+
                 if text == "/start":
 
+
                     keyboard = {
+
                         "inline_keyboard":[
+
+
                             [
+
                                 {
                                     "text":"🚀 فتح منصة USDT P2P فلسطين",
+
                                     "web_app":{
+
                                         "url": WEBAPP_URL
+
                                     }
+
                                 }
+
+                            ],
+
+
+                            [
+
+                                {
+                                    "text":"🔐 دخول الإدارة",
+
+                                    "web_app":{
+
+                                        "url": WEBAPP_URL + "/admin_login"
+
+                                    }
+
+                                }
+
                             ]
+
+
                         ]
+
                     }
 
 
+
                     send_message(
+
                         chat_id,
-                        "أهلاً بك في منصة USDT P2P فلسطين 🇵🇸\n\nاضغط لفتح التطبيق:",
+
+                        "أهلاً بك في منصة USDT P2P فلسطين 🇵🇸\n\nاختر الخدمة:",
+
                         keyboard
+
                     )
+
+
 
 
                 elif text == "/help":
 
+
                     send_message(
+
                         chat_id,
-                        "اكتب /start لفتح المنصة 🚀"
+
+                        "استخدم /start لفتح المنصة 🚀"
+
                     )
+
+
 
 
                 else:
 
+
                     send_message(
+
                         chat_id,
+
                         "استخدم /start لفتح التطبيق 🚀"
+
                     )
+
 
 
         except Exception as e:
 
             print("Telegram Error:", e)
+
             traceback.print_exc()
+
 
 
         time.sleep(2)
 
 
 
+
 if __name__ == "__main__":
+
     bot_loop()
