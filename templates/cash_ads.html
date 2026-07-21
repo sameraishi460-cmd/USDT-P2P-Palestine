@@ -5,7 +5,7 @@
 
 <meta charset="UTF-8">
 
-<title>مقابلات شخصية - USDT P2P</title>
+<title>تفاصيل المقابلة الشخصية</title>
 
 <style>
 
@@ -13,47 +13,41 @@ body{
     background:#0b1220;
     color:white;
     font-family:tahoma;
-    margin:0;
 }
 
-.container{
-    max-width:1000px;
-    margin:auto;
-    padding:20px;
-}
-
-.card{
+.box{
+    max-width:500px;
+    margin:40px auto;
     background:#1e293b;
-    padding:20px;
-    border-radius:18px;
-    margin-bottom:20px;
+    padding:25px;
+    border-radius:20px;
 }
 
-.title{
+h2{
     color:#22c55e;
-    font-size:22px;
-    font-weight:bold;
+    text-align:center;
 }
 
-.info{
+.item{
+    background:#334155;
+    padding:12px;
+    border-radius:10px;
     margin:10px 0;
 }
 
 .btn{
     display:block;
-    text-align:center;
     background:#16a34a;
     color:white;
-    padding:12px;
+    text-align:center;
+    padding:14px;
     border-radius:10px;
     text-decoration:none;
+    margin-top:20px;
 }
 
-.empty{
-    background:#1e293b;
-    padding:20px;
-    border-radius:15px;
-    text-align:center;
+.back{
+    background:#2563eb;
 }
 
 </style>
@@ -64,73 +58,59 @@ body{
 <body>
 
 
-<div class="container">
+<div class="box">
 
 
-<h1>
-🤝 إعلانات المقابلات الشخصية
-</h1>
+<h2>
+🤝 مقابلة شخصية
+</h2>
 
 
-{% for ad in ads %}
-
-
-<div class="card">
-
-
-<div class="title">
-🟢 مقابلة شخصية
-</div>
-
-
-<div class="info">
+<div class="item">
 👤 البائع:
 <b>{{ad.user}}</b>
 </div>
 
 
-<div class="info">
+<div class="item">
 💰 الكمية:
 <b>{{ad.amount}} USDT</b>
 </div>
 
 
-<div class="info">
+<div class="item">
 💵 السعر:
 <b>{{ad.price}}</b>
 </div>
 
 
-<div class="info">
+<div class="item">
 📍 المدينة:
 <b>{{ad.city}}</b>
 </div>
 
 
-<div class="info">
-📌 المكان:
+<div class="item">
+📌 مكان اللقاء:
 <b>{{ad.location}}</b>
 </div>
 
 
-<a class="btn" href="/cash_ad/{{ad.id}}">
-عرض التفاصيل
+<div class="item">
+📝 ملاحظات:
+<b>{{ad.notes}}</b>
+</div>
+
+
+
+<a class="btn" href="/cash_buy/{{ad.id}}">
+طلب مقابلة
 </a>
 
 
-</div>
-
-
-{% else %}
-
-
-<div class="empty">
-لا توجد إعلانات مقابلة شخصية حالياً
-</div>
-
-
-{% endfor %}
-
+<a class="btn back" href="/cash_market">
+رجوع للإعلانات
+</a>
 
 
 </div>
