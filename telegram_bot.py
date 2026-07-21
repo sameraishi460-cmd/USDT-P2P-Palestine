@@ -1,33 +1,19 @@
 import requests
 import time
-import os
+import traceback
 
 
-TOKEN = os.getenv("BOT_TOKEN")
+# ضع توكن البوت هنا
+TOKEN = "8881823408:AAFOF1wDyMjrW7hLQAy9hwY2LvzzeddxQbk"
 
+
+# رابط منصة Flask
 WEBAPP_URL = "https://usdt-p2p-palestine-1.onrender.com/telegram_login"
 
 
-
-def telegram_request(method, data=None):
-
-    url = f"https://api.telegram.org/bot{TOKEN}/{method}"
-
-    try:
-        r = requests.post(
-            url,
-            json=data,
-            timeout=30
-        )
-        return r.json()
-
-    except Exception as e:
-        print("Telegram Error:", e)
-        return {}
-
-
-
 def send_message(chat_id, text, keyboard=None):
+
+    url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
 
     data = {
         "chat_id": chat_id,
@@ -37,22 +23,21 @@ def send_message(chat_id, text, keyboard=None):
     if keyboard:
         data["reply_markup"] = keyboard
 
-    telegram_request(
-        "sendMessage",
-        data
-    )
+    try:
+        requests.post(
+            url,
+            json=data,
+            timeout=15
+        )
+
+    except Exception as e:
+        print("SEND ERROR:", e)
 
 
 
 def bot_loop():
 
-    if not TOKEN:
-        print("BOT_TOKEN missing")
-        return
-
-
     print("Telegram Bot Started 🚀")
-
 
     last_update = 0
 
@@ -61,16 +46,24 @@ def bot_loop():
 
         try:
 
-            result = telegram_request(
-                "getUpdates",
-                {
-                    "offset": last_update + 1,
-                    "timeout": 30
-                }
-            )
+            url = f"https://api.telegram.org/bot{TOKEN}/getUpdates"
 
 
-            for update in result.get("result", []):
+            params = {
+                "offset": last_update + 1,
+                "timeout": 30
+            }
+
+
+            response = requests.get(
+                url,
+                params=params,
+                timeout=40
+            ).json()
+
+
+
+            for update in response.get("result", []):
 
                 last_update = update["update_id"]
 
@@ -79,11 +72,11 @@ def bot_loop():
                     continue
 
 
-                msg = update["message"]
+                message = update["message"]
 
-                chat_id = msg["chat"]["id"]
+                chat_id = message["chat"]["id"]
 
-                text = msg.get("text", "")
+                text = message.get("text", "")
 
 
 
@@ -91,61 +84,81 @@ def bot_loop():
 
 
                     keyboard = {
+
                         "inline_keyboard": [
+
                             [
+
                                 {
+
                                     "text": "🚀 فتح منصة USDT P2P فلسطين",
+
                                     "web_app": {
+
                                         "url": WEBAPP_URL
+
                                     }
+
                                 }
+
                             ]
+
                         ]
+
                     }
 
 
+
                     send_message(
+
                         chat_id,
-                        "🇵🇸 أهلاً بك في منصة USDT P2P فلسطين\n\nاضغط لفتح التطبيق:",
+
+                        "أهلاً بك في منصة USDT P2P فلسطين 🇵🇸\n\nاضغط الزر لفتح المنصة:",
+
                         keyboard
-                    )
 
-
-
-                elif text == "/id":
-
-                    send_message(
-                        chat_id,
-                        f"Telegram ID:\n{chat_id}"
                     )
 
 
 
                 elif text == "/help":
 
+
                     send_message(
+
                         chat_id,
-                        "استخدم /start لفتح المنصة 🚀"
+
+                        "الأوامر المتاحة:\n/start فتح المنصة\n/help المساعدة"
+
                     )
 
 
 
                 else:
 
+
                     send_message(
+
                         chat_id,
-                        "اكتب /start لفتح المنصة 🚀"
+
+                        "اضغط /start لفتح منصة USDT P2P 🚀"
+
                     )
+
 
 
         except Exception as e:
 
-            print("BOT LOOP ERROR:", e)
+
+            print("Telegram Error:", e)
+
+            traceback.print_exc()
 
 
-        time.sleep(2)
+            time.sleep(5)
 
 
 
-if __name__ == "__main__":
+if name == "__main__":
+
     bot_loop()
