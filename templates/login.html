@@ -49,6 +49,25 @@ input{
 
 
 
+.remember{
+
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin:10px 0;
+
+}
+
+
+.remember input{
+
+    width:auto;
+    margin:0;
+
+}
+
+
+
 button{
 
     width:100%;
@@ -68,6 +87,17 @@ a{
     display:block;
     text-align:center;
     margin-top:15px;
+
+}
+
+
+.telegram{
+
+    background:#2563eb;
+    color:white;
+    padding:12px;
+    border-radius:10px;
+    text-decoration:none;
 
 }
 
@@ -121,6 +151,18 @@ required
 
 
 
+<div class="remember">
+
+<input type="checkbox" name="remember">
+
+<label>
+تذكرني لمدة 30 يوم
+</label>
+
+</div>
+
+
+
 <button>
 
 دخول
@@ -130,6 +172,12 @@ required
 
 
 </form>
+
+
+
+<a class="telegram" href="/telegram_login">
+📲 دخول عبر Telegram
+</a>
 
 
 
