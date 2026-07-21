@@ -2,62 +2,197 @@
 <html lang="ar" dir="rtl">
 
 <head>
+
 <meta charset="UTF-8">
-<title>صفقة كاش</title>
-<link rel="stylesheet" href="/static/style.css">
+
+<title>صفقة مقابلة شخصية</title>
+
+<style>
+
+body{
+    background:#0b1220;
+    color:white;
+    font-family:tahoma;
+    padding:20px;
+}
+
+.box{
+    max-width:600px;
+    margin:auto;
+    background:#1e293b;
+    padding:25px;
+    border-radius:20px;
+}
+
+
+h2{
+    text-align:center;
+    color:#22c55e;
+}
+
+
+.item{
+    background:#334155;
+    padding:12px;
+    border-radius:10px;
+    margin:10px 0;
+}
+
+
+.btn{
+    display:block;
+    text-align:center;
+    padding:12px;
+    border-radius:10px;
+    color:white;
+    text-decoration:none;
+    margin-top:12px;
+}
+
+
+.green{
+    background:#16a34a;
+}
+
+
+.blue{
+    background:#2563eb;
+}
+
+
+.red{
+    background:#dc2626;
+}
+
+
+.gray{
+    background:#475569;
+}
+
+
+.status{
+    text-align:center;
+    font-size:18px;
+    color:#22c55e;
+}
+
+</style>
+
 </head>
 
 
 <body>
 
-<h1>صفقة كاش</h1>
-
 
 <div class="box">
 
-<p>
-رقم الصفقة:
-{{ trade.id }}
-</p>
+
+<h2>
+🤝 طلب مقابلة شخصية
+</h2>
 
 
-<p>
-الحالة:
-{{ trade.status }}
-</p>
+<div class="status">
+
+حالة الطلب:
+{{trade.status}}
+
+</div>
 
 
-<p>
-المبلغ:
-{{ trade.amount }} USDT
-</p>
+
+<div class="item">
+
+👤 المشتري:
+
+<b>
+{{trade.buyer}}
+</b>
+
+</div>
 
 
-<p>
-السعر:
-{{ trade.price }}
-</p>
+
+<div class="item">
+
+👤 البائع:
+
+<b>
+{{trade.seller}}
+</b>
+
+</div>
 
 
-<a href="/confirm_meeting/{{ trade.id }}">
-تأكيد اللقاء
+
+<div class="item">
+
+💰 الكمية:
+
+<b>
+{{trade.amount}} USDT
+</b>
+
+</div>
+
+
+
+<div class="item">
+
+💵 السعر:
+
+<b>
+{{trade.price}}
+</b>
+
+</div>
+
+
+
+{% if trade.status == "WAITING_MEETING" %}
+
+
+<a class="btn blue" href="/confirm_meeting/{{trade.id}}">
+
+✅ تأكيد موعد اللقاء
+
 </a>
 
 
-<br>
+{% endif %}
 
 
-<a href="/complete_cash/{{ trade.id }}">
-إتمام الصفقة
+
+
+{% if trade.status == "MEETING_CONFIRMED" %}
+
+
+<a class="btn green" href="/complete_cash/{{trade.id}}">
+
+✅ تم إتمام الصفقة
+
 </a>
 
 
-<br>
+{% endif %}
 
 
-<a href="/cash_dispute/{{ trade.id }}">
-فتح نزاع
+
+
+<a class="btn red" href="/cash_dispute/{{trade.id}}">
+
+⚠️ فتح نزاع
+
 </a>
+
+
+
+<a class="btn gray" href="/">
+
+🏠 الرئيسية
+
+</a>
+
 
 
 </div>
