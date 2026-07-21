@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+
+<meta charset="UTF-8">
+
+<title>USDT P2P Telegram</title>
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+</head>
+
+
+<body>
+
+
+<h2 style="text-align:center;margin-top:50px;">
+🚀 جاري تسجيل الدخول عبر تيليجرام...
+</h2>
+
+
+
+<script>
+
+let tg = window.Telegram.WebApp;
+
+tg.ready();
+
+
+let user = tg.initDataUnsafe.user;
+
+
+if(user){
+
+
+    window.location.href =
+    "/telegram_auth?id="
+    + user.id
+    + "&username="
+    + (user.username || "")
+    + "&first_name="
+    + (user.first_name || "");
+
+
+}
+else{
+
+
+    document.body.innerHTML =
+    "<h2 style='text-align:center;color:red;'>لا توجد بيانات تلجرام</h2>";
+
+
+}
+
+
+</script>
+
+
+</body>
+
+</html>
