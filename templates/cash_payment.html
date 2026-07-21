@@ -7,11 +7,11 @@
 
 <title>دفع إعلان مقابلة شخصية</title>
 
+
 <style>
 
 body{
-    margin:0;
-    font-family:tahoma,Arial;
+    font-family:tahoma;
     background:#0b1220;
     color:white;
 }
@@ -31,7 +31,7 @@ body{
 
 
 h2{
-    color:#22c55e;
+    margin-bottom:20px;
 }
 
 
@@ -39,8 +39,8 @@ h2{
 
     background:#111827;
     padding:15px;
-    border-radius:12px;
-    margin:15px 0;
+    border-radius:10px;
+    margin-bottom:15px;
 
 }
 
@@ -62,27 +62,44 @@ button{
     background:#16a34a;
     color:white;
     border:0;
-    padding:14px;
+    padding:12px;
     border-radius:10px;
     width:100%;
     font-size:16px;
-    cursor:pointer;
+    margin-top:10px;
 
 }
 
 
-.note{
+.copy{
 
-    color:#facc15;
-    font-size:14px;
+    background:#2563eb;
+
+}
+
+
+.back{
+
+    display:block;
     margin-top:15px;
+    color:white;
+
+}
+
+
+#copy_msg{
+
+    color:#22c55e;
+    margin-top:10px;
 
 }
 
 
 </style>
 
+
 </head>
+
 
 
 <body>
@@ -96,26 +113,26 @@ button{
 </h2>
 
 
+
 <div class="info">
 
-<p>
 مدة الإعلان:
-</p>
 
-<h3>
+<br>
+
 {{days}} يوم
-</h3>
 
+<br><br>
 
-<p>
-قيمة الإعلان:
-</p>
+رسوم الإعلان:
 
 <h2>
 {{fee}} USDT
 </h2>
 
+
 </div>
+
 
 
 
@@ -124,7 +141,8 @@ button{
 </p>
 
 
-<div class="wallet">
+
+<div class="wallet" id="wallet">
 
 {{wallet}}
 
@@ -132,15 +150,16 @@ button{
 
 
 
-<p class="note">
+<button class="copy" onclick="copyWallet()">
 
-بعد التحويل اضغط "أرسلت الدفع" ليتم مراجعة الطلب من الإدارة
+📋 نسخ عنوان المحفظة
 
-</p>
+</button>
 
 
 
-<br>
+<p id="copy_msg"></p>
+
 
 
 <form method="POST" action="/cash_payment_sent">
@@ -156,6 +175,8 @@ button{
 
 <input type="hidden" name="notes" value="{{notes}}">
 
+<input type="hidden" name="fee" value="{{fee}}">
+
 <input type="hidden" name="days" value="{{days}}">
 
 
@@ -169,9 +190,42 @@ button{
 </form>
 
 
+
+<a class="back" href="/">
+
+العودة للرئيسية
+
+</a>
+
+
+
 </div>
 
 
+
+<script>
+
+
+function copyWallet(){
+
+let wallet = document.getElementById("wallet").innerText;
+
+
+navigator.clipboard.writeText(wallet);
+
+
+document.getElementById("copy_msg").innerHTML =
+"✅ تم نسخ عنوان المحفظة";
+
+
+}
+
+
+</script>
+
+
+
 </body>
+
 
 </html>
