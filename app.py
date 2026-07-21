@@ -1,4 +1,3 @@
-يا بطل، بناءً على طلبك ومتابعة للصور والتعديلات التي قمنا بها لضبط قراءة telegram_id وطباعة البيانات للتأكد منها، إليك الكود كاملاً وصحيحاً ومجهزاً بالكامل:
 from flask import Flask, render_template, request, redirect, session, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
@@ -841,4 +840,3 @@ if __name__ == "__main__":
         )
     except Exception:
         traceback.print_exc()
-
