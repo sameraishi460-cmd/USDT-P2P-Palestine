@@ -2,48 +2,108 @@
 <html lang="ar" dir="rtl">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>لوحة التحكم - USDT P2P Palestine</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <link rel="stylesheet" href="/static/style.css">
+<title>لوحة التحكم - USDT P2P Palestine</title>
 
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f5f5f5;
-            padding: 20px;
-        }
+<style>
 
-        .box {
-            background: white;
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 15px;
-            box-shadow: 0 2px 10px #ddd;
-        }
+body{
+    margin:0;
+    font-family:tahoma,Arial;
+    background:#0b1220;
+    color:white;
+    padding:20px;
+}
 
-        h1 {
-            text-align: center;
-            color: #1a73e8;
-        }
 
-        .button {
-            display: block;
-            background: #1a73e8;
-            color: white;
-            padding: 12px;
-            margin: 10px 0;
-            text-align: center;
-            border-radius: 10px;
-            text-decoration: none;
-        }
+.container{
+    max-width:600px;
+    margin:auto;
+}
 
-        .logout {
-            background: #d93025;
-        }
-    </style>
+
+.header{
+    background:#111827;
+    padding:25px;
+    border-radius:20px;
+    text-align:center;
+    margin-bottom:20px;
+}
+
+
+.header h1{
+    color:#22c55e;
+}
+
+
+
+.card{
+
+    background:#1e293b;
+    padding:20px;
+    border-radius:20px;
+    margin-bottom:20px;
+
+}
+
+
+
+.info{
+
+    display:flex;
+    justify-content:space-between;
+    background:#334155;
+    padding:12px;
+    border-radius:12px;
+    margin:10px 0;
+
+}
+
+
+
+.menu{
+
+    display:grid;
+    gap:12px;
+
+}
+
+
+
+.button{
+
+    display:block;
+    padding:15px;
+    border-radius:15px;
+    text-align:center;
+    text-decoration:none;
+    color:white;
+    background:#2563eb;
+    font-size:17px;
+
+}
+
+
+.green{
+    background:#16a34a;
+}
+
+
+.orange{
+    background:#ea580c;
+}
+
+
+.red{
+    background:#dc2626;
+}
+
+
+
+</style>
 
 </head>
 
@@ -51,102 +111,190 @@
 <body>
 
 
-<h1>لوحة التحكم</h1>
+<div class="container">
 
 
-<div class="box">
+<div class="header">
 
-    <h2>
-        أهلاً {{ user['username'] }}
-    </h2>
+<h1>
+لوحة التحكم
+</h1>
 
+<p>
+أهلاً {{ user['username'] }} 👋
+</p>
 
-    {% if user['verified'] == 1 %}
-        <p>✅ حساب موثق</p>
-    {% else %}
-        <p>⚠️ الحساب غير موثق</p>
-    {% endif %}
-
-
-    <p>
-        التقييم:
-        ⭐ {{ user['rating'] }}
-    </p>
+</div>
 
 
-    <p>
-        عدد الصفقات:
-        {{ user['trades_count'] }}
-    </p>
+
+<div class="card">
+
+
+<h3>
+الحساب
+</h3>
+
+
+<div class="info">
+
+<span>
+الحالة
+</span>
+
+<span>
+
+{% if user['verified'] == 1 %}
+
+✅ موثق
+
+{% else %}
+
+⚠️ غير موثق
+
+{% endif %}
+
+</span>
+
+</div>
+
+
+
+<div class="info">
+
+<span>
+التقييم
+</span>
+
+<span>
+⭐ {{ user['rating'] }}
+</span>
+
+</div>
+
+
+
+<div class="info">
+
+<span>
+الصفقات
+</span>
+
+<span>
+{{ user['trades_count'] }}
+</span>
+
+</div>
 
 
 </div>
 
 
 
-<div class="box">
-
-    <h3>إحصائياتك</h3>
 
 
-    <p>
-        صفقات USDT المكتملة:
-        {{ completed }}
-    </p>
+<div class="card">
 
 
-    <p>
-        صفقات الكاش المكتملة:
-        {{ cash_completed }}
-    </p>
+<h3>
+الإحصائيات
+</h3>
+
+
+<div class="info">
+
+<span>
+صفقات USDT
+</span>
+
+<span>
+{{ completed }}
+</span>
+
+</div>
+
+
+
+<div class="info">
+
+<span>
+مقابلات شخصية مكتملة
+</span>
+
+<span>
+{{ cash_completed }}
+</span>
+
+</div>
 
 
 </div>
 
 
 
-<div class="box">
-
-    <h3>القائمة</h3>
 
 
-    <a class="button" href="/">
-        إعلانات USDT
-    </a>
+
+<div class="card">
 
 
-    <a class="button" href="/create_ad">
-        إنشاء إعلان USDT
-    </a>
+<h3>
+الخدمات
+</h3>
 
 
-    <a class="button" href="/cash_market">
-        سوق الكاش
-    </a>
+<div class="menu">
 
 
-    <a class="button" href="/create_cash_ad">
-        إنشاء إعلان كاش
-    </a>
+<a class="button green" href="/">
+💱 إعلانات USDT
+</a>
 
 
-    <a class="button" href="/profile">
-        الملف الشخصي
-    </a>
+
+<a class="button" href="/create_ad">
+➕ إنشاء إعلان USDT
+</a>
 
 
-    <a class="button" href="/notifications">
-        الإشعارات
-    </a>
+
+<a class="button orange" href="/cash_market">
+🤝 سوق المقابلات الشخصية
+</a>
 
 
-    <a class="button logout" href="/logout">
-        تسجيل خروج
-    </a>
+
+<a class="button orange" href="/create_cash_ad">
+📍 إنشاء إعلان مقابلة شخصية
+</a>
+
+
+
+<a class="button" href="/profile">
+👤 الملف الشخصي
+</a>
+
+
+
+<a class="button" href="/notifications">
+🔔 الإشعارات
+</a>
+
+
+
+<a class="button red" href="/logout">
+🚪 تسجيل خروج
+</a>
 
 
 </div>
 
+
+</div>
+
+
+
+</div>
 
 
 </body>
