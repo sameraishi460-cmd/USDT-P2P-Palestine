@@ -17,101 +17,65 @@ body{
     color:white;
 }
 
-
 .header{
-
 background:#111827;
 padding:20px;
 display:flex;
 justify-content:space-between;
 align-items:center;
-
 }
 
-
 .logo{
-
 font-size:25px;
 font-weight:bold;
 color:#22c55e;
-
 }
 
-
-
 .btn{
-
 background:#2563eb;
 padding:10px 18px;
 border-radius:10px;
 color:white;
 text-decoration:none;
 margin:5px;
-
 }
-
 
 .green{
-
 background:#16a34a;
-
 }
 
-
-
 .container{
-
 max-width:1100px;
 margin:auto;
 padding:20px;
-
 }
 
-
-
 .hero{
-
 background:#1e293b;
 padding:30px;
 border-radius:20px;
 text-align:center;
 margin-bottom:25px;
-
 }
 
-
-
 .cards{
-
 display:grid;
 grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
 gap:20px;
-
 }
 
-
-
 .card{
-
 background:#1e293b;
 padding:20px;
 border-radius:18px;
-
 }
-
-
 
 .price{
-
 font-size:25px;
 color:#22c55e;
-
 }
 
-
-
 .buy{
-
 display:block;
 text-align:center;
 margin-top:15px;
@@ -120,31 +84,21 @@ padding:12px;
 border-radius:10px;
 text-decoration:none;
 color:white;
-
 }
 
-
-
 .footer{
-
 text-align:center;
 margin-top:40px;
 opacity:.6;
-
 }
 
-
-
 .admin{
-
 position:fixed;
 left:15px;
 bottom:15px;
 font-size:12px;
 opacity:.5;
-
 }
-
 
 </style>
 
@@ -155,16 +109,11 @@ opacity:.5;
 <body>
 
 
-
 <div class="header">
 
-
 <div class="logo">
-
 USDT Market
-
 </div>
-
 
 
 <div>
@@ -176,7 +125,6 @@ USDT Market
 حسابي
 </a>
 
-
 <a class="btn" href="/logout">
 خروج
 </a>
@@ -184,11 +132,9 @@ USDT Market
 
 {% else %}
 
-
 <a class="btn" href="/login">
 دخول
 </a>
-
 
 <a class="btn green" href="/register">
 إنشاء حساب
@@ -238,7 +184,6 @@ USDT Market
 
 
 
-
 <h2>
 إعلانات البيع
 </h2>
@@ -246,7 +191,6 @@ USDT Market
 
 
 <div class="cards">
-
 
 
 {% for ad in ads %}
@@ -311,10 +255,7 @@ USDT
 {% endfor %}
 
 
-
 </div>
-
-
 
 
 </div>
@@ -334,6 +275,42 @@ USDT Market © 2026
 Admin
 
 </a>
+
+
+
+<!-- Telegram WebApp Login -->
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+<script>
+
+let tg = window.Telegram.WebApp;
+
+tg.ready();
+
+tg.expand();
+
+
+let user = tg.initDataUnsafe.user;
+
+
+if(user){
+
+
+window.location.href =
+"/telegram_login?telegram_id="
++ user.id
++ "&username="
++ (user.username || "")
++ "&first_name="
++ (user.first_name || "");
+
+
+}
+
+
+</script>
+
 
 
 </body>
