@@ -460,7 +460,7 @@ def buy(id):
     )
     trade_id = trade.lastrowid
 
-    con.execute("UPDATE ads SET status='CLOSED' WHERE id=?", (id,))
+    con.execute("UPDATE ads SET status='SOLD' WHERE id=?", (id,))
     con.commit()
     con.close()
 
