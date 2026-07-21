@@ -55,7 +55,7 @@ def setup_database():
     )
     """)
     
-    # إضافة عمود telegram_id بأمان باستخدام الدالة الجاهزة
+    # إضافة عمود telegram_id بأمان لمنع أي أخطاء في حال تم تشغيل الكود مسبقاً
     add_column(con, "users", "telegram_id", "TEXT")
 
     # ADS
@@ -280,7 +280,7 @@ def logout():
 
 @app.route("/telegram_login")
 def telegram_login():
-    telegram_id = request.args.get("id")
+    telegram_id = request.args.get("telegram_id")
     username = request.args.get("username")
     first_name = request.args.get("first_name")
 
