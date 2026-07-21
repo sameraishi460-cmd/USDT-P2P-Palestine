@@ -5,27 +5,101 @@
 
 <meta charset="UTF-8">
 
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>لوحة تحكم الأدمن</title>
+
 
 <style>
 
-body{
-    background:#0f172a;
-    font-family:tahoma;
-    color:white;
-    padding:20px;
+
+*{
+box-sizing:border-box;
 }
+
+
+body{
+
+margin:0;
+padding:20px;
+background:#070d18;
+font-family:tahoma;
+color:white;
+
+}
+
 
 
 .container{
-    max-width:1200px;
-    margin:auto;
+
+max-width:1200px;
+margin:auto;
+
 }
 
 
-h1{
-    text-align:center;
+
+.header{
+
+background:#111827;
+padding:20px;
+border-radius:20px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:25px;
+
 }
+
+
+
+.logo{
+
+font-size:25px;
+font-weight:bold;
+color:#22c55e;
+
+}
+
+
+
+.logo span{
+
+color:white;
+
+}
+
+
+
+.btn{
+
+text-decoration:none;
+color:white;
+padding:12px 18px;
+border-radius:12px;
+background:#2563eb;
+display:inline-block;
+margin:5px;
+
+}
+
+
+
+.green{
+
+background:#16a34a;
+
+}
+
+
+
+.red{
+
+background:#dc2626;
+
+}
+
+
 
 
 
@@ -42,9 +116,10 @@ gap:15px;
 .card{
 
 background:#1e293b;
-padding:20px;
-border-radius:15px;
+padding:22px;
+border-radius:20px;
 text-align:center;
+border:1px solid #334155;
 
 }
 
@@ -52,57 +127,119 @@ text-align:center;
 
 .card span{
 
-font-size:30px;
+display:block;
+font-size:32px;
+color:#22c55e;
+font-weight:bold;
+margin-top:10px;
+
+}
+
+
+
+
+.menu{
+
+margin:25px 0;
+display:flex;
+flex-wrap:wrap;
+gap:5px;
+
+}
+
+
+
+
+
+h2{
+
+margin-top:35px;
+
+}
+
+
+
+
+
+.table-box{
+
+background:#111827;
+padding:15px;
+border-radius:20px;
+overflow:auto;
+
+}
+
+
+
+
+
+table{
+
+width:100%;
+border-collapse:collapse;
+
+}
+
+
+
+th{
+
+background:#1e293b;
+padding:15px;
+
+}
+
+
+
+td{
+
+padding:12px;
+text-align:center;
+border-bottom:1px solid #334155;
+
+}
+
+
+
+
+
+.status{
+
+color:#22c55e;
 font-weight:bold;
 
 }
 
 
 
-.menu{
 
-margin:20px 0;
-display:flex;
-gap:10px;
-flex-wrap:wrap;
-
-}
+@media(max-width:600px){
 
 
-.menu a{
+.header{
 
-background:#2563eb;
-color:white;
-padding:12px 18px;
-border-radius:10px;
-text-decoration:none;
+flex-direction:column;
+gap:15px;
 
 }
 
 
 table{
 
-width:100%;
-background:#1e293b;
-border-radius:10px;
-overflow:hidden;
-margin-top:20px;
+font-size:13px;
 
 }
 
-
-td,th{
-
-padding:12px;
-border-bottom:1px solid #334155;
-text-align:center;
 
 }
 
 
 </style>
 
+
 </head>
+
 
 
 <body>
@@ -111,39 +248,87 @@ text-align:center;
 <div class="container">
 
 
-<h1>
-لوحة تحكم الأدمن
-</h1>
+
+<div class="header">
+
+
+<div class="logo">
+
+🇵🇸 <span>USDT</span> P2P Admin
+
+</div>
+
+
+
+<div>
+
+
+<a class="btn green" href="/">
+
+🏠 المنصة
+
+</a>
+
+
+<a class="btn red" href="/logout">
+
+🚪 خروج
+
+</a>
+
+
+</div>
+
+
+</div>
+
+
 
 
 
 <div class="menu">
 
 
-<a href="/admin_wallet">
+<a class="btn" href="/admin_wallet">
+
 💰 محفظة المنصة
+
 </a>
 
 
 
-<a href="/admin_commission_page">
-⚙️ تعديل العمولة
+<a class="btn" href="/admin_commission_page">
+
+⚙️ تعديل العمولات
+
 </a>
 
 
 
-<a href="/admin_cash_ads">
-🤝 إعلانات المقابلات
+<a class="btn green" href="/admin_cash_ads">
+
+🤝 إعلانات المقابلات الشخصية
+
 </a>
 
 
 
-<a href="/admin_logout">
-🚪 خروج
+<a class="btn" href="/admin_search">
+
+🔍 بحث
+
+</a>
+
+
+<a class="btn" href="/admin_backup">
+
+💾 نسخة احتياطية
+
 </a>
 
 
 </div>
+
 
 
 
@@ -152,14 +337,15 @@ text-align:center;
 <div class="cards">
 
 
+
 <div class="card">
 
-عدد المستخدمين
-
-<br>
+👥 المستخدمين
 
 <span>
-{{users_count}}
+
+{{users|length}}
+
 </span>
 
 </div>
@@ -168,12 +354,12 @@ text-align:center;
 
 <div class="card">
 
-الإعلانات المفتوحة
-
-<br>
+📢 إعلانات USDT
 
 <span>
-{{ads_count}}
+
+{{trades|length}}
+
 </span>
 
 </div>
@@ -182,12 +368,12 @@ text-align:center;
 
 <div class="card">
 
-الصفقات الحالية
-
-<br>
+🤝 الصفقات الحالية
 
 <span>
-{{active_trades}}
+
+{{cash_trades|length}}
+
 </span>
 
 </div>
@@ -196,40 +382,35 @@ text-align:center;
 
 <div class="card">
 
-الصفقات المكتملة
-
-<br>
+💰 أرباح المنصة
 
 <span>
-{{completed_trades}}
+
+{{profit.total if profit else 0}}
+
 </span>
 
 </div>
 
 
 
-<div class="card">
-
-صفقات المقابلة المكتملة
-
-<br>
-
-<span>
-{{cash_completed}}
-</span>
-
 </div>
 
 
-</div>
 
 
 
 
 
 <h2>
-صفقات USDT
+
+💱 صفقات USDT
+
 </h2>
+
+
+
+<div class="table-box">
 
 
 <table>
@@ -246,8 +427,8 @@ text-align:center;
 </tr>
 
 
-
 {% for t in trades %}
+
 
 <tr>
 
@@ -257,9 +438,14 @@ text-align:center;
 
 <td>{{t.seller}}</td>
 
-<td>{{t.amount}}</td>
+<td>{{t.amount}} USDT</td>
 
-<td>{{t.status}}</td>
+<td class="status">
+
+{{t.status}}
+
+</td>
+
 
 </tr>
 
@@ -270,12 +456,24 @@ text-align:center;
 </table>
 
 
+</div>
+
+
+
+
+
 
 
 
 <h2>
-إعلانات المقابلات الشخصية
+
+🤝 إعلانات المقابلات الشخصية
+
 </h2>
+
+
+
+<div class="table-box">
 
 
 <table>
@@ -285,7 +483,7 @@ text-align:center;
 
 <th>البائع</th>
 <th>المدينة</th>
-<th>المكان</th>
+<th>مكان اللقاء</th>
 <th>الكمية</th>
 <th>العمولة</th>
 
@@ -295,7 +493,9 @@ text-align:center;
 
 {% for c in cash_ads %}
 
+
 <tr>
+
 
 <td>{{c.user}}</td>
 
@@ -303,9 +503,10 @@ text-align:center;
 
 <td>{{c.location}}</td>
 
-<td>{{c.amount}}</td>
+<td>{{c.amount}} USDT</td>
 
-<td>{{c.fee}}</td>
+<td>{{c.fee}} USDT</td>
+
 
 </tr>
 
@@ -313,15 +514,26 @@ text-align:center;
 {% endfor %}
 
 
+
 </table>
+
+
+</div>
+
+
 
 
 
 
 
 <h2>
-صفقات المقابلات
+
+📍 صفقات المقابلات الشخصية
+
 </h2>
+
+
+<div class="table-box">
 
 
 <table>
@@ -334,11 +546,13 @@ text-align:center;
 <th>البائع</th>
 <th>الحالة</th>
 
+
 </tr>
 
 
 
 {% for c in cash_trades %}
+
 
 <tr>
 
@@ -348,7 +562,12 @@ text-align:center;
 
 <td>{{c.seller}}</td>
 
-<td>{{c.status}}</td>
+<td class="status">
+
+{{c.status}}
+
+</td>
+
 
 </tr>
 
@@ -356,7 +575,13 @@ text-align:center;
 {% endfor %}
 
 
+
 </table>
+
+
+</div>
+
+
 
 
 
