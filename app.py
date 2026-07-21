@@ -197,6 +197,45 @@ def setup_database():
 setup_database()
 
 
+def create_admin_account():
+
+    con = connect()
+
+    username = "Admin"
+    password = "SA526614@mer"
+
+    exists = con.execute(
+        "SELECT * FROM users WHERE username=?",
+        (username,)
+    ).fetchone()
+
+    if not exists:
+
+        con.execute(
+            """
+            INSERT INTO users
+            (username, password, status)
+            VALUES (?, ?, ?)
+            """,
+            (
+                username,
+                generate_password_hash(password),
+                "ADMIN"
+            )
+        )
+
+        con.commit()
+        print("ADMIN CREATED")
+
+    else:
+        print("ADMIN EXISTS")
+
+    con.close()
+
+
+create_admin_account()
+
+
 # =========================
 # 2. AUTH SYSTEM & DECORATORS
 # =========================
