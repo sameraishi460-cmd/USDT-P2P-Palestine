@@ -942,18 +942,6 @@ def profile():
     return render_template("profile.html", user=user, trades=trades, cash_trades=cash_trades, ads=ads)
 
 
-@app.route("/dashboard")
-@login_required
-def dashboard():
-    con = connect()
-    user = con.execute("SELECT * FROM users WHERE username=?", (session["user"],)).fetchone()
-    completed = con.execute("SELECT COUNT(*) FROM trades WHERE (buyer=? OR seller=?) AND status='COMPLETED'", (session["user"], session["user"])).fetchone()[0]
-    cash_completed = con.execute("SELECT COUNT(*) FROM cash_trades WHERE (buyer=? OR seller=?) AND status='COMPLETED'", (session["user"], session["user"])).fetchone()[0]
-    con.close()
-
-    return render_template("dashboard.html", user=user, completed=completed, cash_completed=cash_completed)
-
-
 @app.route("/my_ads")
 @login_required
 def my_ads():
@@ -971,6 +959,18 @@ def my_ads():
         "my_ads.html",
         ads=ads
     )
+
+
+@app.route("/dashboard")
+@login_required
+def dashboard():
+    con = connect()
+    user = con.execute("SELECT * FROM users WHERE username=?", (session["user"],)).fetchone()
+    completed = con.execute("SELECT COUNT(*) FROM trades WHERE (buyer=? OR seller=?) AND status='COMPLETED'", (session["user"], session["user"])).fetchone()[0]
+    cash_completed = con.execute("SELECT COUNT(*) FROM cash_trades WHERE (buyer=? OR seller=?) AND status='COMPLETED'", (session["user"], session["user"])).fetchone()[0]
+    con.close()
+
+    return render_template("dashboard.html", user=user, completed=completed, cash_completed=cash_completed)
 
 
 @app.route("/notifications")
