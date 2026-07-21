@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+<meta charset="UTF-8">
+
+<title>دفع إعلان مقابلة شخصية</title>
+
+<style>
+
+body{
+font-family:tahoma;
+background:#0b1220;
+color:white;
+}
+
+.box{
+background:#1e293b;
+width:90%;
+max-width:500px;
+margin:50px auto;
+padding:25px;
+border-radius:20px;
+text-align:center;
+}
+
+.wallet{
+background:#111827;
+padding:15px;
+border-radius:10px;
+word-break:break-all;
+color:#22c55e;
+}
+
+button{
+background:#16a34a;
+color:white;
+border:0;
+padding:12px;
+border-radius:10px;
+width:100%;
+font-size:16px;
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+<div class="box">
+
+<h2>
+💵 دفع إعلان مقابلة شخصية
+</h2>
+
+
+<p>
+قيمة الإعلان:
+</p>
+
+<h2>
+{{fee}} USDT
+</h2>
+
+
+<p>
+أرسل المبلغ إلى محفظة المنصة:
+</p>
+
+
+<div class="wallet">
+{{wallet}}
+</div>
+
+
+<br>
+
+
+<form method="POST" action="/cash_payment_sent">
+
+<input type="hidden" name="amount" value="{{amount}}">
+
+<input type="hidden" name="price" value="{{price}}">
+
+<input type="hidden" name="city" value="{{city}}">
+
+<input type="hidden" name="location" value="{{location}}">
+
+<input type="hidden" name="notes" value="{{notes}}">
+
+
+<button>
+✅ أرسلت الدفع
+</button>
+
+
+</form>
+
+
+</div>
+
+
+</body>
+
+</html>
