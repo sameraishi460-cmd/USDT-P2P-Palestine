@@ -55,7 +55,6 @@ def setup_database():
     )
     """)
     
-    # إضافة عمود telegram_id بأمان لمنع أي أخطاء في حال تم تشغيل الكود مسبقاً
     add_column(con, "users", "telegram_id", "TEXT")
 
     # ADS
@@ -533,33 +532,25 @@ def create_cash_ad():
         city = request.form.get("city")
         location = request.form.get("location")
         notes = request.form.get("notes")
-        plan = request.form.get("plan")
 
-        plans = {
-            "week": {
-                "fee": 2,
-                "days": 7
-            },
-            "two_weeks": {
-                "fee": 6,
-                "days": 14
-            },
-            "month": {
-                "fee": 15,
-                "days": 30
-            }
-        }
+        days = request.form.get("days", "7")
 
-        selected = plans.get(plan)
+        if days == "7":
+            fee = 2
+        elif days == "14":
+            fee = 6
+        elif days == "30":
+            fee = 15
+        else:
+            fee = 2
 
-        if not selected:
-            return "مدة الإعلان غير صحيحة"
+        wallet = "0x659dd7cba24363c903abe3fddfc89eb30ffbf58a"
 
         return render_template(
             "cash_payment.html",
-            fee=selected["fee"],
-            days=selected["days"],
-            wallet=PLATFORM_WALLET,
+            fee=fee,
+            wallet=wallet,
+            days=days,
             amount=amount,
             price=price,
             city=city,
