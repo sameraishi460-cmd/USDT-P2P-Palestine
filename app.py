@@ -11,6 +11,7 @@ import telegram_bot
 
 
 app = Flask(__name__)
+app.config["PERMANENT_SESSION_LIFETIME"] = 2592000
 app.secret_key = "FINAL_USDT_P2P_PALESTINE_SECRET_KEY"
 
 DATABASE = "database.db"
@@ -327,6 +328,7 @@ def login():
                 return "الحساب محظور"
 
 
+            session.permanent = True
             session["user"] = username
 
 
