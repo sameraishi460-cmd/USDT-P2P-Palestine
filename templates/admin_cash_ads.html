@@ -57,9 +57,15 @@ border-bottom:1px solid #334155;
 .btn{
 background:#16a34a;
 color:white;
-padding:8px;
+padding:8px 12px;
 border-radius:8px;
 text-decoration:none;
+display:inline-block;
+}
+
+
+.reject{
+background:#dc2626;
 }
 
 
@@ -89,7 +95,6 @@ text-decoration:none;
 <a class="home" href="/">
 🏠 الرئيسية
 </a>
-
 
 </div>
 
@@ -135,17 +140,31 @@ text-decoration:none;
 
 <td>
 
+
 {% if ad.status == "PENDING_PAYMENT" %}
+
 
 <a class="btn" href="/admin_cash_accept/{{ad.id}}">
 ✅ قبول
 </a>
 
+
+<br><br>
+
+
+<a class="btn reject" href="/admin_cash_reject/{{ad.id}}">
+❌ رفض
+</a>
+
+
 {% else %}
+
 
 لا يوجد
 
+
 {% endif %}
+
 
 
 </td>
