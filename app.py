@@ -526,23 +526,32 @@ def cash_ads():
 @app.route("/create_cash_ad", methods=["GET", "POST"])
 @login_required
 def create_cash_ad():
+
     if request.method == "POST":
-        amount = request.form.get("amount")
-        price = request.form.get("price")
-        city = request.form.get("city")
-        location = request.form.get("location")
-        notes = request.form.get("notes")
 
-        days = request.form.get("days", "7")
+        amount = float(request.form.get("amount", 0))
+        price = float(request.form.get("price", 0))
+        city = request.form.get("city", "")
+        location = request.form.get("location", "")
+        notes = request.form.get("notes", "")
 
-        if days == "7":
+        plan = request.form.get("plan", "week")
+
+        if plan == "week":
             fee = 2
-        elif days == "14":
+            days = 7
+
+        elif plan == "two_weeks":
             fee = 6
-        elif days == "30":
+            days = 14
+
+        elif plan == "month":
             fee = 15
+            days = 30
+
         else:
             fee = 2
+            days = 7
 
         wallet = "0x659dd7cba24363c903abe3fddfc89eb30ffbf58a"
 
