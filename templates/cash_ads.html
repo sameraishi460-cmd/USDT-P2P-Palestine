@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+
+<meta charset="UTF-8">
+
+<title>إعلانات المقابلات الشخصية</title>
+
+<style>
+
+body{
+    background:#0b1220;
+    color:white;
+    font-family:tahoma;
+    padding:20px;
+}
+
+.box{
+    max-width:900px;
+    margin:auto;
+    background:#1e293b;
+    padding:20px;
+    border-radius:20px;
+}
+
+.menu{
+    text-align:center;
+    margin-bottom:20px;
+}
+
+.menu a{
+    display:inline-block;
+    background:#2563eb;
+    color:white;
+    padding:12px 18px;
+    border-radius:10px;
+    text-decoration:none;
+    margin:5px;
+}
+
+.green{
+    background:#16a34a !important;
+}
+
+
+.card{
+
+    background:#334155;
+    padding:15px;
+    border-radius:15px;
+    margin:15px 0;
+
+}
+
+
+.btn{
+
+    display:block;
+    background:#16a34a;
+    color:white;
+    text-align:center;
+    padding:12px;
+    border-radius:10px;
+    text-decoration:none;
+    margin-top:10px;
+
+}
+
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<div class="box">
+
+
+<h2>
+🤝 إعلانات المقابلات الشخصية
+</h2>
+
+
+
+<div class="menu">
+
+<a href="/">
+🏠 الرئيسية
+</a>
+
+
+<a class="green" href="/create_cash_ad">
+➕ نشر إعلان مقابلة
+</a>
+
+</div>
+
+
+
+
+{% for ad in ads %}
+
+
+<div class="card">
+
+
+<p>
+👤 البائع:
+<b>{{ad.user}}</b>
+</p>
+
+
+<p>
+💰 الكمية:
+<b>{{ad.amount}} USDT</b>
+</p>
+
+
+<p>
+💵 السعر:
+<b>{{ad.price}}</b>
+</p>
+
+
+<p>
+📍 المدينة:
+<b>{{ad.city}}</b>
+</p>
+
+
+<p>
+📌 المكان:
+<b>{{ad.location}}</b>
+</p>
+
+
+
+<a class="btn" href="/cash_ad/{{ad.id}}">
+عرض التفاصيل
+</a>
+
+
+
+</div>
+
+
+{% else %}
+
+
+<div class="card">
+
+لا توجد إعلانات مقابلات حالياً
+
+</div>
+
+
+{% endfor %}
+
+
+
+</div>
+
+
+</body>
+
+</html>
