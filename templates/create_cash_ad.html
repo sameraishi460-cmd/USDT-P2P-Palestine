@@ -5,82 +5,106 @@
 
 <meta charset="UTF-8">
 
-<title>إنشاء إعلان مقابلة شخصية</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>نشر إعلان مقابلة شخصية</title>
 
 
 <style>
 
+
 body{
-    margin:0;
-    font-family:tahoma;
-    background:#0b1220;
-    color:white;
+
+margin:0;
+padding:20px;
+background:#070d18;
+color:white;
+font-family:tahoma;
+
 }
+
 
 
 .box{
 
-    width:90%;
-    max-width:500px;
-    margin:40px auto;
-    background:#1e293b;
-    padding:25px;
-    border-radius:20px;
+max-width:500px;
+margin:auto;
+background:#111827;
+padding:25px;
+border-radius:25px;
 
 }
+
 
 
 h2{
-    text-align:center;
-}
 
-
-input,textarea,select{
-
-    width:100%;
-    padding:12px;
-    margin:10px 0;
-    border-radius:10px;
-    border:0;
+text-align:center;
+color:#22c55e;
 
 }
 
-
-button{
-
-    width:100%;
-    padding:14px;
-    background:#16a34a;
-    color:white;
-    border:0;
-    border-radius:10px;
-    font-size:17px;
-
-}
 
 
 .info{
 
-background:#111827;
+background:#1e293b;
 padding:15px;
-border-radius:10px;
-margin-bottom:15px;
+border-radius:15px;
+margin-bottom:20px;
 
 }
 
-.price_box{
 
-background:#0f172a;
-padding:10px;
-border-radius:10px;
+
+input,textarea,select{
+
+width:100%;
+padding:13px;
+margin:8px 0;
+border:0;
+border-radius:12px;
+background:#334155;
+color:white;
+
+}
+
+
+
+button{
+
+width:100%;
+padding:15px;
+border:0;
+border-radius:12px;
+background:#16a34a;
+color:white;
+font-size:18px;
+cursor:pointer;
+
+}
+
+
+
+.back{
+
+display:block;
 text-align:center;
-margin-top:10px;
+margin-top:15px;
+padding:12px;
+background:#2563eb;
+border-radius:12px;
+color:white;
+text-decoration:none;
 
 }
+
 
 </style>
 
+
 </head>
+
 
 
 <body>
@@ -89,28 +113,37 @@ margin-top:10px;
 <div class="box">
 
 
+
 <h2>
+
 🤝 نشر إعلان مقابلة شخصية
+
 </h2>
+
+
 
 
 <div class="info">
 
-رسوم رفع الإعلان:
+
+رسوم نشر الإعلان:
 
 <br><br>
 
-🟢 أسبوع = 2 USDT
+🟢 أسبوع : 2 USDT
 
 <br>
 
-🟢 أسبوعين = 6 USDT
+🔵 أسبوعين : 6 USDT
 
 <br>
 
-🟢 شهر كامل = 15 USDT
+🟣 شهر كامل : 15 USDT
+
 
 </div>
+
+
 
 
 
@@ -118,114 +151,102 @@ margin-top:10px;
 
 
 
-<input
+<input 
 name="amount"
-placeholder="كمية USDT للبيع"
-required
->
+placeholder="كمية USDT"
+required>
 
 
-<input
+
+<input 
 name="price"
 placeholder="السعر بالدولار"
-required
->
+required>
 
 
-<input
+
+<input 
 name="city"
 placeholder="المدينة"
-required
->
+required>
 
 
-<input
+
+<input 
 name="location"
 placeholder="مكان المقابلة"
-required
->
+required>
+
 
 
 <textarea
 name="notes"
-placeholder="ملاحظات إضافية"
-></textarea>
+placeholder="ملاحظات إضافية">
+</textarea>
 
 
 
-<label>
-اختر مدة الإعلان:
-</label>
 
 
-<select name="plan" id="plan" onchange="showFee()" required>
+<select name="plan">
 
 
-<option value="week" data-fee="2">
+<option value="week">
+
 أسبوع - 2 USDT
+
 </option>
 
 
-<option value="two_weeks" data-fee="6">
+<option value="two_weeks">
+
 أسبوعين - 6 USDT
+
 </option>
 
 
-<option value="month" data-fee="15">
+
+<option value="month">
+
 شهر كامل - 15 USDT
+
 </option>
+
 
 
 </select>
 
 
-<div class="price_box">
-
-رسوم الإعلان:
-<span id="fee">
-2
-</span>
-USDT
-
-</div>
-
-
-
-<input type="hidden" name="fee" id="fee_input" value="2">
 
 
 
 <button>
 
-💵 متابعة الدفع
+متابعة الدفع 🚀
 
 </button>
 
 
+
 </form>
+
+
+
+
+<a class="back" href="/cash_market">
+
+⬅️ الرجوع لسوق المقابلات
+
+</a>
+
+
 
 
 </div>
 
 
 
-<script>
-
-function showFee(){
-
-let select=document.getElementById("plan");
-
-let fee=select.options[select.selectedIndex].getAttribute("data-fee");
-
-document.getElementById("fee").innerHTML=fee;
-
-document.getElementById("fee_input").value=fee;
-
-}
-
-</script>
-
-
 </body>
+
 
 </html>
