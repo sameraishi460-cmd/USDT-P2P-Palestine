@@ -789,6 +789,48 @@ def cash_payment_sent():
     """
 
 
+@app.route("/edit_profile", methods=["GET", "POST"])
+@login_required
+def edit_profile():
+    con = connect()
+
+    user = con.execute(
+        "SELECT * FROM users WHERE username=?",
+        (session["user"],)
+    ).fetchone()
+
+    if request.method == "POST":
+        phone = request.form.get("phone", "")
+        bank = request.form.get("bank", "")
+        wallet = request.form.get("wallet", "")
+
+        con.execute(
+            """
+            UPDATE users 
+            SET phone=?, bank=?, wallet=?
+            WHERE username=?
+            """,
+            (
+                phone,
+                bank,
+                wallet,
+                session["user"]
+            )
+        )
+
+        con.commit()
+        con.close()
+
+        return redirect("/profile")
+
+    con.close()
+
+    return render_template(
+        "edit_profile.html",
+        user=user
+    )
+
+
 # =========================
 # 7. ADMIN PANEL & BACKUP
 # =========================
