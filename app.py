@@ -14,7 +14,7 @@ app = Flask(__name__)
 app.secret_key = "FINAL_USDT_P2P_PALESTINE_SECRET_KEY"
 
 DATABASE = "database.db"
-
+PLATFORM_WALLET = "0x659dd7cba24363c903abe3fddfc89eb30ffbf58a"
 
 # =========================
 # 1. DATABASE SETUP
@@ -280,7 +280,7 @@ def logout():
 
 @app.route("/telegram_login")
 def telegram_login():
-    return render_template("telegram_webapp.html")
+    return render_template("telegram_login.html")
 
 
 @app.route("/telegram_webapp")
