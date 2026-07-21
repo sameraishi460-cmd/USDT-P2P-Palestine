@@ -646,6 +646,20 @@ def cash_buy(id):
     con.close()
 
     notify(ad["user"], "طلب مقابلة شخصية", "يوجد شخص يريد التعامل معك")
+
+    telegram_bot.send_admin(
+        f"""
+🤝 طلب مقابلة جديد 🤝
+👤 المشتري: {session['user']}
+👤 البائع: {ad['user']}
+💰 الكمية: USDT {ad['amount']}
+💵 السعر: {ad['price']}
+📍 المدينة: {ad['city']}
+📌 المكان: {ad['location']}
+🆔 رقم الصفقة: {trade_id}
+"""
+    )
+
     return redirect("/cash_trade/" + str(trade_id))
 
 
@@ -685,6 +699,24 @@ def complete_cash(id):
 
     if trade:
         con.execute("UPDATE cash_trades SET status='COMPLETED' WHERE id=?", (id,))
+
+        telegram_bot.send_admin(
+            f"""
+✅ تم إتمام صفقة مقابلة
+
+🆔 رقم الصفقة: {id}
+
+👤 المشتري: {trade['buyer']}
+
+👤 البائع: {trade['seller']}
+
+💰 الكمية: {trade['amount']} USDT
+
+💵 السعر: {trade['price']}
+
+🎉 الحالة: COMPLETED
+"""
+        )
 
     con.commit()
     con.close()
