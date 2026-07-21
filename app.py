@@ -743,6 +743,19 @@ def cash_payment_sent():
     con.commit()
     con.close()
 
+    telegram_bot.send_admin(
+        f"""
+🔔 إعلان مقابلة جديد 👤
+المستخدم: {session['user']} 👤
+الكمية: USDT {amount} 💰
+السعر: {price} 💵
+المدينة: {city} 📍
+المكان: {location} 📌
+العمولة: USDT {fee} 💳
+الحالة: بانتظار مراجعة الأدمن ⏳
+"""
+    )
+
     return """
     <script>
     alert('تم إرسال طلب الإعلان للمراجعة ✅');
