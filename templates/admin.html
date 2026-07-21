@@ -100,25 +100,6 @@ text-align:center;
 }
 
 
-
-.btn{
-
-background:#16a34a;
-padding:8px 12px;
-border-radius:8px;
-color:white;
-text-decoration:none;
-
-}
-
-
-.red{
-
-background:#dc2626;
-
-}
-
-
 </style>
 
 </head>
@@ -144,9 +125,17 @@ background:#dc2626;
 </a>
 
 
-<a href="/admin_commission">
+
+<a href="/admin_commission_page">
 ⚙️ تعديل العمولة
 </a>
+
+
+
+<a href="/admin_cash_ads">
+🤝 إعلانات المقابلات
+</a>
+
 
 
 <a href="/admin_logout">
@@ -155,6 +144,7 @@ background:#dc2626;
 
 
 </div>
+
 
 
 
@@ -271,15 +261,13 @@ background:#dc2626;
 
 <td>{{t.status}}</td>
 
-
 </tr>
+
 
 {% endfor %}
 
 
 </table>
-
-
 
 
 
@@ -304,6 +292,7 @@ background:#dc2626;
 </tr>
 
 
+
 {% for c in cash_ads %}
 
 <tr>
@@ -318,7 +307,6 @@ background:#dc2626;
 
 <td>{{c.fee}}</td>
 
-
 </tr>
 
 
@@ -326,7 +314,6 @@ background:#dc2626;
 
 
 </table>
-
 
 
 
@@ -350,8 +337,8 @@ background:#dc2626;
 </tr>
 
 
-{% for c in cash_trades %}
 
+{% for c in cash_trades %}
 
 <tr>
 
