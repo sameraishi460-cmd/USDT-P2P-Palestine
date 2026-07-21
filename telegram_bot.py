@@ -1,15 +1,31 @@
 import requests
 import time
+import os
 
 
+# ضع توكن البوت هنا
 TOKEN = "8881823408:AAFOF1wDyMjrW7hLQAy9hwY2LvzzeddxQbk"
 
+
+# رابط منصتك
 WEBAPP_URL = "https://usdt-p2p-palestine-1.onrender.com/telegram_login"
 
 
-def send_message(chat_id, text, keyboard=None):
+def telegram_api(method, data=None):
 
-    url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
+    url = f"https://api.telegram.org/bot{TOKEN}/{method}"
+
+    try:
+        r = requests.post(url, json=data, timeout=30)
+        return r.json()
+
+    except Exception as e:
+        print("Telegram API Error:", e)
+        return {}
+
+
+
+def send_message(chat_id, text, keyboard=None):
 
     data = {
         "chat_id": chat_id,
@@ -19,32 +35,28 @@ def send_message(chat_id, text, keyboard=None):
     if keyboard:
         data["reply_markup"] = keyboard
 
-    requests.post(url, json=data)
+    telegram_api("sendMessage", data)
 
 
 
 def bot_loop():
 
-    last_update = 0
+    print("USDT P2P Telegram Bot Started 🚀")
 
-    print("Telegram Bot Started")
+    last_update = 0
 
 
     while True:
 
         try:
 
-            url = f"https://api.telegram.org/bot{TOKEN}/getUpdates"
-
-            params = {
-                "offset": last_update + 1,
-                "timeout": 30
-            }
-
-            response = requests.get(
-                url,
-                params=params
-            ).json()
+            response = telegram_api(
+                "getUpdates",
+                {
+                    "offset": last_update + 1,
+                    "timeout": 30
+                }
+            )
 
 
             for update in response.get("result", []):
@@ -52,52 +64,75 @@ def bot_loop():
                 last_update = update["update_id"]
 
 
-                if "message" in update:
-
-                    message = update["message"]
-
-                    chat_id = message["chat"]["id"]
-
-                    text = message.get("text", "")
+                if "message" not in update:
+                    continue
 
 
-                    if text == "/start":
+                message = update["message"]
 
-                        keyboard = {
-                            "inline_keyboard": [
-                                [
-                                    {
-                                        "text": "🚀 فتح منصة USDT P2P",
-                                        "web_app": {
-                                            "url": WEBAPP_URL
-                                        }
+                chat_id = message["chat"]["id"]
+
+                text = message.get("text", "")
+
+
+
+                if text == "/start":
+
+                    keyboard = {
+                        "inline_keyboard": [
+                            [
+                                {
+                                    "text": "🚀 فتح منصة USDT P2P فلسطين",
+                                    "web_app": {
+                                        "url": WEBAPP_URL
                                     }
-                                ]
+                                }
                             ]
-                        }
+                        ]
+                    }
 
 
-                        send_message(
-                            chat_id,
-                            "أهلاً بك في منصة USDT P2P فلسطين 🇵🇸\n\nاضغط لفتح التطبيق:",
-                            keyboard
-                        )
+                    send_message(
+                        chat_id,
+                        """
+🇵🇸 أهلاً بك في منصة USDT P2P فلسطين
+
+شراء وبيع USDT بسهولة وأمان.
+
+اضغط الزر لفتح المنصة 👇
+                        """,
+                        keyboard
+                    )
 
 
-                    elif text == "/help":
+                elif text == "/help":
 
-                        send_message(
-                            chat_id,
-                            "اكتب /start لفتح المنصة 🚀"
-                        )
+                    send_message(
+                        chat_id,
+                        """
+الأوامر:
+
+/start فتح المنصة 🚀
+
+/help المساعدة ℹ️
+                        """
+                    )
 
 
-                    else:
+                elif text == "/id":
 
-                        send_message(
-                            chat_id,
-                            "استخدم /start لفتح التطبيق 🚀"
-                        )
+                    send_message(
+                        chat_id,
+                        f"Telegram ID الخاص بك:\n{chat_id}"
+                    )
+
+
+                else:
+
+                    send_message(
+                        chat_id,
+                        "اكتب /start لفتح المنصة 🚀"
+                    )
 
 
         except Exception as e:
@@ -109,5 +144,5 @@ def bot_loop():
 
 
 
-if __name__ == "__main__":
+if name == "__main__":
     bot_loop()
