@@ -5,297 +5,216 @@
 
 <meta charset="UTF-8">
 
-<title>إضافة إعلان مقابلة</title>
+<title>إنشاء إعلان مقابلة شخصية</title>
 
 
 <style>
 
 body{
-
-background:#0b1220;
-color:white;
-font-family:tahoma;
-padding:20px;
-
+    margin:0;
+    font-family:tahoma;
+    background:#0b1220;
+    color:white;
 }
-
-
-
-.container{
-
-max-width:600px;
-margin:auto;
-
-}
-
 
 
 .box{
 
-background:#1e293b;
-padding:25px;
-border-radius:18px;
+    width:90%;
+    max-width:500px;
+    margin:40px auto;
+    background:#1e293b;
+    padding:25px;
+    border-radius:20px;
 
 }
-
 
 
 h2{
-
-text-align:center;
-color:#22c55e;
-
+    text-align:center;
 }
 
 
+input,textarea,select{
 
-label{
-
-display:block;
-margin-top:15px;
-
-}
-
-
-
-input,textarea{
-
-width:100%;
-padding:12px;
-margin-top:8px;
-border-radius:10px;
-border:0;
-background:#111827;
-color:white;
+    width:100%;
+    padding:12px;
+    margin:10px 0;
+    border-radius:10px;
+    border:0;
 
 }
-
-
-
-.note{
-
-background:#064e3b;
-padding:15px;
-border-radius:10px;
-margin:20px 0;
-
-}
-
 
 
 button{
 
-width:100%;
-padding:14px;
-border:0;
+    width:100%;
+    padding:14px;
+    background:#16a34a;
+    color:white;
+    border:0;
+    border-radius:10px;
+    font-size:17px;
+
+}
+
+
+.info{
+
+background:#111827;
+padding:15px;
 border-radius:10px;
-background:#16a34a;
-color:white;
-font-size:18px;
-margin-top:20px;
+margin-bottom:15px;
 
 }
-
-
-
-a{
-
-color:white;
-text-decoration:none;
-
-}
-
-
-
-.back{
-
-display:inline-block;
-background:#2563eb;
-padding:10px 15px;
-border-radius:10px;
-margin-bottom:20px;
-
-}
-
 
 </style>
-
 
 </head>
 
 
-
 <body>
-
-
-<div class="container">
-
-
-<a class="back" href="/cash_market">
-رجوع
-</a>
-
 
 
 <div class="box">
 
 
 <h2>
-🤝 إعلان مقابلة شخصية
+🤝 نشر إعلان مقابلة شخصية
 </h2>
 
 
+<div class="info">
 
-<form method="post">
+رسوم رفع الإعلان:
+
+<br>
+
+أسبوع = 2 USDT
+
+<br>
+
+أسبوعين = 6 USDT
+
+<br>
+
+شهر كامل = 15 USDT
+
+</div>
 
 
 
-<label>
-
-كمية USDT
-
-</label>
+<form method="POST">
 
 
-<input 
 
-type="number"
-
-step="0.01"
+<input
 
 name="amount"
 
-placeholder="مثال: 500"
+placeholder="كمية USDT"
 
-required>
+required
 
-
-
-<label>
-
-السعر
-
-</label>
+>
 
 
-<input 
 
-type="number"
-
-step="0.01"
+<input
 
 name="price"
 
-placeholder="مثال: 1850 شيكل"
+placeholder="السعر بالدولار"
 
-required>
+required
 
-
-
-
-
-<label>
-
-المدينة
-
-</label>
+>
 
 
-<input 
+
+<input
 
 name="city"
 
-placeholder="مثال: طولكرم"
+placeholder="المدينة"
 
-required>
+required
 
-
-
-
-
-<label>
-
-مكان المقابلة
-
-</label>
+>
 
 
-<input 
+
+<input
 
 name="location"
 
-placeholder="مثال: مول / كافيه / منطقة عامة"
+placeholder="مكان المقابلة"
 
-required>
+required
 
+>
 
-
-
-
-<label>
-
-ملاحظات
-
-</label>
 
 
 <textarea
 
 name="notes"
 
-rows="4"
+placeholder="ملاحظات"
 
-placeholder="أي تفاصيل إضافية">
-
-</textarea>
+></textarea>
 
 
 
 
+<label>
 
-<div class="note">
+مدة الإعلان:
 
-
-عمولة المنصة الحالية:
-
-<b>
-
-{{fee}}
-
-</b>
+</label>
 
 
-<br>
+<select name="plan" required>
 
 
-يتم خصمها حسب سياسة المنصة.
+<option value="week">
 
-</div>
+أسبوع - 2 USDT
+
+</option>
 
 
+<option value="two_weeks">
+
+أسبوعين - 6 USDT
+
+</option>
+
+
+<option value="month">
+
+شهر كامل - 15 USDT
+
+</option>
+
+
+</select>
 
 
 
 <button>
 
-نشر الإعلان
+متابعة الدفع
 
 </button>
 
 
-
-
 </form>
-
-
-
-</div>
 
 
 </div>
 
 
 </body>
-
 
 </html>
