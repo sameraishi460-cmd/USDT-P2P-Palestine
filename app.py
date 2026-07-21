@@ -280,7 +280,7 @@ def logout():
 
 @app.route("/telegram_login")
 def telegram_login():
-    return render_template("telegram_login.html")
+    return render_template("telegram_webapp.html")
 
 
 @app.route("/telegram_webapp")
