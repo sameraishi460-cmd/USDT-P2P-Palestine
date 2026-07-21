@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+<meta charset="UTF-8">
+
+<title>الإعلانات المتوفرة</title>
+
+<style>
+
+body{
+background:#070d18;
+color:white;
+font-family:tahoma;
+padding:20px;
+}
+
+.container{
+max-width:1100px;
+margin:auto;
+}
+
+h1{
+text-align:center;
+color:#22c55e;
+}
+
+.cards{
+
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+gap:20px;
+
+}
+
+
+.card{
+
+background:#1e293b;
+padding:20px;
+border-radius:20px;
+
+}
+
+
+.online{
+
+border-right:5px solid #16a34a;
+
+}
+
+
+.cash{
+
+border-right:5px solid #2563eb;
+
+}
+
+
+.btn{
+
+display:block;
+padding:12px;
+margin-top:15px;
+background:#16a34a;
+color:white;
+text-align:center;
+border-radius:10px;
+text-decoration:none;
+
+}
+
+
+.cashbtn{
+
+background:#2563eb;
+
+}
+
+
+.status{
+
+color:#94a3b8;
+
+}
+
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<div class="container">
+
+
+<h1>
+📢 الإعلانات المنشورة
+</h1>
+
+
+<div class="cards">
+
+
+
+{% for ad in ads %}
+
+
+<div class="card {{ad.type}}">
+
+
+<h3>
+
+{% if ad.type == "online" %}
+
+🟢 إعلان USDT أونلاين
+
+{% else %}
+
+🤝 مقابلة شخصية
+
+{% endif %}
+
+
+</h3>
+
+
+<p>
+👤 {{ad.user}}
+</p>
+
+
+<p>
+💰 {{ad.amount}} USDT
+</p>
+
+
+<p>
+💵 السعر: {{ad.price}}
+</p>
+
+
+<p class="status">
+الحالة: {{ad.status}}
+</p>
+
+
+
+{% if ad.type == "online" %}
+
+<a class="btn" href="/buy/{{ad.id}}">
+شراء الآن 🚀
+</a>
+
+
+{% else %}
+
+
+<a class="btn cashbtn" href="/cash_ad/{{ad.id}}">
+تفاصيل المقابلة 🤝
+</a>
+
+
+{% endif %}
+
+
+
+</div>
+
+
+{% endfor %}
+
+
+
+</div>
+
+
+</div>
+
+
+</body>
+
+</html>
