@@ -4,7 +4,7 @@ from functools import wraps
 import sqlite3
 import os
 import shutil
-from datetime import datetime
+from datetime import datetime, timedelta
 import traceback
 import threading
 import telegram_bot
@@ -13,6 +13,7 @@ import telegram_bot
 app = Flask(__name__)
 app.config["PERMANENT_SESSION_LIFETIME"] = 2592000
 app.secret_key = "FINAL_USDT_P2P_PALESTINE_SECRET_KEY"
+app.permanent_session_lifetime = timedelta(days=30)
 
 DATABASE = "database.db"
 PLATFORM_WALLET = "0x659dd7cba24363c903abe3fddfc89eb30ffbf58a"
@@ -294,6 +295,7 @@ def register():
             )
             con.commit()
             con.close()
+            session.permanent = True
             session["user"] = username
             return redirect("/dashboard")
         except:
