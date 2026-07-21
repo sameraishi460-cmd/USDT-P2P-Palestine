@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+
+<meta charset="UTF-8">
+
+<title>إعلانات المقابلات</title>
+
+<style>
+
+body{
+background:#0f172a;
+color:white;
+font-family:tahoma;
+padding:20px;
+}
+
+.box{
+background:#1e293b;
+padding:20px;
+border-radius:20px;
+}
+
+table{
+width:100%;
+border-collapse:collapse;
+}
+
+th,td{
+padding:12px;
+text-align:center;
+border-bottom:1px solid #334155;
+}
+
+.btn{
+background:#16a34a;
+color:white;
+padding:8px;
+border-radius:8px;
+text-decoration:none;
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<div class="box">
+
+
+<h2>
+🤝 إعلانات المقابلات الشخصية
+</h2>
+
+
+<table>
+
+
+<tr>
+
+<th>ID</th>
+<th>البائع</th>
+<th>الكمية</th>
+<th>المدينة</th>
+<th>المكان</th>
+<th>العمولة</th>
+<th>الحالة</th>
+<th>التحكم</th>
+
+</tr>
+
+
+
+{% for ad in ads %}
+
+
+<tr>
+
+<td>{{ad.id}}</td>
+
+<td>{{ad.user}}</td>
+
+<td>{{ad.amount}} USDT</td>
+
+<td>{{ad.city}}</td>
+
+<td>{{ad.location}}</td>
+
+<td>{{ad.fee}} USDT</td>
+
+<td>{{ad.status}}</td>
+
+
+<td>
+
+{% if ad.status == "PENDING_PAYMENT" %}
+
+<a class="btn" href="/admin_cash_accept/{{ad.id}}">
+✅ قبول
+</a>
+
+{% else %}
+
+لا يوجد
+
+{% endif %}
+
+
+</td>
+
+
+</tr>
+
+
+{% endfor %}
+
+
+</table>
+
+
+</div>
+
+
+</body>
+
+</html>
