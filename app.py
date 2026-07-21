@@ -680,15 +680,44 @@ def cash_trade(id):
 @app.route("/confirm_meeting/<int:id>")
 @login_required
 def confirm_meeting(id):
-    con = connect()
-    trade = con.execute("SELECT * FROM cash_trades WHERE id=?", (id,)).fetchone()
 
-    if trade:
-        con.execute("UPDATE cash_trades SET status='MEETING_CONFIRMED' WHERE id=?", (id,))
-        notify(trade["seller"], "تم تأكيد اللقاء", "تم تأكيد المقابلة الشخصية")
+    con = connect()
+
+    trade = con.execute(
+        "SELECT * FROM cash_trades WHERE id=?",
+        (id,)
+    ).fetchone()
+
+
+    if not trade:
+        con.close()
+        return "الصفقة غير موجودة"
+
+
+    con.execute(
+        "UPDATE cash_trades SET status='MEETING_CONFIRMED' WHERE id=?",
+        (id,)
+    )
+
+
+    notify(
+        trade["buyer"],
+        "تم تأكيد موعد اللقاء",
+        "تم تأكيد المقابلة الشخصية مع البائع"
+    )
+
+
+    notify(
+        trade["seller"],
+        "تم تأكيد موعد اللقاء",
+        "تم تأكيد المقابلة الشخصية مع المشتري"
+    )
+
 
     con.commit()
     con.close()
+
+
     return redirect("/cash_trade/" + str(id))
 
 
@@ -727,10 +756,44 @@ def complete_cash(id):
 @app.route("/cash_dispute/<int:id>")
 @login_required
 def cash_dispute(id):
+
     con = connect()
-    con.execute("UPDATE cash_trades SET status='DISPUTE' WHERE id=?", (id,))
+
+    trade = con.execute(
+        "SELECT * FROM cash_trades WHERE id=?",
+        (id,)
+    ).fetchone()
+
+
+    if not trade:
+        con.close()
+        return "الصفقة غير موجودة"
+
+
+    con.execute(
+        "UPDATE cash_trades SET status='DISPUTE' WHERE id=?",
+        (id,)
+    )
+
+
+    notify(
+        trade["buyer"],
+        "فتح نزاع",
+        "تم فتح نزاع على صفقة المقابلة الشخصية"
+    )
+
+
+    notify(
+        trade["seller"],
+        "فتح نزاع",
+        "تم فتح نزاع على صفقة المقابلة الشخصية"
+    )
+
+
     con.commit()
     con.close()
+
+
     return redirect("/cash_trade/" + str(id))
 
 
