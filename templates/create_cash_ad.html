@@ -68,6 +68,16 @@ margin-bottom:15px;
 
 }
 
+.price_box{
+
+background:#0f172a;
+padding:10px;
+border-radius:10px;
+text-align:center;
+margin-top:10px;
+
+}
+
 </style>
 
 </head>
@@ -88,17 +98,17 @@ margin-bottom:15px;
 
 رسوم رفع الإعلان:
 
-<br>
+<br><br>
 
-أسبوع = 2 USDT
-
-<br>
-
-أسبوعين = 6 USDT
+🟢 أسبوع = 2 USDT
 
 <br>
 
-شهر كامل = 15 USDT
+🟢 أسبوعين = 6 USDT
+
+<br>
+
+🟢 شهر كامل = 15 USDT
 
 </div>
 
@@ -109,102 +119,85 @@ margin-bottom:15px;
 
 
 <input
-
 name="amount"
-
-placeholder="كمية USDT"
-
+placeholder="كمية USDT للبيع"
 required
-
 >
 
 
-
 <input
-
 name="price"
-
 placeholder="السعر بالدولار"
-
 required
-
 >
 
 
-
 <input
-
 name="city"
-
 placeholder="المدينة"
-
 required
-
 >
-
 
 
 <input
-
 name="location"
-
 placeholder="مكان المقابلة"
-
 required
-
 >
-
 
 
 <textarea
-
 name="notes"
-
-placeholder="ملاحظات"
-
+placeholder="ملاحظات إضافية"
 ></textarea>
 
 
 
-
 <label>
-
-مدة الإعلان:
-
+اختر مدة الإعلان:
 </label>
 
 
-<select name="plan" required>
+<select name="plan" id="plan" onchange="showFee()" required>
 
 
-<option value="week">
-
+<option value="week" data-fee="2">
 أسبوع - 2 USDT
-
 </option>
 
 
-<option value="two_weeks">
-
+<option value="two_weeks" data-fee="6">
 أسبوعين - 6 USDT
-
 </option>
 
 
-<option value="month">
-
+<option value="month" data-fee="15">
 شهر كامل - 15 USDT
-
 </option>
 
 
 </select>
 
 
+<div class="price_box">
+
+رسوم الإعلان:
+<span id="fee">
+2
+</span>
+USDT
+
+</div>
+
+
+
+<input type="hidden" name="fee" id="fee_input" value="2">
+
+
 
 <button>
 
-متابعة الدفع
+💵 متابعة الدفع
 
 </button>
 
@@ -213,6 +206,24 @@ placeholder="ملاحظات"
 
 
 </div>
+
+
+
+<script>
+
+function showFee(){
+
+let select=document.getElementById("plan");
+
+let fee=select.options[select.selectedIndex].getAttribute("data-fee");
+
+document.getElementById("fee").innerHTML=fee;
+
+document.getElementById("fee_input").value=fee;
+
+}
+
+</script>
 
 
 </body>
