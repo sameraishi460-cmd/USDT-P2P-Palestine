@@ -26,7 +26,7 @@ body{
 
 
 .header{
-    background:#111827;
+    background:linear-gradient(135deg,#111827,#1e293b);
     padding:25px;
     border-radius:20px;
     text-align:center;
@@ -83,8 +83,15 @@ body{
     color:white;
     background:#2563eb;
     font-size:17px;
+    transition:.2s;
 
 }
+
+
+.button:hover{
+    opacity:.85;
+}
+
 
 
 .green{
@@ -99,6 +106,11 @@ body{
 
 .red{
     background:#dc2626;
+}
+
+
+.gray{
+    background:#475569;
 }
 
 
@@ -125,6 +137,7 @@ body{
 </p>
 
 </div>
+
 
 
 
@@ -235,6 +248,7 @@ body{
 
 
 
+
 <div class="card">
 
 
@@ -246,9 +260,17 @@ body{
 <div class="menu">
 
 
-<a class="button green" href="/">
+
+<a class="button gray" href="/market">
+🏠 الصفحة الرئيسية والإعلانات
+</a>
+
+
+
+<a class="button green" href="/market">
 💱 إعلانات USDT
 </a>
+
 
 
 
@@ -258,9 +280,11 @@ body{
 
 
 
+
 <a class="button orange" href="/cash_market">
 🤝 سوق المقابلات الشخصية
 </a>
+
 
 
 
@@ -270,9 +294,11 @@ body{
 
 
 
+
 <a class="button" href="/profile">
 👤 الملف الشخصي
 </a>
+
 
 
 
@@ -282,9 +308,11 @@ body{
 
 
 
+
 <a class="button red" href="/logout">
 🚪 تسجيل خروج
 </a>
+
 
 
 </div>
