@@ -7,11 +7,13 @@ TOKEN = "8064024379:AAE3UZRfkPzhrr98w3WmO0dO5wlIzEugt_w"
 
 ADMIN_CHAT_ID = "5681774891"
 
+WEBAPP_URL = "https://usdt-p2p-palestine-1.onrender.com/"
 
 DATABASE = "database.db"
 
 
-def send_message(chat_id, text):
+def send_message(chat_id, text, keyboard=None):
+
     url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
 
     data = {
@@ -19,7 +21,10 @@ def send_message(chat_id, text):
         "text": text
     }
 
-    requests.post(url, data=data)
+    if keyboard:
+        data["reply_markup"] = keyboard
+
+    requests.post(url, json=data)
 
 
 def notify_admin(text):
@@ -45,7 +50,7 @@ def get_stats():
 
     con.close()
 
-    return users,trades,profit
+    return users, trades, profit
 
 
 
@@ -57,15 +62,15 @@ def bot_loop():
 
         url = f"https://api.telegram.org/bot{TOKEN}/getUpdates"
 
-        params={
-            "offset":last_update+1,
-            "timeout":30
+        params = {
+            "offset": last_update + 1,
+            "timeout": 30
         }
 
-        r=requests.get(url,params=params).json()
+        r = requests.get(url, params=params).json()
 
 
-        for update in r.get("result",[]):
+        for update in r.get("result", []):
 
             last_update = update["update_id"]
 
@@ -73,20 +78,35 @@ def bot_loop():
 
                 chat_id = update["message"]["chat"]["id"]
 
-                text = update["message"].get("text","")
+                text = update["message"].get("text", "")
 
 
                 if text == "/start":
 
+                    keyboard = {
+                        "inline_keyboard": [
+                            [
+                                {
+                                    "text": "🚀 فتح التطبيق",
+                                    "web_app": {
+                                        "url": WEBAPP_URL
+                                    }
+                                }
+                            ]
+                        ]
+                    }
+
+
                     send_message(
                         chat_id,
-                        "مرحبا بك في منصة USDT P2P فلسطين"
+                        "مرحبا بك في منصة USDT P2P فلسطين 🇵🇸\n\nاضغط لفتح التطبيق:",
+                        keyboard
                     )
 
 
                 elif text == "/stats":
 
-                    users,trades,profit=get_stats()
+                    users, trades, profit = get_stats()
 
                     send_message(
                         chat_id,
@@ -106,5 +126,5 @@ def bot_loop():
 
 
 
-if __name__=="__main__":
+if __name__ == "__main__":
     bot_loop()
