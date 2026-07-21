@@ -402,19 +402,27 @@ def home():
         "SELECT * FROM ads WHERE status='OPEN' ORDER BY id DESC"
     ).fetchall()
 
-
     cash_ads = con.execute(
         "SELECT * FROM cash_ads WHERE status='OPEN' ORDER BY id DESC"
     ).fetchall()
 
-
     con.close()
 
+    user = None
+
+    if "user" in session:
+        con = connect()
+        user = con.execute(
+            "SELECT * FROM users WHERE username=?",
+            (session["user"],)
+        ).fetchone()
+        con.close()
 
     return render_template(
         "index.html",
         ads=ads,
-        cash_ads=cash_ads
+        cash_ads=cash_ads,
+        user=user
     )
 
 
