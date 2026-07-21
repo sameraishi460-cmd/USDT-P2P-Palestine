@@ -737,6 +737,46 @@ def review(id):
     return redirect("/profile")
 
 
+@app.route("/cash_payment_sent", methods=["POST"])
+@login_required
+def cash_payment_sent():
+    amount = request.form.get("amount")
+    price = request.form.get("price")
+    city = request.form.get("city")
+    location = request.form.get("location")
+    notes = request.form.get("notes")
+
+    con = connect()
+
+    con.execute(
+        """
+        INSERT INTO cash_ads
+        (user, amount, price, city, location, notes, status)
+        VALUES(?,?,?,?,?,?,?)
+        """,
+        (
+            session["user"],
+            amount,
+            price,
+            city,
+            location,
+            notes,
+            "WAITING_PAYMENT"
+        )
+    )
+
+    con.commit()
+    con.close()
+
+    return """
+    <h2 style='text-align:center'>
+    ✅ تم إرسال الطلب
+    <br>
+    بانتظار موافقة الإدارة
+    </h2>
+    """
+
+
 # =========================
 # 7. ADMIN PANEL & BACKUP
 # =========================
