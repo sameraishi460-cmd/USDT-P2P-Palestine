@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+<meta charset="UTF-8">
+<title>USDT P2P فلسطين</title>
+
+<style>
+body{
+    margin:0;
+    background:#0b1220;
+    color:white;
+    font-family:tahoma;
+}
+
+.box{
+    width:90%;
+    max-width:450px;
+    margin:50px auto;
+    background:#1e293b;
+    padding:25px;
+    border-radius:20px;
+    text-align:center;
+}
+
+button{
+    width:100%;
+    padding:15px;
+    background:#16a34a;
+    color:white;
+    border:0;
+    border-radius:10px;
+    font-size:18px;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="box">
+
+<h2>
+🇵🇸 USDT P2P فلسطين
+</h2>
+
+<p>
+تم تسجيل الدخول من تلجرام
+</p>
+
+
+<form action="/telegram_auth">
+
+<input type="hidden" name="id" value="{{request.args.get('telegram_id')}}">
+
+<input type="hidden" name="username" value="{{request.args.get('username')}}">
+
+<input type="hidden" name="first_name" value="{{request.args.get('first_name')}}">
+
+
+<button>
+🚀 دخول المنصة
+</button>
+
+</form>
+
+
+</div>
+
+</body>
+
+</html>
