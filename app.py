@@ -292,12 +292,14 @@ def telegram_webapp():
 def telegram_auth():
     telegram_id = request.args.get("id")
     username = request.args.get("username")
-    first_name = request.args.get("first_name")
+
+    print("TELEGRAM DATA:", telegram_id, username)
 
     if not telegram_id:
-        return "لا توجد بيانات تليجرام"
+        return "لا توجد بيانات تلجرام"
 
     con = connect()
+
     user = con.execute(
         "SELECT * FROM users WHERE telegram_id=?",
         (telegram_id,)
@@ -305,27 +307,33 @@ def telegram_auth():
 
     if not user:
         new_username = username if username else f"telegram_{telegram_id}"
+
         try:
             con.execute(
                 """
-                INSERT INTO users 
-                (username, password, telegram_id) 
-                VALUES (?, ?, ?)
+                INSERT INTO users
+                (username, password, telegram_id)
+                VALUES(?,?,?)
                 """,
                 (
                     new_username,
-                    generate_password_hash("telegram_default_pass"),
+                    generate_password_hash("telegram"),
                     telegram_id
                 )
             )
+
             con.commit()
             session["user"] = new_username
-        except:
+
+        except Exception as e:
+            print("CREATE USER ERROR:", e)
             session["user"] = new_username
+
     else:
         session["user"] = user["username"]
 
     con.close()
+
     return redirect("/dashboard")
 
 
