@@ -2,6 +2,7 @@
 <html lang="ar" dir="rtl">
 
 <head>
+
 <meta charset="UTF-8">
 
 <title>دفع إعلان مقابلة شخصية</title>
@@ -9,38 +10,75 @@
 <style>
 
 body{
-font-family:tahoma;
-background:#0b1220;
-color:white;
+    margin:0;
+    font-family:tahoma,Arial;
+    background:#0b1220;
+    color:white;
 }
+
 
 .box{
-background:#1e293b;
-width:90%;
-max-width:500px;
-margin:50px auto;
-padding:25px;
-border-radius:20px;
-text-align:center;
+
+    background:#1e293b;
+    width:90%;
+    max-width:500px;
+    margin:50px auto;
+    padding:25px;
+    border-radius:20px;
+    text-align:center;
+
 }
+
+
+h2{
+    color:#22c55e;
+}
+
+
+.info{
+
+    background:#111827;
+    padding:15px;
+    border-radius:12px;
+    margin:15px 0;
+
+}
+
 
 .wallet{
-background:#111827;
-padding:15px;
-border-radius:10px;
-word-break:break-all;
-color:#22c55e;
+
+    background:#020617;
+    padding:15px;
+    border-radius:10px;
+    word-break:break-all;
+    color:#22c55e;
+    font-size:14px;
+
 }
 
+
 button{
-background:#16a34a;
-color:white;
-border:0;
-padding:12px;
-border-radius:10px;
-width:100%;
-font-size:16px;
+
+    background:#16a34a;
+    color:white;
+    border:0;
+    padding:14px;
+    border-radius:10px;
+    width:100%;
+    font-size:16px;
+    cursor:pointer;
+
 }
+
+
+.note{
+
+    color:#facc15;
+    font-size:14px;
+    margin-top:15px;
+
+}
+
 
 </style>
 
@@ -49,11 +87,24 @@ font-size:16px;
 
 <body>
 
+
 <div class="box">
+
 
 <h2>
 💵 دفع إعلان مقابلة شخصية
 </h2>
+
+
+<div class="info">
+
+<p>
+مدة الإعلان:
+</p>
+
+<h3>
+{{days}} يوم
+</h3>
 
 
 <p>
@@ -64,6 +115,9 @@ font-size:16px;
 {{fee}} USDT
 </h2>
 
+</div>
+
+
 
 <p>
 أرسل المبلغ إلى محفظة المنصة:
@@ -71,14 +125,26 @@ font-size:16px;
 
 
 <div class="wallet">
+
 {{wallet}}
+
 </div>
+
+
+
+<p class="note">
+
+بعد التحويل اضغط "أرسلت الدفع" ليتم مراجعة الطلب من الإدارة
+
+</p>
+
 
 
 <br>
 
 
 <form method="POST" action="/cash_payment_sent">
+
 
 <input type="hidden" name="amount" value="{{amount}}">
 
@@ -90,9 +156,13 @@ font-size:16px;
 
 <input type="hidden" name="notes" value="{{notes}}">
 
+<input type="hidden" name="days" value="{{days}}">
+
 
 <button>
+
 ✅ أرسلت الدفع
+
 </button>
 
 
