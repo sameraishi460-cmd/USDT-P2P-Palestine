@@ -701,6 +701,56 @@ def cash_dispute(id):
     return redirect("/cash_trade/" + str(id))
 
 
+@app.route("/cash_payment_sent", methods=["POST"])
+@login_required
+def cash_payment_sent():
+
+    amount = request.form.get("amount")
+    price = request.form.get("price")
+    city = request.form.get("city")
+    location = request.form.get("location")
+    notes = request.form.get("notes")
+    plan = request.form.get("plan")
+
+    fees = {
+        "week": 2,
+        "two_weeks": 6,
+        "month": 15
+    }
+
+    fee = fees.get(plan, 2)
+
+    con = connect()
+
+    con.execute(
+        """
+        INSERT INTO cash_ads
+        (user, amount, price, city, location, notes, fee, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            session["user"],
+            amount,
+            price,
+            city,
+            location,
+            notes,
+            fee,
+            "PENDING_PAYMENT"
+        )
+    )
+
+    con.commit()
+    con.close()
+
+    return """
+    <script>
+    alert('تم إرسال طلب الإعلان للمراجعة ✅');
+    window.location.href='/';
+    </script>
+    """
+
+
 # =========================
 # 6. PROFILE, DASHBOARD & REVIEWS
 # =========================
@@ -971,54 +1021,21 @@ def admin_backup():
     return "تم إنشاء نسخة احتياطية"
 
 
-@app.route("/cash_payment_sent", methods=["POST"])
-@login_required
-def cash_payment_sent():
-
-    amount = request.form.get("amount")
-    price = request.form.get("price")
-    city = request.form.get("city")
-    location = request.form.get("location")
-    notes = request.form.get("notes")
-    plan = request.form.get("plan")
-
-    fees = {
-        "week": 2,
-        "two_weeks": 6,
-        "month": 15
-    }
-
-    fee = fees.get(plan, 2)
+@app.route("/admin_cash_accept/<int:id>")
+@admin_required
+def admin_cash_accept(id):
 
     con = connect()
 
     con.execute(
-        """
-        INSERT INTO cash_ads
-        (user, amount, price, city, location, notes, fee, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            session["user"],
-            amount,
-            price,
-            city,
-            location,
-            notes,
-            fee,
-            "PENDING_PAYMENT"
-        )
+        "UPDATE cash_ads SET status='OPEN' WHERE id=?",
+        (id,)
     )
 
     con.commit()
     con.close()
 
-    return """
-    <script>
-    alert('تم إرسال طلب الإعلان للمراجعة ✅');
-    window.location.href='/';
-    </script>
-    """
+    return redirect("/admin_cash_ads")
 
 
 # تشغيل بوت التليجرام تلقائياً مع خيوط المعالجة (Threading)
