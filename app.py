@@ -54,6 +54,9 @@ def setup_database():
         status TEXT DEFAULT 'ACTIVE'
     )
     """)
+    
+    # إضافة عمود telegram_id بأمان باستخدام الدالة الجاهزة
+    add_column(con, "users", "telegram_id", "TEXT")
 
     # ADS
     con.execute("""
@@ -273,6 +276,48 @@ def login():
 def logout():
     session.clear()
     return redirect("/")
+
+
+@app.route("/telegram_login")
+def telegram_login():
+    telegram_id = request.args.get("id")
+    username = request.args.get("username")
+    first_name = request.args.get("first_name")
+
+    if not telegram_id:
+        return "لا توجد بيانات تليجرام"
+
+    con = connect()
+    user = con.execute(
+        "SELECT * FROM users WHERE telegram_id=?",
+        (telegram_id,)
+    ).fetchone()
+
+    if not user:
+        final_username = username or f"telegram_{telegram_id}"
+        try:
+            con.execute(
+                """
+                INSERT INTO users 
+                (username, password, telegram_id) 
+                VALUES (?, ?, ?)
+                """,
+                (
+                    final_username,
+                    generate_password_hash("telegram_default_pass"),
+                    telegram_id
+                )
+            )
+            con.commit()
+            user_name_to_session = final_username
+        except:
+            user_name_to_session = final_username
+    else:
+        user_name_to_session = user["username"]
+
+    con.close()
+    session["user"] = user_name_to_session
+    return redirect("/dashboard")
 
 
 # =========================
