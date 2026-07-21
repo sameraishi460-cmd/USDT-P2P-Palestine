@@ -304,22 +304,46 @@ def register():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
+
     if request.method == "POST":
+
         username = request.form.get("username")
         password = request.form.get("password")
+        remember = request.form.get("remember")
 
         con = connect()
-        user = con.execute("SELECT * FROM users WHERE username=?", (username,)).fetchone()
+
+        user = con.execute(
+            "SELECT * FROM users WHERE username=?",
+            (username,)
+        ).fetchone()
+
         con.close()
 
+
         if user and check_password_hash(user["password"], password):
+
             if user["status"] == "BANNED":
                 return "الحساب محظور"
 
+
             session["user"] = username
+
+
+            # حفظ الحساب
+            if remember:
+
+                session.permanent = True
+
+                app.permanent_session_lifetime = 60 * 60 * 24 * 30
+                # 30 يوم
+
+
             return redirect("/dashboard")
 
+
         return "خطأ في البيانات"
+
 
     return render_template("login.html")
 
