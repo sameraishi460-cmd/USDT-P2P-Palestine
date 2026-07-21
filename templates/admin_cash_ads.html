@@ -5,73 +5,133 @@
 
 <meta charset="UTF-8">
 
-<title>إعلانات المقابلات</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>سوق المقابلات الشخصية</title>
+
 
 <style>
 
 body{
-background:#0f172a;
+
+margin:0;
+padding:20px;
+background:#070d18;
 color:white;
 font-family:tahoma;
-padding:20px;
+
 }
 
+
 .box{
+
+max-width:1100px;
+margin:auto;
+background:#111827;
+padding:25px;
+border-radius:25px;
+
+}
+
+
+h1{
+
+text-align:center;
+color:#22c55e;
+
+}
+
+
+
+.top{
+
+text-align:center;
+margin-bottom:25px;
+
+}
+
+
+.btn{
+
+display:inline-block;
+padding:12px 20px;
+background:#2563eb;
+color:white;
+text-decoration:none;
+border-radius:12px;
+margin:5px;
+
+}
+
+
+.green{
+
+background:#16a34a;
+
+}
+
+
+
+.cards{
+
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+gap:20px;
+
+}
+
+
+
+.card{
+
 background:#1e293b;
 padding:20px;
 border-radius:20px;
-}
 
-.menu{
-text-align:center;
-margin-bottom:20px;
-}
-
-.menu a{
-display:inline-block;
-padding:10px 20px;
-margin:5px;
-border-radius:10px;
-text-decoration:none;
-color:white;
-background:#2563eb;
 }
 
 
-.home{
-background:#16a34a !important;
+
+.title{
+
+font-size:20px;
+color:#22c55e;
+
 }
 
 
-table{
-width:100%;
-border-collapse:collapse;
-}
 
-th,td{
+.buy{
+
+display:block;
+background:#16a34a;
 padding:12px;
 text-align:center;
-border-bottom:1px solid #334155;
-}
-
-.btn{
-background:#16a34a;
+border-radius:12px;
 color:white;
-padding:8px 12px;
-border-radius:8px;
 text-decoration:none;
-display:inline-block;
+margin-top:15px;
+
 }
 
 
-.reject{
-background:#dc2626;
+
+.info{
+
+background:#334155;
+padding:10px;
+border-radius:10px;
+margin-top:10px;
+
 }
+
 
 
 </style>
 
+
 </head>
+
 
 
 <body>
@@ -80,108 +140,137 @@ background:#dc2626;
 <div class="box">
 
 
-<h2>
-🤝 إعلانات المقابلات الشخصية
-</h2>
+
+<h1>
+
+🤝 سوق المقابلات الشخصية
+
+</h1>
 
 
-<div class="menu">
 
-<a href="/admin">
-⬅️ لوحة الأدمن
+
+<div class="top">
+
+
+<a class="btn green" href="/create_cash_ad">
+
+📍 نشر إعلان مقابلة شخصية
+
 </a>
 
 
-<a class="home" href="/">
+
+<a class="btn" href="/">
+
 🏠 الرئيسية
+
 </a>
+
+
 
 </div>
 
 
 
-<table>
 
 
-<tr>
-
-<th>ID</th>
-<th>البائع</th>
-<th>الكمية</th>
-<th>المدينة</th>
-<th>المكان</th>
-<th>العمولة</th>
-<th>الحالة</th>
-<th>التحكم</th>
-
-</tr>
-
+<div class="cards">
 
 
 {% for ad in ads %}
 
 
-<tr>
 
-<td>{{ad.id}}</td>
-
-<td>{{ad.user}}</td>
-
-<td>{{ad.amount}} USDT</td>
-
-<td>{{ad.city}}</td>
-
-<td>{{ad.location}}</td>
-
-<td>{{ad.fee}} USDT</td>
-
-<td>{{ad.status}}</td>
+<div class="card">
 
 
-<td>
+
+<div class="title">
+
+👤 {{ad.user}}
+
+</div>
 
 
-{% if ad.status == "PENDING_PAYMENT" %}
 
 
-<a class="btn" href="/admin_cash_accept/{{ad.id}}">
-✅ قبول
+<div class="info">
+
+💰 الكمية:
+
+{{ad.amount}} USDT
+
+</div>
+
+
+
+<div class="info">
+
+💵 السعر:
+
+{{ad.price}}
+
+</div>
+
+
+
+<div class="info">
+
+📍 المدينة:
+
+{{ad.city}}
+
+</div>
+
+
+
+<div class="info">
+
+📌 مكان اللقاء:
+
+{{ad.location}}
+
+</div>
+
+
+
+<a class="buy" href="/cash_ad/{{ad.id}}">
+
+عرض التفاصيل
+
 </a>
 
 
-<br><br>
 
+</div>
 
-<a class="btn reject" href="/admin_cash_reject/{{ad.id}}">
-❌ رفض
-</a>
 
 
 {% else %}
 
 
-لا يوجد
 
+<div class="card">
 
-{% endif %}
+لا توجد إعلانات مقابلات شخصية حالياً
 
+</div>
 
-
-</td>
-
-
-</tr>
 
 
 {% endfor %}
 
 
-</table>
+
+</div>
+
 
 
 </div>
 
 
 </body>
+
 
 </html>
