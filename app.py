@@ -603,7 +603,8 @@ def create_cash_ad():
             price=price,
             city=city,
             location=location,
-            notes=notes
+            notes=notes,
+            plan=plan
         )
 
     return render_template("create_cash_ad.html")
