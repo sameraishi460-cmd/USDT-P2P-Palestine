@@ -8,7 +8,6 @@ TOKEN = "8881823408:AAFOF1wDyMjrW7hLQAy9hwY2LvzzeddxQbk"
 WEBAPP_URL = "https://usdt-p2p-palestine-1.onrender.com/telegram_login"
 
 
-
 def send_message(chat_id, text, keyboard=None):
 
     url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
@@ -25,7 +24,7 @@ def send_message(chat_id, text, keyboard=None):
         requests.post(
             url,
             json=data,
-            timeout=15
+            timeout=10
         )
 
     except Exception as e:
@@ -46,19 +45,16 @@ def bot_loop():
 
             url = f"https://api.telegram.org/bot{TOKEN}/getUpdates"
 
-
             params = {
                 "offset": last_update + 1,
                 "timeout": 30
             }
-
 
             response = requests.get(
                 url,
                 params=params,
                 timeout=40
             ).json()
-
 
 
             for update in response.get("result", []):
@@ -74,52 +70,33 @@ def bot_loop():
 
                 chat_id = message["chat"]["id"]
 
-                text = message.get("text", "")
-
+                text = message.get("text","")
 
 
                 if text == "/start":
 
-
                     keyboard = {
-
-                        "inline_keyboard": [
-
+                        "inline_keyboard":[
                             [
-
                                 {
-                                    "text": "🚀 فتح منصة USDT P2P فلسطين",
-
-                                    "web_app": {
-                                        "url": WEBAPP_URL
+                                    "text":"🚀 فتح منصة USDT P2P فلسطين",
+                                    "web_app":{
+                                        "url":WEBAPP_URL
                                     }
                                 }
-
                             ]
-
                         ]
-
                     }
 
 
                     send_message(
                         chat_id,
-                        "أهلاً بك في منصة USDT P2P فلسطين 🇵🇸\n\nاضغط الزر لفتح التطبيق:",
+                        "أهلاً بك في منصة USDT P2P فلسطين 🇵🇸\n\nاضغط لفتح التطبيق:",
                         keyboard
                     )
 
 
                 elif text == "/help":
-
-
-                    send_message(
-                        chat_id,
-                        "الأوامر:\n/start فتح المنصة\n/help المساعدة"
-                    )
-
-
-                else:
-
 
                     send_message(
                         chat_id,
@@ -127,17 +104,23 @@ def bot_loop():
                     )
 
 
+                else:
+
+                    send_message(
+                        chat_id,
+                        "استخدم /start لفتح التطبيق 🚀"
+                    )
+
 
         except Exception as e:
 
             print("Telegram Error:", e)
-
             traceback.print_exc()
 
-            time.sleep(5)
+
+        time.sleep(2)
 
 
 
-if name == "__main__":
-
+if __name__ == "__main__":
     bot_loop()
