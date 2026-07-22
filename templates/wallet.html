@@ -29,7 +29,6 @@ padding:20px;
 }
 
 
-
 .header{
 background:#111827;
 padding:20px;
@@ -39,7 +38,6 @@ margin-bottom:20px;
 }
 
 
-
 .logo{
 font-size:25px;
 font-weight:bold;
@@ -47,110 +45,78 @@ color:#22c55e;
 }
 
 
-
 .card{
-
 background:#111827;
 border:1px solid #263244;
 border-radius:22px;
 padding:20px;
 margin-bottom:20px;
-
 }
 
 
-
 .balance{
-
 background:linear-gradient(135deg,#16a34a,#15803d);
 padding:30px;
 border-radius:20px;
 text-align:center;
-
 }
-
 
 
 .balance h1{
-
 font-size:42px;
 margin:15px 0;
-
 }
 
 
-
 .box{
-
 background:#1e293b;
 padding:18px;
 border-radius:15px;
 margin-top:15px;
 text-align:center;
-
 }
-
 
 
 .label{
-
 color:#cbd5e1;
 font-size:15px;
-
 }
-
 
 
 .value{
-
 font-size:25px;
 font-weight:bold;
 margin-top:8px;
-
 }
-
 
 
 .buttons{
-
 display:grid;
 grid-template-columns:1fr 1fr;
 gap:10px;
-
 }
 
 
-
 .btn{
-
 padding:15px;
 border-radius:15px;
 text-align:center;
 text-decoration:none;
 color:white;
-
 }
-
 
 
 .deposit{
-
 background:#16a34a;
-
 }
-
 
 
 .withdraw{
-
 background:#2563eb;
-
 }
 
 
-
 .back{
-
 display:block;
 background:#475569;
 padding:15px;
@@ -158,24 +124,17 @@ border-radius:15px;
 text-align:center;
 text-decoration:none;
 color:white;
-
 }
-
 
 
 .status{
-
 color:#22c55e;
 font-weight:bold;
-
 }
-
 
 </style>
 
-
 </head>
-
 
 
 <body>
@@ -233,9 +192,7 @@ USDT
 
 
 <div class="value">
-
 {{ wallet.locked or 0 }} USDT
-
 </div>
 
 
@@ -253,9 +210,7 @@ USDT
 
 
 <div class="value">
-
 {{ (wallet.balance or 0) + (wallet.locked or 0) }} USDT
-
 </div>
 
 
@@ -273,9 +228,7 @@ USDT
 
 
 <div class="status">
-
 🟢 نشطة
-
 </div>
 
 
@@ -297,17 +250,13 @@ USDT
 <div class="buttons">
 
 
-<a href="#" class="btn deposit">
-
+<a href="/deposit" class="btn deposit">
 ➕ إيداع USDT
-
 </a>
 
 
-<a href="#" class="btn withdraw">
-
+<a href="/withdraw" class="btn withdraw">
 📤 سحب USDT
-
 </a>
 
 
@@ -321,9 +270,7 @@ USDT
 
 
 <a href="/" class="back">
-
 ⬅️ رجوع للرئيسية
-
 </a>
 
 
