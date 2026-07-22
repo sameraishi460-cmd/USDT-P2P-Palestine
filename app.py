@@ -467,7 +467,8 @@ def home():
         "SELECT * FROM market_price WHERE id=1"
     ).fetchone()
 
-    print("MARKET PRICE:", price)
+    print("USD:", price["usd_ils"])
+    print("USDT:", price["usdt_ils"])
 
     user = None
 
