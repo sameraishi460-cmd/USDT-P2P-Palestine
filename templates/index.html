@@ -192,7 +192,6 @@ text-decoration:none;
 }
 
 
-
 .meet{
 display:block;
 background:#2563eb;
@@ -204,34 +203,23 @@ text-decoration:none;
 }
 
 
-
-.details{
-display:block;
-background:#475569;
-padding:12px;
-border-radius:12px;
-text-align:center;
-color:white;
-text-decoration:none;
-margin-top:10px;
-}
-
-
-
 .empty{
-background:#1e293b;
-padding:20px;
-border-radius:15px;
 text-align:center;
+padding:20px;
+color:#94a3b8;
+background:#111827;
+border-radius:12px;
+grid-column: 1 / -1;
 }
 
 
 .footer{
 text-align:center;
-margin:40px;
+padding:20px;
 color:#94a3b8;
+margin-top:40px;
+border-top:1px solid #1e293b;
 }
-
 
 </style>
 
@@ -260,6 +248,11 @@ color:#94a3b8;
 
 <a href="/dashboard">
 👤 لوحة التحكم
+</a>
+
+
+<a href="/wallet">
+💰 محفظتي
 </a>
 
 
@@ -295,19 +288,17 @@ color:#94a3b8;
 </div>
 
 
-
 <div class="container">
 
 
 <div class="hero">
 
 
-<!-- سعر السوق -->
-
 <div class="info" style="font-size:22px;margin-bottom:25px;background:#0f172a;">
 
 
 💵 سعر الدولار:
+
 <span style="color:#22c55e;font-weight:bold;">
 {{ price["usd_ils"] }}
 </span>
@@ -318,6 +309,7 @@ color:#94a3b8;
 
 
 🟢 سعر USDT:
+
 <span style="color:#22c55e;font-weight:bold;">
 {{ price["usdt_ils"] }}
 </span>
@@ -553,7 +545,6 @@ color:#94a3b8;
 
 
 </div>
-
 
 
 </div>
