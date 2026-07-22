@@ -455,7 +455,24 @@ def home():
 
 @app.route("/market")
 def market():
-    return "وصلنا للسوق ✅"
+
+    con = connect()
+
+    ads = con.execute(
+        "SELECT * FROM ads WHERE status='OPEN' ORDER BY id DESC"
+    ).fetchall()
+
+    cash_ads = con.execute(
+        "SELECT * FROM cash_ads WHERE status='OPEN' ORDER BY id DESC"
+    ).fetchall()
+
+    con.close()
+
+    return render_template(
+        "market.html",
+        ads=ads,
+        cash_ads=cash_ads
+    )
 
 
 @app.route("/create_ad", methods=["GET", "POST"])
