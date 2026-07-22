@@ -4,6 +4,7 @@
 <head>
 
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>تفاصيل الصفقة - USDT P2P Palestine</title>
 
@@ -12,7 +13,7 @@
 body{
 background:#0b1220;
 color:white;
-font-family:tahoma;
+font-family:tahoma,Arial;
 padding:20px;
 }
 
@@ -39,12 +40,14 @@ border-radius:12px;
 line-height:2;
 }
 
+
 .payment{
 background:#064e3b;
 padding:20px;
 border-radius:15px;
 line-height:2;
 }
+
 
 .btn{
 padding:12px 20px;
@@ -54,7 +57,9 @@ color:white;
 display:inline-block;
 margin:5px;
 border:0;
+cursor:pointer;
 }
+
 
 .green{
 background:#16a34a;
@@ -72,6 +77,7 @@ background:#2563eb;
 background:#475569;
 }
 
+
 input,textarea{
 
 width:90%;
@@ -82,6 +88,7 @@ margin:5px;
 
 }
 
+
 .message{
 
 background:#111827;
@@ -91,12 +98,23 @@ margin:8px 0;
 
 }
 
+
 .time{
 
 opacity:.5;
 font-size:12px;
 
 }
+
+
+.warning{
+
+background:#7c2d12;
+padding:15px;
+border-radius:12px;
+
+}
+
 
 </style>
 
@@ -152,10 +170,12 @@ font-size:12px;
 
 <div class="box">
 
-
 <h2>
 💳 بيانات الدفع للبائع
 </h2>
+
+
+{% if seller_info %}
 
 
 <div class="payment">
@@ -178,31 +198,31 @@ font-size:12px;
 <br>
 
 <b>
-{{seller_info.bank or "غير مضاف"}}
+{{seller_info.bank_name or "غير مضاف"}}
 </b>
 
 
 <br><br>
 
 
-💳 رقم الحساب / IBAN:
+🔢 رقم الحساب / IBAN:
 
 <br>
 
 <b>
-{{seller_info.iban or "غير مضاف"}}
+{{seller_info.account_number or "غير مضاف"}}
 </b>
 
 
 <br><br>
 
 
-📱 رقم الجوال:
+📱 رقم الجوال للتحويل:
 
 <br>
 
 <b>
-{{seller_info.phone or "غير مضاف"}}
+{{seller_info.payment_phone or "غير مضاف"}}
 </b>
 
 
@@ -218,13 +238,26 @@ font-size:12px;
 </b>
 
 
+</div>
+
+
+{% else %}
+
+
+<div class="warning">
+
+⚠️ البائع لم يضيف بيانات الدفع بعد.
 
 </div>
 
 
+{% endif %}
+
+
+
 <p>
 
-بعد إرسال المبلغ للبائع ارفع إثبات الدفع واضغط تم إرسال الدفع.
+بعد إرسال المبلغ للبائع قم برفع إثبات الدفع.
 
 </p>
 
@@ -248,7 +281,7 @@ font-size:12px;
 <form action="/upload_payment/{{trade.id}}" method="post" enctype="multipart/form-data">
 
 
-<input type="file" name="proof">
+<input type="file" name="proof" required>
 
 
 <br>
@@ -318,7 +351,7 @@ font-size:12px;
 <form method="post">
 
 
-<textarea name="message" placeholder="اكتب رسالة..."></textarea>
+<textarea name="message" placeholder="اكتب رسالة..." required></textarea>
 
 
 <br>
@@ -354,13 +387,16 @@ font-size:12px;
 
 {% if trade.status == "PENDING" %}
 
+
 <a class="btn green" href="/trade_status/{{trade.id}}/PAYMENT_SENT">
 
 ✅ تم إرسال الدفع
 
 </a>
 
+
 {% endif %}
+
 
 
 
@@ -389,10 +425,9 @@ font-size:12px;
 
 
 
-
 <a class="btn gray" href="/">
 
-⬅️ رجوع
+⬅️ رجوع للرئيسية
 
 </a>
 
