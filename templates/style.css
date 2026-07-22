@@ -1,19 +1,18 @@
 *{
     box-sizing:border-box;
-    font-family:Tahoma, Arial, sans-serif;
+    font-family:"Tajawal",Tahoma,Arial,sans-serif;
 }
-
 
 body{
     margin:0;
     padding:20px;
     direction:rtl;
-    background:#050b16;
-    color:#ffffff;
+    background:
+    radial-gradient(circle at top,#1e293b,#020617 60%);
+    color:white;
+    min-height:100vh;
 }
 
-
-/* الحاوية */
 
 .container{
     max-width:600px;
@@ -21,72 +20,68 @@ body{
 }
 
 
-
-/* الشعار */
+/* LOGO */
 
 .logo{
     text-align:center;
-    font-size:30px;
-    font-weight:bold;
+    font-size:32px;
+    font-weight:900;
     color:#22c55e;
     margin-bottom:25px;
+    text-shadow:0 0 15px #22c55e66;
 }
 
 
+/* HEADER */
 
-/* العناوين */
-
-h1,h2,h3{
-    color:white;
+.header{
+    background:
+    linear-gradient(135deg,#111827,#0f172a);
+    padding:25px;
+    border-radius:25px;
+    margin-bottom:20px;
+    border:1px solid #334155;
+    box-shadow:0 15px 40px #0008;
 }
 
 
+.header h1{
+    margin:0;
+    color:#22c55e;
+}
 
-/* الكروت */
+
+/* CARDS */
 
 .card{
 
-    background:#111827;
-
-    border:1px solid #1f2937;
-
-    border-radius:22px;
-
-    padding:20px;
-
-    margin-bottom:18px;
-
-    box-shadow:
-    0 10px 30px rgba(0,0,0,0.35);
-
-}
-
-
-
-/* الهيدر */
-
-.header{
-
     background:
-    linear-gradient(
-    135deg,
-    #111827,
-    #064e3b
-    );
-
-    padding:25px;
+    linear-gradient(145deg,#1e293b,#111827);
 
     border-radius:25px;
 
-    text-align:center;
+    padding:22px;
 
-    margin-bottom:20px;
+    margin-bottom:18px;
+
+    border:1px solid #334155;
+
+    box-shadow:
+    0 10px 30px #0008;
+}
+
+
+.card h3{
+
+    margin-top:0;
+
+    color:#38bdf8;
 
 }
 
 
+/* INFO BOX */
 
-/* معلومات */
 
 .info{
 
@@ -96,46 +91,46 @@ h1,h2,h3{
 
     align-items:center;
 
-    background:#1f2937;
-
-    padding:14px;
-
-    border-radius:15px;
-
-    margin:10px 0;
-
-    color:#e5e7eb;
-
-}
-
-
-
-/* القوائم */
-
-.menu{
-
-    display:grid;
-
-    gap:12px;
-
-}
-
-
-
-/* الأزرار */
-
-.button,
-button{
-
-    display:block;
-
-    width:100%;
+    background:#0f172a;
 
     padding:15px;
 
     border-radius:16px;
 
-    border:none;
+    margin:12px 0;
+
+    border:1px solid #334155;
+
+}
+
+
+
+/* BUTTON AREA */
+
+.menu{
+
+    display:grid;
+
+    gap:14px;
+
+}
+
+
+
+/* BUTTON */
+
+
+.button,
+button{
+
+
+    display:block;
+
+    width:100%;
+
+    padding:16px;
+
+    border-radius:18px;
 
     text-align:center;
 
@@ -143,13 +138,21 @@ button{
 
     color:white;
 
-    background:#16a34a;
-
     font-size:17px;
+
+    font-weight:bold;
+
+    border:0;
 
     cursor:pointer;
 
-    transition:0.3s;
+    background:
+    linear-gradient(135deg,#2563eb,#1d4ed8);
+
+    box-shadow:
+    0 8px 20px #0006;
+
+    transition:.25s;
 
 }
 
@@ -158,225 +161,152 @@ button{
 .button:hover,
 button:hover{
 
-    transform:translateY(-2px);
-
-    opacity:0.85;
+    transform:translateY(-3px);
 
 }
 
 
 
-/* ألوان الأزرار */
+/* COLORS */
+
 
 .green{
 
-    background:#16a34a;
-
-}
-
-
-.blue{
-
-    background:#2563eb;
+background:
+linear-gradient(135deg,#22c55e,#15803d);
 
 }
 
 
 .orange{
 
-    background:#ea580c;
+background:
+linear-gradient(135deg,#f97316,#c2410c);
 
 }
+
 
 
 .red{
 
-    background:#dc2626;
+background:
+linear-gradient(135deg,#ef4444,#991b1b);
 
 }
 
-
-.gray{
-
-    background:#374151;
-
-}
 
 
 .yellow{
 
-    background:#ca8a04;
+background:
+linear-gradient(135deg,#eab308,#a16207);
 
 }
 
 
 
-/* الإدخال */
+.gray{
 
-input,
-select,
-textarea{
-
-    width:100%;
-
-    padding:14px;
-
-    margin:8px 0;
-
-    border-radius:14px;
-
-    border:1px solid #374151;
-
-    background:#1f2937;
-
-    color:white;
-
-    font-size:16px;
+background:
+linear-gradient(135deg,#475569,#1e293b);
 
 }
 
 
 
-input::placeholder{
-
-    color:#9ca3af;
-
-}
-
-
-
-/* الأسعار */
+/* PRICE */
 
 .price{
 
-    color:#22c55e;
+color:#22c55e;
 
-    font-size:22px;
+font-size:24px;
 
-    font-weight:bold;
-
-}
-
-
-
-/* البطاقات المالية */
-
-.balance{
-
-    background:
-    linear-gradient(
-    135deg,
-    #065f46,
-    #16a34a
-    );
-
-    padding:25px;
-
-    border-radius:25px;
-
-    text-align:center;
-
-    font-size:28px;
-
-    font-weight:bold;
+font-weight:900;
 
 }
 
 
+/* INPUTS */
 
-/* الإعلانات */
+input,
+select{
 
-.ad-card{
+width:100%;
 
-    background:#111827;
+padding:15px;
 
-    border-radius:20px;
+margin:10px 0;
 
-    padding:18px;
+border-radius:15px;
 
-    margin-bottom:15px;
+border:1px solid #334155;
 
-    border:1px solid #1f2937;
+background:#0f172a;
 
-}
+color:white;
 
-
-
-/* الروابط */
-
-a{
-
-    color:white;
+font-size:16px;
 
 }
 
 
+input:focus,
+select:focus{
 
-/* الجداول */
+outline:none;
 
-table{
+border-color:#22c55e;
 
-    width:100%;
-
-    border-collapse:collapse;
-
-    background:#111827;
-
-    border-radius:15px;
-
-    overflow:hidden;
+box-shadow:0 0 10px #22c55e55;
 
 }
 
 
-
-td,th{
-
-    padding:12px;
-
-    border-bottom:1px solid #374151;
-
-}
+/* BADGES */
 
 
+.badge{
 
-/* إشعارات */
+padding:7px 12px;
 
-.notification{
+border-radius:20px;
 
-    background:#1e293b;
+font-size:13px;
 
-    padding:15px;
+font-weight:bold;
 
-    border-radius:15px;
+background:#22c55e;
 
-    margin-bottom:10px;
+color:#022c22;
 
 }
 
 
-
-/* موبايل */
+/* MOBILE */
 
 @media(max-width:600px){
 
 body{
 
-    padding:12px;
+padding:12px;
 
 }
 
 
-.container{
+.card,
+.header{
 
-    width:100%;
+border-radius:22px;
+
+padding:18px;
 
 }
 
 
-.card{
+.logo{
 
-    padding:16px;
+font-size:27px;
 
 }
 
