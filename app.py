@@ -192,6 +192,29 @@ def setup_database():
     if not profit:
         con.execute("INSERT INTO platform_profit (id, total) VALUES(1, 0)")
 
+    # MARKET PRICE
+    con.execute("""
+    CREATE TABLE IF NOT EXISTS market_price(
+        id INTEGER PRIMARY KEY,
+        usd_ils REAL DEFAULT 3.70,
+        usdt_ils REAL DEFAULT 3.70,
+        updated DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
+    price = con.execute(
+        "SELECT * FROM market_price WHERE id=1"
+    ).fetchone()
+
+    if not price:
+        con.execute(
+            """
+            INSERT INTO market_price
+            (id, usd_ils, usdt_ils)
+            VALUES(1, 3.70, 3.70)
+            """
+        )
+
     con.commit()
     con.close()
 
@@ -1204,7 +1227,7 @@ def admin_commission_page():
     con.close()
 
     return render_template(
-        "admin_commission.html",
+        "admin.html",
         commission=commission
     )
 
@@ -1220,108 +1243,4 @@ def admin_verify(username):
 
 
 @app.route("/admin_ban/<username>")
-@admin_required
-def admin_ban(username):
-    con = connect()
-    con.execute("UPDATE users SET status='BANNED' WHERE username=?", (username,))
-    con.commit()
-    con.close()
-    return redirect("/admin")
-
-
-@app.route("/admin_unban/<username>")
-@admin_required
-def admin_unban(username):
-    con = connect()
-    con.execute("UPDATE users SET status='ACTIVE' WHERE username=?", (username,))
-    con.commit()
-    con.close()
-    return redirect("/admin")
-
-
-@app.route("/admin_search")
-@admin_required
-def admin_search():
-    q = request.args.get("q", "")
-    con = connect()
-    results = con.execute(
-        "SELECT * FROM trades WHERE buyer LIKE ? OR seller LIKE ? OR status LIKE ? ORDER BY id DESC",
-        ("%" + q + "%", "%" + q + "%", "%" + q + "%")
-    ).fetchall()
-    con.close()
-    return render_template("admin_search.html", trades=results)
-
-
-@app.route("/admin_stats")
-@admin_required
-def admin_stats():
-    con = connect()
-    users = con.execute("SELECT COUNT(*) FROM users").fetchone()[0]
-    trades = con.execute("SELECT COUNT(*) FROM trades").fetchone()[0]
-    completed = con.execute("SELECT COUNT(*) FROM trades WHERE status='COMPLETED'").fetchone()[0]
-    profit = con.execute("SELECT total FROM platform_profit WHERE id=1").fetchone()[0]
-    con.close()
-
-    return jsonify({"users": users, "trades": trades, "completed": completed, "profit": profit})
-
-
-@app.route("/admin_backup")
-@admin_required
-def admin_backup():
-    shutil.copy("database.db", "database_backup.db")
-    return "تم إنشاء نسخة احتياطية"
-
-
-@app.route("/admin_cash_accept/<int:id>")
-@admin_required
-def admin_cash_accept(id):
-
-    con = connect()
-
-    con.execute(
-        "UPDATE cash_ads SET status='OPEN' WHERE id=?",
-        (id,)
-    )
-
-    con.commit()
-    con.close()
-
-    return redirect("/admin_cash_ads")
-
-
-@app.route("/admin_cash_reject/<int:id>")
-@admin_required
-def admin_cash_reject(id):
-
-    con = connect()
-
-    con.execute(
-        "UPDATE cash_ads SET status='REJECTED' WHERE id=?",
-        (id,)
-    )
-
-    con.commit()
-    con.close()
-
-    return redirect("/admin_cash_ads")
-
-
-# تشغيل بوت التليجرام تلقائياً مع خيوط المعالجة (Threading)
-try:
-    threading.Thread(
-        target=telegram_bot.bot_loop,
-        daemon=True
-    ).start()
-except Exception:
-    traceback.print_exc()
-
-
-if __name__ == "__main__":
-    try:
-        app.run(
-            host="0.0.0.0",
-            port=5000,
-            debug=False
-        )
-    except Exception:
-        traceback.print_exc()
+@admin_required`
