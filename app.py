@@ -1216,19 +1216,33 @@ def edit_profile():
     ).fetchone()
 
     if request.method == "POST":
+
         phone = request.form.get("phone", "")
-        bank = request.form.get("bank", "")
+
+        bank_name = request.form.get("bank_name", "")
+
+        account_number = request.form.get("account_number", "")
+
+        payment_phone = request.form.get("payment_phone", "")
+
         wallet = request.form.get("wallet", "")
+
 
         con.execute(
             """
             UPDATE users 
-            SET phone=?, bank=?, wallet=?
+            SET phone=?,
+                bank_name=?,
+                account_number=?,
+                payment_phone=?,
+                wallet=?
             WHERE username=?
             """,
             (
                 phone,
-                bank,
+                bank_name,
+                account_number,
+                payment_phone,
                 wallet,
                 session["user"]
             )
