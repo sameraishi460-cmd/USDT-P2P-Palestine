@@ -62,6 +62,11 @@ def setup_database():
     add_column(con, "users", "telegram_id", "TEXT")
     add_column(con, "users", "iban", "TEXT")
     add_column(con, "users", "payment_method", "TEXT")
+
+    # بيانات الدفع للبائع
+    add_column(con, "users", "bank_name", "TEXT")
+    add_column(con, "users", "account_number", "TEXT")
+    add_column(con, "users", "payment_phone", "TEXT")
     # WALLETS
     con.execute("""
     CREATE TABLE IF NOT EXISTS wallets(
