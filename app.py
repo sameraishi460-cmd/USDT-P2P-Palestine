@@ -16,6 +16,7 @@ app.secret_key = "FINAL_USDT_P2P_PALESTINE_SECRET_KEY"
 app.permanent_session_lifetime = timedelta(days=30)
 
 DATABASE = "database.db"
+print("DATABASE LOCATION:", os.path.abspath(DATABASE))
 PLATFORM_WALLET = "0x659dd7cba24363c903abe3fddfc89eb30ffbf58a"
 
 # =========================
