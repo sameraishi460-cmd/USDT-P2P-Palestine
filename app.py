@@ -221,6 +221,10 @@ def setup_database():
 
 setup_database()
 
+con = connect()
+print(con.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall())
+con.close()
+
 
 def create_admin_account():
 
