@@ -1036,6 +1036,58 @@ def wallet():
     )
 
 
+@app.route("/deposit", methods=["GET","POST"])
+@login_required
+def deposit():
+
+    if request.method == "POST":
+
+        amount = float(request.form.get("amount",0))
+
+        if amount <= 0:
+            return "الكمية غير صحيحة"
+
+
+        con = connect()
+
+        con.execute("""
+        CREATE TABLE IF NOT EXISTS deposits(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT,
+            amount REAL,
+            status TEXT DEFAULT 'PENDING',
+            created DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+        """)
+
+
+        con.execute(
+            """
+            INSERT INTO deposits
+            (username, amount)
+            VALUES (?,?)
+            """,
+            (
+                session["user"],
+                amount
+            )
+        )
+
+
+        con.commit()
+        con.close()
+
+
+        return "تم إرسال طلب الإيداع للمراجعة ✅"
+
+
+
+    return render_template(
+        "deposit.html",
+        wallet_address=PLATFORM_WALLET
+    )
+
+
 @app.route("/dashboard")
 @login_required
 def dashboard():
