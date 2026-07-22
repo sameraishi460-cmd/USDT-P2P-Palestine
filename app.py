@@ -639,8 +639,19 @@ def trade(id):
         (session["user"], trade["seller"], trade["seller"], session["user"])
     ).fetchall()
 
+    seller_info = con.execute(
+        "SELECT * FROM users WHERE username=?",
+        (trade["seller"],)
+    ).fetchone()
+
     con.close()
-    return render_template("trade.html", trade=trade, messages=messages)
+
+    return render_template(
+        "trade.html",
+        trade=trade,
+        messages=messages,
+        seller_info=seller_info
+    )
 
 
 @app.route("/trade_status/<int:id>/<status>")
