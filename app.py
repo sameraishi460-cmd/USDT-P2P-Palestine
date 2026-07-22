@@ -495,14 +495,11 @@ def market():
         "SELECT * FROM cash_ads WHERE status='OPEN' ORDER BY id DESC"
     ).fetchall()
 
-
     price = con.execute(
         "SELECT * FROM market_price WHERE id=1"
     ).fetchone()
 
-
     con.close()
-
 
     return render_template(
         "market.html",
