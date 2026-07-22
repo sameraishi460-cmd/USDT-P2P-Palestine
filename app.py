@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 import traceback
 import threading
 import telegram_bot
+import price_updater
 
 
 app = Flask(__name__)
@@ -1349,6 +1350,39 @@ try:
         daemon=True
     ).start()
 except Exception:
+    traceback.print_exc()
+
+
+# تحديث سعر الدولار و USDT تلقائياً
+
+def auto_price_update():
+
+    while True:
+
+        try:
+            price_updater.update_price()
+
+        except Exception as e:
+            print("AUTO PRICE ERROR:", e)
+
+
+        # تحديث كل ساعة
+        import time
+        time.sleep(3600)
+
+
+
+try:
+
+    threading.Thread(
+        target=auto_price_update,
+        daemon=True
+    ).start()
+
+    print("PRICE UPDATER STARTED")
+
+except Exception:
+
     traceback.print_exc()
 
 
