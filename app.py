@@ -707,7 +707,8 @@ def trade(id):
         "trade.html",
         trade=trade,
         messages=messages,
-        seller_info=seller_info
+        seller_info=seller_info,
+        current_user=session["user"]
     )
 
 
