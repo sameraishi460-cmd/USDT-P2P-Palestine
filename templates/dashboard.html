@@ -19,16 +19,16 @@
 <div class="container">
 
 
-<div class="top-header card">
+<div class="top-header">
 
 <div class="logo">
-💵 USDT P2P Palestine
+🟢 USDT P2P Palestine
 </div>
 
 
-<h2>
+<h1>
 لوحة التحكم
-</h2>
+</h1>
 
 
 <p>
@@ -38,15 +38,15 @@
 
 {% if user['verified'] == 1 %}
 
-<p style="color:#22c55e">
+<div class="status success">
 ✅ حساب موثق
-</p>
+</div>
 
 {% else %}
 
-<p style="color:#facc15">
+<div class="status warning">
 ⚠️ الحساب غير موثق
-</p>
+</div>
 
 {% endif %}
 
@@ -57,11 +57,12 @@
 
 
 
+
 <div class="card">
 
-<div class="card-title">
+<h3>
 📊 إحصائيات الحساب
-</div>
+</h3>
 
 
 <div class="info-box">
@@ -81,7 +82,7 @@
 <div class="info-box">
 
 <span>
-🤝 الصفقات
+🤝 عدد الصفقات
 </span>
 
 <strong>
@@ -95,7 +96,7 @@
 <div class="info-box">
 
 <span>
-💱 صفقات USDT المكتملة
+💵 صفقات USDT المكتملة
 </span>
 
 <strong>
@@ -125,71 +126,66 @@
 
 
 
+
+
 <div class="card">
 
 
-<div class="card-title">
+<h3>
 ⚡ الخدمات
-</div>
+</h3>
 
+
+
+<div class="actions">
 
 
 <a class="btn green" href="/market">
-
 💰 سوق USDT
-
 </a>
 
 
 
 <a class="btn blue" href="/create_ad">
-
-➕ إنشاء إعلان بيع/شراء
-
+➕ إنشاء إعلان
 </a>
 
 
 
 <a class="btn yellow" href="/my_ads">
-
 📢 إعلاناتي
-
 </a>
 
 
 
 <a class="btn orange" href="/cash_market">
-
 🤝 السوق المحلي
-
 </a>
 
 
 
 <a class="btn orange" href="/create_cash_ad">
-
-📍 إنشاء إعلان مقابلة
-
+📍 إعلان مقابلة
 </a>
 
 
 
 <a class="btn blue" href="/profile">
-
 👤 الملف الشخصي
-
 </a>
 
 
 
 <a class="btn gray" href="/notifications">
-
 🔔 الإشعارات
-
 </a>
 
 
 </div>
+
+
+</div>
+
 
 
 
@@ -199,32 +195,34 @@
 <div class="card">
 
 
-<div class="card-title">
+<h3>
 ⚙️ الحساب
-</div>
+</h3>
 
+
+
+<div class="actions">
 
 
 <a class="btn gray" href="/edit_profile">
-
 ✏️ تعديل البيانات
-
 </a>
 
 
 
 <a class="btn red" href="/logout">
-
 🚪 تسجيل خروج
-
 </a>
 
 
 </div>
 
 
-
 </div>
+
+
+
+
 
 
 
@@ -232,42 +230,34 @@
 
 
 <a href="/dashboard">
-
 <span>🏠</span>
-
 الرئيسية
-
 </a>
 
 
 
 <a href="/market">
-
 <span>💰</span>
-
 السوق
-
 </a>
 
 
 
 <a href="/notifications">
-
 <span>🔔</span>
-
 تنبيهات
-
 </a>
 
 
 
 <a href="/profile">
-
 <span>👤</span>
-
 حسابي
-
 </a>
+
+
+</div>
+
 
 
 </div>
