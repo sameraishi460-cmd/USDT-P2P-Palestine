@@ -1017,6 +1017,25 @@ def profile():
     return render_template("profile.html", user=user, trades=trades, cash_trades=cash_trades, ads=ads)
 
 
+@app.route("/wallet")
+@login_required
+def wallet():
+
+    con = connect()
+
+    wallet = con.execute(
+        "SELECT * FROM wallets WHERE username=?",
+        (session["user"],)
+    ).fetchone()
+
+    con.close()
+
+    return render_template(
+        "wallet.html",
+        wallet=wallet
+    )
+
+
 @app.route("/dashboard")
 @login_required
 def dashboard():
