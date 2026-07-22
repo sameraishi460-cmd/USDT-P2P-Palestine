@@ -341,6 +341,13 @@ def register():
                 "INSERT INTO users (username, password) VALUES(?, ?)",
                 (username, generate_password_hash(password))
             )
+            con.execute(
+                """
+                INSERT INTO wallets(username, balance, locked)
+                VALUES(?,?,?)
+                """,
+                (username, 0, 0)
+            )
             con.commit()
             con.close()
             session.permanent = True
