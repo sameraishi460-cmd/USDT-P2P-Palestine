@@ -8,86 +8,7 @@
 
 <title>لوحة التحكم - USDT P2P Palestine</title>
 
-<style>
-
-body{
-    margin:0;
-    font-family:tahoma,Arial;
-    background:#0b1220;
-    color:white;
-    padding:20px;
-}
-
-.container{
-    max-width:600px;
-    margin:auto;
-}
-
-.header{
-    background:linear-gradient(135deg,#111827,#1e293b);
-    padding:25px;
-    border-radius:20px;
-    text-align:center;
-    margin-bottom:20px;
-}
-
-.header h1{
-    color:#22c55e;
-}
-
-.card{
-    background:#1e293b;
-    padding:20px;
-    border-radius:20px;
-    margin-bottom:20px;
-}
-
-.info{
-    display:flex;
-    justify-content:space-between;
-    background:#334155;
-    padding:12px;
-    border-radius:12px;
-    margin:10px 0;
-}
-
-.menu{
-    display:grid;
-    gap:12px;
-}
-
-.button{
-    display:block;
-    padding:15px;
-    border-radius:15px;
-    text-align:center;
-    text-decoration:none;
-    color:white;
-    background:#2563eb;
-    font-size:17px;
-}
-
-.green{
-    background:#16a34a;
-}
-
-.orange{
-    background:#ea580c;
-}
-
-.red{
-    background:#dc2626;
-}
-
-.gray{
-    background:#475569;
-}
-
-.yellow{
-    background:#ca8a04;
-}
-
-</style>
+<link rel="stylesheet" href="/static/style.css">
 
 </head>
 
@@ -98,56 +19,103 @@ body{
 <div class="container">
 
 
-<div class="header">
+<div class="top-header card">
 
-<h1>
+<div class="logo">
+💵 USDT P2P Palestine
+</div>
+
+
+<h2>
 لوحة التحكم
-</h1>
+</h2>
+
 
 <p>
 أهلاً {{ user['username'] }} 👋
 </p>
 
-<p>
-🔐 جلسة الحساب محفوظة لمدة 30 يوم
+
+{% if user['verified'] == 1 %}
+
+<p style="color:#22c55e">
+✅ حساب موثق
 </p>
 
+{% else %}
+
+<p style="color:#facc15">
+⚠️ الحساب غير موثق
+</p>
+
+{% endif %}
+
+
 </div>
+
+
 
 
 
 <div class="card">
 
-<h3>
-👤 الحساب
-</h3>
+<div class="card-title">
+📊 إحصائيات الحساب
+</div>
 
 
-<div class="info">
-<span>الحالة</span>
+<div class="info-box">
 
 <span>
-{% if user['verified'] == 1 %}
-✅ موثق
-{% else %}
-⚠️ غير موثق
-{% endif %}
+⭐ التقييم
 </span>
 
+<strong>
+{{ user['rating'] }}
+</strong>
+
 </div>
 
 
 
-<div class="info">
-<span>التقييم</span>
-<span>⭐ {{ user['rating'] }}</span>
+<div class="info-box">
+
+<span>
+🤝 الصفقات
+</span>
+
+<strong>
+{{ user['trades_count'] }}
+</strong>
+
 </div>
 
 
 
-<div class="info">
-<span>الصفقات</span>
-<span>{{ user['trades_count'] }}</span>
+<div class="info-box">
+
+<span>
+💱 صفقات USDT المكتملة
+</span>
+
+<strong>
+{{ completed }}
+</strong>
+
+</div>
+
+
+
+<div class="info-box">
+
+<span>
+📍 مقابلات مكتملة
+</span>
+
+<strong>
+{{ cash_completed }}
+</strong>
+
 </div>
 
 
@@ -160,93 +128,150 @@ body{
 <div class="card">
 
 
-<h3>
-📊 الإحصائيات
-</h3>
-
-
-<div class="info">
-<span>صفقات USDT</span>
-<span>{{ completed }}</span>
-</div>
-
-
-<div class="info">
-<span>مقابلات مكتملة</span>
-<span>{{ cash_completed }}</span>
-</div>
-
-
-</div>
-
-
-
-
-
-
-
-<div class="card">
-
-
-<h3>
+<div class="card-title">
 ⚡ الخدمات
-</h3>
+</div>
 
 
-<div class="menu">
 
+<a class="btn green" href="/market">
 
-<a class="button green" href="/market">
-💱 إعلانات USDT
+💰 سوق USDT
+
 </a>
 
 
-<a class="button yellow" href="/my_ads">
+
+<a class="btn blue" href="/create_ad">
+
+➕ إنشاء إعلان بيع/شراء
+
+</a>
+
+
+
+<a class="btn yellow" href="/my_ads">
+
 📢 إعلاناتي
+
 </a>
 
 
-<a class="button" href="/create_ad">
-➕ إنشاء إعلان USDT
+
+<a class="btn orange" href="/cash_market">
+
+🤝 السوق المحلي
+
 </a>
 
 
-<a class="button orange" href="/cash_market">
-🤝 سوق المقابلات الشخصية
-</a>
 
+<a class="btn orange" href="/create_cash_ad">
 
-<a class="button orange" href="/create_cash_ad">
 📍 إنشاء إعلان مقابلة
+
 </a>
 
 
-<a class="button" href="/profile">
+
+<a class="btn blue" href="/profile">
+
 👤 الملف الشخصي
+
 </a>
 
 
-<a class="button" href="/notifications">
+
+<a class="btn gray" href="/notifications">
+
 🔔 الإشعارات
+
 </a>
 
 
 </div>
 
-</div>
+
+
 
 
 
 <div class="card">
 
-<a class="button red" href="/logout">
-🚪 تسجيل خروج
+
+<div class="card-title">
+⚙️ الحساب
+</div>
+
+
+
+<a class="btn gray" href="/edit_profile">
+
+✏️ تعديل البيانات
+
 </a>
 
-</div>
+
+
+<a class="btn red" href="/logout">
+
+🚪 تسجيل خروج
+
+</a>
 
 
 </div>
+
+
+
+</div>
+
+
+
+<div class="bottom-nav">
+
+
+<a href="/dashboard">
+
+<span>🏠</span>
+
+الرئيسية
+
+</a>
+
+
+
+<a href="/market">
+
+<span>💰</span>
+
+السوق
+
+</a>
+
+
+
+<a href="/notifications">
+
+<span>🔔</span>
+
+تنبيهات
+
+</a>
+
+
+
+<a href="/profile">
+
+<span>👤</span>
+
+حسابي
+
+</a>
+
+
+</div>
+
 
 
 </body>
