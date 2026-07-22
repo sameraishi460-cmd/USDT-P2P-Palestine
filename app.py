@@ -105,6 +105,7 @@ def setup_database():
         price REAL,
         fee REAL DEFAULT 0,
         status TEXT DEFAULT 'PENDING',
+        payment_proof TEXT DEFAULT '',
         dispute TEXT DEFAULT 'NONE',
         created DATETIME DEFAULT CURRENT_TIMESTAMP
     )
@@ -1443,6 +1444,24 @@ def admin_cash_reject(id):
     return redirect("/admin_cash_ads")
 
 
+@app.route("/admin_deposits")
+@admin_required
+def admin_deposits():
+
+    con = connect()
+
+    deposits = con.execute(
+        "SELECT * FROM deposits ORDER BY id DESC"
+    ).fetchall()
+
+    con.close()
+
+    return render_template(
+        "admin_deposits.html",
+        deposits=deposits
+    )
+
+
 # تشغيل بوت التليجرام تلقائياً مع خيوط المعالجة (Threading)
 try:
     threading.Thread(
@@ -1484,6 +1503,82 @@ try:
 except Exception:
 
     traceback.print_exc()
+
+
+@app.route("/confirm_payment/<int:id>")
+@login_required
+def confirm_payment(id):
+
+    con = connect()
+
+    trade = con.execute(
+        "SELECT * FROM trades WHERE id=?",
+        (id,)
+    ).fetchone()
+
+    if not trade:
+        con.close()
+        return "الصفقة غير موجودة"
+
+
+    if trade["buyer"] != session["user"]:
+        con.close()
+        return "غير مصرح"
+
+
+    con.execute(
+        "UPDATE trades SET status='PAYMENT_SENT' WHERE id=?",
+        (id,)
+    )
+
+
+    con.commit()
+    con.close()
+
+
+    notify(
+        trade["seller"],
+        "تم إرسال الدفع",
+        "المشتري أكد أنه أرسل المبلغ"
+    )
+
+
+    return redirect("/trade/"+str(id))
+
+
+@app.route("/seller_confirm/<int:id>")
+@login_required
+def seller_confirm(id):
+
+    con = connect()
+
+    trade = con.execute(
+        "SELECT * FROM trades WHERE id=?",
+        (id,)
+    ).fetchone()
+
+
+    if not trade:
+        con.close()
+        return "غير موجود"
+
+
+    if trade["seller"] != session["user"]:
+        con.close()
+        return "غير مصرح"
+
+
+    con.execute(
+        "UPDATE trades SET status='COMPLETED' WHERE id=?",
+        (id,)
+    )
+
+
+    con.commit()
+    con.close()
+
+
+    return redirect("/profile")
 
 
 if __name__ == "__main__":
