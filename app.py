@@ -192,6 +192,29 @@ def setup_database():
     if not profit:
         con.execute("INSERT INTO platform_profit (id, total) VALUES(1, 0)")
 
+    # MARKET PRICE
+    con.execute("""
+    CREATE TABLE IF NOT EXISTS market_price(
+        id INTEGER PRIMARY KEY,
+        usd_ils REAL DEFAULT 3.70,
+        usdt_ils REAL DEFAULT 3.70,
+        updated DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
+    price = con.execute(
+        "SELECT * FROM market_price WHERE id=1"
+    ).fetchone()
+
+    if not price:
+        con.execute(
+            """
+            INSERT INTO market_price
+            (id, usd_ils, usdt_ils)
+            VALUES(1, 3.70, 3.70)
+            """
+        )
+
     con.commit()
     con.close()
 
