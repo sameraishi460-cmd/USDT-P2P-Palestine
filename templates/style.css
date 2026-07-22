@@ -1,61 +1,334 @@
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
+
+
 *{
     box-sizing:border-box;
-    font-family:Arial;
+    font-family:'Cairo',Arial,sans-serif;
 }
+
 
 body{
-    background:#f4f6f8;
+
     margin:0;
     padding:20px;
+
     direction:rtl;
+
+    background:
+    linear-gradient(135deg,#07111f,#0f172a);
+
+    color:white;
+
 }
+
+
+/* الحاوية */
 
 .container{
-    max-width:500px;
+
+    max-width:600px;
     margin:auto;
+    padding-bottom:80px;
+
 }
+
+
+/* الشعار */
 
 .logo{
+
     text-align:center;
-    font-size:28px;
-    font-weight:bold;
+    font-size:32px;
+    font-weight:900;
+
+    color:#22c55e;
+
     margin-bottom:20px;
+
 }
+
+
+
+/* العنوان */
+
+h1,h2,h3{
+
+    margin-top:0;
+
+}
+
+
+
+/* الكروت */
 
 .card{
-    background:white;
-    border-radius:18px;
+
+    background:#111827;
+
+    border-radius:24px;
+
     padding:20px;
-    margin-bottom:15px;
-    box-shadow:0 5px 20px #0001;
+
+    margin-bottom:18px;
+
+    box-shadow:
+    0 10px 30px rgba(0,0,0,.35);
+
+    border:1px solid #1f2937;
+
 }
 
-input,select{
-    width:100%;
-    padding:14px;
-    border-radius:12px;
-    border:1px solid #ddd;
-    margin:8px 0;
-    font-size:16px;
+
+
+/* معلومات */
+
+.info-box{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    align-items:center;
+
+    background:#1e293b;
+
+    padding:13px;
+
+    border-radius:15px;
+
+    margin:10px 0;
+
 }
 
-button{
+
+
+/* الحقول */
+
+input,
+select,
+textarea{
+
     width:100%;
+
     padding:14px;
-    background:#0066ff;
+
+    border-radius:15px;
+
+    border:1px solid #334155;
+
+    background:#0f172a;
+
     color:white;
-    border:0;
-    border-radius:12px;
-    font-size:17px;
-    cursor:pointer;
+
+    margin:8px 0;
+
+    font-size:16px;
+
 }
 
-button:hover{
-    background:#004ecc;
+
+input:focus,
+select:focus,
+textarea:focus{
+
+    outline:none;
+
+    border-color:#22c55e;
+
 }
+
+
+
+/* الأزرار */
+
+button,
+.btn{
+
+    display:block;
+
+    width:100%;
+
+    padding:15px;
+
+    border-radius:18px;
+
+    border:0;
+
+    text-align:center;
+
+    text-decoration:none;
+
+    color:white;
+
+    font-size:17px;
+
+    font-weight:bold;
+
+    cursor:pointer;
+
+    margin-top:10px;
+
+    transition:.3s;
+
+    background:#2563eb;
+
+}
+
+
+button:hover,
+.btn:hover{
+
+    transform:scale(1.03);
+
+}
+
+
+
+/* ألوان الأزرار */
+
+.green{
+
+    background:#16a34a !important;
+
+}
+
+
+.orange{
+
+    background:#ea580c !important;
+
+}
+
+
+.red{
+
+    background:#dc2626 !important;
+
+}
+
+
+.gray{
+
+    background:#475569 !important;
+
+}
+
+
+.yellow{
+
+    background:#ca8a04 !important;
+
+}
+
+
+
+/* الأسعار */
 
 .price{
-    color:#008000;
+
+    color:#22c55e;
+
+    font-size:22px;
+
+    font-weight:900;
+
+}
+
+
+
+/* البطاقات الصغيرة للإعلانات */
+
+.ad-card{
+
+    background:#1e293b;
+
+    border-radius:20px;
+
+    padding:18px;
+
+    margin-bottom:15px;
+
+}
+
+
+
+.ad-title{
+
     font-size:20px;
+
     font-weight:bold;
+
+    color:#22c55e;
+
+}
+
+
+
+/* شريط التنقل السفلي */
+
+.bottom-nav{
+
+    position:fixed;
+
+    bottom:15px;
+
+    left:15px;
+
+    right:15px;
+
+    background:#111827;
+
+    border-radius:25px;
+
+    display:flex;
+
+    justify-content:space-around;
+
+    padding:12px;
+
+    box-shadow:0 5px 25px #0008;
+
+}
+
+
+.bottom-nav a{
+
+    color:white;
+
+    text-decoration:none;
+
+    text-align:center;
+
+    font-size:13px;
+
+}
+
+
+.bottom-nav span{
+
+    display:block;
+
+    font-size:22px;
+
+}
+
+
+
+/* موبايل */
+
+@media(max-width:600px){
+
+    body{
+
+        padding:12px;
+
+    }
+
+
+    .logo{
+
+        font-size:27px;
+
+    }
+
 }
