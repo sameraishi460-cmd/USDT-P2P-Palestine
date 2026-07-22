@@ -12,12 +12,9 @@
 
 </head>
 
-
 <body>
 
-
 <div class="container">
-
 
 <div class="top-header">
 
@@ -25,16 +22,13 @@
 🟢 USDT P2P Palestine
 </div>
 
-
 <h1>
 لوحة التحكم
 </h1>
 
-
 <p>
 أهلاً {{ user['username'] }} 👋
 </p>
-
 
 {% if user['verified'] == 1 %}
 
@@ -50,11 +44,7 @@
 
 {% endif %}
 
-
 </div>
-
-
-
 
 
 <div class="card">
@@ -63,35 +53,27 @@
 📊 إحصائيات الحساب
 </h3>
 
-
 <div class="info-box">
 <span>⭐ التقييم</span>
 <strong>{{ user['rating'] }}</strong>
 </div>
-
 
 <div class="info-box">
 <span>🤝 عدد الصفقات</span>
 <strong>{{ user['trades_count'] }}</strong>
 </div>
 
-
 <div class="info-box">
 <span>💵 صفقات USDT المكتملة</span>
 <strong>{{ completed }}</strong>
 </div>
-
 
 <div class="info-box">
 <span>📍 مقابلات مكتملة</span>
 <strong>{{ cash_completed }}</strong>
 </div>
 
-
 </div>
-
-
-
 
 
 <div class="card">
@@ -100,52 +82,39 @@
 ⚡ الخدمات
 </h3>
 
-
 <div class="actions">
-
 
 <a class="btn green" href="{{ url_for('market') }}">
 💰 سوق USDT
 </a>
 
-
 <a class="btn blue" href="{{ url_for('create_ad') }}">
 ➕ إنشاء إعلان
 </a>
-
 
 <a class="btn yellow" href="{{ url_for('my_ads') }}">
 📢 إعلاناتي
 </a>
 
-
 <a class="btn orange" href="{{ url_for('cash_market') }}">
 🤝 السوق المحلي
 </a>
-
 
 <a class="btn orange" href="{{ url_for('create_cash_ad') }}">
 📍 إعلان مقابلة
 </a>
 
-
 <a class="btn blue" href="{{ url_for('profile') }}">
 👤 الملف الشخصي
 </a>
-
 
 <a class="btn gray" href="{{ url_for('notifications') }}">
 🔔 الإشعارات
 </a>
 
-
 </div>
 
 </div>
-
-
-
-
 
 
 <div class="card">
@@ -154,61 +123,46 @@
 ⚙️ الحساب
 </h3>
 
-
 <div class="actions">
-
 
 <a class="btn gray" href="{{ url_for('edit_profile') }}">
 ✏️ تعديل البيانات
 </a>
 
-
 <a class="btn red" href="{{ url_for('logout') }}">
 🚪 تسجيل خروج
 </a>
 
-
 </div>
 
 </div>
-
-
-
-
 
 
 <div class="bottom-nav">
 
-
-<a href="{{ url_for('dashboard') }}">
+<a href="/">
 <span>🏠</span>
 الرئيسية
 </a>
-
 
 <a href="{{ url_for('market') }}">
 <span>💰</span>
 السوق
 </a>
 
-
 <a href="{{ url_for('notifications') }}">
 <span>🔔</span>
 تنبيهات
 </a>
-
 
 <a href="{{ url_for('profile') }}">
 <span>👤</span>
 حسابي
 </a>
 
-
 </div>
 
-
 </div>
-
 
 </body>
 
