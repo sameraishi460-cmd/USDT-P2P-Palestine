@@ -8,8 +8,11 @@
 
 <title>محفظتي - USDT P2P Palestine</title>
 
-
 <style>
+
+*{
+box-sizing:border-box;
+}
 
 body{
 margin:0;
@@ -26,17 +29,19 @@ padding:20px;
 }
 
 
+
 .header{
 background:#111827;
-padding:18px;
+padding:20px;
 border-radius:20px;
 text-align:center;
 margin-bottom:20px;
 }
 
 
+
 .logo{
-font-size:24px;
+font-size:25px;
 font-weight:bold;
 color:#22c55e;
 }
@@ -48,25 +53,29 @@ color:#22c55e;
 background:#111827;
 border:1px solid #263244;
 border-radius:22px;
-padding:25px;
+padding:20px;
 margin-bottom:20px;
+
+}
+
+
+
+.balance{
+
+background:linear-gradient(135deg,#16a34a,#15803d);
+padding:30px;
+border-radius:20px;
 text-align:center;
 
 }
 
 
 
-.main-balance{
+.balance h1{
 
-background:linear-gradient(135deg,#16a34a,#15803d);
-border-radius:20px;
-padding:25px;
-}
+font-size:42px;
+margin:15px 0;
 
-
-.main-balance h1{
-font-size:40px;
-margin:10px;
 }
 
 
@@ -77,12 +86,13 @@ background:#1e293b;
 padding:18px;
 border-radius:15px;
 margin-top:15px;
+text-align:center;
 
 }
 
 
 
-.title{
+.label{
 
 color:#cbd5e1;
 font-size:15px;
@@ -115,12 +125,12 @@ gap:10px;
 
 padding:15px;
 border-radius:15px;
+text-align:center;
 text-decoration:none;
 color:white;
-font-size:16px;
-display:block;
 
 }
+
 
 
 .deposit{
@@ -130,11 +140,13 @@ background:#16a34a;
 }
 
 
+
 .withdraw{
 
 background:#2563eb;
 
 }
+
 
 
 .back{
@@ -146,9 +158,9 @@ border-radius:15px;
 text-align:center;
 text-decoration:none;
 color:white;
-margin-top:20px;
 
 }
+
 
 
 .status{
@@ -157,7 +169,6 @@ color:#22c55e;
 font-weight:bold;
 
 }
-
 
 
 </style>
@@ -180,9 +191,9 @@ font-weight:bold;
 🇵🇸 USDT P2P Palestine
 </div>
 
-<p>
+<h3>
 💰 محفظتي
-</p>
+</h3>
 
 </div>
 
@@ -192,15 +203,15 @@ font-weight:bold;
 <div class="card">
 
 
-<div class="main-balance">
+<div class="balance">
 
-<div>
+<p>
 الرصيد المتاح
-</div>
+</p>
 
 
 <h1>
-{{ wallet.balance }}
+{{ wallet.balance or 0 }}
 </h1>
 
 
@@ -213,60 +224,68 @@ USDT
 
 
 
+
 <div class="box">
 
-<div class="title">
+<div class="label">
 🔒 الرصيد المحجوز
 </div>
 
 
 <div class="value">
-{{ wallet.locked }} USDT
+
+{{ wallet.locked or 0 }} USDT
+
 </div>
 
 
 </div>
+
 
 
 
 
 <div class="box">
 
-<div class="title">
+<div class="label">
 📊 إجمالي الرصيد
 </div>
 
 
 <div class="value">
 
-{{ wallet.balance + wallet.locked }}
-
-USDT
+{{ (wallet.balance or 0) + (wallet.locked or 0) }} USDT
 
 </div>
 
 
 </div>
+
+
 
 
 
 <div class="box">
 
-<div class="title">
+<div class="label">
 حالة المحفظة
 </div>
 
 
 <div class="status">
+
 🟢 نشطة
-</div>
-
 
 </div>
 
 
+</div>
+
+
 
 </div>
+
+
 
 
 
@@ -278,13 +297,17 @@ USDT
 <div class="buttons">
 
 
-<a class="btn deposit" href="#">
+<a href="#" class="btn deposit">
+
 ➕ إيداع USDT
+
 </a>
 
 
-<a class="btn withdraw" href="#">
+<a href="#" class="btn withdraw">
+
 📤 سحب USDT
+
 </a>
 
 
@@ -296,14 +319,17 @@ USDT
 
 
 
-<a class="back" href="/">
+
+<a href="/" class="back">
+
 ⬅️ رجوع للرئيسية
+
 </a>
 
 
 
-
 </div>
+
 
 
 </body>
