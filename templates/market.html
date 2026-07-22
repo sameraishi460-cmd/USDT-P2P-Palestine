@@ -4,7 +4,6 @@
 <head>
 
 <meta charset="UTF-8">
-
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>سوق USDT</title>
@@ -13,13 +12,9 @@
 
 </head>
 
-
 <body>
 
-
 <div class="container">
-
-
 
 <div class="top-header">
 
@@ -27,127 +22,29 @@
 🟢 USDT P2P Palestine
 </div>
 
-
 <h1>
 💰 سوق USDT
 </h1>
-
 
 <p>
 إعلانات البيع والشراء
 </p>
 
-
 </div>
-
-
-
-
-
-<!-- سعر السوق -->
-
-<div class="card">
-
-
-<h3>
-📈 أسعار السوق الحالية
-</h3>
-
-
-
-<div class="info-box">
-
-<span>
-💵 الدولار مقابل الشيكل
-</span>
-
-
-<strong>
-
-{% if market_price %}
-
-{{ market_price['usd_ils'] }} ₪
-
-{% else %}
-
-غير متوفر
-
-{% endif %}
-
-</strong>
-
-
-</div>
-
-
-
-
-
-<div class="info-box">
-
-<span>
-🟢 USDT مقابل الشيكل
-</span>
-
-
-<strong>
-
-{% if market_price %}
-
-{{ market_price['usdt_ils'] }} ₪
-
-{% else %}
-
-غير متوفر
-
-{% endif %}
-
-
-</strong>
-
-
-</div>
-
-
-{% if market_price %}
-
-<p style="text-align:center;color:#94a3b8;font-size:13px">
-
-آخر تحديث:
-{{ market_price['updated'] }}
-
-</p>
-
-{% endif %}
-
-
-</div>
-
-
-
-
-
-
 
 <!-- الإعلانات -->
 
 <div class="card">
 
-
 <h3>
 📢 إعلانات USDT
 </h3>
 
-
-
 {% if ads %}
-
 
 {% for ad in ads %}
 
-
 <div class="info-box">
-
 
 <div>
 
@@ -155,84 +52,54 @@
 {{ ad['title'] }}
 </b>
 
-
 <br>
-
 
 💰 الكمية:
 {{ ad['amount'] }} USDT
 
-
 <br>
-
 
 💵 السعر:
 {{ ad['price'] }} ₪
 
-
 <br>
-
 
 💳 الدفع:
 {{ ad['payment'] }}
 
-
 </div>
-
-
 
 <a class="btn green" href="/buy/{{ ad['id'] }}">
-
 شراء
-
 </a>
 
-
 </div>
-
-
 
 {% endfor %}
 
-
 {% else %}
-
 
 <p>
 لا يوجد إعلانات حالياً
 </p>
 
-
 {% endif %}
-
 
 </div>
 
-
-
-
-
-
-
-<!-- المقابلات -->
+<!-- السوق المحلي -->
 
 <div class="card">
-
 
 <h3>
 🤝 السوق المحلي
 </h3>
 
-
-
 {% if cash_ads %}
-
 
 {% for ad in cash_ads %}
 
-
 <div class="info-box">
-
 
 <div>
 
@@ -240,69 +107,42 @@
 USDT {{ ad['amount'] }}
 </b>
 
-
 <br>
-
 
 💵 السعر:
 {{ ad['price'] }} ₪
 
-
 <br>
-
 
 📍 المكان:
 {{ ad['city'] }}
 
 </div>
 
-
 <a class="btn orange" href="/cash_ad/{{ ad['id'] }}">
-
 عرض
-
 </a>
-
 
 </div>
 
-
 {% endfor %}
 
-
-
 {% else %}
-
 
 <p>
 لا يوجد مقابلات متاحة
 </p>
 
-
 {% endif %}
 
-
-
 </div>
-
-
-
-
-
-
 
 <a class="btn gray" href="/dashboard">
-
 ⬅️ رجوع للوحة التحكم
-
 </a>
-
-
 
 </div>
 
-
 </body>
-
 
 </html>
