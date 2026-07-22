@@ -8,7 +8,7 @@
 
 <title>لوحة التحكم - USDT P2P Palestine</title>
 
-<link rel="stylesheet" href="/static/style.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 
 </head>
 
@@ -57,7 +57,6 @@
 
 
 
-
 <div class="card">
 
 <h3>
@@ -66,126 +65,83 @@
 
 
 <div class="info-box">
-
-<span>
-⭐ التقييم
-</span>
-
-<strong>
-{{ user['rating'] }}
-</strong>
-
+<span>⭐ التقييم</span>
+<strong>{{ user['rating'] }}</strong>
 </div>
-
 
 
 <div class="info-box">
-
-<span>
-🤝 عدد الصفقات
-</span>
-
-<strong>
-{{ user['trades_count'] }}
-</strong>
-
+<span>🤝 عدد الصفقات</span>
+<strong>{{ user['trades_count'] }}</strong>
 </div>
-
 
 
 <div class="info-box">
-
-<span>
-💵 صفقات USDT المكتملة
-</span>
-
-<strong>
-{{ completed }}
-</strong>
-
+<span>💵 صفقات USDT المكتملة</span>
+<strong>{{ completed }}</strong>
 </div>
-
 
 
 <div class="info-box">
-
-<span>
-📍 مقابلات مكتملة
-</span>
-
-<strong>
-{{ cash_completed }}
-</strong>
-
+<span>📍 مقابلات مكتملة</span>
+<strong>{{ cash_completed }}</strong>
 </div>
 
 
 </div>
-
-
 
 
 
 
 
 <div class="card">
-
 
 <h3>
 ⚡ الخدمات
 </h3>
 
 
-
 <div class="actions">
 
 
-<a class="btn green" href="/market">
+<a class="btn green" href="{{ url_for('market') }}">
 💰 سوق USDT
 </a>
 
 
-
-<a class="btn blue" href="/create_ad">
+<a class="btn blue" href="{{ url_for('create_ad') }}">
 ➕ إنشاء إعلان
 </a>
 
 
-
-<a class="btn yellow" href="/my_ads">
+<a class="btn yellow" href="{{ url_for('my_ads') }}">
 📢 إعلاناتي
 </a>
 
 
-
-<a class="btn orange" href="/cash_market">
+<a class="btn orange" href="{{ url_for('cash_market') }}">
 🤝 السوق المحلي
 </a>
 
 
-
-<a class="btn orange" href="/create_cash_ad">
+<a class="btn orange" href="{{ url_for('create_cash_ad') }}">
 📍 إعلان مقابلة
 </a>
 
 
-
-<a class="btn blue" href="/profile">
+<a class="btn blue" href="{{ url_for('profile') }}">
 👤 الملف الشخصي
 </a>
 
 
-
-<a class="btn gray" href="/notifications">
+<a class="btn gray" href="{{ url_for('notifications') }}">
 🔔 الإشعارات
 </a>
 
 
 </div>
 
-
 </div>
-
 
 
 
@@ -194,32 +150,27 @@
 
 <div class="card">
 
-
 <h3>
 ⚙️ الحساب
 </h3>
 
 
-
 <div class="actions">
 
 
-<a class="btn gray" href="/edit_profile">
+<a class="btn gray" href="{{ url_for('edit_profile') }}">
 ✏️ تعديل البيانات
 </a>
 
 
-
-<a class="btn red" href="/logout">
+<a class="btn red" href="{{ url_for('logout') }}">
 🚪 تسجيل خروج
 </a>
 
 
 </div>
 
-
 </div>
-
 
 
 
@@ -229,28 +180,25 @@
 <div class="bottom-nav">
 
 
-<a href="/dashboard">
+<a href="{{ url_for('dashboard') }}">
 <span>🏠</span>
 الرئيسية
 </a>
 
 
-
-<a href="/market">
+<a href="{{ url_for('market') }}">
 <span>💰</span>
 السوق
 </a>
 
 
-
-<a href="/notifications">
+<a href="{{ url_for('notifications') }}">
 <span>🔔</span>
 تنبيهات
 </a>
 
 
-
-<a href="/profile">
+<a href="{{ url_for('profile') }}">
 <span>👤</span>
 حسابي
 </a>
@@ -259,9 +207,7 @@
 </div>
 
 
-
 </div>
-
 
 
 </body>
