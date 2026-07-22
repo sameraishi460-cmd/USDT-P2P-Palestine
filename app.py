@@ -552,22 +552,72 @@ def market():
 @app.route("/create_ad", methods=["GET", "POST"])
 @login_required
 def create_ad():
-    if request.method == "POST":
-        title = request.form.get("title")
-        amount = float(request.form.get("amount", 0))
-        price = float(request.form.get("price", 0))
-        payment = request.form.get("payment")
 
-        con = connect()
-        con.execute(
-            "INSERT INTO ads (user, title, amount, price, payment, status) VALUES(?, ?, ?, ?, ?, ?)",
-            (session["user"], title, amount, price, payment, "OPEN")
+    con = connect()
+
+    user = con.execute(
+        "SELECT * FROM users WHERE username=?",
+        (session["user"],)
+    ).fetchone()
+
+
+    # فحص بيانات الدفع
+    if not user["phone"] or not user["bank"] or not user["iban"] or not user["payment_method"]:
+
+        con.close()
+
+        return """
+        <script>
+        alert("⚠️ يجب إكمال بيانات الدفع في الملف الشخصي قبل نشر الإعلان");
+        window.location.href='/edit_profile';
+        </script>
+        """
+
+
+    if request.method == "POST":
+
+        title = request.form.get("title")
+
+        amount = float(
+            request.form.get("amount",0)
         )
+
+        price = float(
+            request.form.get("price",0)
+        )
+
+        payment = user["payment_method"]
+
+
+        con.execute(
+            """
+            INSERT INTO ads
+            (user,title,amount,price,payment,status)
+            VALUES(?,?,?,?,?,?)
+            """,
+            (
+                session["user"],
+                title,
+                amount,
+                price,
+                payment,
+                "OPEN"
+            )
+        )
+
+
         con.commit()
         con.close()
+
+
         return redirect("/")
 
-    return render_template("create_ad.html")
+
+    con.close()
+
+    return render_template(
+        "create_ad.html"
+    )
 
 
 def get_trade_fee(price):
@@ -1218,32 +1268,21 @@ def edit_profile():
     if request.method == "POST":
 
         phone = request.form.get("phone", "")
-
-        bank_name = request.form.get("bank_name", "")
-
-        account_number = request.form.get("account_number", "")
-
-        payment_phone = request.form.get("payment_phone", "")
-
-        wallet = request.form.get("wallet", "")
-
+        bank = request.form.get("bank", "")
+        iban = request.form.get("iban", "")
+        payment_method = request.form.get("payment_method", "")
 
         con.execute(
             """
             UPDATE users 
-            SET phone=?,
-                bank_name=?,
-                account_number=?,
-                payment_phone=?,
-                wallet=?
+            SET phone=?, bank=?, iban=?, payment_method=?
             WHERE username=?
             """,
             (
                 phone,
-                bank_name,
-                account_number,
-                payment_phone,
-                wallet,
+                bank,
+                iban,
+                payment_method,
                 session["user"]
             )
         )
