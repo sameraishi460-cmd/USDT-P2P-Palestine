@@ -69,6 +69,16 @@ def setup_database():
     
     add_column(con, "users", "telegram_id", "TEXT")
 
+    # WALLETS
+    con.execute("""
+    CREATE TABLE IF NOT EXISTS wallets(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE,
+        balance REAL DEFAULT 0,
+        locked REAL DEFAULT 0
+    )
+    """)
+
     # ADS
     con.execute("""
     CREATE TABLE IF NOT EXISTS ads(
