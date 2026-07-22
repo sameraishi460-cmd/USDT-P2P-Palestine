@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+<meta charset="UTF-8">
+<title>محفظتي</title>
+
+<style>
+body{
+    font-family: Arial;
+    background:#f5f5f5;
+    padding:30px;
+}
+
+.box{
+    background:white;
+    padding:25px;
+    border-radius:15px;
+    max-width:400px;
+    margin:auto;
+    text-align:center;
+}
+
+.balance{
+    font-size:25px;
+    margin:20px;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="box">
+
+<h2>💰 محفظتي</h2>
+
+<div class="balance">
+USDT المتاح:
+<br>
+{{ wallet.balance }}
+</div>
+
+
+<div class="balance">
+🔒 USDT المحجوز:
+<br>
+{{ wallet.locked }}
+</div>
+
+
+</div>
+
+</body>
+
+</html>
