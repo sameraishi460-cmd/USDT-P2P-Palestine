@@ -467,6 +467,8 @@ def home():
         "SELECT * FROM market_price WHERE id=1"
     ).fetchone()
 
+    print("MARKET PRICE:", price)
+
     user = None
 
     if "user" in session:
