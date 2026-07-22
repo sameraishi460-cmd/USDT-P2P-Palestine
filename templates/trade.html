@@ -5,69 +5,44 @@
 
 <meta charset="UTF-8">
 
-<title>تفاصيل الصفقة</title>
+<title>تفاصيل الصفقة - USDT P2P Palestine</title>
 
 
 <style>
 
 body{
-
 background:#0b1220;
 color:white;
 font-family:tahoma;
 padding:20px;
-
 }
 
 
 .container{
-
 max-width:900px;
 margin:auto;
-
 }
 
 
-
 .box{
-
 background:#1e293b;
 padding:20px;
 border-radius:18px;
 margin-bottom:20px;
-
 }
-
 
 
 h2{
-
 color:#22c55e;
-
 }
 
 
-
 .info{
-
 background:#111827;
 padding:15px;
 border-radius:12px;
 line-height:2;
-
 }
-
-
-
-.wallet{
-
-background:#064e3b;
-padding:15px;
-border-radius:12px;
-word-break:break-all;
-
-}
-
 
 
 .btn{
@@ -83,25 +58,23 @@ margin:5px;
 
 
 .green{
-
 background:#16a34a;
-
 }
 
 
 .red{
-
 background:#dc2626;
-
 }
 
 
 .blue{
-
 background:#2563eb;
-
 }
 
+
+.gray{
+background:#475569;
+}
 
 
 input,textarea{
@@ -115,7 +88,6 @@ margin:5px;
 }
 
 
-
 .message{
 
 background:#111827;
@@ -126,7 +98,6 @@ margin:8px 0;
 }
 
 
-
 .time{
 
 opacity:.5;
@@ -135,11 +106,10 @@ font-size:12px;
 }
 
 
+
 </style>
 
-
 </head>
-
 
 
 <body>
@@ -159,70 +129,34 @@ font-size:12px;
 
 <div class="info">
 
-
 البائع:
-<b>
-{{trade.seller}}
-</b>
-
+<b>{{trade.seller}}</b>
 
 <br>
-
 
 المشتري:
-<b>
-{{trade.buyer}}
-</b>
-
+<b>{{trade.buyer}}</b>
 
 <br>
-
 
 الكمية:
-<b>
-{{trade.amount}} USDT
-</b>
-
+<b>{{trade.amount}} USDT</b>
 
 <br>
-
 
 السعر:
-<b>
-{{trade.price}}
-</b>
-
+<b>{{trade.price}} ₪</b>
 
 <br>
-
 
 حالة الصفقة:
-<b>
-{{trade.status}}
-</b>
-
-
-
-<br>
-
-
-حالة الضمان:
-
-<b>
-
-{{trade.escrow_status}}
-
-</b>
+<b>{{trade.status}}</b>
 
 
 </div>
 
 
 </div>
-
-
-
-
 
 
 
@@ -231,37 +165,33 @@ font-size:12px;
 
 
 <h2>
-🔐 ضمان Escrow
+💳 الدفع للبائع
 </h2>
 
 
-
 <p>
-
-قم بتحويل USDT إلى محفظة المنصة ثم انتظر تأكيد الأدمن.
-
+المشتري يقوم بتحويل المبلغ للبائع حسب بيانات الدفع الموجودة في الإعلان.
 </p>
 
 
 
-<div class="wallet">
+<div class="info">
 
 
-محفظة المنصة:
-
-<br><br>
-
-
-{{trade.platform_wallet}}
-
+👤 البائع:
+{{trade.seller}}
 
 
 <br><br>
 
 
-الشبكة:
+بعد إرسال المبلغ اضغط:
 
-BNB Smart Chain (BEP20)
+<br>
+
+<b style="color:#22c55e;">
+✅ تم إرسال الدفع
+</b>
 
 
 </div>
@@ -282,7 +212,6 @@ BNB Smart Chain (BEP20)
 <h2>
 📤 إثبات الدفع
 </h2>
-
 
 
 <form action="/upload_payment/{{trade.id}}" method="post" enctype="multipart/form-data">
@@ -312,19 +241,15 @@ BNB Smart Chain (BEP20)
 
 
 
-
 <div class="box">
 
 
 <h2>
 💬 المحادثة
-
 </h2>
 
 
-
 {% for m in messages %}
-
 
 <div class="message">
 
@@ -337,14 +262,14 @@ BNB Smart Chain (BEP20)
 <br>
 
 
-{{m.message}}
+{{m.text}}
 
 
 <br>
 
 
 <span class="time">
-{{m.timestamp}}
+{{m.created}}
 </span>
 
 
@@ -352,8 +277,6 @@ BNB Smart Chain (BEP20)
 
 
 {% endfor %}
-
-
 
 
 
@@ -367,9 +290,7 @@ BNB Smart Chain (BEP20)
 
 
 <button class="btn green">
-
 إرسال
-
 </button>
 
 
@@ -387,24 +308,51 @@ BNB Smart Chain (BEP20)
 <div class="box">
 
 
-<a class="btn green" href="/complete_trade/{{trade.id}}">
+<h2>
+⚙️ إجراءات الصفقة
+</h2>
 
-تأكيد إتمام الصفقة
 
+
+{% if trade.status == "PENDING" %}
+
+
+<a class="btn green" href="/confirm_payment/{{trade.id}}">
+✅ تم إرسال الدفع
+</a>
+
+
+{% endif %}
+
+
+
+
+{% if trade.status == "PAYMENT_SENT" %}
+
+
+<a class="btn green" href="/seller_confirm/{{trade.id}}">
+✅ تأكيد استلام المبلغ
+</a>
+
+
+{% endif %}
+
+
+
+
+<a class="btn red" href="/trade_status/{{trade.id}}/DISPUTE">
+⚠️ فتح نزاع
 </a>
 
 
 
-<a class="btn red" href="/cancel_trade/{{trade.id}}">
 
-إلغاء الصفقة
-
+<a class="btn gray" href="/">
+⬅️ رجوع
 </a>
-
 
 
 </div>
-
 
 
 
