@@ -7,7 +7,6 @@
 
 <title>تفاصيل الصفقة - USDT P2P Palestine</title>
 
-
 <style>
 
 body{
@@ -17,12 +16,10 @@ font-family:tahoma;
 padding:20px;
 }
 
-
 .container{
 max-width:900px;
 margin:auto;
 }
-
 
 .box{
 background:#1e293b;
@@ -31,11 +28,9 @@ border-radius:18px;
 margin-bottom:20px;
 }
 
-
 h2{
 color:#22c55e;
 }
-
 
 .info{
 background:#111827;
@@ -44,38 +39,38 @@ border-radius:12px;
 line-height:2;
 }
 
+.payment{
+background:#064e3b;
+padding:20px;
+border-radius:15px;
+line-height:2;
+}
 
 .btn{
-
 padding:12px 20px;
 border-radius:10px;
 text-decoration:none;
 color:white;
 display:inline-block;
 margin:5px;
-
+border:0;
 }
-
 
 .green{
 background:#16a34a;
 }
 
-
 .red{
 background:#dc2626;
 }
-
 
 .blue{
 background:#2563eb;
 }
 
-
 .gray{
 background:#475569;
 }
-
 
 input,textarea{
 
@@ -87,7 +82,6 @@ margin:5px;
 
 }
 
-
 .message{
 
 background:#111827;
@@ -97,15 +91,12 @@ margin:8px 0;
 
 }
 
-
 .time{
 
 opacity:.5;
 font-size:12px;
 
 }
-
-
 
 </style>
 
@@ -121,7 +112,6 @@ font-size:12px;
 
 <div class="box">
 
-
 <h2>
 💱 صفقة USDT
 </h2>
@@ -129,34 +119,33 @@ font-size:12px;
 
 <div class="info">
 
-البائع:
+👤 البائع:
 <b>{{trade.seller}}</b>
 
 <br>
 
-المشتري:
+👤 المشتري:
 <b>{{trade.buyer}}</b>
 
 <br>
 
-الكمية:
+💰 الكمية:
 <b>{{trade.amount}} USDT</b>
 
 <br>
 
-السعر:
+💵 السعر:
 <b>{{trade.price}} ₪</b>
 
 <br>
 
-حالة الصفقة:
+📌 حالة الصفقة:
 <b>{{trade.status}}</b>
 
+</div>
 
 </div>
 
-
-</div>
 
 
 
@@ -165,37 +154,79 @@ font-size:12px;
 
 
 <h2>
-💳 الدفع للبائع
+💳 بيانات الدفع للبائع
 </h2>
 
 
-<p>
-المشتري يقوم بتحويل المبلغ للبائع حسب بيانات الدفع الموجودة في الإعلان.
-</p>
+<div class="payment">
 
 
+👤 اسم البائع:
 
-<div class="info">
+<br>
 
-
-👤 البائع:
-{{trade.seller}}
+<b>
+{{seller_info.username}}
+</b>
 
 
 <br><br>
 
 
-بعد إرسال المبلغ اضغط:
+🏦 البنك:
 
 <br>
 
-<b style="color:#22c55e;">
-✅ تم إرسال الدفع
+<b>
+{{seller_info.bank or "غير مضاف"}}
 </b>
+
+
+<br><br>
+
+
+💳 رقم الحساب / IBAN:
+
+<br>
+
+<b>
+{{seller_info.iban or "غير مضاف"}}
+</b>
+
+
+<br><br>
+
+
+📱 رقم الجوال:
+
+<br>
+
+<b>
+{{seller_info.phone or "غير مضاف"}}
+</b>
+
+
+<br><br>
+
+
+💵 طريقة الدفع:
+
+<br>
+
+<b>
+{{seller_info.payment_method or "تحويل بنكي"}}
+</b>
+
 
 
 </div>
 
+
+<p>
+
+بعد إرسال المبلغ للبائع ارفع إثبات الدفع واضغط تم إرسال الدفع.
+
+</p>
 
 
 </div>
@@ -225,7 +256,7 @@ font-size:12px;
 
 <button class="btn blue">
 
-رفع الإثبات
+📤 رفع الإثبات
 
 </button>
 
@@ -249,7 +280,9 @@ font-size:12px;
 </h2>
 
 
+
 {% for m in messages %}
+
 
 <div class="message">
 
@@ -280,6 +313,8 @@ font-size:12px;
 
 
 
+
+
 <form method="post">
 
 
@@ -290,7 +325,9 @@ font-size:12px;
 
 
 <button class="btn green">
+
 إرسال
+
 </button>
 
 
@@ -298,6 +335,7 @@ font-size:12px;
 
 
 </div>
+
 
 
 
@@ -316,11 +354,11 @@ font-size:12px;
 
 {% if trade.status == "PENDING" %}
 
+<a class="btn green" href="/trade_status/{{trade.id}}/PAYMENT_SENT">
 
-<a class="btn green" href="/confirm_payment/{{trade.id}}">
 ✅ تم إرسال الدفع
-</a>
 
+</a>
 
 {% endif %}
 
@@ -330,8 +368,10 @@ font-size:12px;
 {% if trade.status == "PAYMENT_SENT" %}
 
 
-<a class="btn green" href="/seller_confirm/{{trade.id}}">
-✅ تأكيد استلام المبلغ
+<a class="btn green" href="/finish_trade/{{trade.id}}">
+
+✅ تأكيد استلام وإتمام الصفقة
+
 </a>
 
 
@@ -340,15 +380,20 @@ font-size:12px;
 
 
 
+
 <a class="btn red" href="/trade_status/{{trade.id}}/DISPUTE">
+
 ⚠️ فتح نزاع
+
 </a>
 
 
 
 
 <a class="btn gray" href="/">
+
 ⬅️ رجوع
+
 </a>
 
 
