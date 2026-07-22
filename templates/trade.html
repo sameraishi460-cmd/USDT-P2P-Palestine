@@ -4,16 +4,16 @@
 <head>
 
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>تفاصيل الصفقة - USDT P2P Palestine</title>
+
 
 <style>
 
 body{
 background:#0b1220;
 color:white;
-font-family:tahoma,Arial;
+font-family:tahoma;
 padding:20px;
 }
 
@@ -22,6 +22,7 @@ max-width:900px;
 margin:auto;
 }
 
+
 .box{
 background:#1e293b;
 padding:20px;
@@ -29,9 +30,11 @@ border-radius:18px;
 margin-bottom:20px;
 }
 
+
 h2{
 color:#22c55e;
 }
+
 
 .info{
 background:#111827;
@@ -42,14 +45,27 @@ line-height:2;
 
 
 .payment{
+
 background:#064e3b;
 padding:20px;
 border-radius:15px;
 line-height:2;
+
+}
+
+
+.message{
+
+background:#111827;
+padding:10px;
+border-radius:10px;
+margin:8px 0;
+
 }
 
 
 .btn{
+
 padding:12px 20px;
 border-radius:10px;
 text-decoration:none;
@@ -57,7 +73,7 @@ color:white;
 display:inline-block;
 margin:5px;
 border:0;
-cursor:pointer;
+
 }
 
 
@@ -65,13 +81,16 @@ cursor:pointer;
 background:#16a34a;
 }
 
+
 .red{
 background:#dc2626;
 }
 
+
 .blue{
 background:#2563eb;
 }
+
 
 .gray{
 background:#475569;
@@ -89,29 +108,10 @@ margin:5px;
 }
 
 
-.message{
-
-background:#111827;
-padding:10px;
-border-radius:10px;
-margin:8px 0;
-
-}
-
-
 .time{
 
 opacity:.5;
 font-size:12px;
-
-}
-
-
-.warning{
-
-background:#7c2d12;
-padding:15px;
-border-radius:12px;
 
 }
 
@@ -130,6 +130,7 @@ border-radius:12px;
 
 <div class="box">
 
+
 <h2>
 💱 صفقة USDT
 </h2>
@@ -137,30 +138,41 @@ border-radius:12px;
 
 <div class="info">
 
+
 👤 البائع:
 <b>{{trade.seller}}</b>
 
+
 <br>
+
 
 👤 المشتري:
 <b>{{trade.buyer}}</b>
 
+
 <br>
+
 
 💰 الكمية:
 <b>{{trade.amount}} USDT</b>
 
+
 <br>
+
 
 💵 السعر:
 <b>{{trade.price}} ₪</b>
 
+
 <br>
 
-📌 حالة الصفقة:
+
+📌 الحالة:
 <b>{{trade.status}}</b>
 
+
 </div>
+
 
 </div>
 
@@ -170,18 +182,19 @@ border-radius:12px;
 
 <div class="box">
 
+
 <h2>
 💳 بيانات الدفع للبائع
 </h2>
 
 
-{% if seller_info %}
+{% if trade.buyer == current_user or trade.seller == current_user %}
 
 
 <div class="payment">
 
 
-👤 اسم البائع:
+👤 البائع:
 
 <br>
 
@@ -198,31 +211,31 @@ border-radius:12px;
 <br>
 
 <b>
-{{seller_info.bank_name or "غير مضاف"}}
+{{seller_info.bank or "غير مضاف"}}
 </b>
 
 
 <br><br>
 
 
-🔢 رقم الحساب / IBAN:
+💳 رقم الحساب / IBAN:
 
 <br>
 
 <b>
-{{seller_info.account_number or "غير مضاف"}}
+{{seller_info.iban or "غير مضاف"}}
 </b>
 
 
 <br><br>
 
 
-📱 رقم الجوال للتحويل:
+📱 رقم الجوال:
 
 <br>
 
 <b>
-{{seller_info.payment_phone or "غير مضاف"}}
+{{seller_info.phone or "غير مضاف"}}
 </b>
 
 
@@ -244,22 +257,15 @@ border-radius:12px;
 {% else %}
 
 
-<div class="warning">
+<div class="info">
 
-⚠️ البائع لم يضيف بيانات الدفع بعد.
+🔒 بيانات الدفع تظهر بعد فتح الصفقة
 
 </div>
 
 
 {% endif %}
 
-
-
-<p>
-
-بعد إرسال المبلغ للبائع قم برفع إثبات الدفع.
-
-</p>
 
 
 </div>
@@ -278,10 +284,11 @@ border-radius:12px;
 </h2>
 
 
+
 <form action="/upload_payment/{{trade.id}}" method="post" enctype="multipart/form-data">
 
 
-<input type="file" name="proof" required>
+<input type="file" name="proof">
 
 
 <br>
@@ -351,7 +358,7 @@ border-radius:12px;
 <form method="post">
 
 
-<textarea name="message" placeholder="اكتب رسالة..." required></textarea>
+<textarea name="message" placeholder="اكتب رسالة"></textarea>
 
 
 <br>
@@ -375,7 +382,6 @@ border-radius:12px;
 
 
 
-
 <div class="box">
 
 
@@ -388,7 +394,7 @@ border-radius:12px;
 {% if trade.status == "PENDING" %}
 
 
-<a class="btn green" href="/trade_status/{{trade.id}}/PAYMENT_SENT">
+<a class="btn green" href="/confirm_payment/{{trade.id}}">
 
 ✅ تم إرسال الدفع
 
@@ -404,9 +410,9 @@ border-radius:12px;
 {% if trade.status == "PAYMENT_SENT" %}
 
 
-<a class="btn green" href="/finish_trade/{{trade.id}}">
+<a class="btn green" href="/seller_confirm/{{trade.id}}">
 
-✅ تأكيد استلام وإتمام الصفقة
+✅ تأكيد استلام المبلغ
 
 </a>
 
@@ -425,14 +431,17 @@ border-radius:12px;
 
 
 
+
 <a class="btn gray" href="/">
 
-⬅️ رجوع للرئيسية
+⬅️ رجوع
 
 </a>
 
 
+
 </div>
+
 
 
 
