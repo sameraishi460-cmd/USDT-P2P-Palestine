@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+
+<meta charset="UTF-8">
+
+<title>طلبات الإيداع</title>
+
+<style>
+
+body{
+background:#050b16;
+color:white;
+font-family:tahoma;
+padding:20px;
+}
+
+
+.card{
+background:#111827;
+padding:20px;
+border-radius:20px;
+margin-bottom:15px;
+}
+
+
+h2{
+color:#22c55e;
+text-align:center;
+}
+
+
+.info{
+background:#1e293b;
+padding:12px;
+border-radius:12px;
+margin-top:10px;
+}
+
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<h2>
+💰 طلبات إيداع USDT
+</h2>
+
+
+
+{% for d in deposits %}
+
+
+<div class="card">
+
+
+<div class="info">
+👤 المستخدم:
+{{ d.username }}
+</div>
+
+
+<div class="info">
+💰 الكمية:
+{{ d.amount }} USDT
+</div>
+
+
+<div class="info">
+📌 الحالة:
+{{ d.status }}
+</div>
+
+
+<div class="info">
+📅 التاريخ:
+{{ d.created }}
+</div>
+
+
+
+</div>
+
+
+
+{% else %}
+
+
+<div class="card">
+لا توجد طلبات إيداع
+</div>
+
+
+{% endfor %}
+
+
+
+</body>
+
+</html>
