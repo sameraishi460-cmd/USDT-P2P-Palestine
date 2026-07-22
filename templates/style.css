@@ -1,399 +1,201 @@
+/* templates/style.css */
+
 *{
     box-sizing:border-box;
-    font-family:"Tahoma", Arial, sans-serif;
+    font-family:"Tahoma",Arial,sans-serif;
 }
-
 
 body{
     margin:0;
     padding:20px;
     direction:rtl;
-
-    background:
-    radial-gradient(circle at top,#1e293b,#020617);
-
+    background:#020617;
     color:white;
-
-    min-height:100vh;
 }
-
-
 
 .container{
-
     max-width:600px;
     margin:auto;
-
-    padding-bottom:90px;
-
+    padding-bottom:100px;
 }
 
 
-
-
-/* HEADER */
+/* الهيدر */
 
 .top-header{
-
-    background:
-    linear-gradient(135deg,#0f172a,#1e293b);
-
-    border:1px solid #334155;
-
+    background:linear-gradient(135deg,#0f172a,#1e293b);
     border-radius:25px;
-
     padding:25px;
-
     text-align:center;
-
-    box-shadow:
-    0 15px 40px #0008;
-
+    border:1px solid #334155;
+    box-shadow:0 15px 40px #0008;
 }
-
-
 
 .logo{
-
     font-size:28px;
-
     font-weight:bold;
-
     color:#22c55e;
+}
 
-    margin-bottom:15px;
-
+.top-header h1{
+    margin:15px 0;
 }
 
 
-
-.top-header h2{
-
-    margin:10px 0;
-
-    font-size:26px;
-
-}
-
-
-
-
-/* CARDS */
+/* البطاقات */
 
 .card{
-
-    background:
-
-    linear-gradient(
-    145deg,
-    #111827,
-    #1e293b
-    );
-
-
+    background:linear-gradient(145deg,#111827,#1e293b);
     border-radius:25px;
-
     padding:20px;
-
     margin-top:20px;
-
-
     border:1px solid #334155;
-
-
-    box-shadow:
-
-    0 10px 30px #0007;
-
+    box-shadow:0 10px 30px #0008;
 }
 
-
-
-.card-title{
-
-    font-size:20px;
-
-    font-weight:bold;
-
-    margin-bottom:18px;
-
+.card h3{
     color:#38bdf8;
-
 }
 
 
+/* حالة الحساب */
+
+.status{
+    padding:10px;
+    border-radius:15px;
+    margin-top:15px;
+    font-weight:bold;
+}
+
+.success{
+    background:#166534;
+}
+
+.warning{
+    background:#854d0e;
+}
 
 
-/* INFO BOX */
+/* المعلومات */
 
 .info-box{
-
-
     display:flex;
-
     justify-content:space-between;
-
     align-items:center;
-
-
     background:#0f172a;
-
-
-    border-radius:16px;
-
-
     padding:15px;
-
-
-    margin:12px 0;
-
-
+    border-radius:15px;
+    margin:10px 0;
     border:1px solid #334155;
-
-
 }
-
-
 
 .info-box strong{
-
     color:#22c55e;
-
     font-size:20px;
-
 }
 
 
+/* الأزرار */
 
-
-/* BUTTONS */
+.actions{
+    display:grid;
+    gap:12px;
+}
 
 
 .btn{
-
-
     display:block;
-
-    text-decoration:none;
-
-
-    color:white;
-
-
     padding:16px;
-
-
-    margin:12px 0;
-
-
-    border-radius:18px;
-
-
     text-align:center;
-
-
-    font-size:17px;
-
-
+    text-decoration:none;
+    color:white;
+    border-radius:18px;
     font-weight:bold;
-
-
+    font-size:17px;
     border:1px solid rgba(255,255,255,.15);
-
-
     transition:.3s;
-
-
 }
-
 
 
 .btn:hover{
-
     transform:translateY(-3px);
-
-    opacity:.9;
-
 }
 
 
-
-/* COLORS */
-
+/* الألوان */
 
 .green{
-
-    background:
-    linear-gradient(135deg,#16a34a,#22c55e);
-
+    background:linear-gradient(135deg,#16a34a,#22c55e);
 }
-
-
 
 .blue{
-
-    background:
-    linear-gradient(135deg,#2563eb,#3b82f6);
-
+    background:linear-gradient(135deg,#2563eb,#3b82f6);
 }
-
-
 
 .yellow{
-
-    background:
-    linear-gradient(135deg,#ca8a04,#eab308);
-
+    background:linear-gradient(135deg,#ca8a04,#eab308);
 }
-
-
 
 .orange{
-
-    background:
-    linear-gradient(135deg,#ea580c,#f97316);
-
+    background:linear-gradient(135deg,#ea580c,#f97316);
 }
-
-
 
 .red{
-
-    background:
-    linear-gradient(135deg,#dc2626,#ef4444);
-
+    background:linear-gradient(135deg,#dc2626,#ef4444);
 }
-
-
 
 .gray{
-
-    background:
-    linear-gradient(135deg,#334155,#475569);
-
+    background:linear-gradient(135deg,#334155,#475569);
 }
 
 
-
-
-/* BOTTOM NAV */
-
+/* القائمة السفلية */
 
 .bottom-nav{
-
-
     position:fixed;
-
-
     bottom:15px;
-
-
     left:50%;
-
-
     transform:translateX(-50%);
-
-
     width:90%;
-
-
     max-width:600px;
-
-
-
     background:#0f172a;
-
-
-
     border:1px solid #334155;
-
-
-
     border-radius:25px;
-
-
-
     display:flex;
-
-
-
     justify-content:space-around;
-
-
-
     padding:12px;
-
-
-
     box-shadow:0 10px 40px #0008;
-
-
 }
-
-
 
 
 .bottom-nav a{
-
-
     color:white;
-
-
     text-decoration:none;
-
-
     text-align:center;
-
-
     font-size:13px;
-
-
 }
-
 
 
 .bottom-nav span{
-
-
     display:block;
-
-
     font-size:23px;
-
-
-    margin-bottom:5px;
-
-
 }
 
 
-
-
-/* MOBILE */
-
+/* موبايل */
 
 @media(max-width:500px){
 
+    body{
+        padding:12px;
+    }
 
-body{
+    .logo{
+        font-size:23px;
+    }
 
-    padding:12px;
-
-}
-
-
-.logo{
-
-    font-size:23px;
-
-}
-
-
-.btn{
-
-    font-size:16px;
-
-}
-
+    .btn{
+        font-size:16px;
+    }
 
 }
