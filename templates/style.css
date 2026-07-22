@@ -1,60 +1,43 @@
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
-
-
 *{
     box-sizing:border-box;
-    font-family:'Cairo',Arial,sans-serif;
+    font-family:Tahoma, Arial, sans-serif;
 }
 
 
 body{
-
     margin:0;
     padding:20px;
-
     direction:rtl;
-
-    background:
-    linear-gradient(135deg,#07111f,#0f172a);
-
-    color:white;
-
+    background:#050b16;
+    color:#ffffff;
 }
 
 
 /* الحاوية */
 
 .container{
-
     max-width:600px;
     margin:auto;
-    padding-bottom:80px;
-
 }
+
 
 
 /* الشعار */
 
 .logo{
-
     text-align:center;
-    font-size:32px;
-    font-weight:900;
-
+    font-size:30px;
+    font-weight:bold;
     color:#22c55e;
-
-    margin-bottom:20px;
-
+    margin-bottom:25px;
 }
 
 
 
-/* العنوان */
+/* العناوين */
 
 h1,h2,h3{
-
-    margin-top:0;
-
+    color:white;
 }
 
 
@@ -65,16 +48,39 @@ h1,h2,h3{
 
     background:#111827;
 
-    border-radius:24px;
+    border:1px solid #1f2937;
+
+    border-radius:22px;
 
     padding:20px;
 
     margin-bottom:18px;
 
     box-shadow:
-    0 10px 30px rgba(0,0,0,.35);
+    0 10px 30px rgba(0,0,0,0.35);
 
-    border:1px solid #1f2937;
+}
+
+
+
+/* الهيدر */
+
+.header{
+
+    background:
+    linear-gradient(
+    135deg,
+    #111827,
+    #064e3b
+    );
+
+    padding:25px;
+
+    border-radius:25px;
+
+    text-align:center;
+
+    margin-bottom:20px;
 
 }
 
@@ -82,7 +88,7 @@ h1,h2,h3{
 
 /* معلومات */
 
-.info-box{
+.info{
 
     display:flex;
 
@@ -90,50 +96,27 @@ h1,h2,h3{
 
     align-items:center;
 
-    background:#1e293b;
-
-    padding:13px;
-
-    border-radius:15px;
-
-    margin:10px 0;
-
-}
-
-
-
-/* الحقول */
-
-input,
-select,
-textarea{
-
-    width:100%;
+    background:#1f2937;
 
     padding:14px;
 
     border-radius:15px;
 
-    border:1px solid #334155;
+    margin:10px 0;
 
-    background:#0f172a;
-
-    color:white;
-
-    margin:8px 0;
-
-    font-size:16px;
+    color:#e5e7eb;
 
 }
 
 
-input:focus,
-select:focus,
-textarea:focus{
 
-    outline:none;
+/* القوائم */
 
-    border-color:#22c55e;
+.menu{
+
+    display:grid;
+
+    gap:12px;
 
 }
 
@@ -141,8 +124,8 @@ textarea:focus{
 
 /* الأزرار */
 
-button,
-.btn{
+.button,
+button{
 
     display:block;
 
@@ -150,9 +133,9 @@ button,
 
     padding:15px;
 
-    border-radius:18px;
+    border-radius:16px;
 
-    border:0;
+    border:none;
 
     text-align:center;
 
@@ -160,25 +143,24 @@ button,
 
     color:white;
 
-    font-size:17px;
+    background:#16a34a;
 
-    font-weight:bold;
+    font-size:17px;
 
     cursor:pointer;
 
-    margin-top:10px;
-
-    transition:.3s;
-
-    background:#2563eb;
+    transition:0.3s;
 
 }
 
 
-button:hover,
-.btn:hover{
 
-    transform:scale(1.03);
+.button:hover,
+button:hover{
+
+    transform:translateY(-2px);
+
+    opacity:0.85;
 
 }
 
@@ -188,35 +170,76 @@ button:hover,
 
 .green{
 
-    background:#16a34a !important;
+    background:#16a34a;
+
+}
+
+
+.blue{
+
+    background:#2563eb;
 
 }
 
 
 .orange{
 
-    background:#ea580c !important;
+    background:#ea580c;
 
 }
 
 
 .red{
 
-    background:#dc2626 !important;
+    background:#dc2626;
 
 }
 
 
 .gray{
 
-    background:#475569 !important;
+    background:#374151;
 
 }
 
 
 .yellow{
 
-    background:#ca8a04 !important;
+    background:#ca8a04;
+
+}
+
+
+
+/* الإدخال */
+
+input,
+select,
+textarea{
+
+    width:100%;
+
+    padding:14px;
+
+    margin:8px 0;
+
+    border-radius:14px;
+
+    border:1px solid #374151;
+
+    background:#1f2937;
+
+    color:white;
+
+    font-size:16px;
+
+}
+
+
+
+input::placeholder{
+
+    color:#9ca3af;
 
 }
 
@@ -230,17 +253,42 @@ button:hover,
 
     font-size:22px;
 
-    font-weight:900;
+    font-weight:bold;
 
 }
 
 
 
-/* البطاقات الصغيرة للإعلانات */
+/* البطاقات المالية */
+
+.balance{
+
+    background:
+    linear-gradient(
+    135deg,
+    #065f46,
+    #16a34a
+    );
+
+    padding:25px;
+
+    border-radius:25px;
+
+    text-align:center;
+
+    font-size:28px;
+
+    font-weight:bold;
+
+}
+
+
+
+/* الإعلانات */
 
 .ad-card{
 
-    background:#1e293b;
+    background:#111827;
 
     border-radius:20px;
 
@@ -248,67 +296,61 @@ button:hover,
 
     margin-bottom:15px;
 
-}
-
-
-
-.ad-title{
-
-    font-size:20px;
-
-    font-weight:bold;
-
-    color:#22c55e;
+    border:1px solid #1f2937;
 
 }
 
 
 
-/* شريط التنقل السفلي */
+/* الروابط */
 
-.bottom-nav{
-
-    position:fixed;
-
-    bottom:15px;
-
-    left:15px;
-
-    right:15px;
-
-    background:#111827;
-
-    border-radius:25px;
-
-    display:flex;
-
-    justify-content:space-around;
-
-    padding:12px;
-
-    box-shadow:0 5px 25px #0008;
-
-}
-
-
-.bottom-nav a{
+a{
 
     color:white;
 
-    text-decoration:none;
+}
 
-    text-align:center;
 
-    font-size:13px;
+
+/* الجداول */
+
+table{
+
+    width:100%;
+
+    border-collapse:collapse;
+
+    background:#111827;
+
+    border-radius:15px;
+
+    overflow:hidden;
 
 }
 
 
-.bottom-nav span{
 
-    display:block;
+td,th{
 
-    font-size:22px;
+    padding:12px;
+
+    border-bottom:1px solid #374151;
+
+}
+
+
+
+/* إشعارات */
+
+.notification{
+
+    background:#1e293b;
+
+    padding:15px;
+
+    border-radius:15px;
+
+    margin-bottom:10px;
 
 }
 
@@ -318,17 +360,24 @@ button:hover,
 
 @media(max-width:600px){
 
-    body{
+body{
 
-        padding:12px;
+    padding:12px;
 
-    }
+}
 
 
-    .logo{
+.container{
 
-        font-size:27px;
+    width:100%;
 
-    }
+}
+
+
+.card{
+
+    padding:16px;
+
+}
 
 }
