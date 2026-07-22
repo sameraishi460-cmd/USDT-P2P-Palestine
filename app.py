@@ -503,6 +503,8 @@ def market():
         "SELECT * FROM market_price WHERE id=1"
     ).fetchone()
 
+    print("PRICE TEST:", dict(price))
+
     con.close()
 
     return render_template(
