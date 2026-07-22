@@ -64,9 +64,9 @@
 
 <strong>
 
-{% if price %}
+{% if market_price %}
 
-{{ price['usd_ils'] }} ₪
+{{ market_price['usd_ils'] }} ₪
 
 {% else %}
 
@@ -92,9 +92,9 @@
 
 <strong>
 
-{% if price %}
+{% if market_price %}
 
-{{ price['usdt_ils'] }} ₪
+{{ market_price['usdt_ils'] }} ₪
 
 {% else %}
 
@@ -107,6 +107,18 @@
 
 
 </div>
+
+
+{% if market_price %}
+
+<p style="text-align:center;color:#94a3b8;font-size:13px">
+
+آخر تحديث:
+{{ market_price['updated'] }}
+
+</p>
+
+{% endif %}
 
 
 </div>
