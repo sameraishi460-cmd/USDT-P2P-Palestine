@@ -642,31 +642,129 @@ def add_profit(amount):
 @app.route("/buy/<int:id>")
 @login_required
 def buy(id):
+
     con = connect()
-    ad = con.execute("SELECT * FROM ads WHERE id=?", (id,)).fetchone()
+
+    # جلب الإعلان
+    ad = con.execute(
+        "SELECT * FROM ads WHERE id=?",
+        (id,)
+    ).fetchone()
+
 
     if not ad:
         con.close()
         return "الإعلان غير موجود"
 
+
+
+    # منع شراء إعلانك
     if ad["user"] == session["user"]:
         con.close()
         return "لا يمكنك شراء إعلانك"
 
+
+
+    # جلب محفظة البائع
+    seller_wallet = con.execute(
+        "SELECT * FROM wallets WHERE username=?",
+        (ad["user"],)
+    ).fetchone()
+
+
+
+    if not seller_wallet:
+        con.close()
+        return "لا توجد محفظة للبائع"
+
+
+
+    # التأكد من وجود رصيد كافي
+    if seller_wallet["balance"] < ad["amount"]:
+
+        con.close()
+
+        return """
+        <script>
+        alert("❌ البائع لا يملك كمية USDT كافية");
+        window.location.href='/market';
+        </script>
+        """
+
+
+
+    # حجز USDT
+    con.execute(
+        """
+        UPDATE wallets
+        SET balance = balance - ?,
+            locked = locked + ?
+        WHERE username=?
+        """,
+        (
+            ad["amount"],
+            ad["amount"],
+            ad["user"]
+        )
+    )
+
+
+
+    # إنشاء الصفقة
     fee = get_trade_fee(ad["price"])
 
+
     trade = con.execute(
-        "INSERT INTO trades (ad_id, buyer, seller, amount, price, fee, status) VALUES(?, ?, ?, ?, ?, ?, ?)",
-        (id, session["user"], ad["user"], ad["amount"], ad["price"], fee, "PENDING")
+        """
+        INSERT INTO trades
+        (ad_id,buyer,seller,amount,price,fee,status)
+        VALUES(?,?,?,?,?,?,?)
+        """,
+        (
+            id,
+            session["user"],
+            ad["user"],
+            ad["amount"],
+            ad["price"],
+            fee,
+            "PENDING"
+        )
     )
+
+
     trade_id = trade.lastrowid
 
-    con.execute("UPDATE ads SET status='SOLD' WHERE id=?", (id,))
+
+
+    # إغلاق الإعلان
+    con.execute(
+        "UPDATE ads SET status='SOLD' WHERE id=?",
+        (id,)
+    )
+
+
     con.commit()
     con.close()
 
-    notify(ad["user"], "صفقة جديدة", "تم إنشاء طلب شراء")
-    return redirect("/trade/" + str(trade_id))
+
+
+    notify(
+        ad["user"],
+        "صفقة جديدة",
+        "تم حجز USDT وفتح صفقة جديدة"
+    )
+
+
+    notify(
+        session["user"],
+        "تم إنشاء الصفقة",
+        "USDT محجوزة من البائع"
+    )
+
+
+    return redirect(
+        "/trade/" + str(trade_id)
+    )
 
 
 # =========================
@@ -1152,6 +1250,35 @@ def wallet():
         "wallet.html",
         wallet=wallet
     )
+
+
+@app.route("/add_balance", methods=["POST"])
+@login_required
+def add_balance():
+
+    amount = float(request.form.get("amount",0))
+
+    if amount <= 0:
+        return "كمية غير صحيحة"
+
+    con = connect()
+
+    con.execute(
+        """
+        UPDATE wallets
+        SET balance = balance + ?
+        WHERE username=?
+        """,
+        (
+            amount,
+            session["user"]
+        )
+    )
+
+    con.commit()
+    con.close()
+
+    return redirect("/wallet")
 
 
 @app.route("/deposit", methods=["GET","POST"])
