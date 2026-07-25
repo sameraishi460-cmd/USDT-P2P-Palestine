@@ -639,6 +639,28 @@ def add_profit(amount):
     con.close()
 
 
+def create_wallet_if_missing(username):
+    con = connect()
+
+    wallet = con.execute(
+        "SELECT * FROM wallets WHERE username=?",
+        (username,)
+    ).fetchone()
+
+    if not wallet:
+        con.execute(
+            """
+            INSERT INTO wallets(username,balance,locked)
+            VALUES(?,?,?)
+            """,
+            (username,0,0)
+        )
+
+        con.commit()
+
+    con.close()
+
+
 @app.route("/buy/<int:id>")
 @login_required
 def buy(id):
@@ -650,6 +672,8 @@ def buy(id):
         "SELECT * FROM ads WHERE id=?",
         (id,)
     ).fetchone()
+
+    create_wallet_if_missing(ad["user"])
 
 
     if not ad:
