@@ -641,10 +641,19 @@ def create_ad():
         return redirect("/")
 
 
+    wallet = con.execute(
+        "SELECT balance FROM wallets WHERE username=?",
+        (session["user"],)
+    ).fetchone()
+
+    wallet_balance = wallet["balance"] if wallet else 0
+
     con.close()
 
     return render_template(
-        "create_ad.html"
+        "create_ad.html",
+        wallet_balance=wallet_balance,
+        user=user
     )
 
 
