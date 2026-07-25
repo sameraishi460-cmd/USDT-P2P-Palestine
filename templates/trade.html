@@ -7,7 +7,6 @@
 
 <title>تفاصيل الصفقة - USDT P2P Palestine</title>
 
-
 <style>
 
 body{
@@ -22,7 +21,6 @@ max-width:900px;
 margin:auto;
 }
 
-
 .box{
 background:#1e293b;
 padding:20px;
@@ -30,11 +28,9 @@ border-radius:18px;
 margin-bottom:20px;
 }
 
-
 h2{
 color:#22c55e;
 }
-
 
 .info{
 background:#111827;
@@ -43,29 +39,21 @@ border-radius:12px;
 line-height:2;
 }
 
-
 .payment{
-
 background:#064e3b;
 padding:20px;
 border-radius:15px;
 line-height:2;
-
 }
 
-
 .message{
-
 background:#111827;
 padding:10px;
 border-radius:10px;
 margin:8px 0;
-
 }
 
-
 .btn{
-
 padding:12px 20px;
 border-radius:10px;
 text-decoration:none;
@@ -73,29 +61,23 @@ color:white;
 display:inline-block;
 margin:5px;
 border:0;
-
 }
-
 
 .green{
 background:#16a34a;
 }
 
-
 .red{
 background:#dc2626;
 }
-
 
 .blue{
 background:#2563eb;
 }
 
-
 .gray{
 background:#475569;
 }
-
 
 input,textarea{
 
@@ -107,11 +89,27 @@ margin:5px;
 
 }
 
-
 .time{
 
 opacity:.5;
 font-size:12px;
+
+}
+
+
+.proof{
+
+background:#111827;
+padding:15px;
+border-radius:12px;
+
+}
+
+.proof img{
+
+max-width:100%;
+border-radius:15px;
+margin-top:10px;
 
 }
 
@@ -130,7 +128,6 @@ font-size:12px;
 
 <div class="box">
 
-
 <h2>
 💱 صفقة USDT
 </h2>
@@ -138,41 +135,30 @@ font-size:12px;
 
 <div class="info">
 
-
 👤 البائع:
 <b>{{trade.seller}}</b>
 
-
 <br>
-
 
 👤 المشتري:
 <b>{{trade.buyer}}</b>
 
-
 <br>
-
 
 💰 الكمية:
 <b>{{trade.amount}} USDT</b>
 
-
 <br>
-
 
 💵 السعر:
 <b>{{trade.price}} ₪</b>
 
-
 <br>
-
 
 📌 الحالة:
 <b>{{trade.status}}</b>
 
-
 </div>
-
 
 </div>
 
@@ -188,9 +174,6 @@ font-size:12px;
 </h2>
 
 
-{% if trade.buyer == current_user or trade.seller == current_user %}
-
-
 <div class="payment">
 
 
@@ -198,9 +181,7 @@ font-size:12px;
 
 <br>
 
-<b>
-{{seller_info.username}}
-</b>
+<b>{{seller_info.username}}</b>
 
 
 <br><br>
@@ -210,33 +191,27 @@ font-size:12px;
 
 <br>
 
-<b>
-{{seller_info.bank or "غير مضاف"}}
-</b>
+<b>{{seller_info.bank or "غير مضاف"}}</b>
 
 
 <br><br>
 
 
-💳 رقم الحساب / IBAN:
+💳 IBAN:
 
 <br>
 
-<b>
-{{seller_info.iban or "غير مضاف"}}
-</b>
+<b>{{seller_info.iban or "غير مضاف"}}</b>
 
 
 <br><br>
 
 
-📱 رقم الجوال:
+📱 الجوال:
 
 <br>
 
-<b>
-{{seller_info.phone or "غير مضاف"}}
-</b>
+<b>{{seller_info.phone or "غير مضاف"}}</b>
 
 
 <br><br>
@@ -246,26 +221,10 @@ font-size:12px;
 
 <br>
 
-<b>
-{{seller_info.payment_method or "تحويل بنكي"}}
-</b>
+<b>{{seller_info.payment_method or "تحويل بنكي"}}</b>
 
 
 </div>
-
-
-{% else %}
-
-
-<div class="info">
-
-🔒 بيانات الدفع تظهر بعد فتح الصفقة
-
-</div>
-
-
-{% endif %}
-
 
 
 </div>
@@ -274,6 +233,9 @@ font-size:12px;
 
 
 
+
+
+<!-- إثبات الدفع -->
 
 
 <div class="box">
@@ -285,10 +247,13 @@ font-size:12px;
 
 
 
+{% if current_user == trade.buyer %}
+
+
 <form action="/upload_payment/{{trade.id}}" method="post" enctype="multipart/form-data">
 
 
-<input type="file" name="proof">
+<input type="file" name="proof" required>
 
 
 <br>
@@ -296,7 +261,7 @@ font-size:12px;
 
 <button class="btn blue">
 
-📤 رفع الإثبات
+📤 رفع إثبات الدفع
 
 </button>
 
@@ -304,7 +269,50 @@ font-size:12px;
 </form>
 
 
+{% endif %}
+
+
+
+
+
+{% if current_user == trade.seller %}
+
+
+{% if trade.payment_proof %}
+
+
+<div class="proof">
+
+✅ تم رفع إثبات الدفع
+
+<br>
+
+<img src="/uploads/{{trade.payment_proof}}">
+
+
 </div>
+
+
+{% else %}
+
+
+<div class="info">
+
+⏳ لم يقم المشتري برفع إثبات الدفع بعد
+
+</div>
+
+
+{% endif %}
+
+
+
+{% endif %}
+
+
+
+</div>
+
 
 
 
@@ -327,19 +335,13 @@ font-size:12px;
 <div class="message">
 
 
-<b>
-{{m.sender}}
-</b>
-
+<b>{{m.sender}}</b>
 
 <br>
-
 
 {{m.text}}
 
-
 <br>
-
 
 <span class="time">
 {{m.created}}
@@ -382,6 +384,7 @@ font-size:12px;
 
 
 
+
 <div class="box">
 
 
@@ -391,7 +394,7 @@ font-size:12px;
 
 
 
-{% if trade.status == "PENDING" %}
+{% if trade.status == "PENDING" and current_user == trade.buyer %}
 
 
 <a class="btn green" href="/confirm_payment/{{trade.id}}">
@@ -407,7 +410,8 @@ font-size:12px;
 
 
 
-{% if trade.status == "PAYMENT_SENT" %}
+
+{% if trade.status == "PAYMENT_SENT" and current_user == trade.seller %}
 
 
 <a class="btn green" href="/seller_confirm/{{trade.id}}">
@@ -439,9 +443,7 @@ font-size:12px;
 </a>
 
 
-
 </div>
-
 
 
 
