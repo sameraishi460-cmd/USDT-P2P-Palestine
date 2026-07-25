@@ -79,6 +79,7 @@ background:#2563eb;
 background:#475569;
 }
 
+
 input,textarea{
 
 width:90%;
@@ -88,6 +89,7 @@ border:0;
 margin:5px;
 
 }
+
 
 .time{
 
@@ -102,14 +104,17 @@ font-size:12px;
 background:#111827;
 padding:15px;
 border-radius:12px;
+text-align:center;
 
 }
 
+
 .proof img{
 
-max-width:100%;
+width:100%;
+max-width:450px;
 border-radius:15px;
-margin-top:10px;
+margin-top:15px;
 
 }
 
@@ -123,7 +128,6 @@ margin-top:10px;
 
 
 <div class="container">
-
 
 
 <div class="box">
@@ -168,7 +172,6 @@ margin-top:10px;
 
 <div class="box">
 
-
 <h2>
 💳 بيانات الدفع للبائع
 </h2>
@@ -178,64 +181,46 @@ margin-top:10px;
 
 
 👤 البائع:
-
 <br>
-
 <b>{{seller_info.username}}</b>
 
 
 <br><br>
 
-
 🏦 البنك:
-
 <br>
-
 <b>{{seller_info.bank or "غير مضاف"}}</b>
 
 
 <br><br>
 
-
 💳 IBAN:
-
 <br>
-
 <b>{{seller_info.iban or "غير مضاف"}}</b>
 
 
 <br><br>
 
-
 📱 الجوال:
-
 <br>
-
 <b>{{seller_info.phone or "غير مضاف"}}</b>
 
 
 <br><br>
 
-
 💵 طريقة الدفع:
-
 <br>
-
 <b>{{seller_info.payment_method or "تحويل بنكي"}}</b>
 
 
 </div>
 
-
 </div>
 
 
 
 
 
-
-
-<!-- إثبات الدفع -->
 
 
 <div class="box">
@@ -250,10 +235,38 @@ margin-top:10px;
 {% if current_user == trade.buyer %}
 
 
+{% if trade.payment_proof %}
+
+<div class="proof">
+
+✅ تم رفع إثبات الدفع
+
+<br>
+
+<img src="/uploads/{{trade.payment_proof}}">
+
+
+<br>
+
+<a class="btn gray"
+href="/uploads/{{trade.payment_proof}}"
+target="_blank">
+
+🔍 فتح الصورة
+
+</a>
+
+
+</div>
+
+
+{% else %}
+
+
 <form action="/upload_payment/{{trade.id}}" method="post" enctype="multipart/form-data">
 
 
-<input type="file" name="proof" required>
+<input type="file" name="proof" accept="image/*" required>
 
 
 <br>
@@ -272,6 +285,9 @@ margin-top:10px;
 {% endif %}
 
 
+{% endif %}
+
+
 
 
 
@@ -283,11 +299,26 @@ margin-top:10px;
 
 <div class="proof">
 
-✅ تم رفع إثبات الدفع
+
+✅ وصل إثبات الدفع من المشتري
+
 
 <br>
 
+
 <img src="/uploads/{{trade.payment_proof}}">
+
+
+<br>
+
+
+<a class="btn gray"
+href="/uploads/{{trade.payment_proof}}"
+target="_blank">
+
+🔍 فتح الصورة
+
+</a>
 
 
 </div>
@@ -298,7 +329,7 @@ margin-top:10px;
 
 <div class="info">
 
-⏳ لم يقم المشتري برفع إثبات الدفع بعد
+⏳ بانتظار رفع إثبات الدفع من المشتري
 
 </div>
 
@@ -312,6 +343,8 @@ margin-top:10px;
 
 
 </div>
+
+
 
 
 
@@ -351,6 +384,10 @@ margin-top:10px;
 </div>
 
 
+{% else %}
+
+لا توجد رسائل
+
 {% endfor %}
 
 
@@ -385,6 +422,8 @@ margin-top:10px;
 
 
 
+
+
 <div class="box">
 
 
@@ -405,7 +444,6 @@ margin-top:10px;
 
 
 {% endif %}
-
 
 
 
@@ -432,7 +470,6 @@ margin-top:10px;
 ⚠️ فتح نزاع
 
 </a>
-
 
 
 
