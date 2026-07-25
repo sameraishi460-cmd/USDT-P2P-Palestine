@@ -30,22 +30,16 @@ body{
 
 
 h2{
-
     text-align:center;
     color:#22c55e;
-
 }
-
 
 
 label{
-
 display:block;
 margin-top:15px;
 color:#cbd5e1;
-
 }
-
 
 
 input{
@@ -63,7 +57,6 @@ input{
 }
 
 
-
 .info{
 
 background:#111827;
@@ -74,6 +67,17 @@ line-height:2;
 
 }
 
+
+.balance{
+
+background:#064e3b;
+padding:15px;
+border-radius:12px;
+margin:15px 0;
+color:#86efac;
+font-size:18px;
+
+}
 
 
 button{
@@ -91,7 +95,6 @@ button{
 }
 
 
-
 .back{
 
     display:block;
@@ -103,7 +106,6 @@ button{
 }
 
 
-
 .warning{
 
 background:#7f1d1d;
@@ -112,7 +114,6 @@ border-radius:12px;
 margin-bottom:15px;
 
 }
-
 
 </style>
 
@@ -132,6 +133,31 @@ margin-bottom:15px;
 
 
 
+<div class="balance">
+
+💰 رصيدك الحالي:
+<br>
+
+<b>{{ wallet_balance }} USDT</b>
+
+</div>
+
+
+
+{% if wallet_balance <= 0 %}
+
+<div class="warning">
+
+⚠️ لا يوجد لديك USDT في محفظة المنصة.
+<br>
+قم بإيداع USDT أولاً حتى تستطيع نشر إعلان بيع.
+
+</div>
+
+{% endif %}
+
+
+
 <div class="info">
 
 💳 سيتم استخدام بيانات الدفع الموجودة في ملفك:
@@ -139,17 +165,17 @@ margin-bottom:15px;
 <br>
 
 📱 الهاتف:
-<b>{{session.get('phone','')}}</b>
+<b>{{user.phone}}</b>
 
 <br>
 
 🏦 البنك:
-<b>بيانات الحساب المسجلة</b>
+<b>{{user.bank}}</b>
 
 <br>
 
 طريقة الدفع:
-<b>تحويل بنكي</b>
+<b>{{user.payment_method}}</b>
 
 
 </div>
@@ -157,9 +183,7 @@ margin-bottom:15px;
 
 
 
-
 <form method="POST">
-
 
 
 <label>
@@ -178,7 +202,6 @@ placeholder="مثال: بيع USDT سريع"
 required
 
 >
-
 
 
 
@@ -203,7 +226,6 @@ required
 
 
 
-
 <label>
 السعر بالشيكل ₪
 </label>
@@ -225,6 +247,7 @@ required
 
 
 
+{% if wallet_balance > 0 %}
 
 <button type="submit">
 
@@ -232,11 +255,19 @@ required
 
 </button>
 
+{% else %}
+
+<button type="button" disabled style="background:#555">
+
+🔒 لا يمكن النشر بدون رصيد
+
+</button>
+
+{% endif %}
+
 
 
 </form>
-
-
 
 
 
@@ -247,9 +278,7 @@ required
 </a>
 
 
-
 </div>
-
 
 
 </body>
