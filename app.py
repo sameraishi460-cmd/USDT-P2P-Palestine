@@ -10,6 +10,7 @@ import threading
 import telegram_bot
 import price_updater
 from werkzeug.utils import secure_filename
+from web3 import Web3
 
 
 app = Flask(__name__)
@@ -23,6 +24,36 @@ print("DATABASE LOCATION:", os.path.abspath(DATABASE))
 PLATFORM_WALLET = "0x659dd7cba24363c903abe3fddfc89eb30ffbf58a"
 USDT_CONTRACT = "0x55d398326f99059fF775485246999027B3197955"
 NETWORK = "BSC"
+BSC_RPC = "https://bsc-dataseed.binance.org/"
+
+w3 = Web3(
+    Web3.HTTPProvider(BSC_RPC)
+)
+
+
+USDT_CONTRACT = Web3.to_checksum_address(
+    "0x55d398326f99059fF775485246999027B3197955"
+)
+
+
+PLATFORM_WALLET = Web3.to_checksum_address(
+    PLATFORM_WALLET
+)
+
+
+USDT_ABI = [
+    {
+        "constant": True,
+        "inputs": [
+            {"name":"_owner","type":"address"}
+        ],
+        "name":"balanceOf",
+        "outputs":[
+            {"name":"balance","type":"uint256"}
+        ],
+        "type":"function"
+    }
+]
 
 # =========================
 # 1. DATABASE SETUP
@@ -270,6 +301,59 @@ setup_database()
 con = connect()
 print(con.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall())
 con.close()
+
+
+def check_usdt_transaction(tx_hash, expected_amount):
+
+    try:
+
+        tx = w3.eth.get_transaction(tx_hash)
+
+
+        if not tx:
+            return False
+
+
+
+        receipt = w3.eth.get_transaction_receipt(tx_hash)
+
+
+        if receipt.status != 1:
+            return False
+
+
+
+        contract = w3.eth.contract(
+            address=USDT_CONTRACT,
+            abi=USDT_ABI
+        )
+
+
+        balance = contract.functions.balanceOf(
+            PLATFORM_WALLET
+        ).call()
+
+
+
+        usdt_amount = balance / 10**18
+
+
+
+        if usdt_amount >= expected_amount:
+            return True
+
+
+        return False
+
+
+    except Exception as e:
+
+        print(
+            "TX CHECK ERROR:",
+            e
+        )
+
+        return False
 
 
 def create_admin_account():
@@ -734,9 +818,10 @@ def buy(id):
         return "الإعلان غير موجود"
 
 
-    # إنشاء محفظة للبائع إذا لم تكن موجودة
-    create_wallet_if_missing(ad["user"])
-
+    # منع شراء إعلان مغلق
+    if ad["status"] != "OPEN":
+        con.close()
+        return "الإعلان غير متاح"
 
 
     # منع شراء إعلانك
@@ -760,7 +845,7 @@ def buy(id):
 
 
 
-    # التأكد من وجود رصيد كافي
+    # التأكد من الرصيد المتاح
     if seller_wallet["balance"] < ad["amount"]:
 
         con.close()
@@ -778,8 +863,9 @@ def buy(id):
     con.execute(
         """
         UPDATE wallets
-        SET balance = balance - ?,
-            locked = locked + ?
+        SET 
+        balance = balance - ?,
+        locked = locked + ?
         WHERE username=?
         """,
         (
@@ -789,6 +875,8 @@ def buy(id):
         )
     )
 
+
+
     wallet_log(
         ad["user"],
         "USDT_LOCKED",
@@ -797,14 +885,24 @@ def buy(id):
 
 
 
-    # إنشاء الصفقة
+    # حساب العمولة
     fee = get_trade_fee(ad["price"])
 
 
+
+    # إنشاء الصفقة
     trade = con.execute(
         """
         INSERT INTO trades
-        (ad_id,buyer,seller,amount,price,fee,status)
+        (
+        ad_id,
+        buyer,
+        seller,
+        amount,
+        price,
+        fee,
+        status
+        )
         VALUES(?,?,?,?,?,?,?)
         """,
         (
@@ -825,9 +923,14 @@ def buy(id):
 
     # إغلاق الإعلان
     con.execute(
-        "UPDATE ads SET status='SOLD' WHERE id=?",
+        """
+        UPDATE ads
+        SET status='SOLD'
+        WHERE id=?
+        """,
         (id,)
     )
+
 
 
     con.commit()
@@ -837,16 +940,17 @@ def buy(id):
 
     notify(
         ad["user"],
-        "صفقة جديدة",
-        "تم حجز USDT وفتح صفقة جديدة"
+        "تم حجز USDT",
+        f"تم حجز {ad['amount']} USDT لصفقة جديدة"
     )
 
 
     notify(
         session["user"],
         "تم إنشاء الصفقة",
-        "USDT محجوزة من البائع"
+        "تم حجز كمية USDT من البائع"
     )
+
 
 
     return redirect(
@@ -1641,6 +1745,24 @@ def admin_confirm_deposit(id):
     if deposit["status"] == "CONFIRMED":
         con.close()
         return "تم تأكيده مسبقاً"
+
+
+    verified = check_usdt_transaction(
+        deposit["tx_hash"],
+        deposit["amount"]
+    )
+
+
+    if not verified:
+
+        con.close()
+
+        return """
+        <script>
+        alert("❌ لم يتم العثور على تحويل USDT صحيح على BSC");
+        window.location.href='/admin_usdt_deposits';
+        </script>
+        """
 
 
     # إضافة الرصيد لمحفظة المستخدم
