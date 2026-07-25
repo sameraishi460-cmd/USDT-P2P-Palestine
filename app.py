@@ -1517,7 +1517,8 @@ def wallet():
 
     return render_template(
         "wallet.html",
-        wallet=wallet
+        wallet=wallet,
+        current_user=current_user
     )
 
 
