@@ -54,6 +54,7 @@ margin-bottom:20px;
 }
 
 
+
 .balance{
 background:linear-gradient(135deg,#16a34a,#15803d);
 padding:30px;
@@ -68,12 +69,15 @@ margin:15px 0;
 }
 
 
+
 .box{
+
 background:#1e293b;
 padding:18px;
 border-radius:15px;
 margin-top:15px;
 text-align:center;
+
 }
 
 
@@ -90,19 +94,25 @@ margin-top:8px;
 }
 
 
+
 .buttons{
+
 display:grid;
 grid-template-columns:1fr 1fr;
 gap:10px;
+
 }
 
 
 .btn{
+
 padding:15px;
 border-radius:15px;
 text-align:center;
 text-decoration:none;
 color:white;
+display:block;
+
 }
 
 
@@ -112,11 +122,29 @@ background:#16a34a;
 
 
 .withdraw{
+
 background:#2563eb;
+
 }
 
 
+.market{
+
+background:#f59e0b;
+
+}
+
+
+.trades{
+
+background:#7c3aed;
+
+}
+
+
+
 .back{
+
 display:block;
 background:#475569;
 padding:15px;
@@ -124,13 +152,34 @@ border-radius:15px;
 text-align:center;
 text-decoration:none;
 color:white;
+
 }
 
 
 .status{
+
 color:#22c55e;
 font-weight:bold;
+
 }
+
+
+.lock{
+
+color:#facc15;
+
+}
+
+
+.info{
+
+background:#0f172a;
+padding:15px;
+border-radius:15px;
+line-height:2;
+
+}
+
 
 </style>
 
@@ -147,8 +196,11 @@ font-weight:bold;
 <div class="header">
 
 <div class="logo">
+
 🇵🇸 USDT P2P Palestine
+
 </div>
+
 
 <h3>
 💰 محفظتي
@@ -159,13 +211,15 @@ font-weight:bold;
 
 
 
+
 <div class="card">
 
 
 <div class="balance">
 
+
 <p>
-الرصيد المتاح
+الرصيد المتاح للبيع والشراء
 </p>
 
 
@@ -184,19 +238,24 @@ USDT
 
 
 
+
 <div class="box">
 
+
 <div class="label">
-🔒 الرصيد المحجوز
+🔒 الرصيد المحجوز في الصفقات
 </div>
 
 
-<div class="value">
+<div class="value lock">
+
 {{ wallet.locked or 0 }} USDT
+
 </div>
 
 
 </div>
+
 
 
 
@@ -204,23 +263,28 @@ USDT
 
 <div class="box">
 
+
 <div class="label">
-📊 إجمالي الرصيد
+📊 إجمالي رصيد الحساب
 </div>
 
 
 <div class="value">
+
 {{ (wallet.balance or 0) + (wallet.locked or 0) }} USDT
+
 </div>
 
 
 </div>
+
 
 
 
 
 
 <div class="box">
+
 
 <div class="label">
 حالة المحفظة
@@ -228,15 +292,61 @@ USDT
 
 
 <div class="status">
+
 🟢 نشطة
-</div>
-
 
 </div>
 
 
+</div>
+
+
 
 </div>
+
+
+
+
+
+
+
+
+<div class="card">
+
+
+<h3>
+🔐 حماية الصفقات
+</h3>
+
+
+<div class="info">
+
+
+قبل بيع USDT:
+
+<br>
+
+1️⃣ يتم حجز كمية USDT المطلوبة داخل المنصة
+
+<br>
+
+2️⃣ المشتري يحول المبلغ للبائع
+
+<br>
+
+3️⃣ بعد التأكيد يتم تحرير USDT للمشتري
+
+<br>
+
+4️⃣ في حال النزاع يتدخل الأدمن
+
+
+</div>
+
+
+
+</div>
+
 
 
 
@@ -250,27 +360,54 @@ USDT
 <div class="buttons">
 
 
+
 <a href="/deposit" class="btn deposit">
+
 ➕ إيداع USDT
+
 </a>
+
+
 
 
 <a href="/withdraw" class="btn withdraw">
+
 📤 سحب USDT
+
 </a>
 
 
+
+<a href="/market" class="btn market">
+
+🛒 السوق
+
+</a>
+
+
+
+<a href="/my_trades" class="btn trades">
+
+📋 صفقاتي
+
+</a>
+
+
+
 </div>
 
 
 </div>
+
 
 
 
 
 
 <a href="/" class="back">
+
 ⬅️ رجوع للرئيسية
+
 </a>
 
 
