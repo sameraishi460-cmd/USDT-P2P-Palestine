@@ -90,6 +90,7 @@ def setup_database():
         phone TEXT DEFAULT '',
         bank TEXT DEFAULT '',
         wallet TEXT DEFAULT '',
+        usdt_wallet TEXT,
         rating REAL DEFAULT 5,
         verified INTEGER DEFAULT 0,
         trades_count INTEGER DEFAULT 0,
@@ -97,6 +98,7 @@ def setup_database():
     )
     """)
     
+    add_column(con, "users", "usdt_wallet", "TEXT")
     add_column(con, "users", "telegram_id", "TEXT")
     add_column(con, "users", "iban", "TEXT")
     add_column(con, "users", "payment_method", "TEXT")
@@ -1642,11 +1644,12 @@ def edit_profile():
         bank = request.form.get("bank", "")
         iban = request.form.get("iban", "")
         payment_method = request.form.get("payment_method", "")
+        usdt_wallet = request.form.get("usdt_wallet", "")
 
         con.execute(
             """
             UPDATE users 
-            SET phone=?, bank=?, iban=?, payment_method=?
+            SET phone=?, bank=?, iban=?, payment_method=?, usdt_wallet=?
             WHERE username=?
             """,
             (
@@ -1654,6 +1657,7 @@ def edit_profile():
                 bank,
                 iban,
                 payment_method,
+                usdt_wallet,
                 session["user"]
             )
         )
