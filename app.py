@@ -1513,12 +1513,17 @@ def wallet():
         (session["user"],)
     ).fetchone()
 
+    user = con.execute(
+        "SELECT * FROM users WHERE username=?",
+        (session["user"],)
+    ).fetchone()
+
     con.close()
 
     return render_template(
         "wallet.html",
         wallet=wallet,
-        current_user=current_user
+        user=user
     )
 
 
