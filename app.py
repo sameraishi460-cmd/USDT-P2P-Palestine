@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect, session, jsonify, send_from_directory
+from flask_login import login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 import sqlite3
@@ -650,6 +651,25 @@ def home():
         price=price,
         user=user
     )
+
+
+@app.route("/save_wallet", methods=['POST'])
+@login_required
+def save_wallet():
+    wallet_address = request.form.get('usdt_wallet')
+
+    if not wallet_address:
+        return redirect('/wallet')
+
+    con = connect()
+    con.execute(
+        "UPDATE users SET usdt_wallet = ? WHERE username = ?",
+        (wallet_address, session["user"])
+    )
+    con.commit()
+    con.close()
+
+    return redirect('/wallet')
 
 
 @app.route("/market")
