@@ -127,6 +127,12 @@ font-size:14px;
 </a>
 
 
+<a class="btn" href="/notifications">
+🔔 التنبيهات
+</a>
+
+
+
 
 
 
@@ -238,7 +244,6 @@ IBAN
 
 
 
-
 <div class="box">
 
 
@@ -247,84 +252,21 @@ IBAN
 </h2>
 
 
-
-{% for t in trades %}
-
-
-<div class="card">
+<p>
+تابع جميع عمليات البيع والشراء والصفقات المفتوحة من هنا.
+</p>
 
 
-<b>
-📌 الصفقة رقم {{t.id}}
-</b>
 
+<a class="btn green" href="/my_trades">
 
-<br><br>
-
-
-{% if t.seller == user.username %}
-
-🟢 أنت البائع
-
-{% else %}
-
-🔵 أنت المشتري
-
-{% endif %}
-
-
-<br>
-
-
-💰 الكمية:
-
-{{t.amount}} USDT
-
-
-<br>
-
-
-💵 السعر:
-
-{{t.price}} ₪
-
-
-<br>
-
-
-📌 الحالة:
-
-<span class="status">
-{{t.status}}
-</span>
-
-
-<br>
-
-
-<a class="btn green" href="/trade/{{t.id}}">
-
-فتح الصفقة
+💰 فتح صفقاتي
 
 </a>
 
 
-</div>
-
-
-
-{% else %}
-
-
-لا يوجد صفقات
-
-
-{% endfor %}
-
-
 
 </div>
-
 
 
 
@@ -339,7 +281,6 @@ IBAN
 <h2>
 🤝 صفقات المقابلات الشخصية
 </h2>
-
 
 
 
