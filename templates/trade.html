@@ -61,6 +61,7 @@ color:white;
 display:inline-block;
 margin:5px;
 border:0;
+cursor:pointer;
 }
 
 .green{
@@ -222,7 +223,6 @@ margin-top:15px;
 
 
 
-
 <div class="box">
 
 
@@ -290,11 +290,6 @@ required>
 
 
 {% endif %}
-
-
-
-
-
 {% if current_user == trade.seller %}
 
 
@@ -419,10 +414,6 @@ placeholder="اكتب رسالة"></textarea>
 
 
 
-
-
-
-
 <!-- إجراءات الصفقة -->
 
 <div class="box">
@@ -431,7 +422,6 @@ placeholder="اكتب رسالة"></textarea>
 <h2>
 ⚙️ إجراءات الصفقة
 </h2>
-
 
 
 
@@ -446,6 +436,53 @@ placeholder="اكتب رسالة"></textarea>
 ✅ تم إرسال الدفع
 
 </a>
+
+
+{% endif %}
+
+
+
+
+
+
+<!-- إدخال Transaction Hash والتحقق من USDT -->
+
+{% if trade.status == "PAYMENT_SENT" 
+and current_user == trade.seller %}
+
+
+<div class="info">
+
+
+<h3>
+🔗 إثبات تحويل USDT
+</h3>
+
+
+<form method="post" action="/finish_trade/{{trade.id}}">
+
+
+<input
+type="text"
+name="tx_hash"
+placeholder="ضع Transaction Hash من شبكة BSC"
+required>
+
+
+<br>
+
+
+<button class="btn green">
+
+✅ تحقق من المعاملة وتحرير USDT
+
+</button>
+
+
+</form>
+
+
+</div>
 
 
 {% endif %}
@@ -479,7 +516,6 @@ and trade.payment_proof %}
 
 
 {% endif %}
-
 
 
 
