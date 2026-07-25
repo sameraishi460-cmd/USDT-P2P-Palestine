@@ -553,9 +553,20 @@ def create_ad():
     ).fetchone()
 
 
+    # التأكد أن الحساب موجود
+    if not user:
+        con.close()
+        session.clear()
+        return """
+        <script>
+        alert("انتهت الجلسة، سجل دخول من جديد");
+        window.location.href='/login';
+        </script>
+        """
+
+
     # فحص بيانات الدفع
     if not user["phone"] or not user["bank"] or not user["iban"] or not user["payment_method"]:
-
         con.close()
 
         return """
