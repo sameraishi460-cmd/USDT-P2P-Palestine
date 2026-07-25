@@ -1066,6 +1066,51 @@ def cash_payment_sent():
 # 6. PROFILE, DASHBOARD & REVIEWS
 # =========================
 
+@app.route("/my_trades")
+@login_required
+def my_trades():
+
+    con = connect()
+
+    trades = con.execute(
+        """
+        SELECT *
+        FROM trades
+        WHERE buyer=? OR seller=?
+        ORDER BY id DESC
+        """,
+        (
+            session["user"],
+            session["user"]
+        )
+    ).fetchall()
+
+
+    cash_trades = con.execute(
+        """
+        SELECT *
+        FROM cash_trades
+        WHERE buyer=? OR seller=?
+        ORDER BY id DESC
+        """,
+        (
+            session["user"],
+            session["user"]
+        )
+    ).fetchall()
+
+
+    con.close()
+
+
+    return render_template(
+        "my_trades.html",
+        trades=trades,
+        cash_trades=cash_trades,
+        username=session["user"]
+    )
+
+
 @app.route("/profile")
 @login_required
 def profile():
