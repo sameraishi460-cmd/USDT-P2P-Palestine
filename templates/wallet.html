@@ -112,6 +112,9 @@ text-align:center;
 text-decoration:none;
 color:white;
 display:block;
+border:0;
+width:100%;
+cursor:pointer;
 
 }
 
@@ -181,6 +184,26 @@ line-height:2;
 }
 
 
+input{
+
+width:90%;
+padding:12px;
+border-radius:10px;
+border:0;
+margin-top:10px;
+
+}
+
+
+.wallet-address{
+
+font-size:14px;
+word-break:break-all;
+color:#22c55e;
+
+}
+
+
 </style>
 
 </head>
@@ -234,8 +257,6 @@ USDT
 
 
 </div>
-
-
 
 
 
@@ -300,6 +321,83 @@ USDT
 
 </div>
 
+
+
+</div>
+
+
+
+
+
+
+<!-- محفظة USDT BSC -->
+
+<div class="card">
+
+
+<h3>
+💰 عنوان محفظة USDT (BSC)
+</h3>
+
+
+<div class="info">
+
+
+{% if current_user.usdt_wallet %}
+
+
+<div class="label">
+
+عنوان المحفظة الحالي:
+
+</div>
+
+
+<div class="wallet-address">
+
+{{ current_user.usdt_wallet }}
+
+</div>
+
+
+{% else %}
+
+
+⚠️ لم يتم إضافة عنوان محفظة USDT
+
+{% endif %}
+
+
+
+<form method="post" action="/save_wallet">
+
+
+<input
+
+type="text"
+
+name="usdt_wallet"
+
+placeholder="أدخل عنوان محفظة BSC"
+
+
+>
+
+
+<br>
+
+
+<button class="btn deposit">
+
+💾 حفظ المحفظة
+
+</button>
+
+
+</form>
+
+
+</div>
 
 
 </div>
