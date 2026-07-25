@@ -673,12 +673,14 @@ def buy(id):
         (id,)
     ).fetchone()
 
-    create_wallet_if_missing(ad["user"])
-
 
     if not ad:
         con.close()
         return "الإعلان غير موجود"
+
+
+    # إنشاء محفظة للبائع إذا لم تكن موجودة
+    create_wallet_if_missing(ad["user"])
 
 
 
