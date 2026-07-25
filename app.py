@@ -1799,6 +1799,7 @@ def seller_confirm(id):
 
     con = connect()
 
+
     trade = con.execute(
         "SELECT * FROM trades WHERE id=?",
         (id,)
@@ -1807,25 +1808,137 @@ def seller_confirm(id):
 
     if not trade:
         con.close()
-        return "غير موجود"
+        return "الصفقة غير موجودة"
 
 
+
+    # التأكد أن المستخدم هو البائع
     if trade["seller"] != session["user"]:
+
         con.close()
         return "غير مصرح"
 
 
+
+    # منع تكرار التحويل
+    if trade["status"] == "COMPLETED":
+
+        con.close()
+        return "الصفقة مكتملة مسبقاً"
+
+
+
+    amount = trade["amount"]
+
+
+
+    # إزالة USDT من الرصيد المحجوز للبائع
     con.execute(
-        "UPDATE trades SET status='COMPLETED' WHERE id=?",
+        """
+        UPDATE wallets
+        SET locked = locked - ?
+        WHERE username=?
+        """,
+        (
+            amount,
+            trade["seller"]
+        )
+    )
+
+
+
+    # إضافة USDT للمشتري
+    buyer_wallet = con.execute(
+        "SELECT * FROM wallets WHERE username=?",
+        (trade["buyer"],)
+    ).fetchone()
+
+
+
+    if buyer_wallet:
+
+        con.execute(
+            """
+            UPDATE wallets
+            SET balance = balance + ?
+            WHERE username=?
+            """,
+            (
+                amount,
+                trade["buyer"]
+            )
+        )
+
+    else:
+
+        con.execute(
+            """
+            INSERT INTO wallets(username,balance,locked)
+            VALUES(?,?,?)
+            """,
+            (
+                trade["buyer"],
+                amount,
+                0
+            )
+        )
+
+
+
+    # تحديث حالة الصفقة
+    con.execute(
+        """
+        UPDATE trades
+        SET status='COMPLETED'
+        WHERE id=?
+        """,
         (id,)
     )
+
+
+
+    # زيادة عدد الصفقات
+    con.execute(
+        """
+        UPDATE users
+        SET trades_count = trades_count + 1
+        WHERE username=?
+        """,
+        (trade["buyer"],)
+    )
+
+
+    con.execute(
+        """
+        UPDATE users
+        SET trades_count = trades_count + 1
+        WHERE username=?
+        """,
+        (trade["seller"],)
+    )
+
 
 
     con.commit()
     con.close()
 
 
-    return redirect("/profile")
+
+    notify(
+        trade["buyer"],
+        "تم استلام USDT",
+        f"تم تحويل {amount} USDT إلى محفظتك"
+    )
+
+
+    notify(
+        trade["seller"],
+        "تم إغلاق الصفقة",
+        "تم تحرير USDT بنجاح"
+    )
+
+
+    return redirect("/trade/"+str(id))
 
 
 # =========================
