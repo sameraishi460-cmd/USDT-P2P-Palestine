@@ -21,7 +21,6 @@ body{
 .box{
 
     background:#1e293b;
-    width:90%;
     max-width:500px;
     margin:40px auto;
     padding:25px;
@@ -39,13 +38,11 @@ h2{
 
 
 
-.info{
+label{
 
-    background:#111827;
-    padding:15px;
-    border-radius:12px;
-    margin-bottom:20px;
-    line-height:2;
+display:block;
+margin-top:15px;
+color:#cbd5e1;
 
 }
 
@@ -54,13 +51,26 @@ h2{
 input{
 
     width:100%;
-    padding:12px;
-    margin:10px 0;
-
+    box-sizing:border-box;
+    padding:13px;
+    margin-top:8px;
     border-radius:10px;
     border:0;
-
+    background:#111827;
+    color:white;
     font-size:16px;
+
+}
+
+
+
+.info{
+
+background:#111827;
+padding:15px;
+border-radius:12px;
+margin:15px 0;
+line-height:2;
 
 }
 
@@ -69,35 +79,14 @@ input{
 button{
 
     width:100%;
-    padding:13px;
-
+    padding:14px;
+    margin-top:20px;
     background:#16a34a;
-
     color:white;
-
     border:0;
-
-    border-radius:10px;
-
+    border-radius:12px;
     font-size:17px;
-
     cursor:pointer;
-
-}
-
-
-
-.note{
-
-    background:#064e3b;
-
-    padding:12px;
-
-    border-radius:10px;
-
-    margin-top:15px;
-
-    font-size:14px;
 
 }
 
@@ -106,5 +95,163 @@ button{
 .back{
 
     display:block;
+    text-align:center;
+    margin-top:20px;
+    color:#60a5fa;
+    text-decoration:none;
 
-    text
+}
+
+
+
+.warning{
+
+background:#7f1d1d;
+padding:15px;
+border-radius:12px;
+margin-bottom:15px;
+
+}
+
+
+</style>
+
+
+</head>
+
+
+<body>
+
+
+<div class="box">
+
+
+<h2>
+➕ إنشاء إعلان بيع USDT
+</h2>
+
+
+
+<div class="info">
+
+💳 سيتم استخدام بيانات الدفع الموجودة في ملفك:
+
+<br>
+
+📱 الهاتف:
+<b>{{session.get('phone','')}}</b>
+
+<br>
+
+🏦 البنك:
+<b>بيانات الحساب المسجلة</b>
+
+<br>
+
+طريقة الدفع:
+<b>تحويل بنكي</b>
+
+
+</div>
+
+
+
+
+
+<form method="POST">
+
+
+
+<label>
+عنوان الإعلان
+</label>
+
+
+<input
+
+type="text"
+
+name="title"
+
+placeholder="مثال: بيع USDT سريع"
+
+required
+
+>
+
+
+
+
+<label>
+كمية USDT
+</label>
+
+
+<input
+
+type="number"
+
+step="0.01"
+
+name="amount"
+
+placeholder="مثال: 100"
+
+required
+
+>
+
+
+
+
+<label>
+السعر بالشيكل ₪
+</label>
+
+
+<input
+
+type="number"
+
+step="0.01"
+
+name="price"
+
+placeholder="مثال: 370"
+
+required
+
+>
+
+
+
+
+<button type="submit">
+
+🚀 نشر الإعلان
+
+</button>
+
+
+
+</form>
+
+
+
+
+
+<a class="back" href="/">
+
+⬅ الرجوع للرئيسية
+
+</a>
+
+
+
+</div>
+
+
+
+</body>
+
+</html>
