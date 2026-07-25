@@ -236,6 +236,17 @@ def setup_database():
             """
         )
 
+    # WALLET HISTORY
+    con.execute("""
+    CREATE TABLE IF NOT EXISTS wallet_history(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT,
+        action TEXT,
+        amount REAL,
+        created DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
     con.commit()
     con.close()
 
@@ -639,6 +650,27 @@ def add_profit(amount):
     con.close()
 
 
+def wallet_log(username, action, amount):
+
+    con = connect()
+
+    con.execute(
+        """
+        INSERT INTO wallet_history
+        (username, action, amount)
+        VALUES (?, ?, ?)
+        """,
+        (
+            username,
+            action,
+            amount
+        )
+    )
+
+    con.commit()
+    con.close()
+
+
 def create_wallet_if_missing(username):
     con = connect()
 
@@ -732,6 +764,12 @@ def buy(id):
             ad["amount"],
             ad["user"]
         )
+    )
+
+    wallet_log(
+        ad["user"],
+        "USDT_LOCKED",
+        ad["amount"]
     )
 
 
@@ -1279,7 +1317,7 @@ def wallet():
 
 
 @app.route("/add_balance", methods=["POST"])
-@login_required
+@admin_required
 def add_balance():
 
     amount = float(request.form.get("amount",0))
@@ -1885,6 +1923,12 @@ def seller_confirm(id):
         )
     )
 
+    wallet_log(
+        trade["seller"],
+        "USDT_RELEASED",
+        amount
+    )
+
 
 
     # إضافة USDT للمشتري
@@ -1922,6 +1966,12 @@ def seller_confirm(id):
                 0
             )
         )
+
+    wallet_log(
+        trade["buyer"],
+        "USDT_RECEIVED",
+        amount
+    )
 
 
 
