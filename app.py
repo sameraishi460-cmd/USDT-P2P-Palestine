@@ -1705,7 +1705,7 @@ def seller_confirm(id):
 # PAYMENT PROOF UPLOAD
 # =========================
 
-UPLOAD_FOLDER = "uploads"
+UPLOAD_FOLDER = os.path.join(os.getcwd(), "uploads")
 
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
@@ -1748,8 +1748,9 @@ def upload_payment(id):
         return "غير مصرح لك"
 
 
-    filename = f"proof_{id}_{file.filename}"
-
+    filename = secure_filename(
+        f"proof_{id}_{file.filename}"
+    )
 
     path = os.path.join(
         app.config["UPLOAD_FOLDER"],
