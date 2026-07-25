@@ -21,13 +21,11 @@ background:#050b16;
 color:white;
 }
 
-
 .container{
 max-width:500px;
 margin:auto;
 padding:20px;
 }
-
 
 .header{
 background:#111827;
@@ -37,13 +35,11 @@ text-align:center;
 margin-bottom:20px;
 }
 
-
 .logo{
 font-size:25px;
 font-weight:bold;
 color:#22c55e;
 }
-
 
 .card{
 background:#111827;
@@ -53,8 +49,6 @@ padding:20px;
 margin-bottom:20px;
 }
 
-
-
 .balance{
 background:linear-gradient(135deg,#16a34a,#15803d);
 padding:30px;
@@ -62,30 +56,23 @@ border-radius:20px;
 text-align:center;
 }
 
-
 .balance h1{
 font-size:42px;
 margin:15px 0;
 }
 
-
-
 .box{
-
 background:#1e293b;
 padding:18px;
 border-radius:15px;
 margin-top:15px;
 text-align:center;
-
 }
-
 
 .label{
 color:#cbd5e1;
 font-size:15px;
 }
-
 
 .value{
 font-size:25px;
@@ -93,19 +80,13 @@ font-weight:bold;
 margin-top:8px;
 }
 
-
-
 .buttons{
-
 display:grid;
 grid-template-columns:1fr 1fr;
 gap:10px;
-
 }
 
-
 .btn{
-
 padding:15px;
 border-radius:15px;
 text-align:center;
@@ -115,39 +96,25 @@ display:block;
 border:0;
 width:100%;
 cursor:pointer;
-
 }
-
 
 .deposit{
 background:#16a34a;
 }
 
-
 .withdraw{
-
 background:#2563eb;
-
 }
-
 
 .market{
-
 background:#f59e0b;
-
 }
-
 
 .trades{
-
 background:#7c3aed;
-
 }
 
-
-
 .back{
-
 display:block;
 background:#475569;
 padding:15px;
@@ -155,54 +122,37 @@ border-radius:15px;
 text-align:center;
 text-decoration:none;
 color:white;
-
 }
-
 
 .status{
-
 color:#22c55e;
 font-weight:bold;
-
 }
-
 
 .lock{
-
 color:#facc15;
-
 }
 
-
 .info{
-
 background:#0f172a;
 padding:15px;
 border-radius:15px;
 line-height:2;
-
 }
 
-
 input{
-
 width:90%;
 padding:12px;
 border-radius:10px;
 border:0;
 margin-top:10px;
-
 }
 
-
 .wallet-address{
-
 font-size:14px;
 word-break:break-all;
 color:#22c55e;
-
 }
-
 
 </style>
 
@@ -215,15 +165,11 @@ color:#22c55e;
 <div class="container">
 
 
-
 <div class="header">
 
 <div class="logo">
-
 🇵🇸 USDT P2P Palestine
-
 </div>
-
 
 <h3>
 💰 محفظتي
@@ -233,98 +179,68 @@ color:#22c55e;
 
 
 
-
-
 <div class="card">
 
-
 <div class="balance">
-
 
 <p>
 الرصيد المتاح للبيع والشراء
 </p>
 
-
 <h1>
 {{ wallet.balance or 0 }}
 </h1>
-
 
 <span>
 USDT
 </span>
 
-
 </div>
 
 
 
 <div class="box">
-
 
 <div class="label">
 🔒 الرصيد المحجوز في الصفقات
 </div>
 
-
 <div class="value lock">
-
 {{ wallet.locked or 0 }} USDT
-
 </div>
 
-
 </div>
-
-
-
 
 
 
 <div class="box">
-
 
 <div class="label">
 📊 إجمالي رصيد الحساب
 </div>
 
-
 <div class="value">
-
 {{ (wallet.balance or 0) + (wallet.locked or 0) }} USDT
-
 </div>
 
-
 </div>
-
-
-
 
 
 
 <div class="box">
 
-
 <div class="label">
 حالة المحفظة
 </div>
 
-
 <div class="status">
-
 🟢 نشطة
+</div>
 
 </div>
 
 
 </div>
-
-
-
-</div>
-
 
 
 
@@ -343,19 +259,17 @@ USDT
 <div class="info">
 
 
-{% if current_user.usdt_wallet %}
+{% if user.usdt_wallet %}
 
 
 <div class="label">
-
 عنوان المحفظة الحالي:
-
 </div>
 
 
 <div class="wallet-address">
 
-{{ current_user.usdt_wallet }}
+{{ user.usdt_wallet }}
 
 </div>
 
@@ -365,6 +279,7 @@ USDT
 
 ⚠️ لم يتم إضافة عنوان محفظة USDT
 
+
 {% endif %}
 
 
@@ -373,14 +288,9 @@ USDT
 
 
 <input
-
 type="text"
-
 name="usdt_wallet"
-
 placeholder="أدخل عنوان محفظة BSC"
-
-
 >
 
 
@@ -408,7 +318,6 @@ placeholder="أدخل عنوان محفظة BSC"
 
 
 
-
 <div class="card">
 
 
@@ -418,7 +327,6 @@ placeholder="أدخل عنوان محفظة BSC"
 
 
 <div class="info">
-
 
 قبل بيع USDT:
 
@@ -438,13 +346,10 @@ placeholder="أدخل عنوان محفظة BSC"
 
 4️⃣ في حال النزاع يتدخل الأدمن
 
-
 </div>
 
 
-
 </div>
-
 
 
 
@@ -458,13 +363,11 @@ placeholder="أدخل عنوان محفظة BSC"
 <div class="buttons">
 
 
-
-<a href="/deposit" class="btn deposit">
+<a href="/usdt_deposit" class="btn deposit">
 
 ➕ إيداع USDT
 
 </a>
-
 
 
 
@@ -491,12 +394,10 @@ placeholder="أدخل عنوان محفظة BSC"
 </a>
 
 
-
 </div>
 
 
 </div>
-
 
 
 
@@ -509,9 +410,7 @@ placeholder="أدخل عنوان محفظة BSC"
 </a>
 
 
-
 </div>
-
 
 
 </body>
