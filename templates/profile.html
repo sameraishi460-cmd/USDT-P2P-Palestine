@@ -11,42 +11,30 @@
 <style>
 
 body{
-
 background:#0b1220;
 color:white;
 font-family:tahoma;
 padding:20px;
-
 }
-
 
 
 .container{
-
 max-width:1000px;
 margin:auto;
-
 }
 
 
-
 .box{
-
 background:#1e293b;
 padding:20px;
 border-radius:18px;
 margin-bottom:20px;
-
 }
-
 
 
 h2{
-
 color:#22c55e;
-
 }
-
 
 
 .info{
@@ -56,7 +44,6 @@ grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
 gap:15px;
 
 }
-
 
 
 .item{
@@ -77,15 +64,18 @@ background:#2563eb;
 color:white;
 text-decoration:none;
 border-radius:10px;
+margin-top:10px;
 
 }
 
 
-
 .green{
-
 background:#16a34a;
+}
 
+
+.red{
+background:#dc2626;
 }
 
 
@@ -110,11 +100,13 @@ font-weight:bold;
 
 
 
-.back{
+.small{
 
-margin-bottom:20px;
+color:#94a3b8;
+font-size:14px;
 
 }
+
 
 
 </style>
@@ -130,9 +122,11 @@ margin-bottom:20px;
 
 
 
-<a class="btn back" href="/">
-الرئيسية
+<a class="btn" href="/">
+⬅ الرئيسية
 </a>
+
+
 
 
 
@@ -144,6 +138,7 @@ margin-bottom:20px;
 </h2>
 
 
+
 <div class="info">
 
 
@@ -153,9 +148,7 @@ margin-bottom:20px;
 
 <br>
 
-<b>
-{{user.username}}
-</b>
+<b>{{user.username}}</b>
 
 </div>
 
@@ -167,9 +160,7 @@ margin-bottom:20px;
 
 <br>
 
-<b>
-{{user.phone}}
-</b>
+<b>{{user.phone or "غير مضاف"}}</b>
 
 </div>
 
@@ -181,9 +172,7 @@ margin-bottom:20px;
 
 <br>
 
-<b>
-{{user.bank}}
-</b>
+<b>{{user.bank or "غير مضاف"}}</b>
 
 </div>
 
@@ -191,20 +180,42 @@ margin-bottom:20px;
 
 <div class="item">
 
-المحفظة
+IBAN
 
 <br>
 
-<b>
-
-{{user.wallet}}
-
-</b>
+<b>{{user.iban or "غير مضاف"}}</b>
 
 </div>
 
 
+
+<div class="item">
+
+التقييم
+
+<br>
+
+⭐ {{user.rating}}
+
 </div>
+
+
+
+<div class="item">
+
+عدد الصفقات
+
+<br>
+
+{{user.trades_count}}
+
+</div>
+
+
+
+</div>
+
 
 
 <br>
@@ -212,12 +223,17 @@ margin-bottom:20px;
 
 <a class="btn" href="/edit_profile">
 
-تعديل البيانات
+✏️ تعديل البيانات
 
 </a>
 
 
+
 </div>
+
+
+
+
 
 
 
@@ -238,13 +254,29 @@ margin-bottom:20px;
 <div class="card">
 
 
-الصفقة رقم:
-{{t.id}}
+<b>
+📌 الصفقة رقم {{t.id}}
+</b>
+
+
+<br><br>
+
+
+{% if t.seller == user.username %}
+
+🟢 أنت البائع
+
+{% else %}
+
+🔵 أنت المشتري
+
+{% endif %}
+
 
 <br>
 
 
-الكمية:
+💰 الكمية:
 
 {{t.amount}} USDT
 
@@ -252,24 +284,33 @@ margin-bottom:20px;
 <br>
 
 
-السعر:
+💵 السعر:
 
-{{t.price}}
+{{t.price}} ₪
 
 
 <br>
 
 
-الحالة:
+📌 الحالة:
 
 <span class="status">
-
 {{t.status}}
-
 </span>
 
 
+<br>
+
+
+<a class="btn green" href="/trade/{{t.id}}">
+
+فتح الصفقة
+
+</a>
+
+
 </div>
+
 
 
 {% else %}
@@ -290,6 +331,8 @@ margin-bottom:20px;
 
 
 
+
+
 <div class="box">
 
 
@@ -299,21 +342,22 @@ margin-bottom:20px;
 
 
 
+
 {% for c in cash_trades %}
 
 
 <div class="card">
 
 
-رقم الصفقة:
-
-{{c.id}}
+<b>
+رقم الصفقة {{c.id}}
+</b>
 
 
 <br>
 
 
-الكمية:
+💰 الكمية:
 
 {{c.amount}} USDT
 
@@ -321,24 +365,35 @@ margin-bottom:20px;
 <br>
 
 
-السعر:
+💵 السعر:
 
-{{c.price}}
+{{c.price}} ₪
 
 
 <br>
 
 
-الحالة:
+📌 الحالة:
 
 <span class="status">
-
 {{c.status}}
-
 </span>
 
 
+
+<br>
+
+
+<a class="btn green" href="/cash_trade/{{c.id}}">
+
+فتح الصفقة
+
+</a>
+
+
+
 </div>
+
 
 
 {% else %}
@@ -350,7 +405,10 @@ margin-bottom:20px;
 {% endfor %}
 
 
+
 </div>
+
+
 
 
 
@@ -366,6 +424,7 @@ margin-bottom:20px;
 </h2>
 
 
+
 {% for a in ads %}
 
 
@@ -373,7 +432,7 @@ margin-bottom:20px;
 <div class="card">
 
 
-كمية:
+💰 الكمية:
 
 {{a.amount}} USDT
 
@@ -381,18 +440,29 @@ margin-bottom:20px;
 <br>
 
 
-السعر:
+💵 السعر:
 
-{{a.price}}
+{{a.price}} ₪
 
 
 <br>
 
 
-الحالة:
+💳 الدفع:
+
+{{a.payment}}
+
+
+<br>
+
+
+📌 الحالة:
+
+<span class="status">
 
 {{a.status}}
 
+</span>
 
 
 </div>
@@ -409,18 +479,22 @@ margin-bottom:20px;
 
 
 
+
 <br>
 
 
 <a class="btn green" href="/create_ad">
 
-إضافة إعلان جديد
+➕ إضافة إعلان جديد
 
 </a>
 
 
 
 </div>
+
+
+
 
 
 
