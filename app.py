@@ -19,6 +19,9 @@ app.config["PERMANENT_SESSION_LIFETIME"] = 2592000
 app.secret_key = "FINAL_USDT_P2P_PALESTINE_SECRET_KEY"
 app.permanent_session_lifetime = timedelta(days=30)
 
+# محفظة المنصة لحجز USDT
+ESCROW_WALLET = "0x659dd7cba24363c903abe3fddfc89eb30ffbf58a"
+
 DATABASE = "database.db"
 print("DATABASE LOCATION:", os.path.abspath(DATABASE))
 PLATFORM_WALLET = "0x659dd7cba24363c903abe3fddfc89eb30ffbf58a"
@@ -102,13 +105,25 @@ def setup_database():
     add_column(con, "users", "bank_name", "TEXT")
     add_column(con, "users", "account_number", "TEXT")
     add_column(con, "users", "payment_phone", "TEXT")
-    # WALLETS
+    
+    # WALLETS (balances)
     con.execute("""
     CREATE TABLE IF NOT EXISTS wallets(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE,
         balance REAL DEFAULT 0,
         locked REAL DEFAULT 0
+    )
+    """)
+
+    # USER WALLETS (Addresses Table)
+    con.execute("""
+    CREATE TABLE IF NOT EXISTS user_wallets(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        address TEXT,
+        network TEXT DEFAULT 'BSC',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
     """)
 
@@ -142,6 +157,11 @@ def setup_database():
         created DATETIME DEFAULT CURRENT_TIMESTAMP
     )
     """)
+
+    # إضافة الحقول الجديدة الخاصة بنظام الحجز (Escrow) لجدول الصفقات
+    add_column(con, "trades", "escrow_status", "TEXT DEFAULT 'WAITING'")
+    add_column(con, "trades", "usdt_tx_hash", "TEXT")
+    add_column(con, "trades", "release_tx_hash", "TEXT")
 
     # CASH ADS
     con.execute("""
@@ -1061,6 +1081,17 @@ def finish_trade(id):
         if not payment_ok:
             con.close()
             return "USDT payment not verified"
+
+        # تحديث الحقول المطلوبة للتحقق من الإيداع وحالة الحجز
+        con.execute(
+            """
+            UPDATE trades
+            SET usdt_tx_hash = ?, escrow_status = 'LOCKED'
+            WHERE id = ?
+            """,
+            (tx_hash, id)
+        )
+        con.commit()
 
     con.execute("UPDATE trades SET status='COMPLETED' WHERE id=?", (id,))
     con.execute("UPDATE users SET trades_count = trades_count + 1 WHERE username=?", (trade["buyer"],))
@@ -2170,6 +2201,16 @@ def seller_confirm(id):
         UPDATE trades
         SET status='COMPLETED'
         WHERE id=?
+        """,
+        (id,)
+    )
+
+    # تحديث حالة الحجز Release والـ Hash كما طلبته
+    con.execute(
+        """
+        UPDATE trades
+        SET escrow_status = 'RELEASED', release_tx_hash = 'PENDING_RELEASE'
+        WHERE id = ?
         """,
         (id,)
     )
