@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, session, jsonify
+from flask import Flask, render_template, request, redirect, session, jsonify, send_from_directory
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps
 import sqlite3
@@ -9,9 +9,11 @@ import traceback
 import threading
 import telegram_bot
 import price_updater
+from werkzeug.utils import secure_filename
 
 
 app = Flask(__name__)
+app.config["UPLOAD_FOLDER"] = "uploads"
 app.config["PERMANENT_SESSION_LIFETIME"] = 2592000
 app.secret_key = "FINAL_USDT_P2P_PALESTINE_SECRET_KEY"
 app.permanent_session_lifetime = timedelta(days=30)
@@ -67,16 +69,6 @@ def setup_database():
     add_column(con, "users", "bank_name", "TEXT")
     add_column(con, "users", "account_number", "TEXT")
     add_column(con, "users", "payment_phone", "TEXT")
-    # WALLETS
-    con.execute("""
-    CREATE TABLE IF NOT EXISTS wallets(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT UNIQUE,
-        balance REAL DEFAULT 0,
-        locked REAL DEFAULT 0
-    )
-    """)
-
     # WALLETS
     con.execute("""
     CREATE TABLE IF NOT EXISTS wallets(
@@ -1651,6 +1643,102 @@ def seller_confirm(id):
 
 
     return redirect("/profile")
+
+
+# =========================
+# PAYMENT PROOF UPLOAD
+# =========================
+
+UPLOAD_FOLDER = "uploads"
+
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
+
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+
+
+@app.route("/upload_payment/<int:id>", methods=["POST"])
+@login_required
+def upload_payment(id):
+
+    if "proof" not in request.files:
+        return "لم يتم اختيار ملف"
+
+
+    file = request.files["proof"]
+
+
+    if file.filename == "":
+        return "الملف فارغ"
+
+
+    # التأكد أن الصفقة تخص المشتري
+    con = connect()
+
+    trade = con.execute(
+        "SELECT * FROM trades WHERE id=?",
+        (id,)
+    ).fetchone()
+
+
+    if not trade:
+        con.close()
+        return "الصفقة غير موجودة"
+
+
+    if trade["buyer"] != session["user"]:
+        con.close()
+        return "غير مصرح لك"
+
+
+    filename = f"proof_{id}_{file.filename}"
+
+
+    path = os.path.join(
+        app.config["UPLOAD_FOLDER"],
+        filename
+    )
+
+
+    file.save(path)
+
+
+
+    con.execute(
+        """
+        UPDATE trades
+        SET payment_proof=?
+        WHERE id=?
+        """,
+        (
+            filename,
+            id
+        )
+    )
+
+
+    con.commit()
+    con.close()
+
+
+
+    notify(
+        trade["seller"],
+        "إثبات دفع جديد",
+        "قام المشتري برفع إثبات الدفع"
+    )
+
+
+    return redirect("/trade/"+str(id))
+
+
+@app.route("/uploads/<filename>")
+def uploaded_file(filename):
+    return send_from_directory(
+        "uploads",
+        filename
+    )
 
 
 if __name__ == "__main__":
