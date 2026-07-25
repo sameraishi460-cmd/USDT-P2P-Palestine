@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+
+<meta charset="UTF-8">
+
+<title>صفقاتي</title>
+
+
+<style>
+
+body{
+background:#0b1220;
+color:white;
+font-family:tahoma;
+padding:20px;
+}
+
+.container{
+max-width:900px;
+margin:auto;
+}
+
+
+.box{
+background:#1e293b;
+padding:20px;
+border-radius:18px;
+margin-bottom:20px;
+}
+
+
+h2{
+color:#22c55e;
+}
+
+
+.card{
+background:#111827;
+padding:15px;
+border-radius:12px;
+margin:10px 0;
+}
+
+
+.btn{
+
+display:inline-block;
+padding:10px 18px;
+background:#16a34a;
+color:white;
+text-decoration:none;
+border-radius:10px;
+margin-top:10px;
+
+}
+
+
+.status{
+color:#22c55e;
+font-weight:bold;
+}
+
+
+.blue{
+color:#38bdf8;
+}
+
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<div class="container">
+
+
+<a class="btn" href="/">
+⬅ الرئيسية
+</a>
+
+
+
+<div class="box">
+
+
+<h2>
+🤝 صفقات USDT
+</h2>
+
+
+
+{% for t in trades %}
+
+
+<div class="card">
+
+
+<b>
+📌 صفقة رقم {{t.id}}
+</b>
+
+
+<br><br>
+
+
+{% if t.seller == username %}
+
+<span class="blue">
+🟢 أنت البائع
+</span>
+
+{% else %}
+
+<span class="blue">
+🔵 أنت المشتري
+</span>
+
+{% endif %}
+
+
+
+<br><br>
+
+
+💰 الكمية:
+
+{{t.amount}} USDT
+
+
+<br>
+
+
+💵 السعر:
+
+{{t.price}} ₪
+
+
+<br>
+
+
+📌 الحالة:
+
+<span class="status">
+{{t.status}}
+</span>
+
+
+<br>
+
+
+<a class="btn" href="/trade/{{t.id}}">
+فتح الصفقة
+</a>
+
+
+</div>
+
+
+{% else %}
+
+
+لا يوجد صفقات
+
+
+{% endfor %}
+
+
+
+</div>
+
+
+
+
+
+
+<div class="box">
+
+
+<h2>
+🤝 صفقات المقابلات
+</h2>
+
+
+
+{% for c in cash_trades %}
+
+
+<div class="card">
+
+
+📌 الصفقة رقم {{c.id}}
+
+<br>
+
+💰 {{c.amount}} USDT
+
+<br>
+
+💵 {{c.price}} ₪
+
+<br>
+
+📌 الحالة:
+
+<span class="status">
+{{c.status}}
+</span>
+
+
+<br>
+
+
+<a class="btn" href="/cash_trade/{{c.id}}">
+فتح الصفقة
+</a>
+
+
+</div>
+
+
+
+{% else %}
+
+
+لا يوجد صفقات مقابلات
+
+
+{% endfor %}
+
+
+
+</div>
+
+
+
+</div>
+
+
+</body>
+
+</html>
