@@ -2142,6 +2142,67 @@ def uploaded_file(filename):
     )
 
 
+@app.route("/usdt_deposit", methods=["GET","POST"])
+@login_required
+def usdt_deposit():
+
+    if request.method == "POST":
+
+        amount = float(request.form.get("amount",0))
+        tx_hash = request.form.get("tx_hash","")
+
+        if amount <= 0 or not tx_hash:
+            return "يرجى إدخال الكمية ورقم التحويل"
+
+        con = connect()
+
+        con.execute(
+            """
+            INSERT INTO usdt_deposits
+            (username, amount, tx_hash)
+            VALUES (?,?,?)
+            """,
+            (
+                session["user"],
+                amount,
+                tx_hash
+            )
+        )
+
+        con.commit()
+        con.close()
+
+
+        telegram_bot.send_admin(
+            f"""
+💰 طلب إيداع USDT جديد
+
+👤 المستخدم:
+{session['user']}
+
+💵 الكمية:
+{amount} USDT
+
+🔗 TX:
+{tx_hash}
+"""
+        )
+
+
+        return """
+        <script>
+        alert("تم إرسال طلب الإيداع للمراجعة ✅");
+        window.location.href="/wallet";
+        </script>
+        """
+
+
+    return render_template(
+        "usdt_deposit.html",
+        wallet=PLATFORM_WALLET
+    )
+
+
 if __name__ == "__main__":
     try:
         app.run(
