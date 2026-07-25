@@ -1472,58 +1472,6 @@ def add_balance():
     return redirect("/wallet")
 
 
-@app.route("/deposit", methods=["GET","POST"])
-@login_required
-def deposit():
-
-    if request.method == "POST":
-
-        amount = float(request.form.get("amount",0))
-
-        if amount <= 0:
-            return "الكمية غير صحيحة"
-
-
-        con = connect()
-
-        con.execute("""
-        CREATE TABLE IF NOT EXISTS deposits(
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT,
-            amount REAL,
-            status TEXT DEFAULT 'PENDING',
-            created DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
-        """)
-
-
-        con.execute(
-            """
-            INSERT INTO deposits
-            (username, amount)
-            VALUES (?,?)
-            """,
-            (
-                session["user"],
-                amount
-            )
-        )
-
-
-        con.commit()
-        con.close()
-
-
-        return "تم إرسال طلب الإيداع للمراجعة ✅"
-
-
-
-    return render_template(
-        "deposit.html",
-        wallet_address=PLATFORM_WALLET
-    )
-
-
 @app.route("/dashboard")
 @login_required
 def dashboard():
@@ -1987,24 +1935,6 @@ def admin_cash_reject(id):
     con.close()
 
     return redirect("/admin_cash_ads")
-
-
-@app.route("/admin_deposits")
-@admin_required
-def admin_deposits():
-
-    con = connect()
-
-    deposits = con.execute(
-        "SELECT * FROM deposits ORDER BY id DESC"
-    ).fetchall()
-
-    con.close()
-
-    return render_template(
-        "admin_deposits.html",
-        deposits=deposits
-    )
 
 
 # تشغيل بوت التليجرام تلقائياً مع خيوط المعالجة (Threading)
