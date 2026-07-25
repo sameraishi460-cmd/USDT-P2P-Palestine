@@ -284,13 +284,22 @@ def setup_database():
     con.execute("""
     CREATE TABLE IF NOT EXISTS usdt_deposits(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT,
-        amount REAL,
-        tx_hash TEXT,
+        username TEXT NOT NULL,
+        amount REAL NOT NULL,
+        network TEXT DEFAULT 'BSC',
+        wallet TEXT NOT NULL,
+        tx_hash TEXT UNIQUE NOT NULL,
         status TEXT DEFAULT 'PENDING',
+        confirmed_by TEXT DEFAULT '',
+        confirmed_at DATETIME,
         created DATETIME DEFAULT CURRENT_TIMESTAMP
     )
     """)
+
+    add_column(con, "usdt_deposits", "network", "TEXT DEFAULT 'BSC'")
+    add_column(con, "usdt_deposits", "wallet", "TEXT")
+    add_column(con, "usdt_deposits", "confirmed_by", "TEXT")
+    add_column(con, "usdt_deposits", "confirmed_at", "DATETIME")
 
     con.commit()
     con.close()
@@ -1027,7 +1036,7 @@ def trade_status(id, status):
     return redirect("/trade/" + str(id))
 
 
-@app.route("/finish_trade/<int:id>")
+@app.route("/finish_trade/<int:id>", methods=["GET", "POST"])
 @login_required
 def finish_trade(id):
     con = connect()
@@ -1035,7 +1044,23 @@ def finish_trade(id):
 
     if not trade:
         con.close()
-        return "غير موجود"
+        return "الصفقة غير موجودة"
+
+    if request.method == "POST":
+        tx_hash = request.form.get("tx_hash")
+
+        if not tx_hash:
+            con.close()
+            return "Transaction hash required"
+
+        payment_ok = check_usdt_transaction(
+            tx_hash,
+            trade["amount"]
+        )
+
+        if not payment_ok:
+            con.close()
+            return "USDT payment not verified"
 
     con.execute("UPDATE trades SET status='COMPLETED' WHERE id=?", (id,))
     con.execute("UPDATE users SET trades_count = trades_count + 1 WHERE username=?", (trade["buyer"],))
