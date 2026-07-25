@@ -21,6 +21,8 @@ app.permanent_session_lifetime = timedelta(days=30)
 DATABASE = "database.db"
 print("DATABASE LOCATION:", os.path.abspath(DATABASE))
 PLATFORM_WALLET = "0x659dd7cba24363c903abe3fddfc89eb30ffbf58a"
+USDT_CONTRACT = "0x55d398326f99059fF775485246999027B3197955"
+NETWORK = "BSC"
 
 # =========================
 # 1. DATABASE SETUP
@@ -243,6 +245,18 @@ def setup_database():
         username TEXT,
         action TEXT,
         amount REAL,
+        created DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
+    # USDT DEPOSITS
+    con.execute("""
+    CREATE TABLE IF NOT EXISTS usdt_deposits(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT,
+        amount REAL,
+        tx_hash TEXT,
+        status TEXT DEFAULT 'PENDING',
         created DATETIME DEFAULT CURRENT_TIMESTAMP
     )
     """)
