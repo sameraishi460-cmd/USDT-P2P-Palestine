@@ -118,7 +118,6 @@ margin-top:15px;
 
 }
 
-
 </style>
 
 </head>
@@ -128,6 +127,7 @@ margin-top:15px;
 
 
 <div class="container">
+
 
 
 <div class="box">
@@ -169,7 +169,6 @@ margin-top:15px;
 
 
 
-
 <div class="box">
 
 <h2>
@@ -181,42 +180,55 @@ margin-top:15px;
 
 
 👤 البائع:
+
 <br>
+
 <b>{{seller_info.username}}</b>
 
 
 <br><br>
 
+
 🏦 البنك:
+
 <br>
+
 <b>{{seller_info.bank or "غير مضاف"}}</b>
 
 
 <br><br>
 
+
 💳 IBAN:
+
 <br>
+
 <b>{{seller_info.iban or "غير مضاف"}}</b>
 
 
 <br><br>
 
+
 📱 الجوال:
+
 <br>
+
 <b>{{seller_info.phone or "غير مضاف"}}</b>
 
 
 <br><br>
 
+
 💵 طريقة الدفع:
+
 <br>
+
 <b>{{seller_info.payment_method or "تحويل بنكي"}}</b>
 
 
 </div>
 
 </div>
-
 
 
 
@@ -235,18 +247,24 @@ margin-top:15px;
 {% if current_user == trade.buyer %}
 
 
+
 {% if trade.payment_proof %}
+
 
 <div class="proof">
 
+
 ✅ تم رفع إثبات الدفع
 
+
 <br>
+
 
 <img src="/uploads/{{trade.payment_proof}}">
 
 
 <br>
+
 
 <a class="btn gray"
 href="/uploads/{{trade.payment_proof}}"
@@ -260,13 +278,19 @@ target="_blank">
 </div>
 
 
+
 {% else %}
+
 
 
 <form action="/upload_payment/{{trade.id}}" method="post" enctype="multipart/form-data">
 
 
-<input type="file" name="proof" accept="image/*" required>
+<input 
+type="file" 
+name="proof" 
+accept="image/*"
+required>
 
 
 <br>
@@ -282,6 +306,7 @@ target="_blank">
 </form>
 
 
+
 {% endif %}
 
 
@@ -292,6 +317,7 @@ target="_blank">
 
 
 {% if current_user == trade.seller %}
+
 
 
 {% if trade.payment_proof %}
@@ -324,7 +350,9 @@ target="_blank">
 </div>
 
 
+
 {% else %}
+
 
 
 <div class="info">
@@ -334,6 +362,7 @@ target="_blank">
 </div>
 
 
+
 {% endif %}
 
 
@@ -346,12 +375,7 @@ target="_blank">
 
 
 
-
-
-
-
-
-
+<!-- المحادثة -->
 
 <div class="box">
 
@@ -397,7 +421,9 @@ target="_blank">
 <form method="post">
 
 
-<textarea name="message" placeholder="اكتب رسالة"></textarea>
+<textarea 
+name="message" 
+placeholder="اكتب رسالة"></textarea>
 
 
 <br>
@@ -423,6 +449,7 @@ target="_blank">
 
 
 
+<!-- إجراءات الصفقة -->
 
 <div class="box">
 
@@ -432,6 +459,10 @@ target="_blank">
 </h2>
 
 
+
+
+
+<!-- المشتري يؤكد إرسال الدفع -->
 
 {% if trade.status == "PENDING" and current_user == trade.buyer %}
 
@@ -449,12 +480,19 @@ target="_blank">
 
 
 
-{% if trade.status == "PAYMENT_SENT" and current_user == trade.seller %}
+
+
+<!-- البائع يحرر USDT بعد وصول الإثبات -->
+
+{% if trade.status == "PAYMENT_SENT" 
+and current_user == trade.seller 
+and trade.payment_proof %}
+
 
 
 <a class="btn green" href="/seller_confirm/{{trade.id}}">
 
-✅ تأكيد استلام المبلغ
+✅ تأكيد استلام المبلغ وتحويل USDT
 
 </a>
 
@@ -465,11 +503,66 @@ target="_blank">
 
 
 
+
+
+<!-- حماية: لا يسمح للبائع بالتحويل بدون إثبات -->
+
+{% if trade.status == "PAYMENT_SENT" 
+and current_user == trade.seller 
+and not trade.payment_proof %}
+
+
+
+<div class="info">
+
+⏳ لا يمكن تحويل USDT قبل وصول إثبات الدفع
+
+</div>
+
+
+{% endif %}
+
+
+
+
+
+
+
+<!-- بعد إكمال الصفقة -->
+
+{% if trade.status == "COMPLETED" %}
+
+
+<div class="payment">
+
+✅ الصفقة مكتملة وتم تحويل USDT
+
+</div>
+
+
+{% endif %}
+
+
+
+
+
+
+
+<!-- فتح نزاع -->
+
+{% if trade.status != "COMPLETED" %}
+
+
 <a class="btn red" href="/trade_status/{{trade.id}}/DISPUTE">
 
 ⚠️ فتح نزاع
 
 </a>
+
+
+{% endif %}
+
+
 
 
 
@@ -481,6 +574,9 @@ target="_blank">
 
 
 </div>
+
+
+
 
 
 
