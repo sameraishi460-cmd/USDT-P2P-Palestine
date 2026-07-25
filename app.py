@@ -1820,6 +1820,20 @@ def seller_confirm(id):
 
 
 
+    # التأكد من وجود إثبات دفع قبل تحرير USDT
+    if not trade["payment_proof"]:
+
+        con.close()
+
+        return """
+        <script>
+        alert("⚠️ لا يمكن تحويل USDT قبل رفع إثبات الدفع");
+        window.location.href='/trade/""" + str(id) + """';
+        </script>
+        """
+
+
+
     # منع تكرار التحويل
     if trade["status"] == "COMPLETED":
 
