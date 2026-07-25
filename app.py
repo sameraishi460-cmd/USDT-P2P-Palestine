@@ -1589,6 +1589,95 @@ def all_ads():
 # 8. ADMIN PANEL & BACKUP
 # =========================
 
+@app.route("/admin_usdt_deposits")
+@admin_required
+def admin_usdt_deposits():
+
+    con = connect()
+
+    deposits = con.execute(
+        """
+        SELECT *
+        FROM usdt_deposits
+        ORDER BY id DESC
+        """
+    ).fetchall()
+
+    con.close()
+
+    return render_template(
+        "admin_usdt_deposits.html",
+        deposits=deposits
+    )
+
+
+@app.route("/admin_confirm_deposit/<int:id>")
+@admin_required
+def admin_confirm_deposit(id):
+
+    con = connect()
+
+    deposit = con.execute(
+        "SELECT * FROM usdt_deposits WHERE id=?",
+        (id,)
+    ).fetchone()
+
+
+    if not deposit:
+        con.close()
+        return "الإيداع غير موجود"
+
+
+    # منع التكرار
+    if deposit["status"] == "CONFIRMED":
+        con.close()
+        return "تم تأكيده مسبقاً"
+
+
+    # إضافة الرصيد لمحفظة المستخدم
+
+    create_wallet_if_missing(
+        deposit["username"]
+    )
+
+
+    con.execute(
+        """
+        UPDATE wallets
+        SET balance = balance + ?
+        WHERE username=?
+        """,
+        (
+            deposit["amount"],
+            deposit["username"]
+        )
+    )
+
+
+    con.execute(
+        """
+        UPDATE usdt_deposits
+        SET status='CONFIRMED'
+        WHERE id=?
+        """,
+        (id,)
+    )
+
+
+    con.commit()
+    con.close()
+
+
+    notify(
+        deposit["username"],
+        "تم تأكيد الإيداع",
+        f"تم إضافة {deposit['amount']} USDT إلى محفظتك"
+    )
+
+
+    return redirect("/admin_usdt_deposits")
+
+
 @app.route("/admin_login", methods=["GET", "POST"])
 def admin_login():
     if request.method == "POST":
