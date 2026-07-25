@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+<meta charset="UTF-8">
+<title>إيداعات USDT</title>
+</head>
+
+<body>
+
+<h2>طلبات إيداع USDT</h2>
+
+
+{% for d in deposits %}
+
+<hr>
+
+<p>
+المستخدم:
+{{d.username}}
+</p>
+
+<p>
+الكمية:
+{{d.amount}} USDT
+</p>
+
+<p>
+TX:
+{{d.tx_hash}}
+</p>
+
+<p>
+الحالة:
+{{d.status}}
+</p>
+
+
+{% if d.status == "PENDING" %}
+
+<a href="/admin_confirm_deposit/{{d.id}}">
+تأكيد الإيداع ✅
+</a>
+
+{% endif %}
+
+
+{% endfor %}
+
+
+</body>
+</html>
