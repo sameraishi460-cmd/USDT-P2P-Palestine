@@ -81,41 +81,33 @@ background:#475569;
 
 
 input,textarea{
-
 width:90%;
 padding:12px;
 border-radius:10px;
 border:0;
 margin:5px;
-
 }
 
 
 .time{
-
 opacity:.5;
 font-size:12px;
-
 }
 
 
 .proof{
-
 background:#111827;
 padding:15px;
 border-radius:12px;
 text-align:center;
-
 }
 
 
 .proof img{
-
 width:100%;
 max-width:450px;
 border-radius:15px;
 margin-top:15px;
-
 }
 
 </style>
@@ -127,7 +119,6 @@ margin-top:15px;
 
 
 <div class="container">
-
 
 
 <div class="box">
@@ -165,7 +156,6 @@ margin-top:15px;
 </div>
 
 </div>
-
 
 
 
@@ -233,8 +223,6 @@ margin-top:15px;
 
 
 
-
-
 <div class="box">
 
 
@@ -247,24 +235,18 @@ margin-top:15px;
 {% if current_user == trade.buyer %}
 
 
-
 {% if trade.payment_proof %}
-
 
 <div class="proof">
 
-
 ✅ تم رفع إثبات الدفع
 
-
 <br>
-
 
 <img src="/uploads/{{trade.payment_proof}}">
 
 
 <br>
-
 
 <a class="btn gray"
 href="/uploads/{{trade.payment_proof}}"
@@ -278,17 +260,15 @@ target="_blank">
 </div>
 
 
-
 {% else %}
-
 
 
 <form action="/upload_payment/{{trade.id}}" method="post" enctype="multipart/form-data">
 
 
 <input 
-type="file" 
-name="proof" 
+type="file"
+name="proof"
 accept="image/*"
 required>
 
@@ -306,7 +286,6 @@ required>
 </form>
 
 
-
 {% endif %}
 
 
@@ -317,7 +296,6 @@ required>
 
 
 {% if current_user == trade.seller %}
-
 
 
 {% if trade.payment_proof %}
@@ -350,9 +328,7 @@ target="_blank">
 </div>
 
 
-
 {% else %}
-
 
 
 <div class="info">
@@ -362,13 +338,10 @@ target="_blank">
 </div>
 
 
-
 {% endif %}
 
 
-
 {% endif %}
-
 
 
 </div>
@@ -422,7 +395,7 @@ target="_blank">
 
 
 <textarea 
-name="message" 
+name="message"
 placeholder="اكتب رسالة"></textarea>
 
 
@@ -449,6 +422,7 @@ placeholder="اكتب رسالة"></textarea>
 
 
 
+
 <!-- إجراءات الصفقة -->
 
 <div class="box">
@@ -462,7 +436,7 @@ placeholder="اكتب رسالة"></textarea>
 
 
 
-<!-- المشتري يؤكد إرسال الدفع -->
+<!-- المشتري يعلن أنه دفع -->
 
 {% if trade.status == "PENDING" and current_user == trade.buyer %}
 
@@ -482,7 +456,7 @@ placeholder="اكتب رسالة"></textarea>
 
 
 
-<!-- البائع يحرر USDT بعد وصول الإثبات -->
+<!-- البائع يؤكد فقط استلام المال -->
 
 {% if trade.status == "PAYMENT_SENT" 
 and current_user == trade.seller 
@@ -492,9 +466,16 @@ and trade.payment_proof %}
 
 <a class="btn green" href="/seller_confirm/{{trade.id}}">
 
-✅ تأكيد استلام المبلغ وتحويل USDT
+✅ تأكيد استلام المبلغ
 
 </a>
+
+
+<p class="time">
+
+بعد التأكيد سيتم تحرير USDT تلقائياً من المنصة للمشتري
+
+</p>
 
 
 {% endif %}
@@ -505,7 +486,7 @@ and trade.payment_proof %}
 
 
 
-<!-- حماية: لا يسمح للبائع بالتحويل بدون إثبات -->
+<!-- حماية للبائع -->
 
 {% if trade.status == "PAYMENT_SENT" 
 and current_user == trade.seller 
@@ -515,7 +496,7 @@ and not trade.payment_proof %}
 
 <div class="info">
 
-⏳ لا يمكن تحويل USDT قبل وصول إثبات الدفع
+⏳ لا يمكن تأكيد الاستلام قبل وصول إثبات الدفع
 
 </div>
 
@@ -528,14 +509,18 @@ and not trade.payment_proof %}
 
 
 
-<!-- بعد إكمال الصفقة -->
+<!-- حالة مكتملة -->
 
 {% if trade.status == "COMPLETED" %}
 
 
 <div class="payment">
 
-✅ الصفقة مكتملة وتم تحويل USDT
+✅ اكتملت الصفقة
+
+<br>
+
+🔒 تم تحرير USDT من المحفظة المحجوزة
 
 </div>
 
@@ -548,12 +533,13 @@ and not trade.payment_proof %}
 
 
 
-<!-- فتح نزاع -->
+<!-- نزاع -->
 
 {% if trade.status != "COMPLETED" %}
 
 
-<a class="btn red" href="/trade_status/{{trade.id}}/DISPUTE">
+<a class="btn red" 
+href="/trade_status/{{trade.id}}/DISPUTE">
 
 ⚠️ فتح نزاع
 
@@ -574,6 +560,7 @@ and not trade.payment_proof %}
 
 
 </div>
+
 
 
 
