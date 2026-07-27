@@ -1,37 +1,90 @@
-from flask import Flask, render_template, request, redirect, session, jsonify, send_from_directory
-from flask_login import login_required, current_user
-from werkzeug.security import generate_password_hash, check_password_hash
+From flask import (
+    Flask,
+    render_template,
+    request,
+    redirect,
+    session,
+    jsonify,
+    send_from_directory
+)
+
+from werkzeug.security import (
+    generate_password_hash,
+    check_password_hash
+)
+
+from werkzeug.utils import secure_filename
+
 from functools import wraps
+
 import sqlite3
 import os
 import shutil
-from datetime import datetime, timedelta
-import traceback
 import threading
+import traceback
+import time
+
+from datetime import timedelta, datetime
+
 import telegram_bot
 import price_updater
-from werkzeug.utils import secure_filename
+
 from web3 import Web3
 
 
-app = Flask(__name__)
-app.config["UPLOAD_FOLDER"] = "uploads"
-app.config["PERMANENT_SESSION_LIFETIME"] = 2592000
-app.secret_key = "FINAL_USDT_P2P_PALESTINE_SECRET_KEY"
-app.permanent_session_lifetime = timedelta(days=30)
+# ===============================
+# FLASK CONFIG
+# ===============================
 
-# محفظة المنصة لحجز USDT
-ESCROW_WALLET = "0x659dd7cba24363c903abe3fddfc89eb30ffbf58a"
+app = Flask(__name__)
+
+app.secret_key = "USDT_P2P_PALESTINE_SECRET_KEY_CHANGE_THIS"
+
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=30)
+
+app.config["UPLOAD_FOLDER"] = "uploads"
+
+
+if not os.path.exists("uploads"):
+    os.makedirs("uploads")
+
+
+# ===============================
+# DATABASE
+# ===============================
 
 DATABASE = "database.db"
-print("DATABASE LOCATION:", os.path.abspath(DATABASE))
-PLATFORM_WALLET = "0x659dd7cba24363c903abe3fddfc89eb30ffbf58a"
-USDT_CONTRACT = "0x55d398326f99059fF775485246999027B3197955"
+
+
+def connect():
+
+    con = sqlite3.connect(
+        DATABASE,
+        check_same_thread=False
+    )
+
+    con.row_factory = sqlite3.Row
+
+    return con
+
+
+
+# ===============================
+# WEB3 BSC
+# ===============================
+
 NETWORK = "BSC"
+
 BSC_RPC = "https://bsc-dataseed.binance.org/"
+
 
 w3 = Web3(
     Web3.HTTPProvider(BSC_RPC)
+)
+
+
+PLATFORM_WALLET = Web3.to_checksum_address(
+    "0x659dd7cba24363c903abe3fddfc89eb30ffbf58a"
 )
 
 
@@ -40,797 +93,856 @@ USDT_CONTRACT = Web3.to_checksum_address(
 )
 
 
-PLATFORM_WALLET = Web3.to_checksum_address(
-    PLATFORM_WALLET
+USDT_ABI = [
+
+{
+    "constant": True,
+
+    "inputs":[
+        {
+            "name":"_owner",
+            "type":"address"
+        }
+    ],
+
+    "name":"balanceOf",
+
+    "outputs":[
+        {
+            "name":"balance",
+            "type":"uint256"
+        }
+    ],
+
+    "type":"function"
+}
+
+]
+
+
+usdt_contract = w3.eth.contract(
+    address=USDT_CONTRACT,
+    abi=USDT_ABI
 )
 
 
-USDT_ABI = [
-    {
-        "constant": True,
-        "inputs": [
-            {"name":"_owner","type":"address"}
-        ],
-        "name":"balanceOf",
-        "outputs":[
-            {"name":"balance","type":"uint256"}
-        ],
-        "type":"function"
-    }
-]
 
-# =========================
-# 1. DATABASE SETUP
-# =========================
-
-def connect():
-    con = sqlite3.connect(DATABASE)
-    con.row_factory = sqlite3.Row
-    return con
+# ===============================
+# DATABASE HELPERS
+# ===============================
 
 
-def column_exists(con, table, column):
-    data = con.execute(f"PRAGMA table_info({table})").fetchall()
-    return any(x["name"] == column for x in data)
+def column_exists(
+        con,
+        table,
+        column
+):
+
+    result = con.execute(
+        f"PRAGMA table_info({table})"
+    ).fetchall()
 
 
-def add_column(con, table, column, datatype):
-    if not column_exists(con, table, column):
-        con.execute(f"ALTER TABLE {table} ADD COLUMN {column} {datatype}")
-
-
-def setup_database():
-    con = connect()
-
-    # USERS
-    con.execute("""
-    CREATE TABLE IF NOT EXISTS users(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT UNIQUE,
-        password TEXT,
-        phone TEXT DEFAULT '',
-        bank TEXT DEFAULT '',
-        wallet TEXT DEFAULT '',
-        usdt_wallet TEXT,
-        rating REAL DEFAULT 5,
-        verified INTEGER DEFAULT 0,
-        trades_count INTEGER DEFAULT 0,
-        status TEXT DEFAULT 'ACTIVE'
+    return any(
+        row["name"] == column
+        for row in result
     )
-    """)
-    
-    add_column(con, "users", "usdt_wallet", "TEXT")
-    add_column(con, "users", "telegram_id", "TEXT")
-    add_column(con, "users", "iban", "TEXT")
-    add_column(con, "users", "payment_method", "TEXT")
 
-    # بيانات الدفع للبائع
-    add_column(con, "users", "bank_name", "TEXT")
-    add_column(con, "users", "account_number", "TEXT")
-    add_column(con, "users", "payment_phone", "TEXT")
-    
-    # WALLETS (balances)
-    con.execute("""
-    CREATE TABLE IF NOT EXISTS wallets(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT UNIQUE,
-        balance REAL DEFAULT 0,
-        locked REAL DEFAULT 0
-    )
-    """)
 
-    # USER WALLETS (Addresses Table)
-    con.execute("""
-    CREATE TABLE IF NOT EXISTS user_wallets(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER,
-        address TEXT,
-        network TEXT DEFAULT 'BSC',
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-    """)
 
-    # ADS
-    con.execute("""
-    CREATE TABLE IF NOT EXISTS ads(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user TEXT,
-        title TEXT,
-        amount REAL,
-        price REAL,
-        payment TEXT,
-        status TEXT DEFAULT 'OPEN',
-        created DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-    """)
+def add_column(
+        con,
+        table,
+        column,
+        datatype
+):
 
-    # TRADES
-    con.execute("""
-    CREATE TABLE IF NOT EXISTS trades(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        ad_id INTEGER,
-        buyer TEXT,
-        seller TEXT,
-        amount REAL,
-        price REAL,
-        fee REAL DEFAULT 0,
-        status TEXT DEFAULT 'PENDING',
-        payment_proof TEXT DEFAULT '',
-        dispute TEXT DEFAULT 'NONE',
-        created DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-    """)
+    if not column_exists(
+        con,
+        table,
+        column
+    ):
 
-    # إضافة الحقول الجديدة الخاصة بنظام الحجز (Escrow) لجدول الصفقات
-    add_column(con, "trades", "escrow_status", "TEXT DEFAULT 'WAITING'")
-    add_column(con, "trades", "usdt_tx_hash", "TEXT")
-    add_column(con, "trades", "release_tx_hash", "TEXT")
-
-    # CASH ADS
-    con.execute("""
-    CREATE TABLE IF NOT EXISTS cash_ads(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user TEXT,
-        amount REAL,
-        price REAL,
-        city TEXT,
-        location TEXT,
-        notes TEXT,
-        fee REAL DEFAULT 0,
-        status TEXT DEFAULT 'OPEN'
-    )
-    """)
-
-    # CASH AD PAYMENTS
-    con.execute("""
-    CREATE TABLE IF NOT EXISTS cash_ad_payments(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT,
-        amount REAL,
-        plan TEXT,
-        days INTEGER,
-        wallet TEXT,
-        status TEXT DEFAULT 'PENDING',
-        created DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-    """)
-
-    # CASH TRADES
-    con.execute("""
-    CREATE TABLE IF NOT EXISTS cash_trades(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        ad_id INTEGER,
-        buyer TEXT,
-        seller TEXT,
-        amount REAL,
-        price REAL,
-        meeting_time TEXT DEFAULT '',
-        status TEXT DEFAULT 'WAITING'
-    )
-    """)
-
-    # MESSAGES
-    con.execute("""
-    CREATE TABLE IF NOT EXISTS messages(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        sender TEXT,
-        receiver TEXT,
-        text TEXT,
-        created DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-    """)
-
-    # NOTIFICATIONS
-    con.execute("""
-    CREATE TABLE IF NOT EXISTS notifications(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT,
-        title TEXT,
-        message TEXT,
-        seen INTEGER DEFAULT 0,
-        created DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-    """)
-
-    # REVIEWS
-    con.execute("""
-    CREATE TABLE IF NOT EXISTS reviews(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        trade_id INTEGER,
-        from_user TEXT,
-        to_user TEXT,
-        rating INTEGER,
-        comment TEXT
-    )
-    """)
-
-    # COMMISSION
-    con.execute("""
-    CREATE TABLE IF NOT EXISTS commission(
-        id INTEGER PRIMARY KEY,
-        trade_fee REAL DEFAULT 1,
-        cash_fee REAL DEFAULT 2
-    )
-    """)
-
-    fee = con.execute("SELECT * FROM commission WHERE id=1").fetchone()
-    if not fee:
-        con.execute("INSERT INTO commission (id, trade_fee, cash_fee) VALUES(1, 1, 2)")
-
-    # PLATFORM PROFIT
-    con.execute("""
-    CREATE TABLE IF NOT EXISTS platform_profit(
-        id INTEGER PRIMARY KEY,
-        total REAL DEFAULT 0
-    )
-    """)
-
-    profit = con.execute("SELECT * FROM platform_profit WHERE id=1").fetchone()
-    if not profit:
-        con.execute("INSERT INTO platform_profit (id, total) VALUES(1, 0)")
-
-    # MARKET PRICE
-    con.execute("""
-    CREATE TABLE IF NOT EXISTS market_price(
-        id INTEGER PRIMARY KEY,
-        usd_ils REAL DEFAULT 3.70,
-        usdt_ils REAL DEFAULT 3.70,
-        updated DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-    """)
-
-    price = con.execute(
-        "SELECT * FROM market_price WHERE id=1"
-    ).fetchone()
-
-    if not price:
         con.execute(
-            """
-            INSERT INTO market_price
-            (id, usd_ils, usdt_ils)
-            VALUES(1, 3.70, 3.70)
+            f"""
+            ALTER TABLE {table}
+            ADD COLUMN {column} {datatype}
             """
         )
 
-    # WALLET HISTORY
-    con.execute("""
-    CREATE TABLE IF NOT EXISTS wallet_history(
+
+
+# ===============================
+# DATABASE SETUP
+# ===============================
+
+
+def setup_database():
+
+    con = connect()
+
+
+    # USERS
+
+    con.execute(
+    """
+    CREATE TABLE IF NOT EXISTS users(
+
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT,
-        action TEXT,
+
+        username TEXT UNIQUE,
+
+        password TEXT,
+
+        phone TEXT DEFAULT '',
+
+        bank TEXT DEFAULT '',
+
+        iban TEXT DEFAULT '',
+
+        payment_method TEXT DEFAULT '',
+
+        usdt_wallet TEXT DEFAULT '',
+
+        rating REAL DEFAULT 5,
+
+        verified INTEGER DEFAULT 0,
+
+        trades_count INTEGER DEFAULT 0,
+
+        status TEXT DEFAULT 'ACTIVE',
+
+        telegram_id TEXT
+
+    )
+    """
+    )
+
+
+
+    # WALLETS
+
+    con.execute(
+    """
+    CREATE TABLE IF NOT EXISTS wallets(
+
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+        username TEXT UNIQUE,
+
+        balance REAL DEFAULT 0,
+
+        locked REAL DEFAULT 0
+
+    )
+    """
+    )
+
+
+
+    # ADS
+
+    con.execute(
+    """
+    CREATE TABLE IF NOT EXISTS ads(
+
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+        user TEXT,
+
+        title TEXT,
+
         amount REAL,
+
+        price REAL,
+
+        payment TEXT,
+
+        status TEXT DEFAULT 'OPEN',
+
         created DATETIME DEFAULT CURRENT_TIMESTAMP
+
     )
-    """)
-
-    # USDT DEPOSITS
-    con.execute("""
-    CREATE TABLE IF NOT EXISTS usdt_deposits(
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT NOT NULL,
-        amount REAL NOT NULL,
-        network TEXT DEFAULT 'BSC',
-        wallet TEXT NOT NULL,
-        tx_hash TEXT UNIQUE NOT NULL,
-        status TEXT DEFAULT 'PENDING',
-        confirmed_by TEXT DEFAULT '',
-        confirmed_at DATETIME,
-        created DATETIME DEFAULT CURRENT_TIMESTAMP
+    """
     )
-    """)
 
-    add_column(con, "usdt_deposits", "network", "TEXT DEFAULT 'BSC'")
-    add_column(con, "usdt_deposits", "wallet", "TEXT")
-    add_column(con, "usdt_deposits", "confirmed_by", "TEXT")
-    add_column(con, "usdt_deposits", "confirmed_at", "DATETIME")
 
-    # WITHDRAW REQUESTS
-    con.execute("""
-    CREATE TABLE IF NOT EXISTS withdraw_requests(
+
+    # TRADES
+
+    con.execute(
+    """
+    CREATE TABLE IF NOT EXISTS trades(
+
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT,
+
+        ad_id INTEGER,
+
+        buyer TEXT,
+
+        seller TEXT,
+
         amount REAL,
-        wallet TEXT,
-        network TEXT DEFAULT 'BSC',
+
+        price REAL,
+
+        fee REAL DEFAULT 0,
+
         status TEXT DEFAULT 'PENDING',
-        tx_hash TEXT DEFAULT '',
+
+        payment_proof TEXT DEFAULT '',
+
+        escrow_status TEXT DEFAULT 'WAITING',
+
+        usdt_tx_hash TEXT DEFAULT '',
+
+        release_tx_hash TEXT DEFAULT '',
+
         created DATETIME DEFAULT CURRENT_TIMESTAMP
+
     )
-    """)
+    """
+    )
+
 
     con.commit()
+
     con.close()
+
 
 
 setup_database()
 
-con = connect()
-print(con.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall())
-con.close()
+
+print(
+    "DATABASE:",
+    os.path.abspath(DATABASE)
+)
 
 
-def check_usdt_transaction(tx_hash, expected_amount):
-
-    try:
-
-        tx = w3.eth.get_transaction(tx_hash)
+# ===============================
+# AUTH SYSTEM
+# ===============================
 
 
-        if not tx:
-            return False
+def login_required(func):
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+
+        if "user" not in session:
+
+            return redirect("/login")
+
+        return func(*args, **kwargs)
+
+    return wrapper
 
 
 
-        receipt = w3.eth.get_transaction_receipt(tx_hash)
+def admin_required(func):
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+
+        if "user" not in session:
+
+            return redirect("/login")
 
 
-        if receipt.status != 1:
-            return False
+        con = connect()
+
+        user = con.execute(
+            """
+            SELECT *
+            FROM users
+            WHERE username=?
+            """,
+            (
+                session["user"],
+            )
+        ).fetchone()
+
+
+        con.close()
+
+
+        if not user or user["status"] != "ADMIN":
+
+            return "غير مصرح لك",403
+
+
+        return func(*args, **kwargs)
+
+
+    return wrapper
 
 
 
-        contract = w3.eth.contract(
-            address=USDT_CONTRACT,
-            abi=USDT_ABI
+# ===============================
+# NOTIFICATIONS
+# ===============================
+
+
+def notify(
+        username,
+        title,
+        message
+):
+
+    con = connect()
+
+    con.execute(
+        """
+        INSERT INTO notifications
+        (username,title,message)
+        VALUES(?,?,?)
+        """,
+        (
+            username,
+            title,
+            message
         )
+    )
 
 
-        balance = contract.functions.balanceOf(
-            PLATFORM_WALLET
-        ).call()
+    con.commit()
 
-
-
-        usdt_amount = balance / 10**18
+    con.close()
 
 
 
-        if usdt_amount >= expected_amount:
-            return True
+# إنشاء جدول الإشعارات
+
+def create_extra_tables():
+
+    con = connect()
 
 
-        return False
+    con.execute(
+    """
+    CREATE TABLE IF NOT EXISTS notifications(
+
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+        username TEXT,
+
+        title TEXT,
+
+        message TEXT,
+
+        seen INTEGER DEFAULT 0,
+
+        created DATETIME DEFAULT CURRENT_TIMESTAMP
+
+    )
+    """
+    )
 
 
-    except Exception as e:
+    con.execute(
+    """
+    CREATE TABLE IF NOT EXISTS messages(
 
-        print(
-            "TX CHECK ERROR:",
-            e
-        )
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-        return False
+        sender TEXT,
+
+        receiver TEXT,
+
+        text TEXT,
+
+        created DATETIME DEFAULT CURRENT_TIMESTAMP
+
+    )
+    """
+    )
+
+
+    con.commit()
+
+    con.close()
+
+
+
+create_extra_tables()
+
+
+
+# ===============================
+# CREATE ADMIN
+# ===============================
 
 
 def create_admin_account():
 
     con = connect()
 
-    username = "Admin"
-    password = "SA526614@mer"
 
-    exists = con.execute(
-        "SELECT * FROM users WHERE username=?",
-        (username,)
+    admin = con.execute(
+        """
+        SELECT *
+        FROM users
+        WHERE username='Admin'
+        """
     ).fetchone()
 
-    if not exists:
+
+
+    if not admin:
+
 
         con.execute(
-            """
-            INSERT INTO users
-            (username, password, status)
-            VALUES (?, ?, ?)
-            """,
-            (
-                username,
-                generate_password_hash(password),
-                "ADMIN"
-            )
+        """
+        INSERT INTO users
+        (
+        username,
+        password,
+        status
         )
 
-        con.commit()
-        print("ADMIN CREATED")
+        VALUES(?,?,?)
+        """,
 
-    else:
-        print("ADMIN EXISTS")
+        (
+            "Admin",
+            generate_password_hash(
+                "SA526614@mer"
+            ),
+            "ADMIN"
+        )
+
+        )
+
+
+        con.commit()
+
+
+        print(
+            "ADMIN CREATED"
+        )
+
 
     con.close()
+
 
 
 create_admin_account()
 
 
-# =========================
-# 2. AUTH SYSTEM & DECORATORS
-# =========================
 
-def login_required(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        if "user" not in session:
-            return redirect("/login")
-        return func(*args, **kwargs)
-    return wrapper
+# ===============================
+# REGISTER
+# ===============================
 
 
-def admin_required(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        if "user" not in session:
-            return redirect("/login")
+@app.route(
+    "/register",
+    methods=["GET","POST"]
+)
 
-        con = connect()
-        user = con.execute("SELECT * FROM users WHERE username=?", (session["user"],)).fetchone()
-        con.close()
-
-        if not user or user["status"] != "ADMIN":
-            return "غير مصرح لك بالدخول", 403
-
-        return func(*args, **kwargs)
-    return wrapper
-
-
-def notify(username, title, message):
-    con = connect()
-    con.execute(
-        "INSERT INTO notifications (username, title, message) VALUES(?, ?, ?)",
-        (username, title, message)
-    )
-    con.commit()
-    con.close()
-
-
-@app.route("/register", methods=["GET", "POST"])
 def register():
-    if request.method == "POST":
-        username = request.form.get("username")
-        password = request.form.get("password")
+
+
+    if request.method=="POST":
+
+
+        username=request.form.get(
+            "username"
+        )
+
+
+        password=request.form.get(
+            "password"
+        )
+
 
         if not username or not password:
+
             return "بيانات ناقصة"
 
-        con = connect()
+
+
+        con=connect()
+
+
         try:
+
+
             con.execute(
-                "INSERT INTO users (username, password) VALUES(?, ?)",
-                (username, generate_password_hash(password))
+            """
+            INSERT INTO users
+            (
+            username,
+            password
             )
+            VALUES(?,?)
+            """,
+
+            (
+                username,
+                generate_password_hash(password)
+            )
+
+            )
+
+
             con.execute(
-                """
-                INSERT INTO wallets(username, balance, locked)
-                VALUES(?,?,?)
-                """,
-                (username, 0, 0)
+            """
+            INSERT INTO wallets
+            (
+            username
             )
+            VALUES(?)
+            """,
+
+            (
+                username,
+            )
+
+            )
+
+
             con.commit()
+
+
+            session["user"]=username
+
+
             con.close()
-            session.permanent = True
-            session["user"] = username
-            return redirect("/dashboard")
-        except:
+
+
+            return redirect(
+                "/dashboard"
+            )
+
+
+        except Exception as e:
+
+
             con.close()
+
+
             return "المستخدم موجود"
 
-    return render_template("register.html")
 
 
-@app.route("/login", methods=["GET", "POST"])
+    return render_template(
+        "register.html"
+    )
+
+
+
+# ===============================
+# LOGIN
+# ===============================
+
+
+@app.route(
+    "/login",
+    methods=["GET","POST"]
+)
+
 def login():
 
-    if request.method == "POST":
 
-        username = request.form.get("username")
-        password = request.form.get("password")
-        remember = request.form.get("remember")
+    if request.method=="POST":
 
-        con = connect()
 
-        user = con.execute(
-            "SELECT * FROM users WHERE username=?",
-            (username,)
+        username=request.form.get(
+            "username"
+        )
+
+
+        password=request.form.get(
+            "password"
+        )
+
+
+        con=connect()
+
+
+        user=con.execute(
+        """
+        SELECT *
+        FROM users
+        WHERE username=?
+        """,
+
+        (
+            username,
+        )
+
         ).fetchone()
+
 
         con.close()
 
 
-        if user and check_password_hash(user["password"], password):
 
-            if user["status"] == "BANNED":
+        if user and check_password_hash(
+            user["password"],
+            password
+        ):
+
+
+            if user["status"]=="BANNED":
+
                 return "الحساب محظور"
 
 
-            session.permanent = True
-            session["user"] = username
+
+            session.permanent=True
+
+            session["user"]=username
 
 
-            # حفظ الحساب
-            if remember:
+            return redirect(
+                "/dashboard"
+            )
 
-                session.permanent = True
-
-                app.permanent_session_lifetime = 60 * 60 * 24 * 30
-                # 30 يوم
-
-
-            return redirect("/dashboard")
 
 
         return "خطأ في البيانات"
 
 
-    return render_template("login.html")
+
+    return render_template(
+        "login.html"
+    )
+
+
+
+# ===============================
+# LOGOUT
+# ===============================
 
 
 @app.route("/logout")
+
 def logout():
+
     session.clear()
-    return redirect("/login")
+
+    return redirect(
+        "/login"
+    )
 
 
-@app.route("/telegram_login")
-def telegram_login():
-    return render_template("telegram_login.html")
+
+# ===============================
+# ADMIN LOGIN
+# ===============================
 
 
-@app.route("/telegram_webapp")
-def telegram_webapp():
-    return render_template("telegram_webapp.html")
+@app.route(
+    "/admin_login",
+    methods=["GET","POST"]
+)
+
+def admin_login():
 
 
-@app.route("/telegram_auth")
-def telegram_auth():
-    telegram_id = request.args.get("id")
-    username = request.args.get("username")
+    if request.method=="POST":
 
-    print("TELEGRAM DATA:", telegram_id, username)
 
-    if not telegram_id:
-        return "لا توجد بيانات تلجرام"
+        username=request.form.get(
+            "username"
+        )
 
-    con = connect()
+        password=request.form.get(
+            "password"
+        )
 
-    user = con.execute(
-        "SELECT * FROM users WHERE telegram_id=?",
-        (telegram_id,)
-    ).fetchone()
 
-    if not user:
-        new_username = username if username else f"telegram_{telegram_id}"
 
-        try:
-            con.execute(
-                """
-                INSERT INTO users
-                (username, password, telegram_id)
-                VALUES(?,?,?)
-                """,
-                (
-                    new_username,
-                    generate_password_hash("telegram"),
-                    telegram_id
-                )
+        con=connect()
+
+
+        user=con.execute(
+        """
+        SELECT *
+        FROM users
+        WHERE username=?
+        """,
+
+        (
+            username,
+        )
+
+        ).fetchone()
+
+
+        con.close()
+
+
+
+        if (
+            user
+            and user["status"]=="ADMIN"
+            and check_password_hash(
+                user["password"],
+                password
+            )
+        ):
+
+
+            session["user"]=username
+
+
+            return redirect(
+                "/admin"
             )
 
-            con.commit()
-            session["user"] = new_username
-
-        except Exception as e:
-            print("CREATE USER ERROR:", e)
-            session["user"] = new_username
-
-    else:
-        session["user"] = user["username"]
-
-    con.close()
-
-    return redirect("/dashboard")
 
 
-# =========================
-# 3. HOME & USDT ADS
-# =========================
+        return "بيانات الأدمن خاطئة"
 
-@app.route("/")
-def home():
 
-    con = connect()
-
-    ads = con.execute(
-        "SELECT * FROM ads WHERE status='OPEN' ORDER BY id DESC"
-    ).fetchall()
-
-    cash_ads = con.execute(
-        "SELECT * FROM cash_ads WHERE status='OPEN' ORDER BY id DESC"
-    ).fetchall()
-
-    price = con.execute(
-        "SELECT * FROM market_price WHERE id=1"
-    ).fetchone()
-
-    print("USD:", price["usd_ils"])
-    print("USDT:", price["usdt_ils"])
-
-    user = None
-
-    if "user" in session:
-        user = session["user"]
-
-    con.close()
 
     return render_template(
-        "index.html",
-        ads=ads,
-        cash_ads=cash_ads,
-        price=price,
-        user=user
+        "admin_login.html"
     )
 
 
-@app.route("/save_wallet", methods=['POST'])
+
+# ===============================
+# DASHBOARD
+# ===============================
+
+
+@app.route("/dashboard")
+
 @login_required
-def save_wallet():
-    wallet_address = request.form.get('usdt_wallet')
 
-    if not wallet_address:
-        return redirect('/wallet')
+def dashboard():
 
-    con = connect()
-    con.execute(
-        "UPDATE users SET usdt_wallet = ? WHERE username = ?",
-        (wallet_address, session["user"])
+
+    con=connect()
+
+
+    user=con.execute(
+    """
+    SELECT *
+    FROM users
+    WHERE username=?
+    """,
+
+    (
+        session["user"],
     )
-    con.commit()
-    con.close()
 
-    return redirect('/wallet')
-
-
-@app.route("/market")
-def market():
-
-    con = connect()
-
-    ads = con.execute(
-        "SELECT * FROM ads WHERE status='OPEN' ORDER BY id DESC"
-    ).fetchall()
-
-    cash_ads = con.execute(
-        "SELECT * FROM cash_ads WHERE status='OPEN' ORDER BY id DESC"
-    ).fetchall()
-
-    price = con.execute(
-        "SELECT * FROM market_price WHERE id=1"
     ).fetchone()
 
-    print("PRICE TEST:", dict(price))
+
+
+    trades=con.execute(
+    """
+    SELECT COUNT(*)
+    FROM trades
+    WHERE buyer=? OR seller=?
+    """,
+
+    (
+        session["user"],
+        session["user"]
+    )
+
+    ).fetchone()[0]
+
+
 
     con.close()
+
 
     return render_template(
-        "market.html",
-        ads=ads,
-        cash_ads=cash_ads,
-        price=price
+        "dashboard.html",
+        user=user,
+        trades=trades
     )
 
 
-@app.route("/create_ad", methods=["GET", "POST"])
-@login_required
-def create_ad():
+# ===============================
+# WALLET FUNCTIONS
+# ===============================
+
+
+def create_wallet_if_missing(username):
 
     con = connect()
 
-    user = con.execute(
-        "SELECT * FROM users WHERE username=?",
-        (session["user"],)
+    wallet = con.execute(
+        """
+        SELECT *
+        FROM wallets
+        WHERE username=?
+        """,
+        (username,)
     ).fetchone()
 
 
-    # التأكد أن الحساب موجود
-    if not user:
-        con.close()
-        session.clear()
-        return """
-        <script>
-        alert("انتهت الجلسة، سجل دخول من جديد");
-        window.location.href='/login';
-        </script>
-        """
-
-
-    # فحص بيانات الدفع
-    if not user["phone"] or not user["bank"] or not user["iban"] or not user["payment_method"]:
-        con.close()
-
-        return """
-        <script>
-        alert("⚠️ يجب إكمال بيانات الدفع في الملف الشخصي قبل نشر الإعلان");
-        window.location.href='/edit_profile';
-        </script>
-        """
-
-
-    if request.method == "POST":
-
-        title = request.form.get("title")
-
-        amount = float(
-            request.form.get("amount",0)
-        )
-
-        price = float(
-            request.form.get("price",0)
-        )
-
-        payment = user["payment_method"]
-
+    if not wallet:
 
         con.execute(
             """
-            INSERT INTO ads
-            (user,title,amount,price,payment,status)
-            VALUES(?,?,?,?,?,?)
+            INSERT INTO wallets
+            (
+            username,
+            balance,
+            locked
+            )
+            VALUES(?,?,?)
             """,
             (
-                session["user"],
-                title,
-                amount,
-                price,
-                payment,
-                "OPEN"
+                username,
+                0,
+                0
             )
         )
 
-
         con.commit()
-        con.close()
 
-
-        return redirect("/")
-
-
-    wallet = con.execute(
-        "SELECT balance FROM wallets WHERE username=?",
-        (session["user"],)
-    ).fetchone()
-
-    wallet_balance = wallet["balance"] if wallet else 0
 
     con.close()
 
-    return render_template(
-        "create_ad.html",
-        wallet_balance=wallet_balance,
-        user=user
+
+
+def wallet_log(
+        username,
+        action,
+        amount
+):
+
+    con = connect()
+
+    con.execute(
+        """
+        CREATE TABLE IF NOT EXISTS wallet_history(
+
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+            username TEXT,
+
+            action TEXT,
+
+            amount REAL,
+
+            created DATETIME DEFAULT CURRENT_TIMESTAMP
+
+        )
+        """
     )
 
-
-def get_trade_fee(price):
-    con = connect()
-    fee = con.execute("SELECT trade_fee FROM commission WHERE id=1").fetchone()
-    con.close()
-    if not fee:
-        return 0
-    return price * fee["trade_fee"] / 100
-
-
-def add_profit(amount):
-    con = connect()
-    con.execute("UPDATE platform_profit SET total = total + ? WHERE id=1", (amount,))
-    con.commit()
-    con.close()
-
-
-def wallet_log(username, action, amount):
-
-    con = connect()
 
     con.execute(
         """
         INSERT INTO wallet_history
-        (username, action, amount)
-        VALUES (?, ?, ?)
+        (
+        username,
+        action,
+        amount
+        )
+        VALUES(?,?,?)
         """,
         (
             username,
@@ -839,166 +951,380 @@ def wallet_log(username, action, amount):
         )
     )
 
+
     con.commit()
+
     con.close()
 
 
-def create_wallet_if_missing(username):
+
+# ===============================
+# HOME PAGE
+# ===============================
+
+
+@app.route("/")
+
+def home():
+
     con = connect()
 
-    wallet = con.execute(
-        "SELECT * FROM wallets WHERE username=?",
-        (username,)
+
+    ads = con.execute(
+        """
+        SELECT *
+        FROM ads
+        WHERE status='OPEN'
+        ORDER BY id DESC
+        """
+    ).fetchall()
+
+
+
+    con.close()
+
+
+    return render_template(
+        "index.html",
+        ads=ads
+    )
+
+
+
+# ===============================
+# MARKET
+# ===============================
+
+
+@app.route("/market")
+
+def market():
+
+    con = connect()
+
+
+    ads = con.execute(
+        """
+        SELECT *
+        FROM ads
+        WHERE status='OPEN'
+        ORDER BY id DESC
+        """
+    ).fetchall()
+
+
+
+    con.close()
+
+
+    return render_template(
+        "market.html",
+        ads=ads
+    )
+
+
+
+# ===============================
+# CREATE USDT AD
+# ===============================
+
+
+@app.route(
+    "/create_ad",
+    methods=["GET","POST"]
+)
+
+@login_required
+
+def create_ad():
+
+
+    con = connect()
+
+
+    user = con.execute(
+        """
+        SELECT *
+        FROM users
+        WHERE username=?
+        """,
+        (
+            session["user"],
+        )
     ).fetchone()
 
-    if not wallet:
-        con.execute(
-            """
-            INSERT INTO wallets(username,balance,locked)
-            VALUES(?,?,?)
-            """,
-            (username,0,0)
+
+
+    if request.method=="POST":
+
+
+        title=request.form.get(
+            "title"
         )
+
+
+        amount=float(
+            request.form.get(
+                "amount",
+                0
+            )
+        )
+
+
+        price=float(
+            request.form.get(
+                "price",
+                0
+            )
+        )
+
+
+        payment=request.form.get(
+            "payment",
+            "BANK"
+        )
+
+
+
+        con.execute(
+        """
+        INSERT INTO ads
+        (
+        user,
+        title,
+        amount,
+        price,
+        payment
+        )
+        VALUES(?,?,?,?,?)
+        """,
+
+        (
+            session["user"],
+            title,
+            amount,
+            price,
+            payment
+        )
+
+        )
+
 
         con.commit()
 
+        con.close()
+
+
+        return redirect(
+            "/market"
+        )
+
+
+
     con.close()
 
 
-@app.route("/buy/<int:id>")
+    return render_template(
+        "create_ad.html",
+        user=user
+    )
+
+
+
+# ===============================
+# TRADE FEE
+# ===============================
+
+
+def get_trade_fee(price):
+
+    fee_percent = 1
+
+
+    return (
+        price *
+        fee_percent /
+        100
+    )
+
+
+
+# ===============================
+# BUY USDT
+# ===============================
+
+
+@app.route(
+    "/buy/<int:id>"
+)
+
 @login_required
+
 def buy(id):
 
-    con = connect()
 
-    # جلب الإعلان
-    ad = con.execute(
-        "SELECT * FROM ads WHERE id=?",
-        (id,)
+    con=connect()
+
+
+
+    ad=con.execute(
+    """
+    SELECT *
+    FROM ads
+    WHERE id=?
+    """,
+    (id,)
     ).fetchone()
 
 
+
     if not ad:
+
         con.close()
+
         return "الإعلان غير موجود"
 
 
-    # منع شراء إعلان مغلق
-    if ad["status"] != "OPEN":
+
+    if ad["status"]!="OPEN":
+
         con.close()
-        return "الإعلان غير متاح"
+
+        return "الإعلان مغلق"
 
 
-    # منع شراء إعلانك
-    if ad["user"] == session["user"]:
+
+    if ad["user"]==session["user"]:
+
         con.close()
+
         return "لا يمكنك شراء إعلانك"
 
 
 
-    # جلب محفظة البائع
-    seller_wallet = con.execute(
-        "SELECT * FROM wallets WHERE username=?",
-        (ad["user"],)
+    seller_wallet=con.execute(
+    """
+    SELECT *
+    FROM wallets
+    WHERE username=?
+    """,
+    (
+        ad["user"],
+    )
+
     ).fetchone()
 
 
 
     if not seller_wallet:
+
         con.close()
+
         return "لا توجد محفظة للبائع"
 
 
 
-    # التأكد من الرصيد المتاح
     if seller_wallet["balance"] < ad["amount"]:
 
         con.close()
 
-        return """
-        <script>
-        alert("❌ البائع لا يملك كمية USDT كافية");
-        window.location.href='/market';
-        </script>
-        """
+        return "البائع لا يملك رصيد USDT كافي"
 
 
 
     # حجز USDT
+
     con.execute(
-        """
-        UPDATE wallets
-        SET 
-        balance = balance - ?,
-        locked = locked + ?
-        WHERE username=?
-        """,
-        (
-            ad["amount"],
-            ad["amount"],
-            ad["user"]
-        )
+    """
+    UPDATE wallets
+
+    SET
+
+    balance = balance - ?,
+
+    locked = locked + ?
+
+    WHERE username=?
+
+    """,
+
+    (
+        ad["amount"],
+        ad["amount"],
+        ad["user"]
+    )
+
     )
 
 
 
     wallet_log(
         ad["user"],
-        "USDT_LOCKED",
+        "ESCROW_LOCK",
         ad["amount"]
     )
 
 
 
-    # حساب العمولة
-    fee = get_trade_fee(ad["price"])
-
-
-
-    # إنشاء الصفقة
-    trade = con.execute(
-        """
-        INSERT INTO trades
-        (
-        ad_id,
-        buyer,
-        seller,
-        amount,
-        price,
-        fee,
-        status
-        )
-        VALUES(?,?,?,?,?,?,?)
-        """,
-        (
-            id,
-            session["user"],
-            ad["user"],
-            ad["amount"],
-            ad["price"],
-            fee,
-            "PENDING"
-        )
+    fee=get_trade_fee(
+        ad["price"]
     )
 
 
-    trade_id = trade.lastrowid
+
+    trade=con.execute(
+    """
+    INSERT INTO trades
+    (
+    ad_id,
+    buyer,
+    seller,
+    amount,
+    price,
+    fee,
+    status,
+    escrow_status
+    )
+
+    VALUES(?,?,?,?,?,?,?,?)
+
+    """,
+
+    (
+        id,
+        session["user"],
+        ad["user"],
+        ad["amount"],
+        ad["price"],
+        fee,
+        "PENDING",
+        "LOCKED"
+    )
+
+    )
 
 
 
-    # إغلاق الإعلان
+    trade_id=trade.lastrowid
+
+
+
     con.execute(
-        """
-        UPDATE ads
-        SET status='SOLD'
-        WHERE id=?
-        """,
-        (id,)
+    """
+    UPDATE ads
+
+    SET status='SOLD'
+
+    WHERE id=?
+
+    """,
+    (id,)
     )
 
 
 
     con.commit()
+
     con.close()
 
 
@@ -1006,1357 +1332,282 @@ def buy(id):
     notify(
         ad["user"],
         "تم حجز USDT",
-        f"تم حجز {ad['amount']} USDT لصفقة جديدة"
+        f"تم حجز {ad['amount']} USDT للصفقة"
     )
 
 
     notify(
         session["user"],
         "تم إنشاء الصفقة",
-        "تم حجز كمية USDT من البائع"
+        "يمكنك التواصل مع البائع"
     )
-
 
 
     return redirect(
-        "/trade/" + str(trade_id)
+        "/trade/"+str(trade_id)
     )
 
 
-# =========================
-# 4. TRADES & CHAT SYSTEM
-# =========================
+# ===============================
+# TRADE PAGE + CHAT
+# ===============================
 
-@app.route("/trade/<int:id>", methods=["GET", "POST"])
+
+@app.route(
+    "/trade/<int:id>",
+    methods=["GET","POST"]
+)
+
 @login_required
+
 def trade(id):
+
     con = connect()
-    trade = con.execute("SELECT * FROM trades WHERE id=?", (id,)).fetchone()
 
-    if not trade:
-        con.close()
-        return "الصفقة غير موجودة"
 
-    if request.method == "POST":
-        text = request.form.get("message")
-        receiver = request.form.get("receiver")
-
-        if text and receiver:
-            con.execute(
-                "INSERT INTO messages (sender, receiver, text) VALUES(?, ?, ?)",
-                (session["user"], receiver, text)
-            )
-            con.commit()
-
-    messages = con.execute(
-        "SELECT * FROM messages WHERE (sender=? AND receiver=?) OR (sender=? AND receiver=?) ORDER BY id",
-        (session["user"], trade["seller"], trade["seller"], session["user"])
-    ).fetchall()
-
-    seller_info = con.execute(
-        "SELECT * FROM users WHERE username=?",
-        (trade["seller"],)
+    trade = con.execute(
+        """
+        SELECT *
+        FROM trades
+        WHERE id=?
+        """,
+        (id,)
     ).fetchone()
 
+
+
+    if not trade:
+
+        con.close()
+
+        return "الصفقة غير موجودة"
+
+
+
+    if request.method=="POST":
+
+
+        text=request.form.get(
+            "message"
+        )
+
+
+        receiver=request.form.get(
+            "receiver"
+        )
+
+
+        if text and receiver:
+
+
+            con.execute(
+            """
+            INSERT INTO messages
+            (
+            sender,
+            receiver,
+            text
+            )
+            VALUES(?,?,?)
+            """,
+
+            (
+                session["user"],
+                receiver,
+                text
+            )
+
+            )
+
+
+            con.commit()
+
+
+
+    messages=con.execute(
+    """
+    SELECT *
+    FROM messages
+
+    WHERE
+
+    (sender=? AND receiver=?)
+
+    OR
+
+    (sender=? AND receiver=?)
+
+    ORDER BY id ASC
+
+    """,
+
+    (
+        session["user"],
+        trade["seller"],
+        trade["seller"],
+        session["user"]
+    )
+
+    ).fetchall()
+
+
+
     con.close()
+
+
 
     return render_template(
         "trade.html",
         trade=trade,
-        messages=messages,
-        seller_info=seller_info,
-        current_user=session["user"]
+        messages=messages
     )
 
 
-@app.route("/trade_status/<int:id>/<status>")
+
+# ===============================
+# CONFIRM PAYMENT BY BUYER
+# ===============================
+
+
+@app.route(
+    "/confirm_payment/<int:id>"
+)
+
 @login_required
-def trade_status(id, status):
-    allowed = ["PENDING", "PAYMENT_SENT", "COMPLETED", "CANCELLED", "DISPUTE"]
-    if status not in allowed:
-        return "حالة غير صحيحة"
 
-    con = connect()
-    trade = con.execute("SELECT * FROM trades WHERE id=?", (id,)).fetchone()
-    if not trade:
-        con.close()
-        return "غير موجود"
-
-    con.execute("UPDATE trades SET status=? WHERE id=?", (status, id))
-    con.commit()
-    con.close()
-
-    notify(trade["buyer"], "تحديث صفقة", status)
-    notify(trade["seller"], "تحديث صفقة", status)
-
-    return redirect("/trade/" + str(id))
-
-
-@app.route("/finish_trade/<int:id>", methods=["GET", "POST"])
-@login_required
-def finish_trade(id):
-    con = connect()
-    trade = con.execute("SELECT * FROM trades WHERE id=?", (id,)).fetchone()
-
-    if not trade:
-        con.close()
-        return "الصفقة غير موجودة"
-
-    if request.method == "POST":
-        tx_hash = request.form.get("tx_hash")
-
-        if not tx_hash:
-            con.close()
-            return "Transaction hash required"
-
-        payment_ok = check_usdt_transaction(
-            tx_hash,
-            trade["amount"]
-        )
-
-        if not payment_ok:
-            con.close()
-            return "USDT payment not verified"
-
-        # تحديث الحقول المطلوبة للتحقق من الإيداع وحالة الحجز
-        con.execute(
-            """
-            UPDATE trades
-            SET usdt_tx_hash = ?, escrow_status = 'LOCKED'
-            WHERE id = ?
-            """,
-            (tx_hash, id)
-        )
-        con.commit()
-
-    con.execute("UPDATE trades SET status='COMPLETED' WHERE id=?", (id,))
-    con.execute("UPDATE users SET trades_count = trades_count + 1 WHERE username=?", (trade["buyer"],))
-    con.execute("UPDATE users SET trades_count = trades_count + 1 WHERE username=?", (trade["seller"],))
-    con.commit()
-    con.close()
-
-    add_profit(trade["fee"])
-    return redirect("/profile")
-
-
-# =========================
-# 5. CASH MARKET SYSTEM
-# =========================
-
-@app.route("/cash_market")
-def cash_market():
-    con = connect()
-    ads = con.execute("SELECT * FROM cash_ads WHERE status='OPEN' ORDER BY id DESC").fetchall()
-    con.close()
-    return render_template("cash_ads.html", ads=ads)
-
-
-@app.route("/cash_ads")
-def cash_ads():
-    return redirect("/cash_market")
-
-
-@app.route("/create_cash_ad", methods=["GET", "POST"])
-@login_required
-def create_cash_ad():
-
-    if request.method == "POST":
-
-        amount = float(request.form.get("amount", 0))
-        price = float(request.form.get("price", 0))
-        city = request.form.get("city", "")
-        location = request.form.get("location", "")
-        notes = request.form.get("notes", "")
-
-        plan = request.form.get("plan", "week")
-
-        if plan == "week":
-            fee = 2
-            days = 7
-
-        elif plan == "two_weeks":
-            fee = 6
-            days = 14
-
-        elif plan == "month":
-            fee = 15
-            days = 30
-
-        else:
-            fee = 2
-            days = 7
-
-        wallet = "0x659dd7cba24363c903abe3fddfc89eb30ffbf58a"
-
-        return render_template(
-            "cash_payment.html",
-            fee=fee,
-            wallet=wallet,
-            days=days,
-            amount=amount,
-            price=price,
-            city=city,
-            location=location,
-            notes=notes,
-            plan=plan
-        )
-
-    return render_template("create_cash_ad.html")
-
-
-@app.route("/cash_ad/<int:id>")
-def cash_ad(id):
-    con = connect()
-    ad = con.execute("SELECT * FROM cash_ads WHERE id=?", (id,)).fetchone()
-    con.close()
-
-    if not ad:
-        return "الإعلان غير موجود"
-
-    return render_template("cash_ad.html", ad=ad)
-
-
-@app.route("/cash_buy/<int:id>")
-@login_required
-def cash_buy(id):
-    con = connect()
-    ad = con.execute("SELECT * FROM cash_ads WHERE id=?", (id,)).fetchone()
-
-    if not ad:
-        con.close()
-        return "الإعلان غير موجود"
-
-    if ad["user"] == session["user"]:
-        con.close()
-        return "لا تستطيع الطلب من إعلانك"
-
-    trade = con.execute(
-        "INSERT INTO cash_trades (ad_id, buyer, seller, amount, price, status) VALUES(?, ?, ?, ?, ?, ?)",
-        (id, session["user"], ad["user"], ad["amount"], ad["price"], "WAITING_MEETING")
-    )
-    trade_id = trade.lastrowid
-
-    con.execute("UPDATE cash_ads SET status='CLOSED' WHERE id=?", (id,))
-    con.commit()
-    con.close()
-
-    notify(ad["user"], "طلب مقابلة شخصية", "يوجد شخص يريد التعامل معك")
-
-    telegram_bot.send_admin(
-        f"""
-🤝 طلب مقابلة جديد 🤝
-👤 المشتري: {session['user']}
-👤 البائع: {ad['user']}
-💰 الكمية: USDT {ad['amount']}
-💵 السعر: {ad['price']}
-📍 المدينة: {ad['city']}
-📌 المكان: {ad['location']}
-🆔 رقم الصفقة: {trade_id}
-"""
-    )
-
-    return redirect("/cash_trade/" + str(trade_id))
-
-
-@app.route("/cash_trade/<int:id>", methods=["GET", "POST"])
-@login_required
-def cash_trade(id):
-    con = connect()
-    trade = con.execute("SELECT * FROM cash_trades WHERE id=?", (id,)).fetchone()
-    con.close()
-
-    if not trade:
-        return "المقابلة غير موجودة"
-
-    return render_template("cash_trade.html", trade=trade)
-
-
-@app.route("/confirm_meeting/<int:id>")
-@login_required
-def confirm_meeting(id):
-
-    con = connect()
-
-    trade = con.execute(
-        "SELECT * FROM cash_trades WHERE id=?",
-        (id,)
-    ).fetchone()
-
-
-    if not trade:
-        con.close()
-        return "الصفقة غير موجودة"
-
-
-    con.execute(
-        "UPDATE cash_trades SET status='MEETING_CONFIRMED' WHERE id=?",
-        (id,)
-    )
-
-
-    notify(
-        trade["buyer"],
-        "تم تأكيد موعد اللقاء",
-        "تم تأكيد المقابلة الشخصية مع البائع"
-    )
-
-
-    notify(
-        trade["seller"],
-        "تم تأكيد موعد اللقاء",
-        "تم تأكيد المقابلة الشخصية مع المشتري"
-    )
-
-
-    con.commit()
-    con.close()
-
-
-    return redirect("/cash_trade/" + str(id))
-
-
-@app.route("/complete_cash/<int:id>")
-@login_required
-def complete_cash(id):
-    con = connect()
-    trade = con.execute("SELECT * FROM cash_trades WHERE id=?", (id,)).fetchone()
-
-    if trade:
-        con.execute("UPDATE cash_trades SET status='COMPLETED' WHERE id=?", (id,))
-
-        telegram_bot.send_admin(
-            f"""
-✅ تم إتمام صفقة مقابلة
-
-🆔 رقم الصفقة: {id}
-
-👤 المشتري: {trade['buyer']}
-
-👤 البائع: {trade['seller']}
-
-💰 الكمية: {trade['amount']} USDT
-
-💵 السعر: {trade['price']}
-
-🎉 الحالة: COMPLETED
-"""
-        )
-
-    con.commit()
-    con.close()
-    return redirect("/profile")
-
-
-@app.route("/cash_dispute/<int:id>")
-@login_required
-def cash_dispute(id):
-
-    con = connect()
-
-    trade = con.execute(
-        "SELECT * FROM cash_trades WHERE id=?",
-        (id,)
-    ).fetchone()
-
-
-    if not trade:
-        con.close()
-        return "الصفقة غير موجودة"
-
-
-    con.execute(
-        "UPDATE cash_trades SET status='DISPUTE' WHERE id=?",
-        (id,)
-    )
-
-
-    notify(
-        trade["buyer"],
-        "فتح نزاع",
-        "تم فتح نزاع على صفقة المقابلة الشخصية"
-    )
-
-
-    notify(
-        trade["seller"],
-        "فتح نزاع",
-        "تم فتح نزاع على صفقة المقابلة الشخصية"
-    )
-
-
-    con.commit()
-    con.close()
-
-
-    return redirect("/cash_trade/" + str(id))
-
-
-@app.route("/cash_payment_sent", methods=["POST"])
-@login_required
-def cash_payment_sent():
-
-    amount = request.form.get("amount")
-    price = request.form.get("price")
-    city = request.form.get("city")
-    location = request.form.get("location")
-    notes = request.form.get("notes")
-    plan = request.form.get("plan")
-
-    fees = {
-        "week": 2,
-        "two_weeks": 6,
-        "month": 15
-    }
-
-    fee = fees.get(plan, 2)
-
-    con = connect()
-
-    con.execute(
-        """
-        INSERT INTO cash_ads
-        (user, amount, price, city, location, notes, fee, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            session["user"],
-            amount,
-            price,
-            city,
-            location,
-            notes,
-            fee,
-            "PENDING_PAYMENT"
-        )
-    )
-
-    con.commit()
-    con.close()
-
-    telegram_bot.send_admin(
-        f"""
-🔔 إعلان مقابلة جديد 👤
-المستخدم: {session['user']} 👤
-الكمية: USDT {amount} 💰
-السعر: {price} 💵
-المدينة: {city} 📍
-المكان: {location} 📌
-العمولة: USDT {fee} 💳
-الحالة: بانتظار مراجعة الأدمن ⏳
-"""
-    )
-
-    return """
-    <script>
-    alert('تم إرسال طلب الإعلان للمراجعة ✅');
-    window.location.href='/';
-    </script>
-    """
-
-
-# =========================
-# 6. PROFILE, DASHBOARD & REVIEWS
-# =========================
-
-@app.route("/my_trades")
-@login_required
-def my_trades():
-
-    con = connect()
-
-    trades = con.execute(
-        """
-        SELECT *
-        FROM trades
-        WHERE buyer=? OR seller=?
-        ORDER BY id DESC
-        """,
-        (
-            session["user"],
-            session["user"]
-        )
-    ).fetchall()
-
-
-    cash_trades = con.execute(
-        """
-        SELECT *
-        FROM cash_trades
-        WHERE buyer=? OR seller=?
-        ORDER BY id DESC
-        """,
-        (
-            session["user"],
-            session["user"]
-        )
-    ).fetchall()
-
-
-    con.close()
-
-
-    return render_template(
-        "my_trades.html",
-        trades=trades,
-        cash_trades=cash_trades,
-        username=session["user"]
-    )
-
-
-@app.route("/profile")
-@login_required
-def profile():
-    con = connect()
-    user = con.execute("SELECT * FROM users WHERE username=?", (session["user"],)).fetchone()
-    trades = con.execute("SELECT * FROM trades WHERE buyer=? OR seller=? ORDER BY id DESC", (session["user"], session["user"])).fetchall()
-    cash_trades = con.execute("SELECT * FROM cash_trades WHERE buyer=? OR seller=? ORDER BY id DESC", (session["user"], session["user"])).fetchall()
-    ads = con.execute("SELECT * FROM ads WHERE user=? ORDER BY id DESC", (session["user"],)).fetchall()
-    con.close()
-
-    return render_template("profile.html", user=user, trades=trades, cash_trades=cash_trades, ads=ads)
-
-
-@app.route("/wallet")
-@login_required
-def wallet():
-
-    con = connect()
-
-    wallet = con.execute(
-        "SELECT * FROM wallets WHERE username=?",
-        (session["user"],)
-    ).fetchone()
-
-    user = con.execute(
-        "SELECT * FROM users WHERE username=?",
-        (session["user"],)
-    ).fetchone()
-
-    con.close()
-
-    return render_template(
-        "wallet.html",
-        wallet=wallet,
-        user=user
-    )
-
-
-@app.route("/add_balance", methods=["POST"])
-@admin_required
-def add_balance():
-
-    amount = float(request.form.get("amount",0))
-
-    if amount <= 0:
-        return "كمية غير صحيحة"
-
-    con = connect()
-
-    con.execute(
-        """
-        UPDATE wallets
-        SET balance = balance + ?
-        WHERE username=?
-        """,
-        (
-            amount,
-            session["user"]
-        )
-    )
-
-    con.commit()
-    con.close()
-
-    return redirect("/wallet")
-
-
-@app.route("/dashboard")
-@login_required
-def dashboard():
-    con = connect()
-    user = con.execute("SELECT * FROM users WHERE username=?", (session["user"],)).fetchone()
-    completed = con.execute("SELECT COUNT(*) FROM trades WHERE (buyer=? OR seller=?) AND status='COMPLETED'", (session["user"], session["user"])).fetchone()[0]
-    cash_completed = con.execute("SELECT COUNT(*) FROM cash_trades WHERE (buyer=? OR seller=?) AND status='COMPLETED'", (session["user"], session["user"])).fetchone()[0]
-    con.close()
-
-    return render_template("dashboard.html", user=user, completed=completed, cash_completed=cash_completed)
-
-
-@app.route("/my_ads")
-@login_required
-def my_ads():
-
-    con = connect()
-
-    ads = con.execute(
-        "SELECT * FROM ads WHERE user=? ORDER BY id DESC",
-        (session["user"],)
-    ).fetchall()
-
-    con.close()
-
-    return render_template(
-        "my_ads.html",
-        ads=ads
-    )
-
-
-@app.route("/notifications")
-@login_required
-def notifications():
-    con = connect()
-    data = con.execute("SELECT * FROM notifications WHERE username=? ORDER BY id DESC", (session["user"],)).fetchall()
-    con.close()
-    return render_template("notifications.html", notifications=data)
-
-
-@app.route("/chat/<username>")
-@login_required
-def chat(username):
-    con = connect()
-    messages = con.execute(
-        "SELECT * FROM messages WHERE (sender=? AND receiver=?) OR (sender=? AND receiver=?) ORDER BY id ASC",
-        (session["user"], username, username, session["user"])
-    ).fetchall()
-    con.close()
-    return render_template("chat.html", messages=messages, target=username)
-
-
-@app.route("/send_message", methods=["POST"])
-@login_required
-def send_message():
-    receiver = request.form.get("receiver")
-    text = request.form.get("text")
-
-    if not receiver or not text:
-        return redirect("/")
-
-    con = connect()
-    con.execute("INSERT INTO messages (sender, receiver, text) VALUES(?, ?, ?)", (session["user"], receiver, text))
-    con.commit()
-    con.close()
-
-    return redirect("/chat/" + receiver)
-
-
-@app.route("/review/<int:id>", methods=["POST"])
-@login_required
-def review(id):
-    rating = int(request.form.get("rating", 5))
-    comment = request.form.get("comment", "")
-
-    con = connect()
-    trade = con.execute("SELECT * FROM trades WHERE id=?", (id,)).fetchone()
-
-    if not trade:
-        con.close()
-        return "الصفقة غير موجودة"
-
-    target = trade["seller"] if session["user"] == trade["buyer"] else trade["buyer"]
-
-    con.execute(
-        "INSERT INTO reviews (trade_id, from_user, to_user, rating, comment) VALUES(?, ?, ?, ?, ?)",
-        (id, session["user"], target, rating, comment)
-    )
-
-    avg = con.execute("SELECT AVG(rating) FROM reviews WHERE to_user=?", (target,)).fetchone()[0]
-    if avg:
-        con.execute("UPDATE users SET rating=? WHERE username=?", (round(avg, 2), target))
-
-    con.commit()
-    con.close()
-    return redirect("/profile")
-
-
-@app.route("/edit_profile", methods=["GET", "POST"])
-@login_required
-def edit_profile():
-    con = connect()
-
-    user = con.execute(
-        "SELECT * FROM users WHERE username=?",
-        (session["user"],)
-    ).fetchone()
-
-    if request.method == "POST":
-
-        phone = request.form.get("phone", "")
-        bank = request.form.get("bank", "")
-        iban = request.form.get("iban", "")
-        payment_method = request.form.get("payment_method", "")
-        usdt_wallet = request.form.get("usdt_wallet", "")
-
-        con.execute(
-            """
-            UPDATE users 
-            SET phone=?, bank=?, iban=?, payment_method=?, usdt_wallet=?
-            WHERE username=?
-            """,
-            (
-                phone,
-                bank,
-                iban,
-                payment_method,
-                usdt_wallet,
-                session["user"]
-            )
-        )
-
-        con.commit()
-        con.close()
-
-        return redirect("/profile")
-
-    con.close()
-
-    return render_template(
-        "edit_profile.html",
-        user=user
-    )
-
-
-# =========================
-# 7. ALL ADS ROUTE
-# =========================
-
-@app.route("/all_ads")
-def all_ads():
-
-    con = connect()
-
-    online = con.execute(
-        "SELECT *, 'online' as type FROM ads ORDER BY id DESC"
-    ).fetchall()
-
-
-    cash = con.execute(
-        "SELECT *, 'cash' as type FROM cash_ads ORDER BY id DESC"
-    ).fetchall()
-
-
-    ads = list(online) + list(cash)
-
-
-    con.close()
-
-
-    return render_template(
-        "all_ads.html",
-        ads=ads
-    )
-
-
-# =========================
-# 8. ADMIN PANEL & BACKUP
-# =========================
-
-@app.route("/admin_usdt_deposits")
-@admin_required
-def admin_usdt_deposits():
-
-    con = connect()
-
-    deposits = con.execute(
-        """
-        SELECT *
-        FROM usdt_deposits
-        ORDER BY id DESC
-        """
-    ).fetchall()
-
-    con.close()
-
-    return render_template(
-        "admin_usdt_deposits.html",
-        deposits=deposits
-    )
-
-
-@app.route("/admin_confirm_deposit/<int:id>")
-@admin_required
-def admin_confirm_deposit(id):
-
-    con = connect()
-
-    deposit = con.execute(
-        "SELECT * FROM usdt_deposits WHERE id=?",
-        (id,)
-    ).fetchone()
-
-
-    if not deposit:
-        con.close()
-        return "الإيداع غير موجود"
-
-
-    # منع التكرار
-    if deposit["status"] == "CONFIRMED":
-        con.close()
-        return "تم تأكيده مسبقاً"
-
-
-    verified = check_usdt_transaction(
-        deposit["tx_hash"],
-        deposit["amount"]
-    )
-
-
-    if not verified:
-
-        con.close()
-
-        return """
-        <script>
-        alert("❌ لم يتم العثور على تحويل USDT صحيح على BSC");
-        window.location.href='/admin_usdt_deposits';
-        </script>
-        """
-
-
-    # إضافة الرصيد لمحفظة المستخدم
-
-    create_wallet_if_missing(
-        deposit["username"]
-    )
-
-
-    con.execute(
-        """
-        UPDATE wallets
-        SET balance = balance + ?
-        WHERE username=?
-        """,
-        (
-            deposit["amount"],
-            deposit["username"]
-        )
-    )
-
-
-    con.execute(
-        """
-        UPDATE usdt_deposits
-        SET status='CONFIRMED'
-        WHERE id=?
-        """,
-        (id,)
-    )
-
-
-    con.commit()
-    con.close()
-
-
-    notify(
-        deposit["username"],
-        "تم تأكيد الإيداع",
-        f"تم إضافة {deposit['amount']} USDT إلى محفظتك"
-    )
-
-
-    return redirect("/admin_usdt_deposits")
-
-
-@app.route("/admin_login", methods=["GET", "POST"])
-def admin_login():
-    if request.method == "POST":
-        username = request.form.get("username")
-        password = request.form.get("password")
-
-        con = connect()
-        user = con.execute("SELECT * FROM users WHERE username=?", (username,)).fetchone()
-        con.close()
-
-        if user and user["status"] == "ADMIN" and check_password_hash(user["password"], password):
-            session["user"] = username
-            return redirect("/admin")
-
-        return "بيانات الأدمن غير صحيحة"
-
-    return render_template("admin_login.html")
-
-
-@app.route("/admin")
-@admin_required
-def admin():
-    con = connect()
-    users = con.execute("SELECT * FROM users ORDER BY id DESC").fetchall()
-    trades = con.execute("SELECT * FROM trades ORDER BY id DESC").fetchall()
-    cash_trades = con.execute("SELECT * FROM cash_trades ORDER BY id DESC").fetchall()
-    profit = con.execute("SELECT * FROM platform_profit WHERE id=1").fetchone()
-    commission = con.execute("SELECT * FROM commission WHERE id=1").fetchone()
-    con.close()
-
-    return render_template("admin.html", users=users, trades=trades, cash_trades=cash_trades, profit=profit, commission=commission)
-
-
-@app.route("/admin_cash_ads")
-@admin_required
-def admin_cash_ads():
-
-    con = connect()
-
-    ads = con.execute(
-        "SELECT * FROM cash_ads ORDER BY id DESC"
-    ).fetchall()
-
-    con.close()
-
-    return render_template(
-        "admin_cash_ads.html",
-        ads=ads
-    )
-
-
-@app.route("/admin_commission", methods=["POST"])
-@admin_required
-def admin_commission():
-    trade_fee = float(request.form.get("trade_fee", 1))
-    cash_fee = float(request.form.get("cash_fee", 2))
-
-    con = connect()
-    con.execute("UPDATE commission SET trade_fee=?, cash_fee=? WHERE id=1", (trade_fee, cash_fee))
-    con.commit()
-    con.close()
-
-    return redirect("/admin")
-
-
-@app.route("/admin_commission_page")
-@admin_required
-def admin_commission_page():
-
-    con = connect()
-
-    commission = con.execute(
-        "SELECT * FROM commission WHERE id=1"
-    ).fetchone()
-
-    con.close()
-
-    return render_template(
-        "admin_commission.html",
-        commission=commission
-    )
-
-
-@app.route("/admin_verify/<username>")
-@admin_required
-def admin_verify(username):
-    con = connect()
-    con.execute("UPDATE users SET verified=1 WHERE username=?", (username,))
-    con.commit()
-    con.close()
-    return redirect("/admin")
-
-
-@app.route("/admin_ban/<username>")
-@admin_required
-def admin_ban(username):
-    con = connect()
-    con.execute("UPDATE users SET status='BANNED' WHERE username=?", (username,))
-    con.commit()
-    con.close()
-    return redirect("/admin")
-
-
-@app.route("/admin_unban/<username>")
-@admin_required
-def admin_unban(username):
-    con = connect()
-    con.execute("UPDATE users SET status='ACTIVE' WHERE username=?", (username,))
-    con.commit()
-    con.close()
-    return redirect("/admin")
-
-
-@app.route("/admin_search")
-@admin_required
-def admin_search():
-    q = request.args.get("q", "")
-    con = connect()
-    results = con.execute(
-        "SELECT * FROM trades WHERE buyer LIKE ? OR seller LIKE ? OR status LIKE ? ORDER BY id DESC",
-        ("%" + q + "%", "%" + q + "%", "%" + q + "%")
-    ).fetchall()
-    con.close()
-    return render_template("admin_search.html", trades=results)
-
-
-@app.route("/admin_stats")
-@admin_required
-def admin_stats():
-    con = connect()
-    users = con.execute("SELECT COUNT(*) FROM users").fetchone()[0]
-    trades = con.execute("SELECT COUNT(*) FROM trades").fetchone()[0]
-    completed = con.execute("SELECT COUNT(*) FROM trades WHERE status='COMPLETED'").fetchone()[0]
-    profit = con.execute("SELECT total FROM platform_profit WHERE id=1").fetchone()[0]
-    con.close()
-
-    return jsonify({"users": users, "trades": trades, "completed": completed, "profit": profit})
-
-
-@app.route("/admin_backup")
-@admin_required
-def admin_backup():
-    shutil.copy("database.db", "database_backup.db")
-    return "تم إنشاء نسخة احتياطية"
-
-
-@app.route("/admin_cash_accept/<int:id>")
-@admin_required
-def admin_cash_accept(id):
-
-    con = connect()
-
-    con.execute(
-        "UPDATE cash_ads SET status='OPEN' WHERE id=?",
-        (id,)
-    )
-
-    con.commit()
-    con.close()
-
-    return redirect("/admin_cash_ads")
-
-
-@app.route("/admin_cash_reject/<int:id>")
-@admin_required
-def admin_cash_reject(id):
-
-    con = connect()
-
-    con.execute(
-        "UPDATE cash_ads SET status='REJECTED' WHERE id=?",
-        (id,)
-    )
-
-    con.commit()
-    con.close()
-
-    return redirect("/admin_cash_ads")
-
-
-# تشغيل بوت التليجرام تلقائياً مع خيوط المعالجة (Threading)
-try:
-    threading.Thread(
-        target=telegram_bot.bot_loop,
-        daemon=True
-    ).start()
-except Exception:
-    traceback.print_exc()
-
-
-# تحديث سعر الدولار و USDT تلقائياً
-
-def auto_price_update():
-
-    while True:
-
-        try:
-            price_updater.update_price()
-
-        except Exception as e:
-            print("AUTO PRICE ERROR:", e)
-
-
-        # تحديث كل ساعة
-        import time
-        time.sleep(3600)
-
-
-
-try:
-
-    threading.Thread(
-        target=auto_price_update,
-        daemon=True
-    ).start()
-
-    print("PRICE UPDATER STARTED")
-
-except Exception:
-
-    traceback.print_exc()
-
-
-@app.route("/confirm_payment/<int:id>")
-@login_required
 def confirm_payment(id):
 
-    con = connect()
 
-    trade = con.execute(
-        "SELECT * FROM trades WHERE id=?",
-        (id,)
+    con=connect()
+
+
+
+    trade=con.execute(
+    """
+    SELECT *
+    FROM trades
+    WHERE id=?
+    """,
+    (id,)
     ).fetchone()
 
+
+
     if not trade:
+
         con.close()
+
         return "الصفقة غير موجودة"
+
 
 
     if trade["buyer"] != session["user"]:
+
         con.close()
+
         return "غير مصرح"
 
 
+
     con.execute(
-        "UPDATE trades SET status='PAYMENT_SENT' WHERE id=?",
-        (id,)
+    """
+    UPDATE trades
+
+    SET status='PAYMENT_SENT'
+
+    WHERE id=?
+
+    """,
+    (id,)
     )
 
 
     con.commit()
+
     con.close()
+
 
 
     notify(
         trade["seller"],
         "تم إرسال الدفع",
-        "المشتري أكد أنه أرسل المبلغ"
+        "المشتري أكد إرسال المبلغ"
     )
 
 
-    return redirect("/trade/"+str(id))
+    return redirect(
+        "/trade/"+str(id)
+    )
 
 
-@app.route("/seller_confirm/<int:id>")
+
+# ===============================
+# UPLOAD PAYMENT PROOF
+# ===============================
+
+
+@app.route(
+    "/upload_payment/<int:id>",
+    methods=["POST"]
+)
+
 @login_required
-def seller_confirm(id):
 
-    con = connect()
+def upload_payment(id):
 
 
-    trade = con.execute(
-        "SELECT * FROM trades WHERE id=?",
-        (id,)
+    if "proof" not in request.files:
+
+        return "لم يتم اختيار ملف"
+
+
+
+    file=request.files["proof"]
+
+
+    if file.filename=="":
+
+        return "الملف فارغ"
+
+
+
+    con=connect()
+
+
+
+    trade=con.execute(
+    """
+    SELECT *
+    FROM trades
+    WHERE id=?
+    """,
+    (id,)
     ).fetchone()
 
 
+
     if not trade:
+
         con.close()
+
         return "الصفقة غير موجودة"
 
 
 
-    # التأكد أن المستخدم هو البائع
-    if trade["seller"] != session["user"]:
+    if trade["buyer"] != session["user"]:
 
         con.close()
+
         return "غير مصرح"
 
 
 
-    # التأكد من وجود إثبات دفع قبل تحرير USDT
-    if not trade["payment_proof"]:
-
-        con.close()
-
-        return """
-        <script>
-        alert("⚠️ لا يمكن تحويل USDT قبل رفع إثبات الدفع");
-        window.location.href='/trade/""" + str(id) + """';
-        </script>
-        """
-
-
-
-    # منع تكرار التحويل
-    if trade["status"] == "COMPLETED":
-
-        con.close()
-        return "الصفقة مكتملة مسبقاً"
-
-
-
-    amount = trade["amount"]
-
-
-
-    # إزالة USDT من الرصيد المحجوز للبائع
-    con.execute(
-        """
-        UPDATE wallets
-        SET locked = locked - ?
-        WHERE username=?
-        """,
-        (
-            amount,
-            trade["seller"]
-        )
-    )
-
-    wallet_log(
-        trade["seller"],
-        "USDT_RELEASED",
-        amount
+    filename=secure_filename(
+        f"payment_{id}_{file.filename}"
     )
 
 
-
-    # إضافة USDT للمشتري
-    buyer_wallet = con.execute(
-        "SELECT * FROM wallets WHERE username=?",
-        (trade["buyer"],)
-    ).fetchone()
-
-
-
-    if buyer_wallet:
-
-        con.execute(
-            """
-            UPDATE wallets
-            SET balance = balance + ?
-            WHERE username=?
-            """,
-            (
-                amount,
-                trade["buyer"]
-            )
-        )
-
-    else:
-
-        con.execute(
-            """
-            INSERT INTO wallets(username,balance,locked)
-            VALUES(?,?,?)
-            """,
-            (
-                trade["buyer"],
-                amount,
-                0
-            )
-        )
-
-    wallet_log(
-        trade["buyer"],
-        "USDT_RECEIVED",
-        amount
-    )
-
-
-
-    # تحديث حالة الصفقة
-    con.execute(
-        """
-        UPDATE trades
-        SET status='COMPLETED'
-        WHERE id=?
-        """,
-        (id,)
-    )
-
-    # تحديث حالة الحجز Release والـ Hash كما طلبته
-    con.execute(
-        """
-        UPDATE trades
-        SET escrow_status = 'RELEASED', release_tx_hash = 'PENDING_RELEASE'
-        WHERE id = ?
-        """,
-        (id,)
-    )
-
-
-
-    # زيادة عدد الصفقات
-    con.execute(
-        """
-        UPDATE users
-        SET trades_count = trades_count + 1
-        WHERE username=?
-        """,
-        (trade["buyer"],)
-    )
-
-
-    con.execute(
-        """
-        UPDATE users
-        SET trades_count = trades_count + 1
-        WHERE username=?
-        """,
-        (trade["seller"],)
-    )
-
-
-
-    con.commit()
-    con.close()
-
-
-
-    notify(
-        trade["buyer"],
-        "تم استلام USDT",
-        f"تم تحويل {amount} USDT إلى محفظتك"
-    )
-
-
-    notify(
-        trade["seller"],
-        "تم إغلاق الصفقة",
-        "تم تحرير USDT بنجاح"
-    )
-
-
-    return redirect("/trade/"+str(id))
-
-
-# =========================
-# PAYMENT PROOF UPLOAD
-# =========================
-
-UPLOAD_FOLDER = os.path.join(os.getcwd(), "uploads")
-
-if not os.path.exists(UPLOAD_FOLDER):
-    os.makedirs(UPLOAD_FOLDER)
-
-
-app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
-
-
-@app.route("/upload_payment/<int:id>", methods=["POST"])
-@login_required
-def upload_payment(id):
-
-    if "proof" not in request.files:
-        return "لم يتم اختيار ملف"
-
-
-    file = request.files["proof"]
-
-
-    if file.filename == "":
-        return "الملف فارغ"
-
-
-    # التأكد أن الصفقة تخص المشتري
-    con = connect()
-
-    trade = con.execute(
-        "SELECT * FROM trades WHERE id=?",
-        (id,)
-    ).fetchone()
-
-
-    if not trade:
-        con.close()
-        return "الصفقة غير موجودة"
-
-
-    if trade["buyer"] != session["user"]:
-        con.close()
-        return "غير مصرح لك"
-
-
-    filename = secure_filename(
-        f"proof_{id}_{file.filename}"
-    )
-
-    path = os.path.join(
+    path=os.path.join(
         app.config["UPLOAD_FOLDER"],
         filename
     )
@@ -2367,75 +1618,381 @@ def upload_payment(id):
 
 
     con.execute(
-        """
-        UPDATE trades
-        SET payment_proof=?
-        WHERE id=?
-        """,
-        (
-            filename,
-            id
-        )
+    """
+    UPDATE trades
+
+    SET payment_proof=?
+
+    WHERE id=?
+
+    """,
+
+    (
+        filename,
+        id
+    )
+
     )
 
 
     con.commit()
+
     con.close()
 
 
 
     notify(
         trade["seller"],
-        "إثبات دفع جديد",
-        "قام المشتري برفع إثبات الدفع"
+        "إثبات دفع",
+        "تم رفع إثبات الدفع"
     )
 
 
-    return redirect("/trade/"+str(id))
+
+    return redirect(
+        "/trade/"+str(id)
+    )
 
 
-@app.route("/uploads/<filename>")
+
+# ===============================
+# SELLER RELEASE ESCROW
+# ===============================
+
+
+@app.route(
+    "/seller_confirm/<int:id>"
+)
+
+@login_required
+
+def seller_confirm(id):
+
+
+    con=connect()
+
+
+
+    trade=con.execute(
+    """
+    SELECT *
+    FROM trades
+    WHERE id=?
+    """,
+    (id,)
+    ).fetchone()
+
+
+
+    if not trade:
+
+        con.close()
+
+        return "الصفقة غير موجودة"
+
+
+
+    if trade["seller"] != session["user"]:
+
+        con.close()
+
+        return "غير مصرح"
+
+
+
+    if not trade["payment_proof"]:
+
+        con.close()
+
+        return """
+        لا يمكن تحرير USDT قبل وجود إثبات الدفع
+        """
+
+
+
+    if trade["status"]=="COMPLETED":
+
+        con.close()
+
+        return "الصفقة مكتملة"
+
+
+
+    amount=trade["amount"]
+
+
+
+    # إزالة المحجوز من البائع
+
+    con.execute(
+    """
+    UPDATE wallets
+
+    SET locked = locked - ?
+
+    WHERE username=?
+
+    """,
+
+    (
+        amount,
+        trade["seller"]
+    )
+
+    )
+
+
+
+    wallet_log(
+        trade["seller"],
+        "ESCROW_RELEASE",
+        amount
+    )
+
+
+
+    # إضافة للمشتري
+
+    create_wallet_if_missing(
+        trade["buyer"]
+    )
+
+
+    con.execute(
+    """
+    UPDATE wallets
+
+    SET balance = balance + ?
+
+    WHERE username=?
+
+    """,
+
+    (
+        amount,
+        trade["buyer"]
+    )
+
+    )
+
+
+    wallet_log(
+        trade["buyer"],
+        "USDT_RECEIVED",
+        amount
+    )
+
+
+
+    con.execute(
+    """
+    UPDATE trades
+
+    SET
+
+    status='COMPLETED',
+
+    escrow_status='RELEASED'
+
+    WHERE id=?
+
+    """,
+
+    (id,)
+
+    )
+
+
+
+    con.commit()
+
+    con.close()
+
+
+
+    notify(
+        trade["buyer"],
+        "تم استلام USDT",
+        f"تم تحويل {amount} USDT لمحفظتك"
+    )
+
+
+    notify(
+        trade["seller"],
+        "تم إنهاء الصفقة",
+        "تم تحرير USDT بنجاح"
+    )
+
+
+
+    return redirect(
+        "/trade/"+str(id)
+    )
+
+
+
+# ===============================
+# UPLOADS VIEW
+# ===============================
+
+
+@app.route(
+    "/uploads/<filename>"
+)
+
 def uploaded_file(filename):
+
     return send_from_directory(
-        "uploads",
+        app.config["UPLOAD_FOLDER"],
         filename
     )
 
 
-@app.route("/usdt_deposit", methods=["GET","POST"])
+# ===============================
+# WALLET PAGE
+# ===============================
+
+
+@app.route("/wallet")
 @login_required
+def wallet():
+
+    con = connect()
+
+
+    wallet = con.execute(
+        """
+        SELECT *
+        FROM wallets
+        WHERE username=?
+        """,
+        (
+            session["user"],
+        )
+    ).fetchone()
+
+
+    user = con.execute(
+        """
+        SELECT *
+        FROM users
+        WHERE username=?
+        """,
+        (
+            session["user"],
+        )
+    ).fetchone()
+
+
+    con.close()
+
+
+    return render_template(
+        "wallet.html",
+        wallet=wallet,
+        user=user
+    )
+
+
+
+# ===============================
+# USDT DEPOSIT REQUEST
+# ===============================
+
+
+@app.route(
+    "/usdt_deposit",
+    methods=["GET","POST"]
+)
+
+@login_required
+
 def usdt_deposit():
 
-    if request.method == "POST":
 
-        amount = float(request.form.get("amount",0))
-        tx_hash = request.form.get("tx_hash","")
+    if request.method=="POST":
 
-        if amount <= 0 or not tx_hash:
-            return "يرجى إدخال الكمية ورقم التحويل"
 
-        con = connect()
-
-        con.execute(
-            """
-            INSERT INTO usdt_deposits
-            (username, amount, tx_hash)
-            VALUES (?,?,?)
-            """,
-            (
-                session["user"],
-                amount,
-                tx_hash
+        amount=float(
+            request.form.get(
+                "amount",
+                0
             )
         )
 
+
+        tx_hash=request.form.get(
+            "tx_hash",
+            ""
+        )
+
+
+
+        if amount <= 0 or not tx_hash:
+
+            return "بيانات ناقصة"
+
+
+
+        con=connect()
+
+
+
+        con.execute(
+        """
+        CREATE TABLE IF NOT EXISTS usdt_deposits(
+
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+            username TEXT,
+
+            amount REAL,
+
+            tx_hash TEXT UNIQUE,
+
+            status TEXT DEFAULT 'PENDING',
+
+            created DATETIME DEFAULT CURRENT_TIMESTAMP
+
+        )
+        """
+        )
+
+
+
+        con.execute(
+        """
+        INSERT INTO usdt_deposits
+        (
+        username,
+        amount,
+        tx_hash
+        )
+
+        VALUES(?,?,?)
+
+        """,
+
+        (
+            session["user"],
+            amount,
+            tx_hash
+        )
+
+        )
+
+
         con.commit()
+
         con.close()
 
 
-        telegram_bot.send_admin(
+
+        try:
+
+            telegram_bot.send_admin(
             f"""
-💰 طلب إيداع USDT جديد
+💰 إيداع USDT جديد
 
 👤 المستخدم:
 {session['user']}
@@ -2446,15 +2003,18 @@ def usdt_deposit():
 🔗 TX:
 {tx_hash}
 """
+            )
+
+        except:
+
+            pass
+
+
+
+        return redirect(
+            "/wallet"
         )
 
-
-        return """
-        <script>
-        alert("تم إرسال طلب الإيداع للمراجعة ✅");
-        window.location.href="/wallet";
-        </script>
-        """
 
 
     return render_template(
@@ -2463,12 +2023,938 @@ def usdt_deposit():
     )
 
 
-if __name__ == "__main__":
+
+# ===============================
+# CHECK BSC TRANSACTION
+# ===============================
+
+
+def check_usdt_transaction(
+        tx_hash,
+        expected_amount
+):
+
     try:
-        app.run(
-            host="0.0.0.0",
-            port=5000,
-            debug=False
+
+
+        receipt=w3.eth.get_transaction_receipt(
+            tx_hash
         )
+
+
+        if receipt.status != 1:
+
+            return False
+
+
+
+        balance=usdt_contract.functions.balanceOf(
+            PLATFORM_WALLET
+        ).call()
+
+
+
+        current=balance / 10**18
+
+
+
+        if current >= expected_amount:
+
+            return True
+
+
+
+        return False
+
+
+
+    except Exception as e:
+
+
+        print(
+            "USDT CHECK ERROR:",
+            e
+        )
+
+
+        return False
+
+
+
+# ===============================
+# WITHDRAW REQUEST
+# ===============================
+
+
+@app.route(
+    "/withdraw",
+    methods=["GET","POST"]
+)
+
+@login_required
+
+def withdraw():
+
+
+    con=connect()
+
+
+    wallet=con.execute(
+    """
+    SELECT *
+    FROM wallets
+    WHERE username=?
+    """,
+    (
+        session["user"],
+    )
+
+    ).fetchone()
+
+
+
+    if request.method=="POST":
+
+
+        amount=float(
+            request.form.get(
+                "amount",
+                0
+            )
+        )
+
+
+        address=request.form.get(
+            "wallet"
+        )
+
+
+
+        if amount <= 0:
+
+            con.close()
+
+            return "كمية غير صحيحة"
+
+
+
+        if wallet["balance"] < amount:
+
+            con.close()
+
+            return "الرصيد غير كافي"
+
+
+
+        con.execute(
+        """
+        CREATE TABLE IF NOT EXISTS withdraw_requests(
+
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+            username TEXT,
+
+            amount REAL,
+
+            wallet TEXT,
+
+            status TEXT DEFAULT 'PENDING'
+
+        )
+        """
+        )
+
+
+
+        con.execute(
+        """
+        INSERT INTO withdraw_requests
+        (
+        username,
+        amount,
+        wallet
+        )
+
+        VALUES(?,?,?)
+
+        """,
+
+        (
+            session["user"],
+            amount,
+            address
+        )
+
+        )
+
+
+
+        con.execute(
+        """
+        UPDATE wallets
+
+        SET balance=balance-?
+
+        WHERE username=?
+
+        """,
+
+        (
+            amount,
+            session["user"]
+        )
+
+        )
+
+
+        con.commit()
+
+        con.close()
+
+
+
+        try:
+
+            telegram_bot.send_admin(
+            f"""
+📤 طلب سحب USDT
+
+👤 المستخدم:
+{session['user']}
+
+💰 الكمية:
+{amount}
+
+🏦 العنوان:
+{address}
+"""
+            )
+
+        except:
+
+            pass
+
+
+
+        return redirect(
+            "/wallet"
+        )
+
+
+
+    con.close()
+
+
+    return render_template(
+        "withdraw.html",
+        wallet=wallet
+    )
+
+
+
+# ===============================
+# ADMIN PANEL
+# ===============================
+
+
+@app.route("/admin")
+@admin_required
+
+def admin():
+
+
+    con=connect()
+
+
+    users=con.execute(
+        """
+        SELECT *
+        FROM users
+        ORDER BY id DESC
+        """
+    ).fetchall()
+
+
+
+    trades=con.execute(
+        """
+        SELECT *
+        FROM trades
+        ORDER BY id DESC
+        """
+    ).fetchall()
+
+
+
+    deposits=con.execute(
+        """
+        SELECT *
+        FROM usdt_deposits
+        ORDER BY id DESC
+        """
+    ).fetchall()
+
+
+
+    con.close()
+
+
+
+    return render_template(
+        "admin.html",
+        users=users,
+        trades=trades,
+        deposits=deposits
+    )
+
+
+
+# ===============================
+# ADMIN CONFIRM DEPOSIT
+# ===============================
+
+
+@app.route(
+    "/admin_confirm_deposit/<int:id>"
+)
+
+@admin_required
+
+def admin_confirm_deposit(id):
+
+
+    con=connect()
+
+
+
+    deposit=con.execute(
+    """
+    SELECT *
+    FROM usdt_deposits
+    WHERE id=?
+    """,
+    (id,)
+    ).fetchone()
+
+
+
+    if not deposit:
+
+        con.close()
+
+        return "الإيداع غير موجود"
+
+
+
+    if deposit["status"]=="CONFIRMED":
+
+        con.close()
+
+        return "تم التأكيد مسبقاً"
+
+
+
+    verified=check_usdt_transaction(
+        deposit["tx_hash"],
+        deposit["amount"]
+    )
+
+
+
+    if not verified:
+
+        con.close()
+
+        return "لم يتم العثور على التحويل"
+
+
+
+    create_wallet_if_missing(
+        deposit["username"]
+    )
+
+
+
+    con.execute(
+    """
+    UPDATE wallets
+
+    SET balance=balance+?
+
+    WHERE username=?
+
+    """,
+
+    (
+        deposit["amount"],
+        deposit["username"]
+    )
+
+    )
+
+
+
+    con.execute(
+    """
+    UPDATE usdt_deposits
+
+    SET status='CONFIRMED'
+
+    WHERE id=?
+
+    """,
+
+    (id,)
+
+    )
+
+
+
+    con.commit()
+
+    con.close()
+
+
+
+    notify(
+        deposit["username"],
+        "تم قبول الإيداع",
+        f"تم إضافة {deposit['amount']} USDT"
+    )
+
+
+
+    return redirect(
+        "/admin"
+    )
+
+
+# ===============================
+# PROFILE
+# ===============================
+
+
+@app.route("/profile")
+@login_required
+
+def profile():
+
+    con=connect()
+
+
+    user=con.execute(
+    """
+    SELECT *
+    FROM users
+    WHERE username=?
+    """,
+    (
+        session["user"],
+    )
+
+    ).fetchone()
+
+
+
+    ads=con.execute(
+    """
+    SELECT *
+    FROM ads
+    WHERE user=?
+    ORDER BY id DESC
+    """,
+    (
+        session["user"],
+    )
+
+    ).fetchall()
+
+
+
+    trades=con.execute(
+    """
+    SELECT *
+    FROM trades
+    WHERE buyer=? OR seller=?
+    ORDER BY id DESC
+    """,
+    (
+        session["user"],
+        session["user"]
+    )
+
+    ).fetchall()
+
+
+
+    con.close()
+
+
+    return render_template(
+        "profile.html",
+        user=user,
+        ads=ads,
+        trades=trades
+    )
+
+
+
+# ===============================
+# EDIT PROFILE
+# ===============================
+
+
+@app.route(
+    "/edit_profile",
+    methods=["GET","POST"]
+)
+
+@login_required
+
+def edit_profile():
+
+
+    con=connect()
+
+
+
+    if request.method=="POST":
+
+
+        phone=request.form.get(
+            "phone",
+            ""
+        )
+
+
+        bank=request.form.get(
+            "bank",
+            ""
+        )
+
+
+        iban=request.form.get(
+            "iban",
+            ""
+        )
+
+
+        payment=request.form.get(
+            "payment_method",
+            ""
+        )
+
+
+        wallet=request.form.get(
+            "usdt_wallet",
+            ""
+        )
+
+
+
+        con.execute(
+        """
+        UPDATE users
+
+        SET
+
+        phone=?,
+
+        bank=?,
+
+        iban=?,
+
+        payment_method=?,
+
+        usdt_wallet=?
+
+        WHERE username=?
+
+        """,
+
+        (
+            phone,
+            bank,
+            iban,
+            payment,
+            wallet,
+            session["user"]
+        )
+
+        )
+
+
+
+        con.commit()
+
+        con.close()
+
+
+
+        return redirect(
+            "/profile"
+        )
+
+
+
+    user=con.execute(
+    """
+    SELECT *
+    FROM users
+    WHERE username=?
+    """,
+    (
+        session["user"],
+    )
+
+    ).fetchone()
+
+
+
+    con.close()
+
+
+    return render_template(
+        "edit_profile.html",
+        user=user
+    )
+
+
+
+# ===============================
+# REVIEWS
+# ===============================
+
+
+@app.route(
+    "/review/<int:id>",
+    methods=["POST"]
+)
+
+@login_required
+
+def review(id):
+
+
+    rating=int(
+        request.form.get(
+            "rating",
+            5
+        )
+    )
+
+
+    comment=request.form.get(
+        "comment",
+        ""
+    )
+
+
+    con=connect()
+
+
+
+    trade=con.execute(
+    """
+    SELECT *
+    FROM trades
+    WHERE id=?
+    """,
+    (id,)
+    ).fetchone()
+
+
+
+    if not trade:
+
+        con.close()
+
+        return "الصفقة غير موجودة"
+
+
+
+    target = (
+        trade["seller"]
+        if session["user"]==trade["buyer"]
+        else trade["buyer"]
+    )
+
+
+
+    con.execute(
+    """
+    CREATE TABLE IF NOT EXISTS reviews(
+
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+        trade_id INTEGER,
+
+        from_user TEXT,
+
+        to_user TEXT,
+
+        rating INTEGER,
+
+        comment TEXT
+
+    )
+    """
+    )
+
+
+
+    con.execute(
+    """
+    INSERT INTO reviews
+
+    (
+    trade_id,
+    from_user,
+    to_user,
+    rating,
+    comment
+    )
+
+    VALUES(?,?,?,?,?)
+
+    """,
+
+    (
+        id,
+        session["user"],
+        target,
+        rating,
+        comment
+    )
+
+    )
+
+
+
+    avg=con.execute(
+    """
+    SELECT AVG(rating)
+    FROM reviews
+    WHERE to_user=?
+    """,
+    (
+        target,
+    )
+
+    ).fetchone()[0]
+
+
+
+    if avg:
+
+        con.execute(
+        """
+        UPDATE users
+
+        SET rating=?
+
+        WHERE username=?
+
+        """,
+        (
+            round(avg,2),
+            target
+        )
+
+        )
+
+
+
+    con.commit()
+
+    con.close()
+
+
+
+    return redirect(
+        "/profile"
+    )
+
+
+
+# ===============================
+# NOTIFICATIONS PAGE
+# ===============================
+
+
+@app.route("/notifications")
+
+@login_required
+
+def notifications():
+
+
+    con=connect()
+
+
+    data=con.execute(
+    """
+    SELECT *
+    FROM notifications
+
+    WHERE username=?
+
+    ORDER BY id DESC
+
+    """,
+    (
+        session["user"],
+    )
+
+    ).fetchall()
+
+
+
+    con.close()
+
+
+    return render_template(
+        "notifications.html",
+        notifications=data
+    )
+
+
+
+# ===============================
+# CASH ADS
+# ===============================
+
+
+@app.route(
+    "/cash_market"
+)
+
+def cash_market():
+
+
+    con=connect()
+
+
+    ads=con.execute(
+    """
+    SELECT *
+    FROM cash_ads
+    WHERE status='OPEN'
+    ORDER BY id DESC
+    """
+    ).fetchall()
+
+
+    con.close()
+
+
+    return render_template(
+        "cash_market.html",
+        ads=ads
+    )
+
+
+
+# ===============================
+# ERROR HANDLER
+# ===============================
+
+
+@app.errorhandler(Exception)
+
+def handle_error(error):
+
+    print(
+        traceback.format_exc()
+    )
+
+    return "حدث خطأ في السيرفر",500
+
+
+
+# ===============================
+# START THREADS
+# ===============================
+
+
+def start_bot():
+
+    try:
+
+        telegram_bot.bot_loop()
+
     except Exception:
-        traceback.print_exc()
+
+        print(
+            traceback.format_exc()
+        )
+
+
+
+def update_prices():
+
+    while True:
+
+        try:
+
+            price_updater.update_price()
+
+        except Exception as e:
+
+            print(
+                "PRICE ERROR",
+                e
+            )
+
+
+        time.sleep(
+            3600
+        )
+
+
+
+try:
+
+    threading.Thread(
+        target=start_bot,
+        daemon=True
+    ).start()
+
+
+except Exception:
+
+    print(
+        traceback.format_exc()
+    )
+
+
+
+try:
+
+    threading.Thread(
+        target=update_prices,
+        daemon=True
+    ).start()
+
+
+except Exception:
+
+    print(
+        traceback.format_exc()
+    )
+
+
+
+# ===============================
+# RUN
+# ===============================
+
+
+if __name__=="__main__":
+
+
+    app.run(
+        host="0.0.0.0",
+        port=5000,
+        debug=False
+    )
