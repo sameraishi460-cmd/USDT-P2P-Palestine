@@ -964,11 +964,9 @@ def wallet_log(
 
 
 @app.route("/")
-
 def home():
 
     con = connect()
-
 
     ads = con.execute(
         """
@@ -980,13 +978,40 @@ def home():
     ).fetchall()
 
 
+    cash_ads = con.execute(
+        """
+        SELECT *
+        FROM cash_ads
+        WHERE status='OPEN'
+        ORDER BY id DESC
+        """
+    ).fetchall()
+
+
+    price = con.execute(
+        """
+        SELECT *
+        FROM market_price
+        WHERE id=1
+        """
+    ).fetchone()
+
+
+    user = None
+
+    if "user" in session:
+        user = session["user"]
+
 
     con.close()
 
 
     return render_template(
         "index.html",
-        ads=ads
+        ads=ads,
+        cash_ads=cash_ads,
+        price=price,
+        user=user
     )
 
 
@@ -2237,7 +2262,7 @@ def withdraw():
 
 
         return redirect(
-            "/wallet"
+        "/wallet"
         )
 
 
