@@ -342,11 +342,24 @@ def setup_database():
 
         usd_ils REAL DEFAULT 3.70,
 
-        usdt_ils REAL DEFAULT 3.70
+        usdt_ils REAL DEFAULT 3.70,
+
+        updated DATETIME DEFAULT CURRENT_TIMESTAMP
 
     )
     """
     )
+
+
+    # FIX OLD DATABASE
+    if not column_exists(con, "market_price", "updated"):
+
+        con.execute(
+        """
+        ALTER TABLE market_price
+        ADD COLUMN updated DATETIME
+        """
+        )
 
 
     # INSERT DEFAULT PRICE
