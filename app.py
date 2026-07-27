@@ -3054,6 +3054,72 @@ except Exception:
 
 
 # ===============================
+# ADMIN MARKET PRICE CONTROL
+# ===============================
+
+@app.route("/admin_price", methods=["GET", "POST"])
+@admin_required
+def admin_price():
+
+    con = connect()
+
+
+    if request.method == "POST":
+
+        usd = float(
+            request.form.get("usd_ils", 0)
+        )
+
+        usdt = float(
+            request.form.get("usdt_ils", 0)
+        )
+
+
+        con.execute(
+        """
+        UPDATE market_price
+
+        SET
+
+        usd_ils=?,
+
+        usdt_ils=?,
+
+        updated=?
+
+        WHERE id=1
+        """,
+        (
+            usd,
+            usdt,
+            datetime.now()
+        )
+        )
+
+
+        con.commit()
+
+
+    price = con.execute(
+    """
+    SELECT *
+    FROM market_price
+    WHERE id=1
+    """
+    ).fetchone()
+
+
+    con.close()
+
+
+    return render_template(
+        "admin_price.html",
+        price=price
+    )
+
+
+
+# ===============================
 # RUN
 # ===============================
 
