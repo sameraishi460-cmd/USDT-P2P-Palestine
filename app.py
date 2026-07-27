@@ -324,6 +324,20 @@ def setup_database():
     add_column(con, "usdt_deposits", "confirmed_by", "TEXT")
     add_column(con, "usdt_deposits", "confirmed_at", "DATETIME")
 
+    # WITHDRAW REQUESTS
+    con.execute("""
+    CREATE TABLE IF NOT EXISTS withdraw_requests(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT,
+        amount REAL,
+        wallet TEXT,
+        network TEXT DEFAULT 'BSC',
+        status TEXT DEFAULT 'PENDING',
+        tx_hash TEXT DEFAULT '',
+        created DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
     con.commit()
     con.close()
 
