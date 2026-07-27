@@ -305,6 +305,76 @@ def setup_database():
     )
 
 
+    # CASH ADS
+
+    con.execute(
+    """
+    CREATE TABLE IF NOT EXISTS cash_ads(
+
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+        user TEXT,
+
+        title TEXT,
+
+        amount REAL,
+
+        price REAL,
+
+        payment TEXT,
+
+        status TEXT DEFAULT 'OPEN',
+
+        created DATETIME DEFAULT CURRENT_TIMESTAMP
+
+    )
+    """
+    )
+
+
+    # MARKET PRICE
+
+    con.execute(
+    """
+    CREATE TABLE IF NOT EXISTS market_price(
+
+        id INTEGER PRIMARY KEY,
+
+        usd_ils REAL DEFAULT 3.70,
+
+        usdt_ils REAL DEFAULT 3.70
+
+    )
+    """
+    )
+
+
+    # INSERT DEFAULT PRICE
+
+    check_price = con.execute(
+        """
+        SELECT *
+        FROM market_price
+        WHERE id=1
+        """
+    ).fetchone()
+
+
+    if not check_price:
+
+        con.execute(
+        """
+        INSERT INTO market_price
+        (
+        id,
+        usd_ils,
+        usdt_ils
+        )
+        VALUES(1,3.70,3.70)
+        """
+        )
+
+
     con.commit()
 
     con.close()
