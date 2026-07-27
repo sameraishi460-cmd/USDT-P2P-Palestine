@@ -350,6 +350,51 @@ def setup_database():
     """
     )
 
+    # USDT DEPOSITS
+
+    con.execute(
+    """
+    CREATE TABLE IF NOT EXISTS usdt_deposits(
+
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+        username TEXT,
+
+        amount REAL,
+
+        tx_hash TEXT UNIQUE,
+
+        status TEXT DEFAULT 'PENDING',
+
+        created DATETIME DEFAULT CURRENT_TIMESTAMP
+
+    )
+    """
+    )
+
+
+    # WITHDRAW REQUESTS
+
+    con.execute(
+    """
+    CREATE TABLE IF NOT EXISTS withdraw_requests(
+
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+        username TEXT,
+
+        amount REAL,
+
+        wallet TEXT,
+
+        status TEXT DEFAULT 'PENDING',
+
+        created DATETIME DEFAULT CURRENT_TIMESTAMP
+
+    )
+    """
+    )
+
 
     # FIX OLD DATABASE
     if not column_exists(con, "market_price", "updated"):
