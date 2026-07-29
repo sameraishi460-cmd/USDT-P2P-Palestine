@@ -1,93 +1,98 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-
 <head>
-
 <meta charset="UTF-8">
-
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
 <title>نشر إعلان مقابلة شخصية</title>
-
-
 <style>
-
-
 body{
-
 margin:0;
 padding:20px;
 background:#070d18;
 color:white;
-font-family:tahoma;
-
+font-family:tahoma,Arial;
 }
-
-
-
 .box{
-
 max-width:500px;
 margin:auto;
 background:#111827;
 padding:25px;
 border-radius:25px;
-
+box-shadow:0 0 20px #000;
 }
-
-
-
 h2{
-
 text-align:center;
 color:#22c55e;
-
+margin-bottom:25px;
 }
-
-
-
+.balance{
+background:#064e3b;
+padding:15px;
+border-radius:15px;
+text-align:center;
+font-size:18px;
+margin-bottom:20px;
+}
 .info{
-
 background:#1e293b;
 padding:15px;
 border-radius:15px;
+line-height:2;
 margin-bottom:20px;
-
 }
-
-
-
+.plan{
+background:#0f172a;
+padding:15px;
+border-radius:15px;
+margin-bottom:10px;
+border:1px solid #334155;
+}
+.plan input{
+width:auto;
+}
 input,textarea,select{
-
 width:100%;
+box-sizing:border-box;
 padding:13px;
 margin:8px 0;
 border:0;
 border-radius:12px;
 background:#334155;
 color:white;
-
+font-size:16px;
 }
-
-
-
+textarea{
+height:100px;
+resize:none;
+}
+label{
+display:block;
+margin-top:10px;
+color:#cbd5e1;
+}
 button{
-
 width:100%;
 padding:15px;
+margin-top:20px;
 border:0;
 border-radius:12px;
 background:#16a34a;
 color:white;
 font-size:18px;
 cursor:pointer;
-
 }
-
-
-
+button:disabled{
+background:#555;
+cursor:not-allowed;
+}
+.warning{
+background:#7f1d1d;
+padding:15px;
+border-radius:12px;
+line-height:1.8;
+margin-bottom:15px;
+}
 .back{
-
 display:block;
 text-align:center;
 margin-top:15px;
@@ -96,157 +101,108 @@ background:#2563eb;
 border-radius:12px;
 color:white;
 text-decoration:none;
-
 }
-
-
 </style>
-
-
 </head>
-
-
-
 <body>
-
-
 <div class="box">
-
-
-
 <h2>
-
 🤝 نشر إعلان مقابلة شخصية
-
 </h2>
-
-
-
-
-<div class="info">
-
-
-رسوم نشر الإعلان:
-
-<br><br>
-
-🟢 أسبوع : 2 USDT
-
+<div class="balance">
+💰 رصيد محفظتك:
 <br>
-
-🔵 أسبوعين : 6 USDT
-
-<br>
-
-🟣 شهر كامل : 15 USDT
-
-
+<b>{{ wallet_balance }} USDT</b>
 </div>
-
-
-
-
-
+<div class="info">
+💳 رسوم الإعلان:
+<br>
+🟢 أسبوع : <b>2 USDT</b>
+<br>
+🔵 أسبوعين : <b>6 USDT</b>
+<br>
+🟣 شهر كامل : <b>15 USDT</b>
+<br><br>
+سيتم خصم رسوم الإعلان مباشرة من محفظتك عند التأكيد.
+</div>
+{% if wallet_balance < 2 %}
+<div class="warning">
+⚠️ رصيدك غير كافي.
+<br>
+تحتاج على الأقل 2 USDT لنشر إعلان أسبوع.
+</div>
+{% endif %}
 <form method="POST">
-
-
-
-<input 
+<label>
+كمية USDT المتوفرة للبيع
+</label>
+<input
+type="number"
+step="0.01"
 name="amount"
-placeholder="كمية USDT"
-required>
-
-
-
-<input 
+placeholder="مثال: 500"
+required
+>
+<label>
+السعر بالدولار
+</label>
+<input
+type="number"
+step="0.01"
 name="price"
-placeholder="السعر بالدولار"
-required>
-
-
-
-<input 
+placeholder="مثال: 500"
+required
+>
+<label>
+المدينة
+</label>
+<input
 name="city"
-placeholder="المدينة"
-required>
-
-
-
-<input 
+placeholder="مثال: طولكرم"
+required
+>
+<label>
+مكان المقابلة
+</label>
+<input
 name="location"
-placeholder="مكان المقابلة"
-required>
-
-
-
+placeholder="مثال: وسط المدينة"
+required
+>
+<label>
+ملاحظات إضافية
+</label>
 <textarea
 name="notes"
-placeholder="ملاحظات إضافية">
+placeholder="اكتب أي تفاصيل إضافية">
 </textarea>
-
-
-
-
-
+<label>
+اختر مدة الإعلان
+</label>
 <select name="plan">
-
-
 <option value="week">
-
-أسبوع - 2 USDT
-
+🟢 أسبوع - 2 USDT
 </option>
-
-
 <option value="two_weeks">
-
-أسبوعين - 6 USDT
-
+🔵 أسبوعين - 6 USDT
 </option>
-
-
-
 <option value="month">
-
-شهر كامل - 15 USDT
-
+🟣 شهر كامل - 15 USDT
 </option>
-
-
-
 </select>
-
-
-
-
-
+{% if wallet_balance >= 2 %}
 <button>
-
-متابعة الدفع 🚀
-
+🚀 تأكيد ونشر الإعلان
 </button>
-
-
-
+{% else %}
+<button disabled>
+🔒 رصيد غير كافي
+</button>
+{% endif %}
 </form>
-
-
-
-
 <a class="back" href="/cash_market">
-
 ⬅️ الرجوع لسوق المقابلات
-
 </a>
-
-
-
-
 </div>
-
-
-
 </body>
-
-
 </html>
