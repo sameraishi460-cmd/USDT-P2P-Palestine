@@ -8,161 +8,613 @@
 
 <title>لوحة التحكم - USDT P2P Palestine</title>
 
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+<style>
+
+*{
+box-sizing:border-box;
+}
+
+
+body{
+
+margin:0;
+padding:15px;
+background:#050816;
+color:white;
+font-family:tahoma,Arial;
+padding-bottom:90px;
+
+}
+
+
+.container{
+
+max-width:600px;
+margin:auto;
+
+}
+
+
+
+.header{
+
+background:linear-gradient(135deg,#16a34a,#065f46);
+padding:25px;
+border-radius:25px;
+text-align:center;
+margin-bottom:20px;
+
+}
+
+
+
+.logo{
+
+font-size:24px;
+font-weight:bold;
+
+}
+
+
+
+.card{
+
+background:#111827;
+border-radius:22px;
+padding:20px;
+margin-bottom:18px;
+border:1px solid #263244;
+
+}
+
+
+
+h3{
+
+color:#22c55e;
+margin-top:0;
+
+}
+
+
+
+.status{
+
+padding:10px;
+border-radius:12px;
+text-align:center;
+margin-top:15px;
+
+}
+
+
+.success{
+
+background:#064e3b;
+color:#86efac;
+
+}
+
+
+.warning{
+
+background:#451a03;
+color:#fed7aa;
+
+}
+
+
+
+.balance{
+
+background:linear-gradient(135deg,#064e3b,#16a34a);
+text-align:center;
+padding:25px;
+border-radius:20px;
+
+}
+
+
+
+.balance h1{
+
+font-size:40px;
+margin:10px;
+
+}
+
+
+
+.grid{
+
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:12px;
+
+}
+
+
+
+.stat{
+
+background:#020617;
+padding:15px;
+border-radius:15px;
+text-align:center;
+
+}
+
+
+
+.stat span{
+
+display:block;
+color:#94a3b8;
+font-size:14px;
+
+}
+
+
+
+.stat b{
+
+font-size:25px;
+color:#22c55e;
+
+}
+
+
+
+.actions{
+
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:12px;
+
+}
+
+
+
+.btn{
+
+padding:15px;
+border-radius:15px;
+text-decoration:none;
+color:white;
+text-align:center;
+font-size:15px;
+
+}
+
+
+
+.green{
+
+background:#16a34a;
+
+}
+
+
+
+.blue{
+
+background:#2563eb;
+
+}
+
+
+
+.yellow{
+
+background:#ca8a04;
+
+}
+
+
+
+.orange{
+
+background:#ea580c;
+
+}
+
+
+
+.gray{
+
+background:#475569;
+
+}
+
+
+
+.red{
+
+background:#dc2626;
+
+}
+
+
+
+.bottom-nav{
+
+position:fixed;
+bottom:0;
+right:0;
+left:0;
+background:#111827;
+display:flex;
+justify-content:space-around;
+padding:12px;
+border-top:1px solid #263244;
+
+}
+
+
+
+.bottom-nav a{
+
+color:white;
+text-decoration:none;
+font-size:12px;
+text-align:center;
+
+}
+
+
+
+.bottom-nav span{
+
+display:block;
+font-size:22px;
+
+}
+
+
+</style>
 
 </head>
 
+
+
 <body>
+
 
 <div class="container">
 
-<div class="top-header">
+
+
+<div class="header">
+
 
 <div class="logo">
-🟢 USDT P2P Palestine
+
+🇵🇸 USDT P2P Palestine
+
 </div>
 
-<h1>
+
+<h2>
 لوحة التحكم
-</h1>
+</h2>
+
 
 <p>
 أهلاً {{ user['username'] }} 👋
 </p>
 
+
+
 {% if user['verified'] == 1 %}
 
 <div class="status success">
+
 ✅ حساب موثق
+
 </div>
 
 {% else %}
 
+
 <div class="status warning">
+
 ⚠️ الحساب غير موثق
+
 </div>
+
 
 {% endif %}
 
+
+
 </div>
+
+
+
+
 
 
 <div class="card">
 
+
+<div class="balance">
+
+
+<p>
+💰 رصيد USDT
+</p>
+
+
+<h1>
+
+{{ wallet_balance|default(0) }}
+
+</h1>
+
+
+<span>
+
+USDT
+
+</span>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+
+<div class="card">
+
+
 <h3>
+
 📊 إحصائيات الحساب
+
 </h3>
 
-<div class="info-box">
-<span>⭐ التقييم</span>
-<strong>{{ user['rating'] }}</strong>
-</div>
 
-<div class="info-box">
-<span>🤝 عدد الصفقات</span>
-<strong>{{ user['trades_count'] }}</strong>
-</div>
 
-<div class="info-box">
-<span>💵 صفقات USDT المكتملة</span>
-<strong>{{ completed }}</strong>
-</div>
+<div class="grid">
 
-<div class="info-box">
-<span>📍 مقابلات مكتملة</span>
-<strong>{{ cash_completed }}</strong>
-</div>
+
+
+<div class="stat">
+
+<span>
+⭐ التقييم
+</span>
+
+<b>
+{{ user['rating'] }}
+</b>
 
 </div>
+
+
+
+<div class="stat">
+
+<span>
+🤝 الصفقات
+</span>
+
+<b>
+{{ user['trades_count'] }}
+</b>
+
+</div>
+
+
+
+<div class="stat">
+
+<span>
+✅ مكتملة
+</span>
+
+<b>
+{{ completed }}
+</b>
+
+</div>
+
+
+
+<div class="stat">
+
+<span>
+📍 مقابلات
+</span>
+
+<b>
+{{ cash_completed }}
+</b>
+
+</div>
+
+
+
+</div>
+
+
+</div>
+
+
+
+
+
 
 
 <div class="card">
 
+
 <h3>
+
 ⚡ الخدمات
+
 </h3>
+
+
 
 <div class="actions">
+
+
 
 <a class="btn green" href="{{ url_for('market') }}">
-💰 سوق USDT
+
+💰 السوق
+
 </a>
+
+
 
 <a class="btn blue" href="{{ url_for('create_ad') }}">
-➕ إنشاء إعلان
+
+➕ بيع USDT
+
 </a>
+
+
 
 <a class="btn yellow" href="{{ url_for('my_ads') }}">
+
 📢 إعلاناتي
+
 </a>
+
+
 
 <a class="btn orange" href="{{ url_for('cash_market') }}">
-🤝 السوق المحلي
+
+🤝 مقابلات
+
 </a>
 
-<a class="btn orange" href="{{ url_for('create_cash_ad') }}">
-📍 إعلان مقابلة
-</a>
+
 
 <a class="btn blue" href="{{ url_for('profile') }}">
-👤 الملف الشخصي
+
+👤 حسابي
+
 </a>
+
+
 
 <a class="btn gray" href="{{ url_for('notifications') }}">
-🔔 الإشعارات
+
+🔔 تنبيهات
+
 </a>
 
-</div>
+
 
 </div>
+
+
+</div>
+
+
+
+
+
 
 
 <div class="card">
 
+
 <h3>
+
 ⚙️ الحساب
+
 </h3>
+
 
 <div class="actions">
 
+
 <a class="btn gray" href="{{ url_for('edit_profile') }}">
+
 ✏️ تعديل البيانات
+
 </a>
+
+
 
 <a class="btn red" href="{{ url_for('logout') }}">
-🚪 تسجيل خروج
+
+🚪 خروج
+
 </a>
 
-</div>
+
 
 </div>
+
+
+</div>
+
+
+
+
 
 
 <div class="bottom-nav">
 
+
 <a href="/">
+
 <span>🏠</span>
+
 الرئيسية
+
 </a>
+
+
 
 <a href="{{ url_for('market') }}">
+
 <span>💰</span>
+
 السوق
+
 </a>
+
+
 
 <a href="{{ url_for('notifications') }}">
+
 <span>🔔</span>
+
 تنبيهات
+
 </a>
+
+
 
 <a href="{{ url_for('profile') }}">
+
 <span>👤</span>
+
 حسابي
+
 </a>
 
-</div>
+
 
 </div>
+
+
+
+</div>
+
 
 </body>
 
