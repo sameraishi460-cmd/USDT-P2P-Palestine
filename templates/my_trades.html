@@ -4,68 +4,166 @@
 <head>
 
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>صفقاتي</title>
+<title>صفقاتي - USDT P2P Palestine</title>
 
 
 <style>
 
-body{
-background:#0b1220;
-color:white;
-font-family:tahoma;
-padding:20px;
+*{
+box-sizing:border-box;
 }
 
-.container{
-max-width:900px;
-margin:auto;
+
+body{
+
+margin:0;
+padding:20px;
+background:#050816;
+color:white;
+font-family:tahoma,Arial;
+
 }
+
+
+
+.container{
+
+max-width:600px;
+margin:auto;
+
+}
+
+
+
+.header{
+
+background:linear-gradient(135deg,#111827,#1e293b);
+padding:25px;
+border-radius:25px;
+text-align:center;
+margin-bottom:20px;
+
+}
+
+
+
+.logo{
+
+font-size:25px;
+font-weight:bold;
+color:#22c55e;
+
+}
+
 
 
 .box{
-background:#1e293b;
+
+background:#111827;
 padding:20px;
-border-radius:18px;
+border-radius:22px;
 margin-bottom:20px;
+
+border:1px solid #263244;
+
 }
+
 
 
 h2{
+
 color:#22c55e;
+margin-top:0;
+
 }
+
 
 
 .card{
-background:#111827;
-padding:15px;
-border-radius:12px;
-margin:10px 0;
+
+background:#1e293b;
+padding:18px;
+border-radius:18px;
+margin-top:15px;
+
 }
+
+
+
+.number{
+
+font-size:20px;
+color:#38bdf8;
+font-weight:bold;
+
+}
+
+
+
+.info{
+
+line-height:2;
+color:#e2e8f0;
+
+}
+
+
+
+.status{
+
+display:inline-block;
+background:#064e3b;
+color:#86efac;
+padding:5px 12px;
+border-radius:20px;
+font-weight:bold;
+
+}
+
+
+
+.role{
+
+color:#38bdf8;
+font-weight:bold;
+
+}
+
 
 
 .btn{
 
-display:inline-block;
-padding:10px 18px;
+display:block;
+text-align:center;
+padding:14px;
 background:#16a34a;
 color:white;
 text-decoration:none;
-border-radius:10px;
-margin-top:10px;
+border-radius:14px;
+margin-top:15px;
 
 }
 
 
-.status{
-color:#22c55e;
-font-weight:bold;
+
+.back{
+
+background:#475569;
+
 }
 
 
-.blue{
-color:#38bdf8;
+
+.empty{
+
+text-align:center;
+padding:20px;
+color:#94a3b8;
+
 }
+
 
 
 </style>
@@ -79,9 +177,27 @@ color:#38bdf8;
 <div class="container">
 
 
-<a class="btn" href="/">
-⬅ الرئيسية
-</a>
+
+<div class="header">
+
+<div class="logo">
+
+🇵🇸 USDT P2P Palestine
+
+</div>
+
+
+<h3>
+
+📋 صفقاتي
+
+</h3>
+
+
+</div>
+
+
+
 
 
 
@@ -89,7 +205,9 @@ color:#38bdf8;
 
 
 <h2>
-🤝 صفقات USDT
+
+💰 صفقات USDT
+
 </h2>
 
 
@@ -100,36 +218,42 @@ color:#38bdf8;
 <div class="card">
 
 
-<b>
-📌 صفقة رقم {{t.id}}
-</b>
+<div class="number">
+
+📌 صفقة #{{t.id}}
+
+</div>
 
 
-<br><br>
+<div class="info">
 
 
 {% if t.seller == username %}
 
-<span class="blue">
+<div class="role">
+
 🟢 أنت البائع
-</span>
+
+</div>
 
 {% else %}
 
-<span class="blue">
+<div class="role">
+
 🔵 أنت المشتري
-</span>
+
+</div>
 
 {% endif %}
 
 
 
-<br><br>
+<br>
 
 
 💰 الكمية:
 
-{{t.amount}} USDT
+<b>{{t.amount}} USDT</b>
 
 
 <br>
@@ -137,7 +261,7 @@ color:#38bdf8;
 
 💵 السعر:
 
-{{t.price}} ₪
+<b>{{t.price}} ₪</b>
 
 
 <br>
@@ -146,16 +270,23 @@ color:#38bdf8;
 📌 الحالة:
 
 <span class="status">
+
 {{t.status}}
+
 </span>
 
 
-<br>
+
+</div>
+
 
 
 <a class="btn" href="/trade/{{t.id}}">
-فتح الصفقة
+
+فتح الصفقة 🔥
+
 </a>
+
 
 
 </div>
@@ -164,7 +295,11 @@ color:#38bdf8;
 {% else %}
 
 
-لا يوجد صفقات
+<div class="empty">
+
+لا يوجد صفقات USDT حالياً
+
+</div>
 
 
 {% endfor %}
@@ -172,6 +307,8 @@ color:#38bdf8;
 
 
 </div>
+
+
 
 
 
@@ -182,7 +319,9 @@ color:#38bdf8;
 
 
 <h2>
+
 🤝 صفقات المقابلات
+
 </h2>
 
 
@@ -193,31 +332,53 @@ color:#38bdf8;
 <div class="card">
 
 
-📌 الصفقة رقم {{c.id}}
+<div class="number">
+
+📌 صفقة #{{c.id}}
+
+</div>
+
+
+<div class="info">
+
 
 <br>
 
-💰 {{c.amount}} USDT
+💰 الكمية:
+
+<b>{{c.amount}} USDT</b>
+
 
 <br>
 
-💵 {{c.price}} ₪
+
+💵 السعر:
+
+<b>{{c.price}} ₪</b>
+
 
 <br>
+
 
 📌 الحالة:
 
 <span class="status">
+
 {{c.status}}
+
 </span>
 
 
-<br>
+</div>
+
 
 
 <a class="btn" href="/cash_trade/{{c.id}}">
-فتح الصفقة
+
+فتح الصفقة 🔥
+
 </a>
+
 
 
 </div>
@@ -227,7 +388,11 @@ color:#38bdf8;
 {% else %}
 
 
+<div class="empty">
+
 لا يوجد صفقات مقابلات
+
+</div>
 
 
 {% endfor %}
@@ -235,6 +400,18 @@ color:#38bdf8;
 
 
 </div>
+
+
+
+
+
+
+
+<a class="btn back" href="/wallet">
+
+⬅ الرجوع للمحفظة
+
+</a>
 
 
 
