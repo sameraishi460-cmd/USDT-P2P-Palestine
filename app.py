@@ -1309,6 +1309,19 @@ def create_ad():
     ).fetchone()
 
 
+    wallet = con.execute(
+        """
+        SELECT *
+        FROM wallets
+        WHERE username=?
+        """,
+        (
+            session["user"],
+        )
+    ).fetchone()
+
+    wallet_balance = wallet["balance"] if wallet else 0
+
 
     if request.method=="POST":
 
@@ -1376,12 +1389,23 @@ def create_ad():
 
 
 
+    price = con.execute(
+        """
+        SELECT *
+        FROM market_price
+        WHERE id=1
+        """
+    ).fetchone()
+
+
     con.close()
 
 
     return render_template(
         "create_ad.html",
-        user=user
+        user=user,
+        wallet_balance=wallet_balance,
+        price=price
     )
 
 
@@ -3250,101 +3274,6 @@ def admin_price():
 
 
 # ===============================
-# CREATE CASH AD
-# ===============================
-
-@app.route(
-    "/create_cash_ad",
-    methods=["GET","POST"]
-)
-@login_required
-def create_cash_ad():
-
-    con = connect()
-
-
-    if request.method == "POST":
-
-        title = request.form.get(
-            "title",
-            ""
-        )
-
-        amount = float(
-            request.form.get(
-                "amount",
-                0
-            )
-        )
-
-
-        price = float(
-            request.form.get(
-                "price",
-                0
-            )
-        )
-
-
-        payment = request.form.get(
-            "payment",
-            "BANK"
-        )
-
-
-        if amount <= 0 or price <= 0:
-
-            con.close()
-
-            return "بيانات غير صحيحة"
-
-
-        con.execute(
-        """
-        INSERT INTO cash_ads
-        (
-        user,
-        title,
-        amount,
-        price,
-        payment
-        )
-
-        VALUES(?,?,?,?,?)
-
-        """,
-
-        (
-            session["user"],
-            title,
-            amount,
-            price,
-            payment
-        )
-
-        )
-
-
-        con.commit()
-
-        con.close()
-
-
-        return redirect(
-            "/cash_market"
-        )
-
-
-    con.close()
-
-
-    return render_template(
-        "create_cash_ad.html"
-    )
-
-
-
-# ===============================
 # BUY CASH AD
 # ===============================
 
@@ -3547,6 +3476,121 @@ def my_ads():
     return render_template(
         "my_ads.html",
         ads=ads
+    )
+
+
+
+# ===============================
+# CREATE CASH AD
+# ===============================
+
+@app.route(
+    "/create_cash_ad",
+    methods=["GET","POST"]
+)
+
+@login_required
+
+def create_cash_ad():
+
+    con = connect()
+
+
+    user = con.execute(
+        """
+        SELECT *
+        FROM users
+        WHERE username=?
+        """,
+        (
+            session["user"],
+        )
+    ).fetchone()
+
+
+
+    if request.method=="POST":
+
+
+        title = request.form.get(
+            "title"
+        )
+
+
+        amount = float(
+            request.form.get(
+                "amount",
+                0
+            )
+        )
+
+
+        price = float(
+            request.form.get(
+                "price",
+                0
+            )
+        )
+
+
+        payment = request.form.get(
+            "payment",
+            "CASH"
+        )
+
+
+        if amount <= 0 or price <= 0:
+
+            con.close()
+
+            return "بيانات غير صحيحة"
+
+
+
+        con.execute(
+        """
+        INSERT INTO cash_ads
+        (
+        user,
+        title,
+        amount,
+        price,
+        payment
+        )
+
+        VALUES(?,?,?,?,?)
+
+        """,
+
+        (
+            session["user"],
+            title,
+            amount,
+            price,
+            payment
+        )
+
+        )
+
+
+        con.commit()
+
+        con.close()
+
+
+
+        return redirect(
+            "/cash_market"
+        )
+
+
+
+    con.close()
+
+
+    return render_template(
+        "create_cash_ad.html",
+        user=user
     )
 
 
