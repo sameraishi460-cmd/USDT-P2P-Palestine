@@ -6,142 +6,435 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>سوق USDT</title>
+<title>سوق USDT - USDT P2P Palestine</title>
 
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<style>
+
+*{
+box-sizing:border-box;
+}
+
+
+body{
+
+margin:0;
+padding:15px;
+background:#050816;
+color:white;
+font-family:tahoma,Arial;
+
+}
+
+
+.container{
+
+max-width:600px;
+margin:auto;
+
+}
+
+
+
+.header{
+
+background:linear-gradient(135deg,#16a34a,#065f46);
+padding:25px;
+border-radius:25px;
+text-align:center;
+margin-bottom:20px;
+
+}
+
+
+
+.logo{
+
+font-size:24px;
+font-weight:bold;
+
+}
+
+
+
+.card{
+
+background:#111827;
+border-radius:22px;
+padding:20px;
+margin-bottom:20px;
+border:1px solid #263244;
+
+}
+
+
+
+.title{
+
+color:#22c55e;
+font-size:20px;
+font-weight:bold;
+margin-bottom:15px;
+
+}
+
+
+
+.ad{
+
+background:#020617;
+border-radius:18px;
+padding:18px;
+margin-bottom:15px;
+border:1px solid #1e293b;
+
+}
+
+
+
+.ad-title{
+
+font-size:18px;
+font-weight:bold;
+margin-bottom:10px;
+
+}
+
+
+
+.price{
+
+background:#172554;
+padding:12px;
+border-radius:12px;
+margin:10px 0;
+color:#bfdbfe;
+
+}
+
+
+
+.amount{
+
+color:#86efac;
+font-size:22px;
+font-weight:bold;
+
+}
+
+
+
+.info{
+
+line-height:2;
+color:#cbd5e1;
+
+}
+
+
+
+.buy{
+
+display:block;
+background:#16a34a;
+padding:15px;
+text-align:center;
+border-radius:14px;
+color:white;
+text-decoration:none;
+font-size:18px;
+margin-top:15px;
+
+}
+
+
+
+.cash{
+
+border-right:4px solid #f59e0b;
+
+}
+
+
+
+.local-btn{
+
+background:#f59e0b;
+
+}
+
+
+
+.back{
+
+display:block;
+background:#334155;
+padding:15px;
+border-radius:15px;
+text-align:center;
+color:white;
+text-decoration:none;
+
+}
+
+
+
+.empty{
+
+text-align:center;
+color:#94a3b8;
+padding:20px;
+
+}
+
+
+</style>
 
 </head>
 
+
 <body>
+
 
 <div class="container">
 
-<div class="top-header">
+
+
+<div class="header">
+
 
 <div class="logo">
-🟢 USDT P2P Palestine
+🇵🇸 USDT P2P Palestine
 </div>
 
-<h1>
+
+<h2>
 💰 سوق USDT
-</h1>
+</h2>
+
 
 <p>
-إعلانات البيع والشراء
+شراء وبيع العملات الرقمية بأمان
 </p>
+
 
 </div>
 
-<!-- الإعلانات -->
+
+
+
+
 
 <div class="card">
 
-<h3>
-📢 إعلانات USDT
-</h3>
+
+<div class="title">
+📢 إعلانات بيع USDT
+</div>
+
+
+
 
 {% if ads %}
 
+
 {% for ad in ads %}
 
-<div class="info-box">
 
-<div>
+
+<div class="ad">
+
+
+<div class="ad-title">
+
+{{ ad['title'] }}
+
+</div>
+
+
+
+<div class="amount">
+
+💰 {{ ad['amount'] }} USDT
+
+</div>
+
+
+
+<div class="price">
+
+💵 سعر 1 USDT:
 
 <b>
-{{ ad['title'] }}
+{{ ad['price'] }} ₪
 </b>
 
-<br>
+</div>
 
-💰 الكمية:
-{{ ad['amount'] }} USDT
 
-<br>
 
-💵 السعر:
-{{ ad['price'] }} ₪
-
-<br>
+<div class="info">
 
 💳 الدفع:
 {{ ad['payment'] }}
 
+<br>
+
+🛡️ حماية المنصة:
+مفعلة
+
 </div>
 
-<a class="btn green" href="/buy/{{ ad['id'] }}">
-شراء
+
+
+<a class="buy" href="/buy/{{ ad['id'] }}">
+
+شراء USDT
+
 </a>
 
+
+
 </div>
+
+
 
 {% endfor %}
 
+
+
 {% else %}
 
-<p>
-لا يوجد إعلانات حالياً
-</p>
 
-{% endif %}
+<div class="empty">
+
+لا يوجد إعلانات بيع حالياً
 
 </div>
 
-<!-- السوق المحلي -->
+
+{% endif %}
+
+
+
+</div>
+
+
+
+
+
+
 
 <div class="card">
 
-<h3>
+
+
+<div class="title">
+
 🤝 السوق المحلي
-</h3>
+
+</div>
+
+
+
 
 {% if cash_ads %}
 
+
+
 {% for ad in cash_ads %}
 
-<div class="info-box">
 
-<div>
 
-<b>
+<div class="ad cash">
+
+
+
+<div class="amount">
+
 USDT {{ ad['amount'] }}
-</b>
 
-<br>
+</div>
+
+
+
+<div class="price">
 
 💵 السعر:
-{{ ad['price'] }} ₪
 
-<br>
+<b>
+{{ ad['price'] }} ₪
+</b>
+
+
+</div>
+
+
+
+<div class="info">
+
 
 📍 المكان:
+
 {{ ad['city'] }}
 
+
 </div>
 
-<a class="btn orange" href="/cash_ad/{{ ad['id'] }}">
-عرض
+
+
+
+<a class="buy local-btn" href="/cash_ad/{{ ad['id'] }}">
+
+عرض الصفقة
+
 </a>
 
+
+
+
 </div>
+
+
 
 {% endfor %}
 
+
+
+
 {% else %}
 
-<p>
+
+
+<div class="empty">
+
 لا يوجد مقابلات متاحة
-</p>
+
+</div>
+
+
 
 {% endif %}
 
+
+
 </div>
 
-<a class="btn gray" href="/dashboard">
-⬅️ رجوع للوحة التحكم
+
+
+
+
+
+
+<a class="back" href="/dashboard">
+
+⬅️ الرجوع للوحة التحكم
+
 </a>
 
+
+
 </div>
+
 
 </body>
 
