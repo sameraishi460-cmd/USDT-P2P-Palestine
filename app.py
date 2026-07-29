@@ -840,6 +840,134 @@ def login():
     )
 
 
+# ===============================
+# TELEGRAM LOGIN
+# ===============================
+
+@app.route("/telegram_login")
+def telegram_login():
+
+    telegram_id = request.args.get(
+        "id"
+    )
+
+    username = request.args.get(
+        "username"
+    )
+
+
+    if not telegram_id:
+
+        return "بيانات تيليجرام ناقصة"
+
+
+    con = connect()
+
+
+    user = con.execute(
+    """
+    SELECT *
+    FROM users
+    WHERE telegram_id=?
+    """,
+    (
+        telegram_id,
+    )
+    ).fetchone()
+
+
+
+    if not user:
+
+
+        if not username:
+
+            username = "tg_" + telegram_id
+
+
+
+        # منع تكرار الاسم
+
+        check = con.execute(
+        """
+        SELECT *
+        FROM users
+        WHERE username=?
+        """,
+        (
+            username,
+        )
+        ).fetchone()
+
+
+
+        if check:
+
+            username = username + "_" + telegram_id
+
+
+
+        con.execute(
+        """
+        INSERT INTO users
+        (
+        username,
+        password,
+        telegram_id
+        )
+
+        VALUES(?,?,?)
+
+        """,
+
+        (
+            username,
+            generate_password_hash(
+                telegram_id
+            ),
+            telegram_id
+        )
+
+        )
+
+
+        con.execute(
+        """
+        INSERT INTO wallets
+        (
+        username
+        )
+
+        VALUES(?)
+
+        """,
+
+        (
+            username,
+        )
+
+        )
+
+
+        con.commit()
+
+
+
+    con.close()
+
+
+
+    session.permanent = True
+
+    session["user"] = username
+
+
+
+    return redirect(
+        "/dashboard"
+    )
+
+
 
 # ===============================
 # LOGOUT
