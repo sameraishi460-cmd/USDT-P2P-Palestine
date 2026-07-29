@@ -3519,6 +3519,39 @@ def cash_trade(id):
 
 
 # ===============================
+# MY ADS
+# ===============================
+
+@app.route("/my_ads")
+@login_required
+def my_ads():
+
+    con = connect()
+
+    ads = con.execute(
+        """
+        SELECT *
+        FROM ads
+        WHERE user=?
+        ORDER BY id DESC
+        """,
+        (
+            session["user"],
+        )
+    ).fetchall()
+
+
+    con.close()
+
+
+    return render_template(
+        "my_ads.html",
+        ads=ads
+    )
+
+
+
+# ===============================
 # ERROR HANDLER
 # ===============================
 
