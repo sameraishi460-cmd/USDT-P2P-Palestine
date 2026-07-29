@@ -864,18 +864,18 @@ def telegram_login():
 @app.route("/telegram_auth", methods=["POST"])
 def telegram_auth():
 
-    telegram_id = request.form.get(
-        "telegram_id"
-    )
-
-    username = request.form.get(
-        "username"
-    )
+    telegram_id = request.form.get("telegram_id")
+    username = request.form.get("username")
+    first_name = request.form.get("first_name")
 
 
-    if not telegram_id or not username:
+    if not telegram_id:
+        return "Telegram ID مفقود"
 
-        return "بيانات ناقصة"
+
+    if not username:
+        username = "tg_" + str(telegram_id)
+
 
 
     con = connect()
@@ -885,16 +885,15 @@ def telegram_auth():
         """
         SELECT *
         FROM users
-        WHERE username=?
+        WHERE telegram_id=?
         """,
-        (
-            username,
-        )
+        (telegram_id,)
     ).fetchone()
 
 
 
     if not user:
+
 
         con.execute(
         """
@@ -934,36 +933,13 @@ def telegram_auth():
 
 
 
-    else:
-
-        con.execute(
-        """
-        UPDATE users
-
-        SET telegram_id=?
-
-        WHERE username=?
-
-        """,
-        (
-            telegram_id,
-            username
-        )
-        )
-
-        con.commit()
-
-
-
     con.close()
 
 
-    session["user"]=username
+    session["user"] = username
 
 
-    return redirect(
-        "/dashboard"
-    )
+    return redirect("/dashboard")
 
 
 
