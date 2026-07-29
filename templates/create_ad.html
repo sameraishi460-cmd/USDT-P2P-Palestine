@@ -4,7 +4,6 @@
 <head>
 
 <meta charset="UTF-8">
-
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>إنشاء إعلان بيع USDT</title>
@@ -12,31 +11,45 @@
 
 <style>
 
+*{
+box-sizing:border-box;
+}
+
 body{
-    font-family:tahoma,Arial;
-    background:#0b1220;
-    color:white;
-    padding:15px;
-}
 
-
-.box{
-
-    background:#1e293b;
-    max-width:500px;
-    margin:25px auto;
-    padding:25px;
-    border-radius:22px;
-    box-shadow:0 0 20px #0005;
+margin:0;
+padding:15px;
+background:#050b16;
+color:white;
+font-family:tahoma,Arial;
 
 }
 
 
-h2{
+.container{
 
-    text-align:center;
-    color:#22c55e;
-    margin-bottom:25px;
+max-width:520px;
+margin:auto;
+
+}
+
+
+
+.header{
+
+background:linear-gradient(135deg,#16a34a,#15803d);
+padding:25px;
+border-radius:25px;
+text-align:center;
+margin-bottom:20px;
+
+}
+
+
+.header h1{
+
+margin:0;
+font-size:25px;
 
 }
 
@@ -44,11 +57,22 @@ h2{
 
 .card{
 
-    background:#111827;
-    padding:15px;
-    border-radius:15px;
-    margin-bottom:15px;
-    line-height:2;
+background:#111827;
+padding:18px;
+border-radius:20px;
+margin-bottom:15px;
+
+border:1px solid #1f2937;
+
+}
+
+
+
+.title{
+
+color:#22c55e;
+font-size:18px;
+margin-bottom:10px;
 
 }
 
@@ -56,9 +80,16 @@ h2{
 
 .balance{
 
-    background:#064e3b;
-    color:#86efac;
-    font-size:18px;
+background:#064e3b;
+
+}
+
+
+
+.balance b{
+
+font-size:25px;
+color:#86efac;
 
 }
 
@@ -66,8 +97,15 @@ h2{
 
 .price{
 
-    background:#1e40af;
-    color:#bfdbfe;
+background:#172554;
+
+}
+
+
+
+.info span{
+
+color:#94a3b8;
 
 }
 
@@ -75,8 +113,8 @@ h2{
 
 .warning{
 
-    background:#7f1d1d;
-    color:#fecaca;
+background:#450a0a;
+color:#fecaca;
 
 }
 
@@ -84,9 +122,10 @@ h2{
 
 label{
 
-    display:block;
-    margin-top:15px;
-    color:#cbd5e1;
+display:block;
+margin-top:15px;
+margin-bottom:6px;
+color:#cbd5e1;
 
 }
 
@@ -94,28 +133,48 @@ label{
 
 input,select{
 
-    width:100%;
-    box-sizing:border-box;
-    padding:13px;
-    margin-top:8px;
-    border-radius:12px;
-    border:0;
-    background:#111827;
-    color:white;
-    font-size:16px;
+
+width:100%;
+padding:14px;
+
+border-radius:14px;
+border:1px solid #334155;
+
+background:#020617;
+
+color:white;
+
+font-size:16px;
+
 
 }
 
 
 
-.result{
+.row{
 
-    background:#14532d;
-    padding:15px;
-    border-radius:12px;
-    margin-top:15px;
-    color:#bbf7d0;
-    font-size:17px;
+display:flex;
+gap:10px;
+
+}
+
+
+
+.row div{
+
+width:50%;
+
+}
+
+
+
+.total{
+
+background:#14532d;
+
+text-align:center;
+
+font-size:20px;
 
 }
 
@@ -123,14 +182,32 @@ input,select{
 
 button{
 
-    width:100%;
-    padding:15px;
-    margin-top:20px;
-    background:#16a34a;
-    color:white;
-    border:0;
-    border-radius:12px;
-    font-size:18px;
+
+width:100%;
+
+padding:16px;
+
+margin-top:20px;
+
+border:0;
+
+border-radius:15px;
+
+background:#16a34a;
+
+color:white;
+
+font-size:18px;
+
+cursor:pointer;
+
+}
+
+
+
+button:hover{
+
+background:#15803d;
 
 }
 
@@ -138,7 +215,7 @@ button{
 
 button:disabled{
 
-    background:#555;
+background:#475569;
 
 }
 
@@ -146,10 +223,24 @@ button:disabled{
 
 .back{
 
-    display:block;
-    text-align:center;
-    margin-top:20px;
-    color:#60a5fa;
+
+display:block;
+
+text-align:center;
+
+margin-top:20px;
+
+color:#60a5fa;
+
+text-decoration:none;
+
+}
+
+
+.small{
+
+font-size:13px;
+color:#94a3b8;
 
 }
 
@@ -160,61 +251,90 @@ button:disabled{
 </head>
 
 
+
 <body>
 
 
-<div class="box">
+<div class="container">
 
 
-<h2>
+
+<div class="header">
+
+<h1>
 🚀 بيع USDT
-</h2>
+</h1>
+
+<p>
+أنشئ إعلانك وابدأ التداول
+</p>
+
+
+</div>
+
 
 
 
 <div class="card balance">
 
-💰 رصيدك في المنصة:
 
-<br>
+<div class="title">
+💰 رصيد المحفظة
+</div>
+
 
 <b>
-{{ wallet_balance|default(0) }} USDT
+
+{{ wallet_balance|default(0) }}
+
+USDT
+
 </b>
 
+
 </div>
+
+
+
 
 
 
 <div class="card price">
 
-📊 سعر USDT الحالي:
 
-<br>
+<div class="title">
+📊 سعر السوق
+</div>
+
 
 1 USDT ≈
 
 <b>
-{{ price.usdt_ils if price else "غير متوفر" }}
-</b>
+
+{{ price.usdt_ils if price else "3.70" }}
 
 ₪
+
+</b>
 
 
 </div>
 
 
 
-{% if wallet_balance|default(0) <= 0 %}
+
+
+
+{% if wallet_balance|default(0) <=0 %}
 
 
 <div class="card warning">
 
-⚠️ لا يوجد رصيد USDT.
+⚠️ لا يوجد لديك USDT كافي.
 
 <br>
 
-قم بإيداع USDT أولاً حتى تستطيع إنشاء إعلان.
+قم بإيداع USDT أولاً لإنشاء إعلان بيع.
 
 </div>
 
@@ -224,35 +344,44 @@ button:disabled{
 
 
 
+
+
 <div class="card">
 
 
-💳 معلومات الدفع:
+<div class="title">
+💳 بيانات الدفع
+</div>
 
-<br>
 
 📱 الهاتف:
+<br>
 
 <b>
-{{ user.phone if user.phone else "غير مضاف" }}
+{{user.phone if user.phone else "غير مضاف"}}
 </b>
 
 
-<br>
+<br><br>
+
 
 🏦 البنك:
+<br>
 
 <b>
-{{ user.bank if user.bank else "غير مضاف" }}
+{{user.bank if user.bank else "غير مضاف"}}
 </b>
 
 
-<br>
+<br><br>
+
 
 طريقة الدفع:
 
+<br>
+
 <b>
-{{ user.payment_method if user.payment_method else "غير مضافة" }}
+{{user.payment_method if user.payment_method else "غير مضافة"}}
 </b>
 
 
@@ -262,8 +391,18 @@ button:disabled{
 
 
 
-<form method="POST"
-onsubmit="return checkBalance()">
+
+
+<form method="POST" onsubmit="return checkBalance()">
+
+
+
+<div class="card">
+
+
+<div class="title">
+📝 تفاصيل الإعلان
+</div>
 
 
 
@@ -276,7 +415,7 @@ onsubmit="return checkBalance()">
 
 name="title"
 
-placeholder="مثال: بيع USDT مقابل شيكل"
+placeholder="مثال: بيع USDT سريع"
 
 required
 
@@ -285,7 +424,7 @@ required
 
 
 <label>
-كمية USDT للبيع
+كمية USDT
 </label>
 
 
@@ -306,6 +445,7 @@ oninput="calculate()"
 required
 
 >
+
 
 
 
@@ -334,6 +474,58 @@ required
 
 
 
+<div class="row">
+
+
+<div>
+
+<label>
+أقل كمية
+</label>
+
+<input
+
+type="number"
+
+step="0.01"
+
+name="min_amount"
+
+placeholder="10"
+
+>
+
+</div>
+
+
+
+<div>
+
+<label>
+أعلى كمية
+</label>
+
+<input
+
+type="number"
+
+step="0.01"
+
+name="max_amount"
+
+placeholder="100"
+
+>
+
+
+</div>
+
+
+</div>
+
+
+
+
 <label>
 طريقة الدفع
 </label>
@@ -342,20 +534,23 @@ required
 <select name="payment">
 
 
-<option>
-BANK
+<option value="BANK">
+🏦 بنك
 </option>
 
-<option>
-CASH
+
+<option value="CASH">
+💵 كاش
 </option>
 
-<option>
-PAYPAL
+
+<option value="PAYPAL">
+💳 PayPal
 </option>
 
-<option>
-OTHER
+
+<option value="OTHER">
+🌐 أخرى
 </option>
 
 
@@ -363,16 +558,24 @@ OTHER
 
 
 
+</div>
 
-<div class="result">
 
 
-💵 قيمة الإعلان:
+
+
+<div class="card total">
+
+
+القيمة الإجمالية:
 
 <br>
 
+
 <b id="total">
+
 0
+
 </b>
 
 ₪
@@ -384,10 +587,10 @@ OTHER
 
 
 
-{% if wallet_balance|default(0) > 0 %}
+{% if wallet_balance|default(0)>0 %}
 
 
-<button type="submit">
+<button>
 
 ✅ نشر الإعلان
 
@@ -412,11 +615,14 @@ OTHER
 
 
 
+
+
 <a class="back" href="/">
 
-⬅ الرجوع
+⬅ العودة للرئيسية
 
 </a>
+
 
 
 </div>
@@ -428,26 +634,31 @@ OTHER
 <script>
 
 
-let balance = {{ wallet_balance|default(0) }};
+let balance =
+{{wallet_balance|default(0)}};
 
 
 
 function calculate(){
 
+
 let amount =
 parseFloat(
 document.getElementById("amount").value
-) || 0;
+)||0;
 
 
 let price =
 parseFloat(
 document.getElementById("price").value
-) || 0;
+)||0;
+
 
 
 document.getElementById("total").innerHTML =
-(amount * price).toFixed(2);
+(amount*price).toFixed(2);
+
+
 
 }
 
@@ -456,26 +667,34 @@ document.getElementById("total").innerHTML =
 
 function checkBalance(){
 
+
 let amount =
 parseFloat(
 document.getElementById("amount").value
-) || 0;
+)||0;
+
 
 
 if(amount > balance){
+
 
 alert(
 "❌ الكمية أكبر من رصيدك"
 );
 
+
 return false;
 
+
 }
+
 
 
 return true;
 
+
 }
+
 
 
 </script>
