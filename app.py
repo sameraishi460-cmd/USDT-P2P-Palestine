@@ -3596,6 +3596,94 @@ def create_cash_ad():
 
 
 # ===============================
+# MY TRADES
+# ===============================
+
+@app.route("/my_trades")
+@login_required
+def my_trades():
+
+    con = connect()
+
+
+    # حماية لإنشاء جدول صفقات المقابلات في حال لم يتم إنشاؤه مسبقاً
+    con.execute("""
+    CREATE TABLE IF NOT EXISTS cash_trades(
+
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    ad_id INTEGER,
+
+    buyer TEXT,
+
+    seller TEXT,
+
+    amount REAL,
+
+    price REAL,
+
+    status TEXT DEFAULT 'PENDING',
+
+    created DATETIME DEFAULT CURRENT_TIMESTAMP
+
+    )
+    """)
+
+
+    trades = con.execute(
+    """
+    SELECT *
+    FROM trades
+
+    WHERE buyer=? OR seller=?
+
+    ORDER BY id DESC
+    """,
+    (
+        session["user"],
+        session["user"]
+    )
+
+    ).fetchall()
+
+
+
+    # صفقات المقابلات
+
+    cash_trades = con.execute(
+    """
+    SELECT *
+    FROM cash_trades
+
+    WHERE buyer=? OR seller=?
+
+    ORDER BY id DESC
+    """,
+    (
+        session["user"],
+        session["user"]
+    )
+
+    ).fetchall()
+
+
+
+    con.close()
+
+
+    return render_template(
+        "my_trades.html",
+
+        trades=trades,
+
+        cash_trades=cash_trades,
+
+        username=session["user"]
+    )
+
+
+
+# ===============================
 # ERROR HANDLER
 # ===============================
 
