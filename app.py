@@ -3009,23 +3009,6 @@ def cash_market():
 
 
 # ===============================
-# ERROR HANDLER
-# ===============================
-
-
-@app.errorhandler(Exception)
-
-def handle_error(error):
-
-    print(
-        traceback.format_exc()
-    )
-
-    return "حدث خطأ في السيرفر",500
-
-
-
-# ===============================
 # START THREADS
 # ===============================
 
@@ -3161,6 +3144,292 @@ def admin_price():
         "admin_price.html",
         price=price
     )
+
+
+
+# ===============================
+# CREATE CASH AD
+# ===============================
+
+@app.route(
+    "/create_cash_ad",
+    methods=["GET","POST"]
+)
+@login_required
+def create_cash_ad():
+
+    con = connect()
+
+
+    if request.method == "POST":
+
+        title = request.form.get(
+            "title",
+            ""
+        )
+
+        amount = float(
+            request.form.get(
+                "amount",
+                0
+            )
+        )
+
+
+        price = float(
+            request.form.get(
+                "price",
+                0
+            )
+        )
+
+
+        payment = request.form.get(
+            "payment",
+            "BANK"
+        )
+
+
+        if amount <= 0 or price <= 0:
+
+            con.close()
+
+            return "بيانات غير صحيحة"
+
+
+        con.execute(
+        """
+        INSERT INTO cash_ads
+        (
+        user,
+        title,
+        amount,
+        price,
+        payment
+        )
+
+        VALUES(?,?,?,?,?)
+
+        """,
+
+        (
+            session["user"],
+            title,
+            amount,
+            price,
+            payment
+        )
+
+        )
+
+
+        con.commit()
+
+        con.close()
+
+
+        return redirect(
+            "/cash_market"
+        )
+
+
+    con.close()
+
+
+    return render_template(
+        "create_cash_ad.html"
+    )
+
+
+
+# ===============================
+# BUY CASH AD
+# ===============================
+
+@app.route(
+    "/cash_buy/<int:id>"
+)
+@login_required
+def cash_buy(id):
+
+    con = connect()
+
+
+    ad = con.execute(
+    """
+    SELECT *
+    FROM cash_ads
+    WHERE id=?
+    """,
+    (id,)
+    ).fetchone()
+
+
+
+    if not ad:
+
+        con.close()
+
+        return "الإعلان غير موجود"
+
+
+
+    if ad["status"] != "OPEN":
+
+        con.close()
+
+        return "الإعلان مغلق"
+
+
+
+    if ad["user"] == session["user"]:
+
+        con.close()
+
+        return "لا يمكنك شراء إعلانك"
+
+
+
+    con.execute(
+    """
+    CREATE TABLE IF NOT EXISTS cash_trades(
+
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+        ad_id INTEGER,
+
+        buyer TEXT,
+
+        seller TEXT,
+
+        amount REAL,
+
+        price REAL,
+
+        status TEXT DEFAULT 'PENDING',
+
+        created DATETIME DEFAULT CURRENT_TIMESTAMP
+
+    )
+    """
+    )
+
+
+
+    trade = con.execute(
+    """
+    INSERT INTO cash_trades
+    (
+    ad_id,
+    buyer,
+    seller,
+    amount,
+    price
+    )
+
+    VALUES(?,?,?,?,?)
+
+    """,
+
+    (
+        id,
+        session["user"],
+        ad["user"],
+        ad["amount"],
+        ad["price"]
+    )
+
+    )
+
+
+    trade_id = trade.lastrowid
+
+
+
+    con.execute(
+    """
+    UPDATE cash_ads
+
+    SET status='SOLD'
+
+    WHERE id=?
+
+    """,
+    (id,)
+    )
+
+
+    con.commit()
+
+    con.close()
+
+
+
+    notify(
+        ad["user"],
+        "طلب شراء كاش",
+        "يوجد طلب جديد على إعلانك"
+    )
+
+
+    return redirect(
+        "/cash_trade/"+str(trade_id)
+    )
+
+
+
+# ===============================
+# CASH TRADE PAGE
+# ===============================
+
+@app.route(
+    "/cash_trade/<int:id>"
+)
+@login_required
+def cash_trade(id):
+
+    con = connect()
+
+
+    trade = con.execute(
+    """
+    SELECT *
+    FROM cash_trades
+    WHERE id=?
+    """,
+    (id,)
+    ).fetchone()
+
+
+    con.close()
+
+
+    if not trade:
+
+        return "الصفقة غير موجودة"
+
+
+    return render_template(
+        "cash_trade.html",
+        trade=trade
+    )
+
+
+
+# ===============================
+# ERROR HANDLER
+# ===============================
+
+
+@app.errorhandler(Exception)
+
+def handle_error(error):
+
+    print(
+        traceback.format_exc()
+    )
+
+    return "حدث خطأ في السيرفر",500
 
 
 
