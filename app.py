@@ -847,48 +847,41 @@ def login():
 @app.route("/telegram_login")
 def telegram_login():
 
-    telegram_id = request.args.get(
-        "id"
+    try:
+
+        return render_template(
+            "telegram_login.html"
+        )
+
+    except Exception as e:
+
+        print(e)
+
+        return "خطأ في صفحة Telegram Login",500
+
+
+
+@app.route("/telegram_auth", methods=["POST"])
+def telegram_auth():
+
+    telegram_id = request.form.get(
+        "telegram_id"
     )
 
-    username = request.args.get(
+    username = request.form.get(
         "username"
     )
 
 
-    if not telegram_id:
+    if not telegram_id or not username:
 
-        return "بيانات تيليجرام ناقصة"
+        return "بيانات ناقصة"
 
 
     con = connect()
 
 
     user = con.execute(
-    """
-    SELECT *
-    FROM users
-    WHERE telegram_id=?
-    """,
-    (
-        telegram_id,
-    )
-    ).fetchone()
-
-
-
-    if not user:
-
-
-        if not username:
-
-            username = "tg_" + telegram_id
-
-
-
-        # منع تكرار الاسم
-
-        check = con.execute(
         """
         SELECT *
         FROM users
@@ -897,15 +890,11 @@ def telegram_login():
         (
             username,
         )
-        ).fetchone()
+    ).fetchone()
 
 
 
-        if check:
-
-            username = username + "_" + telegram_id
-
-
+    if not user:
 
         con.execute(
         """
@@ -915,11 +904,8 @@ def telegram_login():
         password,
         telegram_id
         )
-
         VALUES(?,?,?)
-
         """,
-
         (
             username,
             generate_password_hash(
@@ -927,7 +913,6 @@ def telegram_login():
             ),
             telegram_id
         )
-
         )
 
 
@@ -937,17 +922,34 @@ def telegram_login():
         (
         username
         )
-
         VALUES(?)
-
         """,
-
         (
             username,
         )
-
         )
 
+
+        con.commit()
+
+
+
+    else:
+
+        con.execute(
+        """
+        UPDATE users
+
+        SET telegram_id=?
+
+        WHERE username=?
+
+        """,
+        (
+            telegram_id,
+            username
+        )
+        )
 
         con.commit()
 
@@ -956,11 +958,7 @@ def telegram_login():
     con.close()
 
 
-
-    session.permanent = True
-
-    session["user"] = username
-
+    session["user"]=username
 
 
     return redirect(
