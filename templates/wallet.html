@@ -15,144 +15,264 @@ box-sizing:border-box;
 }
 
 body{
+
 margin:0;
 font-family:tahoma,Arial;
-background:#050b16;
+background:#050816;
 color:white;
+
 }
+
 
 .container{
-max-width:500px;
+
+max-width:520px;
 margin:auto;
-padding:20px;
+padding:18px;
+
 }
+
+
 
 .header{
-background:#111827;
-padding:20px;
-border-radius:20px;
+
+background:linear-gradient(135deg,#111827,#1e293b);
+padding:25px;
+border-radius:25px;
 text-align:center;
 margin-bottom:20px;
+
+box-shadow:0 10px 30px #0005;
+
 }
+
 
 .logo{
-font-size:25px;
+
+font-size:26px;
 font-weight:bold;
 color:#22c55e;
+
 }
+
+
 
 .card{
+
 background:#111827;
-border:1px solid #263244;
-border-radius:22px;
+border:1px solid #243044;
+border-radius:25px;
 padding:20px;
-margin-bottom:20px;
+margin-bottom:18px;
+
 }
+
+
 
 .balance{
+
 background:linear-gradient(135deg,#16a34a,#15803d);
 padding:30px;
-border-radius:20px;
+border-radius:22px;
 text-align:center;
+
 }
+
+
 
 .balance h1{
-font-size:42px;
-margin:15px 0;
+
+font-size:45px;
+margin:10px 0;
+
 }
+
+
+
+.usdt{
+
+font-size:18px;
+opacity:.9;
+
+}
+
+
 
 .box{
+
 background:#1e293b;
 padding:18px;
-border-radius:15px;
-margin-top:15px;
+border-radius:18px;
+margin-top:12px;
 text-align:center;
+
 }
+
+
 
 .label{
+
 color:#cbd5e1;
-font-size:15px;
+
 }
 
+
+
 .value{
+
 font-size:25px;
 font-weight:bold;
 margin-top:8px;
+
 }
+
+
+
+.lock{
+
+color:#facc15;
+
+}
+
+
+
+.status{
+
+color:#4ade80;
+font-weight:bold;
+
+}
+
+
+
+.info{
+
+background:#0f172a;
+padding:16px;
+border-radius:18px;
+line-height:2;
+
+}
+
+
+
+.wallet-address{
+
+background:#020617;
+padding:12px;
+border-radius:12px;
+color:#4ade80;
+font-size:13px;
+word-break:break-all;
+margin-top:10px;
+
+}
+
+
+
+input{
+
+width:100%;
+padding:14px;
+border-radius:12px;
+border:0;
+margin-top:12px;
+background:#334155;
+color:white;
+font-size:15px;
+
+}
+
+
 
 .buttons{
+
 display:grid;
 grid-template-columns:1fr 1fr;
-gap:10px;
+gap:12px;
+
 }
 
+
+
 .btn{
+
 padding:15px;
 border-radius:15px;
 text-align:center;
 text-decoration:none;
 color:white;
-display:block;
 border:0;
-width:100%;
+display:block;
+font-size:15px;
 cursor:pointer;
+
 }
+
+
 
 .deposit{
+
 background:#16a34a;
+
 }
+
+
 
 .withdraw{
+
 background:#2563eb;
+
 }
+
+
 
 .market{
+
 background:#f59e0b;
+
 }
+
+
 
 .trades{
+
 background:#7c3aed;
+
 }
 
+
+
+.copy{
+
+background:#334155;
+margin-top:10px;
+
+}
+
+
+
 .back{
+
 display:block;
 background:#475569;
 padding:15px;
 border-radius:15px;
 text-align:center;
-text-decoration:none;
 color:white;
+text-decoration:none;
+
 }
 
-.status{
-color:#22c55e;
-font-weight:bold;
+
+
+h3{
+
+margin-top:0;
+
 }
 
-.lock{
-color:#facc15;
-}
 
-.info{
-background:#0f172a;
-padding:15px;
-border-radius:15px;
-line-height:2;
-}
-
-input{
-width:90%;
-padding:12px;
-border-radius:10px;
-border:0;
-margin-top:10px;
-}
-
-.wallet-address{
-font-size:14px;
-word-break:break-all;
-color:#22c55e;
-}
 
 </style>
 
@@ -165,80 +285,121 @@ color:#22c55e;
 <div class="container">
 
 
+
 <div class="header">
 
 <div class="logo">
+
 🇵🇸 USDT P2P Palestine
+
 </div>
+
 
 <h3>
+
 💰 محفظتي
+
 </h3>
 
+
 </div>
+
+
 
 
 
 <div class="card">
+
 
 <div class="balance">
 
+
 <p>
-الرصيد المتاح للبيع والشراء
+
+الرصيد المتاح
+
 </p>
 
+
 <h1>
+
 {{ wallet.balance or 0 }}
+
 </h1>
 
-<span>
+
+<div class="usdt">
+
 USDT
-</span>
 
 </div>
+
+
+</div>
+
+
 
 
 
 <div class="box">
 
 <div class="label">
-🔒 الرصيد المحجوز في الصفقات
+
+🔒 محجوز في الصفقات
+
 </div>
+
 
 <div class="value lock">
+
 {{ wallet.locked or 0 }} USDT
+
 </div>
 
 </div>
+
+
 
 
 
 <div class="box">
 
 <div class="label">
-📊 إجمالي رصيد الحساب
+
+📊 إجمالي الرصيد
+
 </div>
+
 
 <div class="value">
-{{ (wallet.balance or 0) + (wallet.locked or 0) }} USDT
+
+{{ (wallet.balance or 0)+(wallet.locked or 0) }} USDT
+
 </div>
 
 </div>
+
 
 
 
 <div class="box">
 
 <div class="label">
-حالة المحفظة
+
+حالة الحساب
+
 </div>
+
 
 <div class="status">
-🟢 نشطة
-</div>
+
+🟢 نشط
 
 </div>
 
+</div>
+
+
 
 </div>
 
@@ -246,14 +407,17 @@ USDT
 
 
 
-<!-- محفظة USDT BSC -->
+
 
 <div class="card">
 
 
 <h3>
-💰 عنوان محفظة USDT (BSC)
+
+💳 محفظة USDT BSC
+
 </h3>
+
 
 
 <div class="info">
@@ -262,25 +426,38 @@ USDT
 {% if user.usdt_wallet %}
 
 
-<div class="label">
-عنوان المحفظة الحالي:
+<div>
+
+عنوانك:
+
 </div>
 
 
-<div class="wallet-address">
+<div class="wallet-address" id="wallet">
 
 {{ user.usdt_wallet }}
 
 </div>
 
 
+
+<button onclick="copyWallet()" class="btn copy">
+
+📋 نسخ العنوان
+
+</button>
+
+
+
 {% else %}
 
 
-⚠️ لم يتم إضافة عنوان محفظة USDT
+⚠️ لم تضف عنوان USDT بعد
 
 
 {% endif %}
+
+
 
 
 
@@ -288,23 +465,23 @@ USDT
 
 
 <input
-type="text"
+
 name="usdt_wallet"
-placeholder="أدخل عنوان محفظة BSC"
+
+placeholder="أدخل عنوان BSC 0x..."
+
 >
-
-
-<br>
 
 
 <button class="btn deposit">
 
-💾 حفظ المحفظة
+💾 حفظ العنوان
 
 </button>
 
 
 </form>
+
 
 
 </div>
@@ -322,29 +499,29 @@ placeholder="أدخل عنوان محفظة BSC"
 
 
 <h3>
-🔐 حماية الصفقات
+
+🔐 نظام الحماية
+
 </h3>
 
 
 <div class="info">
 
-قبل بيع USDT:
+
+1️⃣ يتم حجز USDT أثناء الصفقة
 
 <br>
 
-1️⃣ يتم حجز كمية USDT المطلوبة داخل المنصة
+2️⃣ المشتري يدفع للبائع
 
 <br>
 
-2️⃣ المشتري يحول المبلغ للبائع
+3️⃣ بعد التأكيد يتم تحويل USDT
 
 <br>
 
-3️⃣ بعد التأكيد يتم تحرير USDT للمشتري
+4️⃣ الأدمن يتدخل عند وجود نزاع
 
-<br>
-
-4️⃣ في حال النزاع يتدخل الأدمن
 
 </div>
 
@@ -365,7 +542,7 @@ placeholder="أدخل عنوان محفظة BSC"
 
 <a href="/usdt_deposit" class="btn deposit">
 
-➕ إيداع USDT
+➕ إيداع
 
 </a>
 
@@ -373,7 +550,7 @@ placeholder="أدخل عنوان محفظة BSC"
 
 <a href="/withdraw" class="btn withdraw">
 
-📤 سحب USDT
+📤 سحب
 
 </a>
 
@@ -387,11 +564,12 @@ placeholder="أدخل عنوان محفظة BSC"
 
 
 
-<a href="/my_trades" class="btn trades">
+<a href="/profile" class="btn trades">
 
 📋 صفقاتي
 
 </a>
+
 
 
 </div>
@@ -405,12 +583,35 @@ placeholder="أدخل عنوان محفظة BSC"
 
 <a href="/" class="back">
 
-⬅️ رجوع للرئيسية
+⬅️ الرئيسية
 
 </a>
 
 
+
 </div>
+
+
+
+
+<script>
+
+
+function copyWallet(){
+
+let text=document.getElementById("wallet").innerText;
+
+
+navigator.clipboard.writeText(text);
+
+
+alert("✅ تم نسخ العنوان");
+
+}
+
+
+</script>
+
 
 
 </body>
