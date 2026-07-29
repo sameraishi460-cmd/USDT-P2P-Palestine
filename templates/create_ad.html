@@ -5,6 +5,8 @@
 
 <meta charset="UTF-8">
 
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>إنشاء إعلان بيع USDT</title>
 
 
@@ -14,7 +16,7 @@ body{
     font-family:tahoma,Arial;
     background:#0b1220;
     color:white;
-    padding:20px;
+    padding:15px;
 }
 
 
@@ -22,33 +24,81 @@ body{
 
     background:#1e293b;
     max-width:500px;
-    margin:40px auto;
+    margin:25px auto;
     padding:25px;
-    border-radius:20px;
+    border-radius:22px;
+    box-shadow:0 0 20px #0005;
 
 }
 
 
 h2{
+
     text-align:center;
     color:#22c55e;
+    margin-bottom:25px;
+
 }
+
+
+
+.card{
+
+    background:#111827;
+    padding:15px;
+    border-radius:15px;
+    margin-bottom:15px;
+    line-height:2;
+
+}
+
+
+
+.balance{
+
+    background:#064e3b;
+    color:#86efac;
+    font-size:18px;
+
+}
+
+
+
+.price{
+
+    background:#1e40af;
+    color:#bfdbfe;
+
+}
+
+
+
+.warning{
+
+    background:#7f1d1d;
+    color:#fecaca;
+
+}
+
 
 
 label{
-display:block;
-margin-top:15px;
-color:#cbd5e1;
+
+    display:block;
+    margin-top:15px;
+    color:#cbd5e1;
+
 }
 
 
-input{
+
+input,select{
 
     width:100%;
     box-sizing:border-box;
     padding:13px;
     margin-top:8px;
-    border-radius:10px;
+    border-radius:12px;
     border:0;
     background:#111827;
     color:white;
@@ -57,42 +107,41 @@ input{
 }
 
 
-.info{
 
-background:#111827;
-padding:15px;
-border-radius:12px;
-margin:15px 0;
-line-height:2;
+.result{
 
-}
-
-
-.balance{
-
-background:#064e3b;
-padding:15px;
-border-radius:12px;
-margin:15px 0;
-color:#86efac;
-font-size:18px;
+    background:#14532d;
+    padding:15px;
+    border-radius:12px;
+    margin-top:15px;
+    color:#bbf7d0;
+    font-size:17px;
 
 }
+
 
 
 button{
 
     width:100%;
-    padding:14px;
+    padding:15px;
     margin-top:20px;
     background:#16a34a;
     color:white;
     border:0;
     border-radius:12px;
-    font-size:17px;
-    cursor:pointer;
+    font-size:18px;
 
 }
+
+
+
+button:disabled{
+
+    background:#555;
+
+}
+
 
 
 .back{
@@ -101,19 +150,9 @@ button{
     text-align:center;
     margin-top:20px;
     color:#60a5fa;
-    text-decoration:none;
 
 }
 
-
-.warning{
-
-background:#7f1d1d;
-padding:15px;
-border-radius:12px;
-margin-bottom:15px;
-
-}
 
 </style>
 
@@ -128,54 +167,93 @@ margin-bottom:15px;
 
 
 <h2>
-➕ إنشاء إعلان بيع USDT
+🚀 بيع USDT
 </h2>
 
 
 
-<div class="balance">
+<div class="card balance">
 
-💰 رصيدك الحالي:
+💰 رصيدك في المنصة:
+
 <br>
 
-<b>{{ wallet_balance }} USDT</b>
+<b>
+{{ wallet_balance|default(0) }} USDT
+</b>
 
 </div>
 
 
 
-{% if wallet_balance <= 0 %}
+<div class="card price">
 
-<div class="warning">
+📊 سعر USDT الحالي:
 
-⚠️ لا يوجد لديك USDT في محفظة المنصة.
 <br>
-قم بإيداع USDT أولاً حتى تستطيع نشر إعلان بيع.
+
+1 USDT ≈
+
+<b>
+{{ price.usdt_ils if price else "غير متوفر" }}
+</b>
+
+₪
+
 
 </div>
+
+
+
+{% if wallet_balance|default(0) <= 0 %}
+
+
+<div class="card warning">
+
+⚠️ لا يوجد رصيد USDT.
+
+<br>
+
+قم بإيداع USDT أولاً حتى تستطيع إنشاء إعلان.
+
+</div>
+
 
 {% endif %}
 
 
 
-<div class="info">
 
-💳 سيتم استخدام بيانات الدفع الموجودة في ملفك:
+<div class="card">
+
+
+💳 معلومات الدفع:
 
 <br>
 
 📱 الهاتف:
-<b>{{user.phone}}</b>
+
+<b>
+{{ user.phone if user.phone else "غير مضاف" }}
+</b>
+
 
 <br>
 
 🏦 البنك:
-<b>{{user.bank}}</b>
+
+<b>
+{{ user.bank if user.bank else "غير مضاف" }}
+</b>
+
 
 <br>
 
 طريقة الدفع:
-<b>{{user.payment_method}}</b>
+
+<b>
+{{ user.payment_method if user.payment_method else "غير مضافة" }}
+</b>
 
 
 </div>
@@ -183,7 +261,10 @@ margin-bottom:15px;
 
 
 
-<form method="POST">
+
+<form method="POST"
+onsubmit="return checkBalance()">
+
 
 
 <label>
@@ -193,11 +274,9 @@ margin-bottom:15px;
 
 <input
 
-type="text"
-
 name="title"
 
-placeholder="مثال: بيع USDT سريع"
+placeholder="مثال: بيع USDT مقابل شيكل"
 
 required
 
@@ -206,11 +285,13 @@ required
 
 
 <label>
-كمية USDT
+كمية USDT للبيع
 </label>
 
 
 <input
+
+id="amount"
 
 type="number"
 
@@ -218,7 +299,9 @@ step="0.01"
 
 name="amount"
 
-placeholder="مثال: 100"
+placeholder="100"
+
+oninput="calculate()"
 
 required
 
@@ -227,11 +310,13 @@ required
 
 
 <label>
-السعر بالشيكل ₪
+سعر 1 USDT بالشيكل
 </label>
 
 
 <input
+
+id="price"
 
 type="number"
 
@@ -239,7 +324,9 @@ step="0.01"
 
 name="price"
 
-placeholder="مثال: 370"
+value="{{ price.usdt_ils if price else 3.70 }}"
+
+oninput="calculate()"
 
 required
 
@@ -247,21 +334,75 @@ required
 
 
 
-{% if wallet_balance > 0 %}
+<label>
+طريقة الدفع
+</label>
+
+
+<select name="payment">
+
+
+<option>
+BANK
+</option>
+
+<option>
+CASH
+</option>
+
+<option>
+PAYPAL
+</option>
+
+<option>
+OTHER
+</option>
+
+
+</select>
+
+
+
+
+<div class="result">
+
+
+💵 قيمة الإعلان:
+
+<br>
+
+<b id="total">
+0
+</b>
+
+₪
+
+
+</div>
+
+
+
+
+
+{% if wallet_balance|default(0) > 0 %}
+
 
 <button type="submit">
 
-🚀 نشر الإعلان
+✅ نشر الإعلان
 
 </button>
+
 
 {% else %}
 
-<button type="button" disabled style="background:#555">
 
-🔒 لا يمكن النشر بدون رصيد
+<button disabled>
+
+🔒 الرصيد غير كافي
 
 </button>
+
 
 {% endif %}
 
@@ -273,12 +414,72 @@ required
 
 <a class="back" href="/">
 
-⬅ الرجوع للرئيسية
+⬅ الرجوع
 
 </a>
 
 
 </div>
+
+
+
+
+
+<script>
+
+
+let balance = {{ wallet_balance|default(0) }};
+
+
+
+function calculate(){
+
+let amount =
+parseFloat(
+document.getElementById("amount").value
+) || 0;
+
+
+let price =
+parseFloat(
+document.getElementById("price").value
+) || 0;
+
+
+document.getElementById("total").innerHTML =
+(amount * price).toFixed(2);
+
+}
+
+
+
+
+function checkBalance(){
+
+let amount =
+parseFloat(
+document.getElementById("amount").value
+) || 0;
+
+
+if(amount > balance){
+
+alert(
+"❌ الكمية أكبر من رصيدك"
+);
+
+return false;
+
+}
+
+
+return true;
+
+}
+
+
+</script>
+
 
 
 </body>
