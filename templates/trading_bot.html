@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Trading Bot</title>
+
+    <style>
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f6fa;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: auto;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+        }
+
+        h1 {
+            margin-top: 0;
+        }
+
+        .value {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            border: 0;
+            border-radius: 10px;
+            font-size: 17px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .start {
+            background: #16a34a;
+            color: white;
+        }
+
+        .stop {
+            background: #dc2626;
+            color: white;
+        }
+
+        .back {
+            background: #374151;
+            color: white;
+        }
+
+        .status {
+            padding: 10px;
+            border-radius: 8px;
+            background: #eee;
+            margin-top: 10px;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="card">
+
+        <h1>🤖 Trading Bot</h1>
+
+        <p>
+            Paper Trading — تجريبي
+        </p>
+
+        {% if bot %}
+
+            <div class="status">
+                🟢 البوت يعمل
+            </div>
+
+        {% else %}
+
+            <div class="status">
+                ⚪ البوت متوقف
+            </div>
+
+        {% endif %}
+
+    </div>
+
+
+    {% if stats %}
+
+    <div class="card">
+
+        <h3>💰 رأس المال</h3>
+
+        <div class="value">
+            ${{ stats.capital }}
+        </div>
+
+    </div>
+
+
+    <div class="card">
+
+        <h3>📈 الربح</h3>
+
+        <div class="value">
+            ${{ stats.profit }}
+        </div>
+
+        <p>
+            العائد:
+            {{ stats.return_percent }}%
+        </p>
+
+    </div>
+
+
+    <div class="card">
+
+        <h3>📊 الصفقات</h3>
+
+        <div class="value">
+            {{ stats.trades }}
+        </div>
+
+    </div>
+
+    {% endif %}
+
+
+    {% if bot %}
+
+        <form
+            method="POST"
+            action="/trading_bot/stop"
+        >
+
+            <button
+                class="stop"
+                type="submit"
+            >
+                ⛔ إيقاف البوت
+            </button>
+
+        </form>
+
+    {% else %}
+
+        <form
+            method="POST"
+            action="/trading_bot/start"
+        >
+
+            <button
+                class="start"
+                type="submit"
+            >
+                🚀 تشغيل البوت
+            </button>
+
+        </form>
+
+    {% endif %}
+
+
+    <a href="/dashboard">
+
+        <button class="back">
+            العودة للمنصة
+        </button>
+
+    </a>
+
+</div>
+
+</body>
+
+</html>
