@@ -29,6 +29,8 @@ from datetime import timedelta, datetime
 import telegram_bot
 import price_updater
 
+from trading.bot_engine import TradingBot
+
 from web3 import Web3
 
 
