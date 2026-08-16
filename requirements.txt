@@ -4,3 +4,4 @@ gunicorn
 requests
 web3
 Flask-Login
+pandas
