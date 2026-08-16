@@ -5,7 +5,9 @@ from flask import (
     redirect,
     session,
     jsonify,
-    send_from_directory
+    send_from_directory,
+    url_for,
+    flash
 )
 
 from werkzeug.security import (
@@ -28,8 +30,6 @@ from datetime import timedelta, datetime
 
 import telegram_bot
 import price_updater
-
-from trading.bot_engine import TradingBot
 
 from web3 import Web3
 
@@ -3489,7 +3489,7 @@ def my_ads():
 @app.route(
     "/create_cash_ad",
     methods=["GET","POST"]
-)
+    )
 
 @login_required
 
@@ -3650,6 +3650,97 @@ def my_trades():
         cash_trades=cash_trades,
         username=session["user"]
     )
+
+
+
+# ===============================
+# TRADING BOT
+# ===============================
+
+paper_bots = {}
+
+
+@app.route("/trading_bot")
+@login_required
+def trading_bot_page():
+
+    username = session.get("user")
+
+    bot = paper_bots.get(username)
+
+    stats = None
+
+    if bot and hasattr(bot, "stats"):
+        stats = bot.stats()
+
+    return render_template(
+        "trading_bot.html",
+        bot=bot,
+        stats=stats
+    )
+
+
+@app.route("/trading_bot/start", methods=["POST"])
+@login_required
+def start_trading_bot():
+
+    username = session.get("user")
+
+    if username in paper_bots:
+        flash("البوت يعمل بالفعل!", "info")
+        return redirect(url_for("trading_bot_page"))
+
+    try:
+        bot = TradingBot(
+            symbol="BTCUSDT",
+            interval="1h",
+            capital=2500,
+            risk_percent=0.5,
+            stop_loss_percent=1.0,
+            take_profit_percent=1.5
+        )
+
+        paper_bots[username] = bot
+
+        thread = threading.Thread(
+            target=bot.start,
+            daemon=True
+        )
+
+        thread.start()
+        
+        flash("تم تشغيل بوت التداول التجريبي بنجاح.", "success")
+
+    except Exception as e:
+        if username in paper_bots:
+            del paper_bots[username]
+        flash(f"حدث خطأ أثناء تشغيل البوت: {str(e)}", "danger")
+
+    return redirect(url_for("trading_bot_page"))
+
+
+@app.route("/trading_bot/stop", methods=["POST"])
+@login_required
+def stop_trading_bot():
+
+    username = session.get("user")
+
+    bot = paper_bots.get(username)
+
+    if bot:
+        try:
+            bot.stop()
+        except Exception as e:
+            print(f"Error stopping bot for {username}: {e}")
+        finally:
+            if username in paper_bots:
+                del paper_bots[username]
+        
+        flash("تم إيقاف بوت التداول بنجاح.", "warning")
+    else:
+        flash("لا يوجد بوت نشط حالياً لإيقافه.", "info")
+
+    return redirect(url_for("trading_bot_page"))
 
 
 
