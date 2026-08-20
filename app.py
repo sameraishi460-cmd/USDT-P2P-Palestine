@@ -20,7 +20,7 @@ from web3 import Web3
 
 import telegram_bot
 import price_updater
-from trading.bot_engine import TradingBot
+# Old import removed — now using trading.get_engine()
 
 # ===============================
 # FLASK CONFIG
@@ -2274,20 +2274,18 @@ def my_trades():
 
 
 # ===============================
-# TRADING BOT
+# AI TRADING ENGINE
 # ===============================
-paper_bots = {}
+from trading import get_engine
 
 
 @app.route("/trading_bot")
 @login_required
 def trading_bot_page():
     username = session.get("user")
-    bot = paper_bots.get(username)
-    stats = None
-    if bot and hasattr(bot, "stats"):
-        stats = bot.stats()
-    return render_template("trading_bot.html", bot=bot, stats=stats)
+    engine = get_engine()
+    status = engine.get_bot_status(username)
+    return render_template("trading_bot.html", **status)
 
 
 @app.route("/trading_bot/start", methods=["POST"])
@@ -2297,24 +2295,9 @@ def start_trading_bot():
         return redirect("/trading_bot")
 
     username = session.get("user")
-    if username in paper_bots:
-        flash("البوت يعمل بالفعل!", "info")
-        return redirect("/trading_bot")
-
-    try:
-        bot = TradingBot(
-            symbol="BTCUSDT", interval="1h",
-            capital=2500, risk_percent=0.5,
-            stop_loss_percent=1.0, take_profit_percent=1.5
-        )
-        paper_bots[username] = bot
-        thread = threading.Thread(target=bot.start, daemon=True)
-        thread.start()
-        flash("تم تشغيل بوت التداول التجريبي بنجاح", "success")
-    except Exception as e:
-        paper_bots.pop(username, None)
-        flash(f"حدث خطأ: {str(e)}", "danger")
-
+    engine = get_engine()
+    ok, msg = engine.start_bot(username)
+    flash(msg, "success" if ok else "danger")
     return redirect("/trading_bot")
 
 
@@ -2325,19 +2308,40 @@ def stop_trading_bot():
         return redirect("/trading_bot")
 
     username = session.get("user")
-    bot = paper_bots.get(username)
-    if bot:
-        try:
-            bot.stop()
-        except Exception:
-            pass
-        finally:
-            paper_bots.pop(username, None)
-        flash("تم إيقاف بوت التداول", "warning")
-    else:
-        flash("لا يوجد بوت نشط", "info")
-
+    engine = get_engine()
+    ok, msg = engine.stop_bot(username)
+    flash(msg, "warning" if ok else "info")
     return redirect("/trading_bot")
+
+
+@app.route("/trading_bot/pause", methods=["POST"])
+@login_required
+def pause_trading_bot():
+    if not validate_csrf():
+        return redirect("/trading_bot")
+
+    username = session.get("user")
+    engine = get_engine()
+    ok, msg = engine.pause_bot(username)
+    flash(msg, "info" if ok else "danger")
+    return redirect("/trading_bot")
+
+
+@app.route("/trading_bot/emergency", methods=["POST"])
+@login_required
+def emergency_stop_bot():
+    if not validate_csrf():
+        return redirect("/trading_bot")
+
+    username = session.get("user")
+    engine = get_engine()
+    ok, msg = engine.emergency_stop(username)
+    flash(msg, "danger" if ok else "warning")
+    return redirect("/trading_bot")
+
+
+# ===============================
+# ADMIN PANEL
 
 
 # ===============================

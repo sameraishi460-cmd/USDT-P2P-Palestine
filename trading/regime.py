@@ -1,0 +1,200 @@
+"""
+AI Trading Engine — Market Regime Detection
+
+Detects the current market regime to guide strategy selection.
+"""
+
+import numpy as np
+import pandas as pd
+
+
+# Regime constants
+BULL_TREND = "BULL_TREND"
+BEAR_TREND = "BEAR_TREND"
+SIDEWAYS = "SIDEWAYS"
+HIGH_VOL = "HIGH_VOLATILITY"
+LOW_VOL = "LOW_VOLATILITY"
+BREAKOUT = "BREAKOUT"
+BREAKDOWN = "BREAKDOWN"
+UNCERTAIN = "UNCERTAIN"
+
+
+def detect_regime(df):
+    """
+    Detect market regime from latest features.
+    Returns (regime, confidence, description).
+    """
+    if df is None or len(df) < 30:
+        return UNCERTAIN, 0, "Insufficient data"
+
+    row = df.iloc[-1]
+    recent = df.tail(20)
+
+    # Trend detection
+    ema20 = row.get("ema_20", 0)
+    ema50 = row.get("ema_50", 0)
+    ema200 = row.get("ema_200", 0)
+    adx = row.get("adx", 25)
+    rsi = row.get("rsi", 50)
+
+    # Volatility
+    atr_pct = row.get("atr_pct", 0)
+    bb_width = row.get("bb_width", 2)
+    vol_regime = row.get("volatility_regime", 1)
+
+    # Breakout
+    breakout_up = row.get("breakout_up", 0)
+    breakout_down = row.get("breakout_down", 0)
+
+    # Volume
+    rel_vol = row.get("relative_volume", 1)
+
+    scores = {}
+
+    # === BULL TREND ===
+    bull_score = 0
+    if ema20 > ema50:
+        bull_score += 20
+    if ema50 > ema200:
+        bull_score += 20
+    if adx > 25:
+        bull_score += 15
+    if rsi > 50 and rsi < 75:
+        bull_score += 10
+    if row.get("plus_di", 25) > row.get("minus_di", 25):
+        bull_score += 10
+    if row.get("momentum_10", 0) > 0:
+        bull_score += 10
+    if row.get("is_green", 0):
+        bull_score += 5
+    scores[BULL_TREND] = min(bull_score, 100)
+
+    # === BEAR TREND ===
+    bear_score = 0
+    if ema20 < ema50:
+        bear_score += 20
+    if ema50 < ema200:
+        bear_score += 20
+    if adx > 25:
+        bear_score += 15
+    if rsi < 50 and rsi > 25:
+        bear_score += 10
+    if row.get("minus_di", 25) > row.get("plus_di", 25):
+        bear_score += 10
+    if row.get("momentum_10", 0) < 0:
+        bear_score += 10
+    if not row.get("is_green", 1):
+        bear_score += 5
+    scores[BEAR_TREND] = min(bear_score, 100)
+
+    # === SIDEWAYS ===
+    sideways_score = 0
+    if adx < 20:
+        sideways_score += 30
+    if abs(ema20 - ema50) / ema50 * 100 < 0.5:
+        sideways_score += 20
+    if bb_width < 2:
+        sideways_score += 15
+    if abs(row.get("momentum_20", 0)) < 1:
+        sideways_score += 15
+    if 40 < rsi < 60:
+        sideways_score += 10
+    scores[SIDEWAYS] = min(sideways_score, 100)
+
+    # === HIGH VOLATILITY ===
+    high_vol_score = 0
+    if atr_pct > 2:
+        high_vol_score += 25
+    if bb_width > 4:
+        high_vol_score += 25
+    if vol_regime >= 2:
+        high_vol_score += 20
+    if row.get("candle_range", 0) > 2:
+        high_vol_score += 15
+    if rel_vol > 2:
+        high_vol_score += 15
+    scores[HIGH_VOL] = min(high_vol_score, 100)
+
+    # === LOW VOLATILITY ===
+    low_vol_score = 0
+    if atr_pct < 0.5:
+        low_vol_score += 25
+    if bb_width < 1.5:
+        low_vol_score += 25
+    if vol_regime == 0:
+        low_vol_score += 20
+    if rel_vol < 0.7:
+        low_vol_score += 15
+    scores[LOW_VOL] = min(low_vol_score, 100)
+
+    # === BREAKOUT ===
+    breakout_score = 0
+    if breakout_up:
+        breakout_score += 40
+    if rel_vol > 1.5:
+        breakout_score += 20
+    if adx > 20:
+        breakout_score += 15
+    if rsi > 55:
+        breakout_score += 10
+    scores[BREAKOUT] = min(breakout_score, 100)
+
+    # === BREAKDOWN ===
+    breakdown_score = 0
+    if breakout_down:
+        breakdown_score += 40
+    if rel_vol > 1.5:
+        breakdown_score += 20
+    if adx > 20:
+        breakdown_score += 15
+    if rsi < 45:
+        breakdown_score += 10
+    scores[BREAKDOWN] = min(breakdown_score, 100)
+
+    # Select dominant regime
+    best_regime = max(scores, key=scores.get)
+    best_score = scores[best_regime]
+
+    # If no regime scores above 30, it's uncertain
+    if best_score < 30:
+        return UNCERTAIN, best_score, "Market conditions unclear"
+
+    # If HIGH_VOL and not trending, it's just volatile
+    if best_regime == HIGH_VOL and adx < 20:
+        return HIGH_VOL, best_score, f"High volatility (ATR {atr_pct:.1f}%), no clear trend"
+
+    # If LOW_VOL, check if trending
+    if best_regime == LOW_VOL and adx > 25:
+        if scores[BULL_TREND] > 30:
+            return BULL_TREND, scores[BULL_TREND], "Low vol but strong uptrend"
+        elif scores[BEAR_TREND] > 30:
+            return BEAR_TREND, scores[BEAR_TREND], "Low vol but strong downtrend"
+
+    descriptions = {
+        BULL_TREND: f"Bullish trend (ADX {adx:.0f}, RSI {rsi:.0f})",
+        BEAR_TREND: f"Bearish trend (ADX {adx:.0f}, RSI {rsi:.0f})",
+        SIDEWAYS: f"Range-bound (ADX {adx:.0f})",
+        HIGH_VOL: f"High volatility (ATR {atr_pct:.1f}%)",
+        LOW_VOL: f"Low volatility (ATR {atr_pct:.1f}%)",
+        BREAKOUT: f"Breakout detected (rel_vol {rel_vol:.1f}x)",
+        BREAKDOWN: f"Breakdown detected (rel_vol {rel_vol:.1f}x)",
+    }
+
+    return best_regime, best_score, descriptions.get(best_regime, best_regime)
+
+
+def is_regime_suitable(regime, strategy_type):
+    """
+    Check if a strategy is suitable for the current regime.
+    Returns True if the strategy should be allowed to trade.
+    """
+    suitability = {
+        "trend_following": [BULL_TREND, BEAR_TREND, BREAKOUT, BREAKDOWN],
+        "mean_reversion": [SIDEWAYS, LOW_VOL],
+        "breakout": [BREAKOUT, BREAKDOWN],
+        "momentum": [BULL_TREND, BEAR_TREND, HIGH_VOL],
+        "conservative": [BULL_TREND, BEAR_TREND, SIDEWAYS],
+    }
+
+    allowed = suitability.get(strategy_type, [BULL_TREND, BEAR_TREND])
+    return regime in allowed

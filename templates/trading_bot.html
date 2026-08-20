@@ -1,80 +1,209 @@
 {% extends "base.html" %}
-{% block title %}بوت التداول - USDT P2P Palestine{% endblock %}
+{% block title %}🤖 AI Trading Engine — USDT P2P Palestine{% endblock %}
 {% block content %}
 <div class="container container-narrow">
-  <a href="/dashboard" class="back-link">⬅️ العودة</a>
 
-  <div class="page-header" style="background:linear-gradient(135deg,var(--bg-surface),rgba(168,85,247,0.06));border-color:rgba(168,85,247,0.15);">
-    <h2>🤖 بوت التداول</h2>
-    <span class="badge badge-purple" style="margin-top:var(--sp-2);">تجريبي — Paper Trading</span>
+  <!-- Header -->
+  <div class="page-header" style="background:linear-gradient(135deg,rgba(168,85,247,0.08),var(--bg-surface));border-color:rgba(168,85,247,0.15);">
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <h2>🤖 محرك التداول الذكي</h2>
+        <p style="color:var(--text-muted);font-size:0.8rem;margin-top:var(--sp-1);">Autonomous AI Trading Engine</p>
+      </div>
+      <div style="text-align:right;">
+        {% if bot and bot.status == 'RUNNING' %}
+          <span class="badge badge-success" style="font-size:0.8rem;">🟢 يعمل</span>
+        {% elif bot and bot.status == 'PAUSED' %}
+          <span class="badge badge-warning" style="font-size:0.8rem;">⏸️ متوقف مؤقتاً</span>
+        {% elif bot and bot.status == 'SAFE_MODE' %}
+          <span class="badge badge-danger" style="font-size:0.8rem;">🛡️ وضع آمن</span>
+        {% elif bot and bot.status == 'ERROR' %}
+          <span class="badge badge-danger" style="font-size:0.8rem;">❌ خطأ</span>
+        {% else %}
+          <span class="badge badge-neutral" style="font-size:0.8rem;">⏹️ متوقف</span>
+        {% endif %}
+      </div>
+    </div>
   </div>
 
-  <div class="alert alert-info">ℹ️ هذا البوت يعمل في وضع <strong>التجريبي فقط</strong>. لا يستخدم أموالاً حقيقية.</div>
-
-  <!-- Status -->
-  <div class="card" style="text-align:center;background:linear-gradient(135deg,var(--bg-surface),rgba(168,85,247,0.04));">
-    <div style="font-size:2.5rem;margin-bottom:var(--sp-2);">{% if bot %}🟢{% else %}⚪{% endif %}</div>
-    <h3>{% if bot %}البوت يعمل{% else %}البوت متوقف{% endif %}</h3>
-    <p style="color:var(--text-muted);font-size:0.85rem;">
-      {% if bot %}جاري التداول على BTCUSDT{% else %}اضغط تشغيل لبدء التداول التجريبي{% endif %}
-    </p>
-    {% if bot %}
-    <span class="badge badge-success">🟢 نشط — BTCUSDT 1h</span>
-    {% else %}
-    <span class="badge badge-neutral">⚪ متوقف</span>
-    {% endif %}
+  <!-- Mode Warning -->
+  <div class="alert alert-info" style="margin-bottom:var(--sp-4);">
+    ℹ️ <strong>وضع تجريبي (Paper Trading)</strong> — لا يستخدم أموالاً حقيقية. الأرباح والخسائر تجريبية فقط.
   </div>
 
-  <!-- Start/Stop -->
-  <div style="display:flex;gap:var(--sp-3);">
-    {% if not bot %}
-    <form method="POST" action="/trading_bot/start" style="flex:1;">
+  <!-- Controls -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3);margin-bottom:var(--sp-4);">
+    {% if not bot or bot.status != 'RUNNING' %}
+    <form method="POST" action="/trading_bot/start">
       <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
-      <button type="submit" class="btn btn-success btn-block btn-lg" onclick="haptic('success')">▶️ تشغيل البوت</button>
+      <button type="submit" class="btn btn-success btn-block btn-lg" onclick="haptic('success')">▶️ تشغيل</button>
     </form>
     {% else %}
-    <form method="POST" action="/trading_bot/stop" style="flex:1;">
+    <form method="POST" action="/trading_bot/pause">
       <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
-      <button type="submit" class="btn btn-danger btn-block btn-lg" onclick="haptic('warning')">⏹️ إيقاف البوت</button>
+      <button type="submit" class="btn btn-warning btn-block btn-lg" onclick="haptic('warning')">⏸️ إيقاف مؤقت</button>
     </form>
     {% endif %}
+
+    <form method="POST" action="/trading_bot/stop">
+      <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="btn btn-ghost btn-block btn-lg">⏹️ إيقاف</button>
+    </form>
   </div>
 
-  {% if stats %}
-  <div class="section-title mt-6">📊 أداء البوت</div>
-  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:var(--sp-3);">
+  <!-- Emergency Stop -->
+  <form method="POST" action="/trading_bot/emergency" style="margin-bottom:var(--sp-4);">
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="btn btn-danger btn-block" onclick="return confirm('هل أنت متأكد؟ سيتم إغلاق جميع الصفقات المفتوحة فوراً')">
+      🛑 إيقاف طارئ — إغلاق كل الصفقات
+    </button>
+  </form>
+
+  <!-- KPI Cards -->
+  {% if bot %}
+  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:var(--sp-3);margin-bottom:var(--sp-4);">
     <div class="kpi-card">
       <div class="kpi-icon green">💰</div>
-      <div class="kpi-value">${{ stats.capital }}</div>
-      <div class="kpi-label">رأس المال</div>
+      <div class="kpi-value">${{ "%.2f"|format(bot.equity or 0) }}</div>
+      <div class="kpi-label">ال诊ية</div>
     </div>
     <div class="kpi-card">
-      <div class="kpi-icon {% if stats.profit|default(0)|float > 0 %}green{% else %}red{% endif %}">📈</div>
-      <div class="kpi-value" style="color:{% if stats.profit|default(0)|float > 0 %}var(--accent-light){% else %}var(--danger-light){% endif %};">${{ stats.profit }}</div>
-      <div class="kpi-label">الربح / الخسارة</div>
+      <div class="kpi-icon {% if (bot.today_pnl or 0) >= 0 %}green{% else %}red{% endif %}">📊</div>
+      <div class="kpi-value" style="color:{% if (bot.today_pnl or 0) >= 0 %}var(--accent-light){% else %}var(--danger-light){% endif %};">
+        ${{ "%.2f"|format(bot.today_pnl or 0) }}
+      </div>
+      <div class="kpi-label">P&L اليوم</div>
     </div>
     <div class="kpi-card">
-      <div class="kpi-icon blue">📊</div>
-      <div class="kpi-value" style="color:var(--primary-light);">{{ stats.return_percent }}%</div>
-      <div class="kpi-label">العائد</div>
+      <div class="kpi-icon {% if (bot.total_pnl or 0) >= 0 %}green{% else %}red{% endif %}">📈</div>
+      <div class="kpi-value" style="color:{% if (bot.total_pnl or 0) >= 0 %}var(--accent-light){% else %}var(--danger-light){% endif %};">
+        ${{ "%.2f"|format(bot.total_pnl or 0) }}
+      </div>
+      <div class="kpi-label">P&L إجمالي</div>
     </div>
     <div class="kpi-card">
-      <div class="kpi-icon purple">🔄</div>
-      <div class="kpi-value">{{ stats.trades }}</div>
-      <div class="kpi-label">عدد الصفقات</div>
+      <div class="kpi-icon blue">📉</div>
+      <div class="kpi-value">{{ "%.1f"|format(((bot.peak_equity or 1) - (bot.equity or 0)) / (bot.peak_equity or 1) * 100) }}%</div>
+      <div class="kpi-label">الانسحاب الأقصى</div>
     </div>
   </div>
 
-  <!-- Strategy -->
-  <div class="card mt-4">
-    <div class="card-title">📐 الاستراتيجية</div>
-    <div class="info-row"><span class="info-label">الأزواج</span><span class="info-value">BTCUSDT</span></div>
-    <div class="info-row"><span class="info-label">الإطار الزمني</span><span class="info-value">1 ساعة</span></div>
-    <div class="info-row"><span class="info-label">المخاطرة</span><span class="info-value">0.5%</span></div>
-    <div class="info-row"><span class="info-label">وقف الخسارة</span><span class="info-value" style="color:var(--danger);">1.0%</span></div>
-    <div class="info-row"><span class="info-label">جني الأرباح</span><span class="info-value" style="color:var(--accent-light);">1.5%</span></div>
-    <div class="info-row"><span class="info-label">المؤشرات</span><span class="info-value">EMA 20/50, RSI 14</span></div>
+  <!-- Stats -->
+  {% if stats and stats.total_trades > 0 %}
+  <div class="section-title">📊 إحصائيات الأداء</div>
+  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:var(--sp-3);margin-bottom:var(--sp-4);">
+    <div class="kpi-card">
+      <div class="kpi-value">{{ stats.total_trades }}</div>
+      <div class="kpi-label">إجمالي الصفقات</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-value" style="color:var(--accent-light);">{{ stats.win_rate }}%</div>
+      <div class="kpi-label">نسبة الربح</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-value">{{ stats.profit_factor }}</div>
+      <div class="kpi-label">عامل الربح</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-value">${{ stats.expectancy }}</div>
+      <div class="kpi-label">التوقع</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-value" style="color:var(--accent-light);">${{ stats.largest_win }}</div>
+      <div class="kpi-label">أكبر ربح</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-value" style="color:var(--danger-light);">${{ stats.largest_loss }}</div>
+      <div class="kpi-label">أكبر خسارة</div>
+    </div>
   </div>
   {% endif %}
+
+  <!-- Open Positions -->
+  <div class="section-title">📋 الصفقات المفتوحة ({{ positions|length }})</div>
+  {% if positions %}
+    {% for pos in positions %}
+    <div class="card" style="border-right:3px solid {% if pos.side == 'LONG' %}var(--accent){% else %}var(--danger){% endif %};margin-bottom:var(--sp-3);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--sp-2);">
+        <div>
+          <span style="font-weight:700;">{{ pos.symbol }}</span>
+          <span class="badge {% if pos.side == 'LONG' %}badge-success{% else %}badge-danger{% endif %}" style="font-size:0.7rem;">{{ pos.side }}</span>
+        </div>
+        <span style="font-size:0.8rem;color:var(--text-muted);">AI: {{ pos.entry_ai_score }}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-2);font-size:0.8rem;">
+        <div><span style="color:var(--text-muted);">الدخول:</span> ${{ "%.2f"|format(pos.entry_price) }}</div>
+        <div><span style="color:var(--text-muted);">الحالي:</span> ${{ "%.2f"|format(pos.current_price) }}</div>
+        <div><span style="color:var(--text-muted);">الوقف:</span> ${{ "%.2f"|format(pos.stop_loss) }}</div>
+        <div><span style="color:var(--text-muted);">الكمية:</span> {{ "%.6f"|format(pos.remaining_qty) }}</div>
+      </div>
+      <div style="display:flex;gap:var(--sp-2);margin-top:var(--sp-2);font-size:0.75rem;">
+        {% if pos.tp1_hit %}<span class="badge badge-success">TP1 ✓</span>{% endif %}
+        {% if pos.break_even %}<span class="badge badge-info">BE ✓</span>{% endif %}
+        {% if pos.trailing_active %}<span class="badge badge-warning">TRAIL</span>{% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty-state" style="padding:var(--sp-4);">
+      <div class="empty-state-icon">📭</div>
+      <div class="empty-state-text">لا توجد صفقات مفتوحة</div>
+    </div>
+  {% endif %}
+
+  <!-- Recent Trades -->
+  <div class="section-title">📜 آخر الصفقات</div>
+  {% if recent_trades %}
+    {% for t in recent_trades %}
+    <div class="list-item" style="border-right:3px solid {% if t.net_pnl > 0 %}var(--accent){% else %}var(--danger){% endif %};">
+      <div>
+        <div style="font-weight:600;font-size:0.85rem;">
+          {{ t.symbol }}
+          <span class="badge {% if t.side == 'LONG' %}badge-success{% else %}badge-danger{% endif %}" style="font-size:0.65rem;">{{ t.side }}</span>
+        </div>
+        <div style="font-size:0.7rem;color:var(--text-muted);">{{ t.exit_reason }} — {{ t.exit_time }}</div>
+      </div>
+      <div style="text-align:left;">
+        <div style="font-weight:700;color:{% if t.net_pnl > 0 %}var(--accent-light){% else %}var(--danger-light){% endif %};">
+          {{ "+" if t.net_pnl > 0 else "" }}${{ "%.2f"|format(t.net_pnl) }}
+        </div>
+        <div style="font-size:0.7rem;color:var(--text-muted);">
+          ${{ "%.2f"|format(t.entry_price) }} → ${{ "%.2f"|format(t.exit_price) }}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty-state" style="padding:var(--sp-4);">
+      <div class="empty-state-icon">📝</div>
+      <div class="empty-state-text">لم تُ executing أي صفقات بعد</div>
+    </div>
+  {% endif %}
+
+  <!-- Strategy Info -->
+  <div class="card" style="margin-top:var(--sp-4);">
+    <div class="card-title">📐 استراتيجية الذكاء الاصطناعي</div>
+    <div class="info-row"><span class="info-label">الأزواج</span><span class="info-value" style="font-size:0.75rem;">{{ bot_config.symbols if bot_config else '9 أزواج' }}</span></div>
+    <div class="info-row"><span class="info-label">الإطار الزمني</span><span class="info-value">5m, 15m, 1h, 4h</span></div>
+    <div class="info-row"><span class="info-label">المخاطرة</span><span class="info-value">{{ config.risk_per_trade_pct if config else '0.5' }}%</span></div>
+    <div class="info-row"><span class="info-label">الحد الأقصى للمخاطرة</span><span class="info-value" style="color:var(--danger);">{{ config.max_risk_per_trade_pct if config else '1.0' }}%</span></div>
+    <div class="info-row"><span class="info-label">خسارة اليوم</span><span class="info-value" style="color:var(--danger);">{{ config.daily_loss_limit_pct if config else '2.0' }}%</span></div>
+    <div class="info-row"><span class="info-label">الإيقاف الطارئ</span><span class="info-value" style="color:var(--danger);">{{ config.emergency_shutdown_pct if config else '10.0' }}%</span></div>
+    <div class="info-row"><span class="info-label">المؤشرات</span><span class="info-value">EMA, RSI, MACD, ADX, ATR, BB, Volume, Momentum</span></div>
+    <div class="info-row"><span class="info-label">كشف الاتجاه</span><span class="info-value">BULL/BEAR/SIDEWAYS/HIGH_VOL/BREAKOUT</span></div>
+    <div class="info-row"><span class="info-label">نمط التداول</span><span class="info-value"> Tradable Only with High AI Score</span></div>
+  </div>
+
+  {% else %}
+  <!-- No bot state -->
+  <div class="empty-state" style="padding:var(--sp-8);">
+    <div class="empty-state-icon">🤖</div>
+    <div class="empty-state-text">محرك التداول الذكي جاهز</div>
+    <p style="color:var(--text-muted);font-size:0.85rem;margin-top:var(--sp-2);">اضغط تشغيل لبدء المسح التلقائي للأسواق</p>
+  </div>
+  {% endif %}
+
+  <a href="/dashboard" class="back-link mt-4">⬅️ لوحة التحكم</a>
+
 </div>
 {% endblock %}
