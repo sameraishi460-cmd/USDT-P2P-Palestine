@@ -333,6 +333,12 @@ def setup_database():
     """
     )
 
+    # MIGRATE CASH ADS - add missing columns
+    add_column(con, 'cash_ads', 'city', "TEXT DEFAULT ''")
+    add_column(con, 'cash_ads', 'location', "TEXT DEFAULT ''")
+    add_column(con, 'cash_ads', 'notes', "TEXT DEFAULT ''")
+    add_column(con, 'cash_ads', 'plan', "TEXT DEFAULT 'week'")
+
 
     # MARKET PRICE
 
@@ -3513,12 +3519,6 @@ def create_cash_ad():
 
     if request.method=="POST":
 
-
-        title = request.form.get(
-            "title"
-        )
-
-
         amount = float(
             request.form.get(
                 "amount",
@@ -3534,19 +3534,33 @@ def create_cash_ad():
             )
         )
 
-
-        payment = request.form.get(
-            "payment",
-            "CASH"
+        city = request.form.get(
+            "city",
+            ""
         )
+
+        location = request.form.get(
+            "location",
+            ""
+        )
+
+        notes = request.form.get(
+            "notes",
+            ""
+        )
+
+        plan = request.form.get(
+            "plan",
+            "week"
+        )
+
+        payment = "CASH"
 
 
         if amount <= 0 or price <= 0:
 
             con.close()
-
             return "بيانات غير صحيحة"
-
 
 
         con.execute(
@@ -3557,26 +3571,32 @@ def create_cash_ad():
         title,
         amount,
         price,
-        payment
+        payment,
+        city,
+        location,
+        notes,
+        plan
         )
 
-        VALUES(?,?,?,?,?)
+        VALUES(?,?,?,?,?,?,?,?,?)
 
         """,
 
         (
             session["user"],
-            title,
+            city + " - " + location,
             amount,
             price,
-            payment
+            payment,
+            city,
+            location,
+            notes,
+            plan
         )
 
         )
-
 
         con.commit()
-
         con.close()
 
 
@@ -3587,12 +3607,26 @@ def create_cash_ad():
 
 
 
-    con.close()
+    # GET WALLET BALANCE
+    wallet = con.execute(
+        """
+        SELECT *
+        FROM wallets
+        WHERE username=?
+        """,
+        (
+            session["user"],
+        )
+    ).fetchone()
 
+    wallet_balance = wallet["balance"] if wallet else 0
+
+    con.close()
 
     return render_template(
         "create_cash_ad.html",
-        user=user
+        user=user,
+        wallet_balance=wallet_balance
     )
 
 
