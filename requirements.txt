@@ -5,3 +5,5 @@ requests
 web3
 Flask-Login
 pandas
+scikit-learn
+joblib

@@ -2340,8 +2340,26 @@ def emergency_stop_bot():
     return redirect("/trading_bot")
 
 
-# ===============================
-# ADMIN PANEL
+@app.route("/trading_bot/train_ml", methods=["POST"])
+@login_required
+def train_ml_model():
+    if not validate_csrf():
+        return redirect("/trading_bot")
+
+    username = session.get("user")
+    engine = get_engine()
+    flash("ML training started...", "info")
+
+    try:
+        result = engine.train_ml()
+        if result.get("status") == "SUCCESS":
+            flash(f"Model trained! Val acc: {result['metrics']['val_acc']:.1%}", "success")
+        else:
+            flash(f"Training failed: {result.get('reason', 'unknown')}", "danger")
+    except Exception as e:
+        flash(f"Training error: {str(e)}", "danger")
+
+    return redirect("/trading_bot")
 
 
 # ===============================

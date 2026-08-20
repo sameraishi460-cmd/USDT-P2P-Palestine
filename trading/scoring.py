@@ -62,8 +62,9 @@ def score_opportunity(df, direction, config, multi_tf_data=None):
     rr_data = _estimate_rr(df, direction, config)
     scores["risk_reward"] = rr_data["score"]
 
-    # 8. ML SCORE (placeholder — set to 50 until ML is trained)
-    scores["ml"] = 50.0
+    # 8. ML SCORE (Phase 3: real ML prediction)
+    ml_prediction = _get_ml_prediction(row, direction)
+    scores["ml"] = ml_prediction["ml_score"]
 
     # 9. MULTI-TF ALIGNMENT SCORE (Phase 2)
     tf_alignment = None
@@ -131,8 +132,52 @@ def score_opportunity(df, direction, config, multi_tf_data=None):
         "rr_ratio": rr_data["rr"],
         "atr_pct": row.get("atr_pct", 0),
         "tf_alignment": tf_alignment,
+        "ml_prediction": ml_prediction,
         "reasons": reasons,
     }
+
+
+# ============================================
+# PHASE 3: ML INTEGRATION
+# ============================================
+
+_ml_predictor = None
+
+
+def _get_ml_prediction(row, direction):
+    """
+    Get ML prediction for a feature row.
+    Falls back gracefully to neutral score on any failure.
+    """
+    global _ml_predictor
+
+    # Lazy-load the predictor
+    if _ml_predictor is None:
+        try:
+            from trading.ml_engine import MLPredictor
+            _ml_predictor = MLPredictor()
+        except Exception as e:
+            return {
+                "ml_score": 50.0,
+                "ml_confidence": 0.0,
+                "ml_direction": "NEUTRAL",
+                "model_version": "none",
+                "available": False,
+                "error": f"ML predictor init failed: {e}",
+            }
+
+    try:
+        result = _ml_predictor.predict(row)
+        return result
+    except Exception as e:
+        return {
+            "ml_score": 50.0,
+            "ml_confidence": 0.0,
+            "ml_direction": "NEUTRAL",
+            "model_version": "none",
+            "available": False,
+            "error": str(e),
+        }
 
 
 def _score_tf_alignment(tf_alignment, direction):
@@ -489,5 +534,10 @@ def _empty_score(reason):
         "rr_ratio": 0,
         "atr_pct": 0,
         "tf_alignment": None,
+        "ml_prediction": {
+            "ml_score": 50.0, "ml_confidence": 0.0,
+            "ml_direction": "NEUTRAL", "model_version": "none",
+            "available": False, "error": reason,
+        },
         "reasons": [f"✗ {reason}"],
     }

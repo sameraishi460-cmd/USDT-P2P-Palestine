@@ -623,6 +623,7 @@ class AIEngine:
         if last_scan and "opportunities" in last_scan:
             for opp in last_scan["opportunities"][:5]:
                 s = opp["score"]
+                ml_pred = s.get("ml_prediction", {})
                 top_opportunities.append({
                     "symbol": opp["symbol"],
                     "direction": opp["direction"],
@@ -637,7 +638,14 @@ class AIEngine:
                     "rr_ratio": s["rr_ratio"],
                     "reasons": s.get("reasons", []),
                     "tf_alignment": s.get("tf_alignment", {}),
+                    "scores": s.get("scores", {}),
+                    "ml_score": ml_pred.get("ml_score", 50),
+                    "ml_confidence": ml_pred.get("ml_confidence", 0),
+                    "model_version": ml_pred.get("model_version", "none"),
                 })
+
+        # Phase 3: ML status
+        ml_status = self._get_ml_status()
 
         return {
             "bot": dict(bot) if bot else None,
@@ -652,4 +660,47 @@ class AIEngine:
             "last_scan_time": last_scan["timestamp"] if last_scan else None,
             "symbols_scanned": last_scan["symbols_scanned"] if last_scan else 0,
             "symbols_rejected": last_scan["symbols_rejected"] if last_scan else 0,
+            "ml_status": ml_status,
         }
+
+    def _get_ml_status(self):
+        """Get ML engine status for UI display."""
+        try:
+            from trading.ml_engine import MLPredictor, ModelRegistry
+            predictor = MLPredictor()
+            ml_info = predictor.get_status()
+
+            registry = ModelRegistry()
+            registry_info = registry.get_registry_info()
+
+            return {
+                "available": ml_info.get("active_model") is not None,
+                "active_model": ml_info.get("active_model"),
+                "model_version": ml_info.get("active_model"),
+                "total_models": ml_info.get("total_models", 0),
+                "predictions_made": ml_info.get("prediction_count", 0),
+                "errors": ml_info.get("error_count", 0),
+                "model_info": registry_info.get("active_info"),
+            }
+        except Exception as e:
+            return {
+                "available": False,
+                "active_model": None,
+                "model_version": "none",
+                "total_models": 0,
+                "predictions_made": 0,
+                "errors": 0,
+                "model_info": None,
+                "error": str(e),
+            }
+
+    def train_ml(self):
+        """Train the ML model. Called from route or startup."""
+        try:
+            from trading.ml_engine import run_ml_training_pipeline
+            result = run_ml_training_pipeline()
+            return result
+        except Exception as e:
+            print(f"ML training error: {e}")
+            traceback.print_exc()
+            return {"status": "FAILED", "reason": str(e)}
