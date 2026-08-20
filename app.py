@@ -2362,6 +2362,86 @@ def train_ml_model():
     return redirect("/trading_bot")
 
 
+@app.route("/trading_bot/backtest", methods=["POST"])
+@login_required
+def run_backtest():
+    if not validate_csrf():
+        return redirect("/trading_bot")
+
+    username = session.get("user")
+    symbol = request.form.get("symbol", "BTCUSDT").strip().upper()
+    timeframe = request.form.get("timeframe", "1h").strip()
+    limit = int(request.form.get("limit", 1000) or 1000)
+
+    if not symbol.endswith("USDT"):
+        symbol += "USDT"
+
+    valid_tfs = ["5m", "15m", "1h", "4h"]
+    if timeframe not in valid_tfs:
+        timeframe = "1h"
+
+    flash(f"Running backtest on {symbol} ({timeframe})...", "info")
+
+    try:
+        from trading.backtest import Backtester
+        bt = Backtester()
+        result = bt.run(symbol, timeframe, limit)
+
+        if result.status == "COMPLETED":
+            flash(f"Backtest complete: {result.total_trades} trades, ROI {result.roi_pct:.1f}%, MaxDD {result.max_drawdown_pct:.1f}%", "success")
+        else:
+            flash(f"Backtest failed: {result.error or 'Unknown error'}", "danger")
+
+        return render_template("trading_bot.html",
+            **get_engine().get_bot_status(username),
+            backtest_result=result.to_dict(),
+        )
+    except Exception as e:
+        flash(f"Backtest error: {str(e)}", "danger")
+        return redirect("/trading_bot")
+
+
+@app.route("/trading_bot/walkforward", methods=["POST"])
+@login_required
+def run_walkforward():
+    if not validate_csrf():
+        return redirect("/trading_bot")
+
+    username = session.get("user")
+    symbol = request.form.get("symbol", "BTCUSDT").strip().upper()
+    timeframe = request.form.get("timeframe", "1h").strip()
+
+    if not symbol.endswith("USDT"):
+        symbol += "USDT"
+
+    valid_tfs = ["5m", "15m", "1h", "4h"]
+    if timeframe not in valid_tfs:
+        timeframe = "1h"
+
+    flash(f"Running walk-forward validation on {symbol} ({timeframe})...", "info")
+
+    try:
+        from trading.backtest import WalkForwardValidator
+        wf = WalkForwardValidator()
+        result = wf.run(symbol, timeframe, limit=2000)
+
+        if result["status"] == "COMPLETED":
+            agg = result.get("aggregate", {})
+            flash(f"Walk-Forward complete: {agg.get('total_oos_trades', 0)} OOS trades, "
+                  f"Consistency {agg.get('consistency', 0):.0f}%, "
+                  f"Sharpe {agg.get('oos_sharpe', 0):.2f}", "success")
+        else:
+            flash(f"Walk-Forward failed: {result.get('error', 'Unknown error')}", "danger")
+
+        return render_template("trading_bot.html",
+            **get_engine().get_bot_status(username),
+            walkforward_result=result,
+        )
+    except Exception as e:
+        flash(f"Walk-Forward error: {str(e)}", "danger")
+        return redirect("/trading_bot")
+
+
 # ===============================
 # ADMIN PANEL
 # ===============================

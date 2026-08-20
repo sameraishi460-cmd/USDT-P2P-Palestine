@@ -1,5 +1,239 @@
 {% extends "base.html" %}
-{% block title %}🤖 AI Trading Terminal — USDT P2P Palestine{% endblock %}
+{% block title %}🤖 AI Trading Terminal — USDT P2P Palestine
+  <!-- ===== BACKTESTING ===== -->
+  <div class="card" style="border-color:rgba(168,85,247,0.12);padding:var(--sp-4);">
+    <div style="display:flex;align-items:center;gap:var(--sp-2);margin-bottom:var(--sp-3);">
+      <span style="font-size:1.1rem;">📊</span>
+      <div style="font-weight:700;font-size:0.9rem;">الاختبار الخلفي (Backtesting)</div>
+    </div>
+    <form method="POST" action="/trading_bot/backtest" style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-2);">
+      <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+      <div class="form-group" style="grid-column:1/-1;">
+        <label class="form-label">الزوج</label>
+        <select class="form-input" name="symbol">
+          <option value="BTCUSDT">BTC/USDT</option>
+          <option value="ETHUSDT">ETH/USDT</option>
+          <option value="BNBUSDT">BNB/USDT</option>
+          <option value="SOLUSDT">SOL/USDT</option>
+          <option value="XRPUSDT">XRP/USDT</option>
+          <option value="DOGEUSDT">DOGE/USDT</option>
+          <option value="ADAUSDT">ADA/USDT</option>
+          <option value="AVAXUSDT">AVAX/USDT</option>
+          <option value="LINKUSDT">LINK/USDT</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">الإطار الزمني</label>
+        <select class="form-input" name="timeframe">
+          <option value="1h">1 ساعة</option>
+          <option value="4h">4 ساعات</option>
+          <option value="15m">15 دقيقة</option>
+          <option value="5m">5 دقائق</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">عدد الشموع</label>
+        <input class="form-input" type="number" name="limit" value="1000" min="200" max="2000">
+      </div>
+      <div style="grid-column:1/-1;">
+        <button type="submit" class="btn btn-primary btn-block" onclick="return confirm('سيتم تشغيل اختبار خلفي على البيانات التاريخية.')">
+          📊 تشغيل الاختبار الخلفي
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ===== WALK-FORWARD ===== -->
+  <div class="card" style="border-color:rgba(59,130,246,0.12);padding:var(--sp-4);">
+    <div style="display:flex;align-items:center;gap:var(--sp-2);margin-bottom:var(--sp-3);">
+      <span style="font-size:1.1rem;">🔬</span>
+      <div style="font-weight:700;font-size:0.9rem;">التحقق المقدمي (Walk-Forward)</div>
+    </div>
+    <form method="POST" action="/trading_bot/walkforward" style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-2);">
+      <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+      <div class="form-group" style="grid-column:1/-1;">
+        <label class="form-label">الزوج</label>
+        <select class="form-input" name="symbol">
+          <option value="BTCUSDT">BTC/USDT</option>
+          <option value="ETHUSDT">ETH/USDT</option>
+          <option value="BNBUSDT">BNB/USDT</option>
+          <option value="SOLUSDT">SOL/USDT</option>
+          <option value="XRPUSDT">XRP/USDT</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">الإطار الزمني</label>
+        <select class="form-input" name="timeframe">
+          <option value="1h">1 ساعة</option>
+          <option value="4h">4 ساعات</option>
+        </select>
+      </div>
+      <div style="grid-column:1/-1;">
+        <button type="submit" class="btn btn-primary btn-block" onclick="return confirm('سيقوم بالتحقق المقدمي — تقسيم البيانات إلى نوافذ تدريب واختبار متتالية.')">
+          🔬 تشغيل Walk-Forward
+        </button>
+        <div style="font-size:0.6rem;color:var(--text-muted);margin-top:var(--sp-2);text-align:center;">
+          يختبر النموذج على بيانات خارج عينة عبر نوافذ زمنية متعددة
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- ===== BACKTEST RESULTS ===== -->
+  {% if backtest_result is defined and backtest_result %}
+  <div class="card" style="border-color:rgba(34,197,94,0.15);padding:var(--sp-4);">
+    <div style="display:flex;align-items:center;gap:var(--sp-2);margin-bottom:var(--sp-4);">
+      <span style="font-size:1.1rem;">📊</span>
+      <div style="font-weight:700;font-size:0.95rem;">نتائج الاختبار الخلفي — {{ backtest_result.symbol }} {{ backtest_result.timeframe }}</div>
+    </div>
+
+    <!-- KPI Grid -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-2);margin-bottom:var(--sp-4);">
+      <div style="text-align:center;background:var(--bg-input);border-radius:var(--radius-md);padding:var(--sp-3);">
+        <div style="font-size:0.65rem;color:var(--text-muted);">صافي الربح</div>
+        <div style="font-weight:800;font-size:1.1rem;color:{% if backtest_result.net_profit > 0 %}var(--accent-light){% elif backtest_result.net_profit < 0 %}var(--danger-light){% else %}var(--text-primary){% endif %};">
+          ${{ "%.2f"|format(backtest_result.net_profit) }}
+        </div>
+      </div>
+      <div style="text-align:center;background:var(--bg-input);border-radius:var(--radius-md);padding:var(--sp-3);">
+        <div style="font-size:0.65rem;color:var(--text-muted);">ROI</div>
+        <div style="font-weight:800;font-size:1.1rem;color:{% if backtest_result.roi_pct > 0 %}var(--accent-light){% elif backtest_result.roi_pct < 0 %}var(--danger-light){% else %}var(--text-primary){% endif %};">
+          {{ "%.1f"|format(backtest_result.roi_pct) }}%
+        </div>
+      </div>
+      <div style="text-align:center;background:var(--bg-input);border-radius:var(--radius-md);padding:var(--sp-3);">
+        <div style="font-size:0.65rem;color:var(--text-muted);">إجمالي الصفقات</div>
+        <div style="font-weight:800;font-size:1.1rem;">{{ backtest_result.total_trades }}</div>
+      </div>
+      <div style="text-align:center;background:var(--bg-input);border-radius:var(--radius-md);padding:var(--sp-3);">
+        <div style="font-size:0.65rem;color:var(--text-muted);">نسبة الفوز</div>
+        <div style="font-weight:800;font-size:1.1rem;">{{ "%.1f"|format(backtest_result.win_rate) }}%</div>
+      </div>
+      <div style="text-align:center;background:var(--bg-input);border-radius:var(--radius-md);padding:var(--sp-3);">
+        <div style="font-size:0.65rem;color:var(--text-muted);">عامل الربح</div>
+        <div style="font-weight:800;font-size:1.1rem;">{{ "%.2f"|format(backtest_result.profit_factor) }}</div>
+      </div>
+      <div style="text-align:center;background:var(--bg-input);border-radius:var(--radius-md);padding:var(--sp-3);">
+        <div style="font-size:0.65rem;color:var(--text-muted);">أقصى سقوط</div>
+        <div style="font-weight:800;font-size:1.1rem;color:var(--danger-light);">{{ "%.1f"|format(backtest_result.max_drawdown_pct) }}%</div>
+      </div>
+      <div style="text-align:center;background:var(--bg-input);border-radius:var(--radius-md);padding:var(--sp-3);">
+        <div style="font-size:0.65rem;color:var(--text-muted);">Sharpe</div>
+        <div style="font-weight:800;font-size:1.1rem;">{{ "%.2f"|format(backtest_result.sharpe_ratio) }}</div>
+      </div>
+      <div style="text-align:center;background:var(--bg-input);border-radius:var(--radius-md);padding:var(--sp-3);">
+        <div style="font-size:0.65rem;color:var(--text-muted);">Sortino</div>
+        <div style="font-weight:800;font-size:1.1rem;">{{ "%.2f"|format(backtest_result.sortino_ratio) }}</div>
+      </div>
+      <div style="text-align:center;background:var(--bg-input);border-radius:var(--radius-md);padding:var(--sp-3);">
+        <div style="font-size:0.65rem;color:var(--text-muted);">التوقع</div>
+        <div style="font-weight:800;font-size:1.1rem;">${{ "%.2f"|format(backtest_result.expectancy) }}</div>
+      </div>
+    </div>
+
+    <!-- Trade Breakdown -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-2);margin-bottom:var(--sp-3);">
+      <div style="background:rgba(34,197,94,0.08);border-radius:var(--radius-md);padding:var(--sp-3);text-align:center;">
+        <div style="font-size:0.65rem;color:var(--text-muted);">✅ انتصارات</div>
+        <div style="font-weight:700;color:var(--accent-light);">{{ backtest_result.wins }} | {{ "%.1f"|format(backtest_result.avg_win) }}</div>
+      </div>
+      <div style="background:rgba(239,68,68,0.08);border-radius:var(--radius-md);padding:var(--sp-3);text-align:center;">
+        <div style="font-size:0.65rem;color:var(--text-muted);">❌ خسائر</div>
+        <div style="font-weight:700;color:var(--danger-light);">{{ backtest_result.losses }} | {{ "%.1f"|format(backtest_result.avg_loss) }}</div>
+      </div>
+      <div style="background:var(--bg-input);border-radius:var(--radius-md);padding:var(--sp-3);text-align:center;">
+        <div style="font-size:0.65rem;color:var(--text-muted);">أكبر ربح</div>
+        <div style="font-weight:700;color:var(--accent-light);">${{ "%.2f"|format(backtest_result.largest_win) }}</div>
+      </div>
+      <div style="background:var(--bg-input);border-radius:var(--radius-md);padding:var(--sp-3);text-align:center;">
+        <div style="font-size:0.65rem;color:var(--text-muted);">أكبر خسارة</div>
+        <div style="font-weight:700;color:var(--danger-light);">${{ "%.2f"|format(backtest_result.largest_loss) }}</div>
+      </div>
+    </div>
+
+    <!-- Consecutive & Holding -->
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--sp-2);">
+      <div style="text-align:center;padding:var(--sp-2);">
+        <div style="font-size:0.6rem;color:var(--text-muted);">سلسلة انتصارات</div>
+        <div style="font-weight:700;font-size:0.85rem;color:var(--accent-light);">{{ backtest_result.max_consecutive_wins }}</div>
+      </div>
+      <div style="text-align:center;padding:var(--sp-2);">
+        <div style="font-size:0.6rem;color:var(--text-muted);">سلسلة خسائر</div>
+        <div style="font-weight:700;font-size:0.85rem;color:var(--danger-light);">{{ backtest_result.max_consecutive_losses }}</div>
+      </div>
+      <div style="text-align:center;padding:var(--sp-2);">
+        <div style="font-size:0.6rem;color:var(--text-muted);">متوسط الاحتفاظ</div>
+        <div style="font-weight:700;font-size:0.85rem;">{{ "%.1f"|format(backtest_result.avg_holding_hours) }}h</div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ===== WALK-FORWARD RESULTS ===== -->
+  {% if walkforward_result is defined and walkforward_result %}
+  {% set wf_agg = walkforward_result.get('aggregate', {}) if walkforward_result else {} %}
+  <div class="card" style="border-color:rgba(59,130,246,0.15);padding:var(--sp-4);">
+    <div style="display:flex;align-items:center;gap:var(--sp-2);margin-bottom:var(--sp-4);">
+      <span style="font-size:1.1rem;">🔬</span>
+      <div style="font-weight:700;font-size:0.95rem;">Walk-Forward — {{ walkforward_result.symbol }} {{ walkforward_result.timeframe }}</div>
+    </div>
+
+    {% if wf_agg %}
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-2);margin-bottom:var(--sp-4);">
+      <div style="text-align:center;background:var(--bg-input);border-radius:var(--radius-md);padding:var(--sp-3);">
+        <div style="font-size:0.65rem;color:var(--text-muted);">صفقات خارجية</div>
+        <div style="font-weight:800;font-size:1.1rem;">{{ wf_agg.get('total_oos_trades', 0) }}</div>
+      </div>
+      <div style="text-align:center;background:var(--bg-input);border-radius:var(--radius-md);padding:var(--sp-3);">
+        <div style="font-size:0.65rem;color:var(--text-muted);">الثبات</div>
+        <div style="font-weight:800;font-size:1.1rem;color:{% if wf_agg.get('consistency', 0) >= 50 %}var(--accent-light){% else %}var(--danger-light){% endif %};">
+          {{ "%.0f"|format(wf_agg.get('consistency', 0)) }}%
+        </div>
+      </div>
+      <div style="text-align:center;background:var(--bg-input);border-radius:var(--radius-md);padding:var(--sp-3);">
+        <div style="font-size:0.65rem;color:var(--text-muted);">Sharpe خارجي</div>
+        <div style="font-weight:800;font-size:1.1rem;">{{ "%.2f"|format(wf_agg.get('oos_sharpe', 0)) }}</div>
+      </div>
+      <div style="text-align:center;background:var(--bg-input);border-radius:var(--radius-md);padding:var(--sp-3);">
+        <div style="font-size:0.65rem;color:var(--text-muted);">نسبة الفوز</div>
+        <div style="font-weight:800;font-size:1.1rem;">{{ "%.1f"|format(wf_agg.get('oos_win_rate', 0)) }}%</div>
+      </div>
+      <div style="text-align:center;background:var(--bg-input);border-radius:var(--radius-md);padding:var(--sp-3);">
+        <div style="font-size:0.65rem;color:var(--text-muted);">عامل الربح</div>
+        <div style="font-weight:800;font-size:1.1rem;">{{ "%.2f"|format(wf_agg.get('oos_profit_factor', 0)) }}</div>
+      </div>
+      <div style="text-align:center;background:var(--bg-input);border-radius:var(--radius-md);padding:var(--sp-3);">
+        <div style="font-size:0.65rem;color:var(--text-muted);">أقصى سقوط</div>
+        <div style="font-weight:800;font-size:1.1rem;color:var(--danger-light);">{{ "%.1f"|format(wf_agg.get('oos_max_drawdown', 0)) }}%</div>
+      </div>
+    </div>
+
+    <!-- Windows -->
+    {% if walkforward_result.get('windows') %}
+    <div style="font-size:0.75rem;font-weight:600;margin-bottom:var(--sp-2);color:var(--text-secondary);">نوافذ الاختبار</div>
+    {% for w in walkforward_result.windows %}
+    <div style="display:flex;align-items:center;gap:var(--sp-2);padding:var(--sp-2) 0;border-bottom:1px solid var(--border);font-size:0.7rem;">
+      <span style="font-weight:600;min-width:20px;">#{{ w.window }}</span>
+      <span style="min-width:40px;">{{ w.oos_trades }} صفقة</span>
+      <span style="color:{% if w.oos_pnl > 0 %}var(--accent-light){% else %}var(--danger-light){% endif %};">
+        {{ "$%.1f"|format(w.oos_pnl) }}
+      </span>
+      <span>{{ "%.0f"|format(w.oos_win_rate) }}% WR</span>
+      <span style="color:var(--text-muted);">{{ w.is_regime }}</span>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    {% else %}
+    <div style="text-align:center;padding:var(--sp-3);color:var(--text-muted);font-size:0.8rem;">
+      لا توجد نتائج بعد
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+
+{% endblock %}
 {% block content %}
 <div class="container container-narrow">
 
