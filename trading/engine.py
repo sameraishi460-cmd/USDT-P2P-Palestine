@@ -1,8 +1,17 @@
 """
-AI Trading Engine — Main Engine
+AI Trading Engine — Main Engine (Phase 2 Enhanced)
 
 Orchestrates the complete trading pipeline:
-Market Data → Features → Regime → Scoring → Risk → Execution → Management
+Market Scanner → Feature Engineering → Multi-TF Regime →
+Ensemble Scoring → Opportunity Ranking → Risk → Execution → Management
+
+Phase 2 enhancements:
+- Full multi-symbol, multi-timeframe scanning
+- Cross-timeframe alignment analysis
+- Opportunity ranking with quality grades
+- Scanner result persistence
+- Enhanced NO TRADE logic
+- API failure recovery with backoff
 """
 
 import time
@@ -15,22 +24,26 @@ from trading.db import (
     create_trading_tables, get_or_create_bot, save_position,
     update_position, close_position, record_order, record_signal,
     record_equity_snapshot, update_daily_stats, get_open_positions,
+    record_scanner_result, get_recent_scanner_results, get_scanner_summary,
 )
-from trading.market_data import get_multi_tf_data, fetch_ticker
-from trading.features import calculate_all_features, get_latest_features
-from trading.regime import detect_regime
+from trading.market_data import (
+    get_multi_tf_data, fetch_ticker, scan_symbol, analyze_spread,
+)
+from trading.features import calculate_all_features, analyze_timeframe_alignment
+from trading.regime import detect_regime, detect_multi_tf_regime
 from trading.scoring import score_opportunity
 from trading.risk_manager import RiskEngine
 from trading.position_manager import PositionManager
 
 
 class AIEngine:
-    """The main AI trading engine."""
+    """The main AI trading engine with Phase 2 multi-TF scanner."""
 
     def __init__(self, database_path="database.db"):
         self.db_path = database_path
         self.running_bots = {}  # username -> thread
         self._stop_events = {}  # username -> threading.Event
+        self._last_scan_data = {}  # bot_id -> latest scan results (for UI)
 
     def _connect(self):
         """Get a database connection."""
@@ -59,7 +72,6 @@ class AIEngine:
         config = get_trading_config(con)
         con.close()
 
-        # Set status to RUNNING
         con2 = self._connect()
         con2.execute(
             "UPDATE trading_bots SET status='RUNNING', updated_at=CURRENT_TIMESTAMP WHERE id=?",
@@ -120,7 +132,6 @@ class AIEngine:
             con.close()
             return False, "Bot not found"
 
-        # Close all open positions at market
         positions = get_open_positions(con, bot["id"])
         for pos in positions:
             ticker = fetch_ticker(pos["symbol"])
@@ -130,7 +141,9 @@ class AIEngine:
                 exit_price = pos["current_price"] or pos["entry_price"]
 
             pnl = self._calculate_pnl(pos, exit_price)
-            net_pnl = pnl - abs(pnl * 0.001)  # Commission
+            commission_bps = 10
+            commission = exit_price * pos["remaining_qty"] * commission_bps / 10000
+            net_pnl = pnl - commission
             holding = self._holding_periods(pos)
 
             close_position(con, pos["id"], exit_price, "EMERGENCY_STOP", pnl, net_pnl, holding)
@@ -138,7 +151,6 @@ class AIEngine:
                         "MARKET", exit_price, pos["remaining_qty"], reason="EMERGENCY_STOP",
                         position_id=pos["id"])
 
-        # Update status
         con.execute(
             "UPDATE trading_bots SET status='STOPPED', updated_at=CURRENT_TIMESTAMP WHERE id=?",
             (bot["id"],),
@@ -146,7 +158,6 @@ class AIEngine:
         con.commit()
         con.close()
 
-        # Stop the thread
         self.stop_bot(username)
         return True, f"Emergency stop: closed {len(positions)} positions"
 
@@ -155,17 +166,14 @@ class AIEngine:
         con = self._connect()
         risk_engine = RiskEngine(config)
         pos_manager = PositionManager(config)
-
         scan_interval = config.get("scan_interval_seconds", 60)
 
         while not stop_event.is_set():
             try:
-                # Reload config each cycle
                 config = get_trading_config(con)
                 risk_engine.config = config
                 pos_manager.config = config
 
-                # Check bot status
                 bot = con.execute(
                     "SELECT * FROM trading_bots WHERE id=?", (bot_id,)
                 ).fetchone()
@@ -173,13 +181,12 @@ class AIEngine:
                     break
 
                 if bot["status"] == "PAUSED":
-                    # Still manage existing positions
                     self._manage_positions(con, bot_id, config, pos_manager, risk_engine)
                     time.sleep(scan_interval)
                     continue
 
-                # === SCAN ===
-                self._scan_market(con, bot_id, config, risk_engine)
+                # === PHASE 2: MULTI-TF SCANNER ===
+                self._scan_market_phase2(con, bot_id, config, risk_engine)
 
                 # === MANAGE POSITIONS ===
                 self._manage_positions(con, bot_id, config, pos_manager, risk_engine)
@@ -191,37 +198,94 @@ class AIEngine:
             except Exception as e:
                 print(f"AI Engine error ({username}): {e}")
                 traceback.print_exc()
-                con.execute(
-                    "UPDATE trading_bots SET status='ERROR', updated_at=CURRENT_TIMESTAMP WHERE id=?",
-                    (bot_id,),
-                )
-                con.commit()
+                try:
+                    con.execute(
+                        "UPDATE trading_bots SET status='ERROR', updated_at=CURRENT_TIMESTAMP WHERE id=?",
+                        (bot_id,),
+                    )
+                    con.commit()
+                except Exception:
+                    pass
 
-            # Wait with early exit
             stop_event.wait(scan_interval)
 
-        con.close()
+        try:
+            con.close()
+        except Exception:
+            pass
         self.running_bots.pop(username, None)
         self._stop_events.pop(username, None)
 
-    def _scan_market(self, con, bot_id, config, risk_engine):
-        """Scan all symbols and generate opportunities."""
-        symbols = config["symbols"].split(",")
-        timeframes = config["timeframes"].split(",")
-        min_score = config["min_ai_score"]
+    def _scan_market_phase2(self, con, bot_id, config, risk_engine):
+        """
+        Phase 2 Multi-Symbol, Multi-Timeframe Scanner.
+
+        Pipeline:
+        1. Scan all symbols → quality checks
+        2. Fetch multi-TF data for each
+        3. Calculate features for each TF
+        4. Detect regime per-TF and composite
+        5. Analyze timeframe alignment
+        6. Score opportunities (both directions)
+        7. Rank all opportunities
+        8. Execute the best ones (subject to risk engine)
+        """
+        symbols = [s.strip() for s in config["symbols"].split(",") if s.strip()]
+        timeframes = [t.strip() for t in config["timeframes"].split(",") if t.strip()]
+        min_score = config.get("min_ai_score", 70)
+        max_positions = config.get("max_positions", 5)
+
+        # Current open position count
+        open_positions = get_open_positions(con, bot_id)
+        open_count = len(open_positions)
+        open_symbols = {p["symbol"] for p in open_positions}
+
+        # Collect all opportunities
+        opportunities = []
+        scan_count = 0
+        reject_count = 0
 
         for symbol in symbols:
-            symbol = symbol.strip()
-            if not symbol:
-                continue
-
             try:
-                # Fetch multi-timeframe data
-                data = get_multi_tf_data(symbol, timeframes)
-                if not data:
+                # Phase 2: Run quality scan first
+                scan_result = scan_symbol(symbol, timeframes)
+
+                if scan_result.get("rejected"):
+                    reject_count += 1
+                    record_scanner_result(
+                        con, bot_id, symbol, scan_result,
+                        reject_reason=scan_result.get("reject_reason", ""),
+                    )
                     continue
 
-                # Use primary timeframe for feature calculation
+                scan_count += 1
+                data = scan_result.get("data", {})
+
+                if len(data) < 2:
+                    reject_count += 1
+                    record_scanner_result(
+                        con, bot_id, symbol, scan_result,
+                        reject_reason=f"Only {len(data)} timeframes",
+                    )
+                    continue
+
+                # 1. Detect composite regime
+                regime_info = detect_multi_tf_regime(data, timeframes)
+
+                # 2. Analyze timeframe alignment
+                alignment_info = analyze_timeframe_alignment(data, timeframes)
+
+                # 3. Check regime tradeability
+                if not regime_info["tradeable"]:
+                    record_scanner_result(
+                        con, bot_id, symbol, scan_result,
+                        regime_info=regime_info,
+                        alignment_info=alignment_info,
+                        reject_reason=f"Regime not tradeable: {regime_info['composite_regime']}",
+                    )
+                    continue
+
+                # 4. Use primary timeframe for detailed scoring
                 primary_tf = config.get("primary_tf", "1h")
                 if primary_tf not in data:
                     primary_tf = list(data.keys())[-1] if data else None
@@ -231,18 +295,15 @@ class AIEngine:
                 df = data[primary_tf]
                 df = calculate_all_features(df)
 
-                # Get current price
-                ticker = fetch_ticker(symbol)
-                if not ticker:
-                    continue
-
-                current_price = ticker["price"]
-
-                # Check both directions
+                # 5. Score both directions
                 for direction in ["LONG", "SHORT"]:
-                    # Score opportunity
-                    score_result = score_opportunity(df, direction, config)
+                    # Skip if already have position in this symbol+direction
+                    if symbol in open_symbols:
+                        break
 
+                    score_result = score_opportunity(df, direction, config, multi_tf_data=data)
+
+                    # 6. Filter: minimum score
                     if score_result["ai_score"] < min_score:
                         record_signal(con, bot_id, {
                             "symbol": symbol,
@@ -254,11 +315,10 @@ class AIEngine:
                         })
                         continue
 
-                    # Risk check
+                    # 7. Risk engine check
                     allowed, reason = risk_engine.can_trade(
                         con, bot_id, symbol, direction, score_result["ai_score"]
                     )
-
                     if not allowed:
                         record_signal(con, bot_id, {
                             "symbol": symbol,
@@ -270,7 +330,7 @@ class AIEngine:
                         })
                         continue
 
-                    # Check R:R
+                    # 8. R:R check
                     if score_result["rr_ratio"] < config.get("min_rr_ratio", 1.5):
                         record_signal(con, bot_id, {
                             "symbol": symbol,
@@ -282,56 +342,111 @@ class AIEngine:
                         })
                         continue
 
-                    # Calculate position size
-                    qty, risk_amt, pos_value = risk_engine.calculate_position_size(
-                        con, bot_id,
-                        score_result["entry_price"],
-                        score_result["stop_loss"],
-                        score_result["ai_score"],
-                    )
-
-                    if qty <= 0:
-                        record_signal(con, bot_id, {
-                            "symbol": symbol,
-                            "timeframe": primary_tf,
-                            "direction": direction,
-                            **score_result,
-                            "executed": False,
-                            "reject_reason": "Position size = 0",
-                        })
-                        continue
-
-                    # EXECUTE TRADE
-                    self._execute_entry(
-                        con, bot_id, symbol, direction, current_price,
-                        qty, score_result, config,
-                    )
-
-                    record_signal(con, bot_id, {
+                    # Add to opportunities for ranking
+                    opportunities.append({
                         "symbol": symbol,
-                        "timeframe": primary_tf,
                         "direction": direction,
-                        **score_result,
-                        "executed": True,
+                        "score": score_result,
+                        "regime_info": regime_info,
+                        "alignment_info": alignment_info,
+                        "scan_result": scan_result,
+                        "primary_tf": primary_tf,
                     })
 
-                    # Update last scan
-                    con.execute(
-                        "UPDATE trading_bots SET last_scan=CURRENT_TIMESTAMP WHERE id=?",
-                        (bot_id,),
-                    )
-                    con.commit()
-
-                    # Only one trade per scan cycle per symbol
-                    break
+                # Record scanner result
+                best_opp = max(opportunities, key=lambda x: x["score"]["ai_score"]) if opportunities else None
+                record_scanner_result(
+                    con, bot_id, symbol, scan_result,
+                    regime_info=regime_info,
+                    alignment_info=alignment_info,
+                    best_score=best_opp["score"]["ai_score"] if best_opp else 0,
+                    best_direction=best_opp["direction"] if best_opp else "",
+                    tradeable=True,
+                )
 
             except Exception as e:
-                print(f"Scan error {symbol}: {e}")
+                print(f"Scanner error {symbol}: {e}")
+                reject_count += 1
                 continue
+
+        # Store scan data for UI
+        self._last_scan_data[bot_id] = {
+            "timestamp": datetime.now(),
+            "symbols_scanned": scan_count,
+            "symbols_rejected": reject_count,
+            "opportunities": opportunities,
+        }
+
+        # 9. RANK opportunities
+        ranked = sorted(opportunities, key=lambda x: x["score"]["ai_score"], reverse=True)
+
+        # 10. EXECUTE top opportunities (up to max_positions)
+        executed_count = 0
+        for opp in ranked:
+            if open_count + executed_count >= max_positions:
+                break
+
+            symbol = opp["symbol"]
+            direction = opp["direction"]
+            score_result = opp["score"]
+
+            # Final check — symbol not already open
+            if symbol in open_symbols:
+                continue
+
+            ticker = fetch_ticker(symbol)
+            if not ticker:
+                continue
+            current_price = ticker["price"]
+
+            # Calculate position size
+            qty, risk_amt, pos_value = risk_engine.calculate_position_size(
+                con, bot_id,
+                score_result["entry_price"],
+                score_result["stop_loss"],
+                score_result["ai_score"],
+            )
+
+            if qty <= 0:
+                record_signal(con, bot_id, {
+                    "symbol": symbol,
+                    "timeframe": opp["primary_tf"],
+                    "direction": direction,
+                    **score_result,
+                    "executed": False,
+                    "reject_reason": "Position size = 0",
+                })
+                continue
+
+            # EXECUTE TRADE
+            self._execute_entry(
+                con, bot_id, symbol, direction, current_price,
+                qty, score_result, config,
+            )
+
+            record_signal(con, bot_id, {
+                "symbol": symbol,
+                "timeframe": opp["primary_tf"],
+                "direction": direction,
+                **score_result,
+                "executed": True,
+            })
+
+            executed_count += 1
+            open_symbols.add(symbol)
+
+        # Update last scan
+        try:
+            con.execute(
+                "UPDATE trading_bots SET last_scan=CURRENT_TIMESTAMP WHERE id=?",
+                (bot_id,),
+            )
+            con.commit()
+        except Exception:
+            pass
 
     def _execute_entry(self, con, bot_id, symbol, side, price, quantity, score_result, config):
         """Execute a paper trade entry."""
-        # Apply slippage
         slippage_bps = config.get("slippage_bps", 5)
         slippage = price * slippage_bps / 10000
         if side == "LONG":
@@ -339,11 +454,9 @@ class AIEngine:
         else:
             fill_price = price - slippage
 
-        # Commission
         commission_bps = config.get("commission_bps", 10)
         commission = fill_price * quantity * commission_bps / 10000
 
-        # Create position
         pos_data = {
             "symbol": symbol,
             "side": side,
@@ -359,13 +472,11 @@ class AIEngine:
 
         pos_id = save_position(con, bot_id, pos_data)
 
-        # Record order
         record_order(con, bot_id, symbol, "BUY" if side == "LONG" else "SELL",
                     "LIMIT", fill_price, quantity, slippage=slippage,
                     commission=commission, reason=score_result.get("regime", ""),
                     position_id=pos_id)
 
-        # Update last trade time
         con.execute(
             "UPDATE trading_bots SET last_trade=CURRENT_TIMESTAMP WHERE id=?",
             (bot_id,),
@@ -381,14 +492,11 @@ class AIEngine:
 
         for pos in positions:
             try:
-                # Get current price
                 ticker = fetch_ticker(pos["symbol"])
                 if not ticker:
                     continue
 
                 current_price = ticker["price"]
-
-                # Update position management (trailing, partial TP, etc.)
                 pos_manager.update(con, pos, current_price)
 
                 # Reload position after updates
@@ -396,17 +504,15 @@ class AIEngine:
                     "SELECT * FROM trading_positions WHERE id=?", (pos["id"],)
                 ).fetchone()
 
-                # Check for exit
                 should_exit, reason = risk_engine.check_position_exit(con, bot_id, pos, current_price)
 
                 if should_exit:
                     self._execute_exit(con, bot_id, pos, current_price, reason, config)
                 elif reason == "TP1_REACHED":
-                    # Partial close for TP1
                     self._partial_close(con, bot_id, pos, current_price, "TP1", config)
 
             except Exception as e:
-                print(f"Position management error {pos['symbol']}: {e}")
+                print(f"Position mgmt error {pos['symbol']}: {e}")
                 continue
 
     def _execute_exit(self, con, bot_id, pos, exit_price, reason, config):
@@ -451,21 +557,18 @@ class AIEngine:
         commission = fill_price * close_qty * commission_bps / 10000
         net_pnl = pnl - commission
 
-        # Update position
         new_qty = pos["remaining_qty"] - close_qty
         update_position(con, pos["id"],
                        remaining_qty=new_qty,
                        tp1_hit=1,
                        stop_loss=max(pos["entry_price"], pos["stop_loss"]) if pos["side"] == "LONG" else min(pos["entry_price"], pos["stop_loss"]))
 
-        # Record partial order
         record_order(con, bot_id, pos["symbol"],
                     "SELL" if pos["side"] == "LONG" else "BUY",
                     "PARTIAL_TP", fill_price, close_qty,
                     slippage=slippage, commission=commission,
                     reason=reason, position_id=pos["id"])
 
-        # Update bot equity
         con.execute(
             "UPDATE trading_bots SET equity=equity+?, total_pnl=total_pnl+?, today_pnl=today_pnl+? WHERE id=?",
             (net_pnl, net_pnl, net_pnl, bot_id),
@@ -491,11 +594,11 @@ class AIEngine:
                 return 0
         if entry_time:
             delta = datetime.now() - entry_time
-            return int(delta.total_seconds() / 300)  # Assuming 5m periods
+            return int(delta.total_seconds() / 300)
         return 0
 
     def get_bot_status(self, username):
-        """Get comprehensive bot status."""
+        """Get comprehensive bot status (Phase 2 enhanced)."""
         con = self._connect()
         bot = get_or_create_bot(con, username)
         config = get_trading_config(con)
@@ -503,9 +606,38 @@ class AIEngine:
         from trading.db import get_trade_stats, get_recent_trades
         stats = get_trade_stats(con, bot["id"])
         recent = get_recent_trades(con, bot["id"], 10)
+
+        # Phase 2: scanner data
+        scan_summary = get_scanner_summary(con, bot["id"])
+        recent_scans = get_recent_scanner_results(con, bot["id"], 10)
+
         con.close()
 
         is_running = username in self.running_bots
+
+        # Get last scan data from memory
+        last_scan = self._last_scan_data.get(bot["id"])
+
+        # Build opportunity list for UI
+        top_opportunities = []
+        if last_scan and "opportunities" in last_scan:
+            for opp in last_scan["opportunities"][:5]:
+                s = opp["score"]
+                top_opportunities.append({
+                    "symbol": opp["symbol"],
+                    "direction": opp["direction"],
+                    "ai_score": s["ai_score"],
+                    "quality": s.get("quality", {}),
+                    "regime": s.get("regime", ""),
+                    "regime_description": s.get("regime_description", ""),
+                    "entry_price": s["entry_price"],
+                    "stop_loss": s["stop_loss"],
+                    "take_profit1": s["take_profit1"],
+                    "take_profit2": s["take_profit2"],
+                    "rr_ratio": s["rr_ratio"],
+                    "reasons": s.get("reasons", []),
+                    "tf_alignment": s.get("tf_alignment", {}),
+                })
 
         return {
             "bot": dict(bot) if bot else None,
@@ -514,4 +646,10 @@ class AIEngine:
             "stats": stats,
             "recent_trades": [dict(t) for t in recent],
             "is_running": is_running,
+            "scan_summary": scan_summary,
+            "recent_scans": [dict(s) for s in recent_scans],
+            "top_opportunities": top_opportunities,
+            "last_scan_time": last_scan["timestamp"] if last_scan else None,
+            "symbols_scanned": last_scan["symbols_scanned"] if last_scan else 0,
+            "symbols_rejected": last_scan["symbols_rejected"] if last_scan else 0,
         }

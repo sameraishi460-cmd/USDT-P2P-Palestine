@@ -263,6 +263,25 @@ def create_trading_tables(con):
         )
     """)
 
+    # === SCANNER LOG (Phase 2) ===
+    con.execute("""
+        CREATE TABLE IF NOT EXISTS trading_scanner_log (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            bot_id INTEGER,
+            symbol TEXT NOT NULL,
+            scan_result TEXT DEFAULT '{}',
+            regime TEXT DEFAULT '',
+            regime_confidence REAL DEFAULT 0,
+            alignment_score REAL DEFAULT 0,
+            best_direction TEXT DEFAULT '',
+            best_ai_score REAL DEFAULT 0,
+            tradeable INTEGER DEFAULT 0,
+            executed INTEGER DEFAULT 0,
+            reject_reason TEXT DEFAULT '',
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
     # === INDEXES ===
     indexes = [
         "CREATE INDEX IF NOT EXISTS idx_tp_bot ON trading_positions(bot_id, status)",
@@ -276,6 +295,8 @@ def create_trading_tables(con):
         "CREATE INDEX IF NOT EXISTS idx_tmd_symbol_tf ON trading_market_data(symbol, timeframe, timestamp)",
         "CREATE INDEX IF NOT EXISTS idx_tp_status ON trading_positions(status)",
         "CREATE INDEX IF NOT EXISTS idx_tt_exit ON trading_trades(exit_reason)",
+        "CREATE INDEX IF NOT EXISTS idx_tsl_bot ON trading_scanner_log(bot_id, timestamp)",
+        "CREATE INDEX IF NOT EXISTS idx_tsl_symbol ON trading_scanner_log(symbol)",
     ]
     for idx in indexes:
         con.execute(idx)
@@ -561,4 +582,69 @@ def get_trade_stats(con, bot_id):
         "max_drawdown_pct": 0,  # Calculated from equity curve
         "sharpe_ratio": 0,  # Calculated from returns
         "total_net_pnl": round(sum(t["net_pnl"] for t in trades), 2),
+    }
+
+
+def record_scanner_result(con, bot_id, symbol, scan_result, regime_info=None, alignment_info=None,
+                          best_score=0, best_direction="", tradeable=False, executed=False, reject_reason=""):
+    """Record a scanner result for a symbol."""
+    import json
+    regime = regime_info.get("composite_regime", "") if regime_info else ""
+    regime_conf = regime_info.get("composite_confidence", 0) if regime_info else 0
+    alignment = alignment_info.get("alignment_score", 0) if alignment_info else 0
+
+    con.execute(
+        """INSERT INTO trading_scanner_log
+        (bot_id, symbol, scan_result, regime, regime_confidence,
+         alignment_score, best_direction, best_ai_score, tradeable, executed, reject_reason)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
+        (bot_id, symbol, json.dumps(str(scan_result)[:500]), regime, regime_conf,
+         alignment, best_direction, best_score, 1 if tradeable else 0,
+         1 if executed else 0, reject_reason),
+    )
+    con.commit()
+
+
+def get_recent_scanner_results(con, bot_id, limit=20):
+    """Get recent scanner results."""
+    return con.execute(
+        """SELECT * FROM trading_scanner_log
+        WHERE bot_id=? ORDER BY timestamp DESC LIMIT ?""",
+        (bot_id, limit),
+    ).fetchall()
+
+
+def get_scanner_summary(con, bot_id):
+    """Get summary statistics from scanner log."""
+    today = datetime.now().strftime("%Y-%m-%d")
+
+    total = con.execute(
+        "SELECT COUNT(*) FROM trading_scanner_log WHERE bot_id=?",
+        (bot_id,),
+    ).fetchone()[0]
+
+    tradeable = con.execute(
+        "SELECT COUNT(*) FROM trading_scanner_log WHERE bot_id=? AND tradeable=1",
+        (bot_id,),
+    ).fetchone()[0]
+
+    executed = con.execute(
+        "SELECT COUNT(*) FROM trading_scanner_log WHERE bot_id=? AND executed=1",
+        (bot_id,),
+    ).fetchone()[0]
+
+    # Top opportunities today
+    top = con.execute(
+        """SELECT symbol, best_direction, best_ai_score, regime, alignment_score
+        FROM trading_scanner_log
+        WHERE bot_id=? AND date(timestamp)=? AND best_ai_score > 0
+        ORDER BY best_ai_score DESC LIMIT 5""",
+        (bot_id, today),
+    ).fetchall()
+
+    return {
+        "total_scans": total,
+        "tradeable_signals": tradeable,
+        "executed_trades": executed,
+        "top_opportunities": [dict(t) for t in top],
     }

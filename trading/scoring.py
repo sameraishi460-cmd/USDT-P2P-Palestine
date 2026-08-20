@@ -1,24 +1,32 @@
 """
-AI Trading Engine — Opportunity Scoring Engine
+AI Trading Engine — Opportunity Scoring Engine (Phase 2 Enhanced)
 
 Generates a composite AI score (0-100) from multiple scoring components.
 Uses ensemble of technical analysis, trend, momentum, volume, volatility,
-regime, and risk/reward scoring.
+regime, risk/reward, multi-TF alignment, and ML scoring.
+
+Phase 2 additions:
+- Multi-timeframe alignment scoring
+- Cross-TF confirmation
+- Enhanced NO TRADE detection
+- Opportunity quality grades
 """
 
 import numpy as np
 import pandas as pd
-from trading.regime import detect_regime, is_regime_suitable
+from trading.regime import detect_regime, is_regime_suitable, detect_multi_tf_regime
+from trading.features import analyze_timeframe_alignment
 
 
-def score_opportunity(df, direction, config):
+def score_opportunity(df, direction, config, multi_tf_data=None):
     """
     Score a trade opportunity.
 
     Args:
-        df: DataFrame with all features calculated
+        df: DataFrame with all features calculated (primary TF)
         direction: 'LONG' or 'SHORT'
         config: Trading configuration dict
+        multi_tf_data: Optional dict of {tf: DataFrame} for multi-TF scoring
 
     Returns:
         dict with detailed scoring breakdown
@@ -57,18 +65,27 @@ def score_opportunity(df, direction, config):
     # 8. ML SCORE (placeholder — set to 50 until ML is trained)
     scores["ml"] = 50.0
 
+    # 9. MULTI-TF ALIGNMENT SCORE (Phase 2)
+    tf_alignment = None
+    if multi_tf_data and len(multi_tf_data) >= 2:
+        tf_alignment = analyze_timeframe_alignment(multi_tf_data)
+        scores["tf_alignment"] = _score_tf_alignment(tf_alignment, direction)
+    else:
+        scores["tf_alignment"] = 30.0  # Low score when no multi-TF data
+
     # =====================
-    # ENSEMBLE WEIGHTS
+    # ENSEMBLE WEIGHTS (Phase 2 updated)
     # =====================
     weights = {
-        "technical": 0.15,
-        "trend": 0.20,
-        "momentum": 0.15,
-        "volume": 0.10,
-        "volatility": 0.10,
+        "technical": 0.12,
+        "trend": 0.15,
+        "momentum": 0.12,
+        "volume": 0.08,
+        "volatility": 0.08,
         "regime": 0.10,
-        "risk_reward": 0.15,
+        "risk_reward": 0.12,
         "ml": 0.05,
+        "tf_alignment": 0.18,  # Phase 2: Significant weight for multi-TF
     }
 
     # Calculate composite score
@@ -76,15 +93,32 @@ def score_opportunity(df, direction, config):
 
     # Penalty: if regime doesn't suit the trade
     if not is_regime_suitable(regime, "trend_following"):
-        if direction == "LONG" and regime == "BEAR_TREND":
+        if direction == "LONG" and regime in ("BEAR_TREND", "BREAKDOWN"):
             ai_score *= 0.5
-        elif direction == "SHORT" and regime == "BULL_TREND":
+        elif direction == "SHORT" and regime in ("BULL_TREND", "BREAKOUT"):
             ai_score *= 0.5
+
+    # Penalty: conflicting timeframes
+    if tf_alignment and tf_alignment["direction"] == "CONFLICTED":
+        ai_score *= 0.6
+
+    # Bonus: strong multi-TF alignment in the trade direction
+    if tf_alignment and tf_alignment["direction"] == direction and tf_alignment["alignment_score"] > 70:
+        ai_score *= 1.1
 
     ai_score = max(0, min(100, ai_score))
 
+    # Build reasons list
+    reasons = _get_reasons(row, direction, scores, regime)
+    if tf_alignment:
+        reasons.extend(_get_tf_reasons(tf_alignment, direction))
+
+    # Quality grade
+    quality = _get_quality_grade(ai_score)
+
     return {
         "ai_score": round(ai_score, 1),
+        "quality": quality,
         "scores": {k: round(v, 1) for k, v in scores.items()},
         "direction": direction,
         "regime": regime,
@@ -96,13 +130,32 @@ def score_opportunity(df, direction, config):
         "take_profit2": rr_data["tp2"],
         "rr_ratio": rr_data["rr"],
         "atr_pct": row.get("atr_pct", 0),
-        "reasons": _get_reasons(row, direction, scores, regime),
+        "tf_alignment": tf_alignment,
+        "reasons": reasons,
     }
+
+
+def _score_tf_alignment(tf_alignment, direction):
+    """Score based on multi-timeframe alignment."""
+    if not tf_alignment:
+        return 30.0
+
+    alignment_score = tf_alignment.get("alignment_score", 0)
+    tf_direction = tf_alignment.get("direction", "CONFLICTED")
+
+    if tf_direction == direction:
+        # Perfect alignment
+        return min(100, alignment_score)
+    elif tf_direction == "CONFLICTED":
+        return max(10, alignment_score * 0.3)
+    else:
+        # Counter-trend — strong penalty
+        return max(0, alignment_score * 0.2)
 
 
 def _score_technical(row, direction):
     """Score based on raw technical indicators."""
-    score = 50  # Neutral
+    score = 50
 
     rsi = row.get("rsi", 50)
     macd_hist = row.get("macd_hist", 0)
@@ -113,18 +166,18 @@ def _score_technical(row, direction):
         if rsi > 50 and rsi < 70:
             score += 10
         if rsi < 35:
-            score += 15  # Oversold bounce
+            score += 15
         if macd_hist > 0:
             score += 10
         if bb_pos < 0.3:
-            score += 10  # Near lower band
+            score += 10
         if adx > 25:
             score += 5
-    else:  # SHORT
+    else:
         if rsi < 50 and rsi > 30:
             score += 10
         if rsi > 65:
-            score += 15  # Overbought reversal
+            score += 15
         if macd_hist < 0:
             score += 10
         if bb_pos > 0.7:
@@ -180,7 +233,6 @@ def _score_momentum(row, direction):
 
     mom5 = row.get("momentum_5", 0)
     mom10 = row.get("momentum_10", 0)
-    mom20 = row.get("momentum_20", 0)
     macd_cross_up = row.get("macd_cross_up", 0)
     macd_cross_down = row.get("macd_cross_down", 0)
     consec_green = row.get("consecutive_green", 0)
@@ -194,9 +246,8 @@ def _score_momentum(row, direction):
             score += 15
         if consec_green >= 2:
             score += 5
-        # Penalize chasing
         if mom5 > 5:
-            score -= 10
+            score -= 10  # Chasing
     else:
         if mom5 < 0:
             score += 10
@@ -224,7 +275,7 @@ def _score_volume(row):
     elif rel_vol > 1.2:
         score += 10
     elif rel_vol < 0.5:
-        score -= 15  # Low volume warning
+        score -= 15
 
     if vol_trend > 1.2:
         score += 10
@@ -241,13 +292,12 @@ def _score_volatility(row, config):
     atr_pct = row.get("atr_pct", 0)
     bb_width = row.get("bb_width", 2)
 
-    # Optimal volatility range
     if 0.5 < atr_pct < 2.0:
         score += 20
     elif atr_pct < 0.3:
-        score -= 10  # Too quiet
+        score -= 10
     elif atr_pct > 3.0:
-        score -= 15  # Too volatile
+        score -= 15
 
     if 1.5 < bb_width < 4:
         score += 10
@@ -274,8 +324,6 @@ def _score_regime(regime, regime_conf, direction):
     }
 
     base = regime_scores.get(regime, {}).get(direction, 30)
-
-    # Adjust by confidence
     conf_factor = min(regime_conf / 100, 1.0)
     return base * conf_factor
 
@@ -287,7 +335,7 @@ def _estimate_rr(df, direction, config):
     price = row.get("close", 0)
 
     if price <= 0 or atr <= 0:
-        atr = price * 0.01  # Fallback: 1% of price
+        atr = price * 0.01
         if atr <= 0:
             return {"entry": 0, "sl": 0, "tp1": 0, "tp2": 0, "rr": 0, "score": 0}
 
@@ -310,7 +358,6 @@ def _estimate_rr(df, direction, config):
     reward = abs(tp1 - entry)
     rr = reward / risk if risk > 0 else 0
 
-    # Score the R:R
     if rr >= 3:
         rr_score = 95
     elif rr >= 2.5:
@@ -334,9 +381,30 @@ def _estimate_rr(df, direction, config):
     }
 
 
+def _get_quality_grade(ai_score):
+    """Get quality grade from AI score."""
+    if ai_score >= 90:
+        return {"grade": "A+", "label": "استثنائي", "label_en": "EXCEPTIONAL"}
+    elif ai_score >= 80:
+        return {"grade": "A", "label": "قوي جداً", "label_en": "STRONG"}
+    elif ai_score >= 70:
+        return {"grade": "B+", "label": "مقبول", "label_en": "ACCEPTABLE"}
+    elif ai_score >= 60:
+        return {"grade": "B", "label": "ضعيف", "label_en": "WEAK"}
+    elif ai_score >= 50:
+        return {"grade": "C", "label": "ضعيف جداً", "label_en": "VERY WEAK"}
+    else:
+        return {"grade": "F", "label": "لا يتداول", "label_en": "NO TRADE"}
+
+
 def _get_reasons(row, direction, scores, regime):
     """Generate human-readable reasons for the score."""
     reasons = []
+
+    if scores["technical"] > 60:
+        reasons.append("✓ Technical indicators aligned")
+    elif scores["technical"] < 40:
+        reasons.append("✗ Technical indicators conflicting")
 
     if scores["trend"] > 60:
         reasons.append("✓ Multi-timeframe trend alignment")
@@ -359,14 +427,9 @@ def _get_reasons(row, direction, scores, regime):
         reasons.append(f"✗ Unfavorable regime ({regime})")
 
     if scores["risk_reward"] > 60:
-        reasons.append(f"✓ Good risk/reward ({scores.get('risk_reward', 0):.1f})")
+        reasons.append(f"✓ Good risk/reward ({scores.get('rr_ratio', 0):.1f})")
     elif scores["risk_reward"] < 40:
         reasons.append("✗ Poor risk/reward ratio")
-
-    if scores["technical"] > 60:
-        reasons.append("✓ Technical indicators aligned")
-    elif scores["technical"] < 40:
-        reasons.append("✗ Technical indicators conflicting")
 
     rsi = row.get("rsi", 50)
     if direction == "LONG" and rsi > 75:
@@ -377,10 +440,43 @@ def _get_reasons(row, direction, scores, regime):
     return reasons
 
 
+def _get_tf_reasons(tf_alignment, direction):
+    """Generate reasons from multi-TF alignment."""
+    reasons = []
+
+    if not tf_alignment:
+        return reasons
+
+    tf_dir = tf_alignment.get("direction", "CONFLICTED")
+    aligned = tf_alignment.get("aligned_tfs", [])
+    conflicting = tf_alignment.get("conflicting_tfs", [])
+    score = tf_alignment.get("alignment_score", 0)
+
+    if tf_dir == direction:
+        reasons.append(f"✓ Timeframes aligned ({len(aligned)}/{tf_alignment.get('total_tfs', 0)} agree)")
+        if score > 70:
+            reasons.append(f"✓ Strong multi-TF consensus")
+    elif tf_dir == "CONFLICTED":
+        reasons.append("✗ Timeframes conflicting — NO TRADE")
+    else:
+        reasons.append(f"✗ {tf_dir} trend on higher timeframes")
+
+    # Report specific TF roles
+    macro = tf_alignment.get("macro_trend", "UNKNOWN")
+    primary = tf_alignment.get("primary_trend", "UNKNOWN")
+    if macro != "UNKNOWN":
+        reasons.append(f"  4h: {macro}")
+    if primary != "UNKNOWN":
+        reasons.append(f"  1h: {primary}")
+
+    return reasons
+
+
 def _empty_score(reason):
     """Return empty score with reason."""
     return {
         "ai_score": 0,
+        "quality": {"grade": "F", "label": "لا يتداول", "label_en": "NO TRADE"},
         "scores": {},
         "direction": "NONE",
         "regime": "UNCERTAIN",
@@ -392,5 +488,6 @@ def _empty_score(reason):
         "take_profit2": 0,
         "rr_ratio": 0,
         "atr_pct": 0,
+        "tf_alignment": None,
         "reasons": [f"✗ {reason}"],
     }

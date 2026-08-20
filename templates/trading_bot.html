@@ -1,209 +1,428 @@
 {% extends "base.html" %}
-{% block title %}🤖 AI Trading Engine — USDT P2P Palestine{% endblock %}
+{% block title %}🤖 AI Trading Terminal — USDT P2P Palestine{% endblock %}
 {% block content %}
 <div class="container container-narrow">
 
-  <!-- Header -->
-  <div class="page-header" style="background:linear-gradient(135deg,rgba(168,85,247,0.08),var(--bg-surface));border-color:rgba(168,85,247,0.15);">
-    <div style="display:flex;align-items:center;justify-content:space-between;">
-      <div>
-        <h2>🤖 محرك التداول الذكي</h2>
-        <p style="color:var(--text-muted);font-size:0.8rem;margin-top:var(--sp-1);">Autonomous AI Trading Engine</p>
+  <!-- ===== HEADER ===== -->
+  <div class="page-header" style="background:linear-gradient(135deg,rgba(168,85,247,0.1),rgba(59,130,246,0.06),var(--bg-surface));border-color:rgba(168,85,247,0.15);padding:var(--sp-5);">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--sp-3);">
+      <div style="display:flex;align-items:center;gap:var(--sp-3);">
+        <div style="font-size:2rem;">🤖</div>
+        <div>
+          <h2 style="font-size:1.1rem;font-weight:800;">محرك التداول الذكي</h2>
+          <p style="color:var(--text-muted);font-size:0.75rem;margin-top:2px;">Autonomous AI Trading Engine v2.0</p>
+        </div>
       </div>
-      <div style="text-align:right;">
+      <div>
         {% if bot and bot.status == 'RUNNING' %}
-          <span class="badge badge-success" style="font-size:0.8rem;">🟢 يعمل</span>
+          <span class="badge badge-success" style="font-size:0.75rem;padding:6px 14px;animation:pulse-green 2s infinite;">
+            <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:currentColor;margin-inline-end:4px;animation:blink 1s infinite;"></span>يعمل
+          </span>
         {% elif bot and bot.status == 'PAUSED' %}
-          <span class="badge badge-warning" style="font-size:0.8rem;">⏸️ متوقف مؤقتاً</span>
+          <span class="badge badge-warning" style="font-size:0.75rem;padding:6px 14px;">⏸️ متوقف مؤقتاً</span>
         {% elif bot and bot.status == 'SAFE_MODE' %}
-          <span class="badge badge-danger" style="font-size:0.8rem;">🛡️ وضع آمن</span>
+          <span class="badge badge-danger" style="font-size:0.75rem;padding:6px 14px;">🛡️ وضع آمن</span>
         {% elif bot and bot.status == 'ERROR' %}
-          <span class="badge badge-danger" style="font-size:0.8rem;">❌ خطأ</span>
+          <span class="badge badge-danger" style="font-size:0.75rem;padding:6px 14px;">❌ خطأ</span>
         {% else %}
-          <span class="badge badge-neutral" style="font-size:0.8rem;">⏹️ متوقف</span>
+          <span class="badge badge-neutral" style="font-size:0.75rem;padding:6px 14px;">⏹️ متوقف</span>
         {% endif %}
       </div>
     </div>
   </div>
 
-  <!-- Mode Warning -->
-  <div class="alert alert-info" style="margin-bottom:var(--sp-4);">
-    ℹ️ <strong>وضع تجريبي (Paper Trading)</strong> — لا يستخدم أموالاً حقيقية. الأرباح والخسائر تجريبية فقط.
+  <!-- ===== MODE WARNING ===== -->
+  <div class="card" style="background:linear-gradient(135deg,rgba(59,130,246,0.08),var(--bg-surface));border-color:rgba(59,130,246,0.12);padding:var(--sp-3) var(--sp-4);margin-bottom:var(--sp-4);">
+    <div style="display:flex;align-items:center;gap:var(--sp-2);">
+      <span style="font-size:1.1rem;">🧪</span>
+      <div>
+        <div style="font-weight:700;font-size:0.85rem;color:var(--blue-light);">وضع تجريبي (Paper Trading)</div>
+        <div style="font-size:0.7rem;color:var(--text-muted);margin-top:2px;">لا يستخدم أموالاً حقيقية — الأرباح والخسائر تجريبية فقط</div>
+      </div>
+    </div>
   </div>
 
-  <!-- Controls -->
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3);margin-bottom:var(--sp-4);">
+  <!-- ===== CONTROLS ===== -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-2);margin-bottom:var(--sp-3);">
     {% if not bot or bot.status != 'RUNNING' %}
     <form method="POST" action="/trading_bot/start">
       <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
-      <button type="submit" class="btn btn-success btn-block btn-lg" onclick="haptic('success')">▶️ تشغيل</button>
+      <button type="submit" class="btn btn-success btn-block" onclick="haptic('success')" style="padding:var(--sp-3);font-weight:700;">
+        ▶️ تشغيل المسح
+      </button>
     </form>
     {% else %}
     <form method="POST" action="/trading_bot/pause">
       <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
-      <button type="submit" class="btn btn-warning btn-block btn-lg" onclick="haptic('warning')">⏸️ إيقاف مؤقت</button>
+      <button type="submit" class="btn btn-warning btn-block" onclick="haptic('warning')" style="padding:var(--sp-3);font-weight:700;">
+        ⏸️ إيقاف مؤقت
+      </button>
     </form>
     {% endif %}
 
     <form method="POST" action="/trading_bot/stop">
       <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
-      <button type="submit" class="btn btn-ghost btn-block btn-lg">⏹️ إيقاف</button>
+      <button type="submit" class="btn btn-ghost btn-block" style="padding:var(--sp-3);font-weight:700;">
+        ⏹️ إيقاف
+      </button>
     </form>
   </div>
 
-  <!-- Emergency Stop -->
   <form method="POST" action="/trading_bot/emergency" style="margin-bottom:var(--sp-4);">
     <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
-    <button type="submit" class="btn btn-danger btn-block" onclick="return confirm('هل أنت متأكد؟ سيتم إغلاق جميع الصفقات المفتوحة فوراً')">
+    <button type="submit" class="btn btn-danger btn-block" onclick="return confirm('⚠️ إيقاف طارئ — سيتم إغلاق جميع الصفقات المفتوحة فوراً؟')">
       🛑 إيقاف طارئ — إغلاق كل الصفقات
     </button>
   </form>
 
-  <!-- KPI Cards -->
   {% if bot %}
+
+  <!-- ===== KPI CARDS ===== -->
   <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:var(--sp-3);margin-bottom:var(--sp-4);">
-    <div class="kpi-card">
+    <!-- Equity -->
+    <div class="kpi-card" style="border-left:3px solid var(--accent);">
       <div class="kpi-icon green">💰</div>
-      <div class="kpi-value">${{ "%.2f"|format(bot.equity or 0) }}</div>
+      <div class="kpi-value" style="font-size:1.3rem;">${{ "%.2f"|format(bot.equity or 0) }}</div>
       <div class="kpi-label">ال诊ية</div>
+      {% if bot.starting_equity %}
+      <div style="font-size:0.65rem;color:var(--text-muted);margin-top:4px;">
+        البداية: ${{ "%.0f"|format(bot.starting_equity) }}
+      </div>
+      {% endif %}
     </div>
-    <div class="kpi-card">
+
+    <!-- Today P&L -->
+    <div class="kpi-card" style="border-left:3px solid {% if (bot.today_pnl or 0) >= 0 %}var(--accent){% else %}var(--danger){% endif %};">
       <div class="kpi-icon {% if (bot.today_pnl or 0) >= 0 %}green{% else %}red{% endif %}">📊</div>
-      <div class="kpi-value" style="color:{% if (bot.today_pnl or 0) >= 0 %}var(--accent-light){% else %}var(--danger-light){% endif %};">
-        ${{ "%.2f"|format(bot.today_pnl or 0) }}
+      <div class="kpi-value" style="font-size:1.3rem;color:{% if (bot.today_pnl or 0) >= 0 %}var(--accent-light){% else %}var(--danger-light){% endif %};">
+        {{ "+" if (bot.today_pnl or 0) > 0 else "" }}${{ "%.2f"|format(bot.today_pnl or 0) }}
       </div>
       <div class="kpi-label">P&L اليوم</div>
     </div>
-    <div class="kpi-card">
+
+    <!-- Total P&L -->
+    <div class="kpi-card" style="border-left:3px solid {% if (bot.total_pnl or 0) >= 0 %}var(--accent){% else %}var(--danger){% endif %};">
       <div class="kpi-icon {% if (bot.total_pnl or 0) >= 0 %}green{% else %}red{% endif %}">📈</div>
-      <div class="kpi-value" style="color:{% if (bot.total_pnl or 0) >= 0 %}var(--accent-light){% else %}var(--danger-light){% endif %};">
-        ${{ "%.2f"|format(bot.total_pnl or 0) }}
+      <div class="kpi-value" style="font-size:1.3rem;color:{% if (bot.total_pnl or 0) >= 0 %}var(--accent-light){% else %}var(--danger-light){% endif %};">
+        {{ "+" if (bot.total_pnl or 0) > 0 else "" }}${{ "%.2f"|format(bot.total_pnl or 0) }}
       </div>
       <div class="kpi-label">P&L إجمالي</div>
+      {% if bot.starting_equity and bot.starting_equity > 0 %}
+      <div style="font-size:0.65rem;color:var(--text-muted);margin-top:4px;">
+        ROI: {{ "%.2f"|format(((bot.equity or 0) - (bot.starting_equity or 0)) / (bot.starting_equity or 1) * 100) }}%
+      </div>
+      {% endif %}
     </div>
-    <div class="kpi-card">
-      <div class="kpi-icon blue">📉</div>
-      <div class="kpi-value">{{ "%.1f"|format(((bot.peak_equity or 1) - (bot.equity or 0)) / (bot.peak_equity or 1) * 100) }}%</div>
+
+    <!-- Max Drawdown -->
+    <div class="kpi-card" style="border-left:3px solid var(--danger);">
+      <div class="kpi-icon red">📉</div>
+      <div class="kpi-value" style="font-size:1.3rem;color:var(--danger-light);">
+        {{ "%.2f"|format(((bot.peak_equity or 1) - (bot.equity or 0)) / (bot.peak_equity or 1) * 100) }}%
+      </div>
       <div class="kpi-label">الانسحاب الأقصى</div>
+      <div style="font-size:0.65rem;color:var(--text-muted);margin-top:4px;">
+        القمة: ${{ "%.2f"|format(bot.peak_equity or 0) }}
+      </div>
     </div>
   </div>
 
-  <!-- Stats -->
+  <!-- ===== PERFORMANCE STATS ===== -->
   {% if stats and stats.total_trades > 0 %}
   <div class="section-title">📊 إحصائيات الأداء</div>
-  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:var(--sp-3);margin-bottom:var(--sp-4);">
-    <div class="kpi-card">
-      <div class="kpi-value">{{ stats.total_trades }}</div>
-      <div class="kpi-label">إجمالي الصفقات</div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-2);margin-bottom:var(--sp-4);">
+    <div class="kpi-card" style="padding:var(--sp-3);">
+      <div class="kpi-value" style="font-size:1.1rem;">{{ stats.total_trades }}</div>
+      <div class="kpi-label" style="font-size:0.65rem;">صفقات</div>
     </div>
-    <div class="kpi-card">
-      <div class="kpi-value" style="color:var(--accent-light);">{{ stats.win_rate }}%</div>
-      <div class="kpi-label">نسبة الربح</div>
+    <div class="kpi-card" style="padding:var(--sp-3);">
+      <div class="kpi-value" style="font-size:1.1rem;color:var(--accent-light);">{{ stats.win_rate }}%</div>
+      <div class="kpi-label" style="font-size:0.65rem;">نسبة الربح</div>
     </div>
-    <div class="kpi-card">
-      <div class="kpi-value">{{ stats.profit_factor }}</div>
-      <div class="kpi-label">عامل الربح</div>
+    <div class="kpi-card" style="padding:var(--sp-3);">
+      <div class="kpi-value" style="font-size:1.1rem;">{{ stats.profit_factor }}</div>
+      <div class="kpi-label" style="font-size:0.65rem;">عامل الربح</div>
     </div>
-    <div class="kpi-card">
-      <div class="kpi-value">${{ stats.expectancy }}</div>
-      <div class="kpi-label">التوقع</div>
+    <div class="kpi-card" style="padding:var(--sp-3);">
+      <div class="kpi-value" style="font-size:1rem;">${{ stats.expectancy }}</div>
+      <div class="kpi-label" style="font-size:0.65rem;">التوقع</div>
     </div>
-    <div class="kpi-card">
-      <div class="kpi-value" style="color:var(--accent-light);">${{ stats.largest_win }}</div>
-      <div class="kpi-label">أكبر ربح</div>
+    <div class="kpi-card" style="padding:var(--sp-3);">
+      <div class="kpi-value" style="font-size:1rem;color:var(--accent-light);">+${{ stats.largest_win }}</div>
+      <div class="kpi-label" style="font-size:0.65rem;">أكبر ربح</div>
     </div>
-    <div class="kpi-card">
-      <div class="kpi-value" style="color:var(--danger-light);">${{ stats.largest_loss }}</div>
-      <div class="kpi-label">أكبر خسارة</div>
+    <div class="kpi-card" style="padding:var(--sp-3);">
+      <div class="kpi-value" style="font-size:1rem;color:var(--danger-light);">${{ stats.largest_loss }}</div>
+      <div class="kpi-label" style="font-size:0.65rem;">أكبر خسارة</div>
     </div>
   </div>
   {% endif %}
 
-  <!-- Open Positions -->
+  <!-- ===== SCANNER STATUS ===== -->
+  {% if scan_summary %}
+  <div class="card" style="background:linear-gradient(135deg,rgba(59,130,246,0.06),var(--bg-surface));border-color:rgba(59,130,246,0.1);margin-bottom:var(--sp-4);">
+    <div class="card-title" style="margin-bottom:var(--sp-3);">🔍 حالة المسح</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:var(--sp-2);">
+      <div style="text-align:center;">
+        <div style="font-size:0.7rem;color:var(--text-muted);">إجمالي المسحات</div>
+        <div style="font-weight:700;font-size:1.1rem;">{{ scan_summary.total_scans }}</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-size:0.7rem;color:var(--text-muted);">إشارات تداول</div>
+        <div style="font-weight:700;font-size:1.1rem;color:var(--blue-light);">{{ scan_summary.tradeable_signals }}</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-size:0.7rem;color:var(--text-muted);">صفقات م ejecutada</div>
+        <div style="font-weight:700;font-size:1.1rem;color:var(--accent-light);">{{ scan_summary.executed_trades }}</div>
+      </div>
+    </div>
+    {% if last_scan_time %}
+    <div style="font-size:0.65rem;color:var(--text-muted);text-align:center;margin-top:var(--sp-2);">
+      آخر مسح: {{ last_scan_time.strftime('%H:%M:%S') if last_scan_time else '—' }}
+      {% if symbols_scanned %} | تم فحص {{ symbols_scanned }} أزواج | تم رفض {{ symbols_rejected }}{% endif %}
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- ===== TOP OPPORTUNITIES ===== -->
+  <div class="section-title">🎯 أفضل الفرص المكتشفة</div>
+  {% if top_opportunities %}
+    {% for opp in top_opportunities %}
+    <div class="card" style="border-right:3px solid {% if opp.direction == 'LONG' %}var(--accent){% else %}var(--danger){% endif %};margin-bottom:var(--sp-3);padding:var(--sp-3);">
+      <!-- Header row -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--sp-2);">
+        <div style="display:flex;align-items:center;gap:var(--sp-2);">
+          <span style="font-weight:800;font-size:0.95rem;">{{ opp.symbol }}</span>
+          <span class="badge {% if opp.direction == 'LONG' %}badge-success{% else %}badge-danger{% endif %}" style="font-size:0.65rem;">
+            {{ "🟢 شراء" if opp.direction == 'LONG' else "🔴 بيع" }}
+          </span>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-weight:800;font-size:1.1rem;color:{% if opp.ai_score >= 70 %}var(--accent-light){% elif opp.ai_score >= 50 %}var(--warning-light){% else %}var(--danger-light){% endif %};">
+            {{ "%.0f"|format(opp.ai_score) }}<span style="font-size:0.65rem;color:var(--text-muted);">/100</span>
+          </div>
+          {% if opp.quality %}
+          <div style="font-size:0.6rem;color:var(--text-muted);">
+            {{ opp.quality.label if opp.quality.label else '' }}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Score bar -->
+      <div style="height:4px;border-radius:2px;background:var(--bg-input);margin-bottom:var(--sp-2);overflow:hidden;">
+        <div style="height:100%;width:{{ opp.ai_score }}%;border-radius:2px;background:{% if opp.ai_score >= 70 %}var(--accent){% elif opp.ai_score >= 50 %}var(--warning){% else %}var(--danger){% endif %};"></div>
+      </div>
+
+      <!-- Price levels -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--sp-2);margin-bottom:var(--sp-2);">
+        <div style="background:var(--bg-input);border-radius:var(--radius-sm);padding:var(--sp-2);text-align:center;">
+          <div style="font-size:0.6rem;color:var(--text-muted);">الدخول</div>
+          <div style="font-weight:700;font-size:0.8rem;" class="ltr" dir="ltr">${{ "%.2f"|format(opp.entry_price) }}</div>
+        </div>
+        <div style="background:var(--bg-input);border-radius:var(--radius-sm);padding:var(--sp-2);text-align:center;">
+          <div style="font-size:0.6rem;color:var(--danger-light);">الوقف</div>
+          <div style="font-weight:700;font-size:0.8rem;color:var(--danger-light);" class="ltr" dir="ltr">${{ "%.2f"|format(opp.stop_loss) }}</div>
+        </div>
+        <div style="background:var(--bg-input);border-radius:var(--radius-sm);padding:var(--sp-2);text-align:center;">
+          <div style="font-size:0.6rem;color:var(--accent-light);">الهدف</div>
+          <div style="font-weight:700;font-size:0.8rem;color:var(--accent-light);" class="ltr" dir="ltr">${{ "%.2f"|format(opp.take_profit1) }}</div>
+        </div>
+      </div>
+
+      <!-- R:R and regime -->
+      <div style="display:flex;gap:var(--sp-2);margin-bottom:var(--sp-2);flex-wrap:wrap;">
+        <span class="badge badge-neutral" style="font-size:0.65rem;">R:R {{ "%.1f"|format(opp.rr_ratio) }}</span>
+        <span class="badge badge-neutral" style="font-size:0.65rem;">{{ opp.regime }}</span>
+        {% if opp.tf_alignment and opp.tf_alignment.direction %}
+        <span class="badge {% if opp.tf_alignment.direction == opp.direction %}badge-success{% elif opp.tf_alignment.direction == 'CONFLICTED' %}badge-warning{% else %}badge-danger{% endif %}" style="font-size:0.65rem;">
+          TF: {{ opp.tf_alignment.direction }} ({{ "%.0f"|format(opp.tf_alignment.alignment_score or 0) }}%)
+        </span>
+        {% endif %}
+      </div>
+
+      <!-- Reasons -->
+      {% if opp.reasons %}
+      <div style="font-size:0.65rem;color:var(--text-muted);line-height:1.6;">
+        {% for reason in opp.reasons[:4] %}
+        <div>{{ reason }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty-state" style="padding:var(--sp-6);">
+      <div class="empty-state-icon">🔍</div>
+      <div class="empty-state-text">لا توجد فرص حالياً</div>
+      <p style="font-size:0.75rem;color:var(--text-muted);margin-top:var(--sp-2);">المحرك يبحث عن أفضل فرص التداول تلقائياً</p>
+    </div>
+  {% endif %}
+
+  <!-- ===== OPEN POSITIONS ===== -->
   <div class="section-title">📋 الصفقات المفتوحة ({{ positions|length }})</div>
   {% if positions %}
     {% for pos in positions %}
-    <div class="card" style="border-right:3px solid {% if pos.side == 'LONG' %}var(--accent){% else %}var(--danger){% endif %};margin-bottom:var(--sp-3);">
+    <div class="card" style="border-right:3px solid {% if pos.side == 'LONG' %}var(--accent){% else %}var(--danger){% endif %};margin-bottom:var(--sp-3);padding:var(--sp-3);">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--sp-2);">
-        <div>
-          <span style="font-weight:700;">{{ pos.symbol }}</span>
-          <span class="badge {% if pos.side == 'LONG' %}badge-success{% else %}badge-danger{% endif %}" style="font-size:0.7rem;">{{ pos.side }}</span>
+        <div style="display:flex;align-items:center;gap:var(--sp-2);">
+          <span style="font-weight:800;">{{ pos.symbol }}</span>
+          <span class="badge {% if pos.side == 'LONG' %}badge-success{% else %}badge-danger{% endif %}" style="font-size:0.65rem;">{{ pos.side }}</span>
+          {% if pos.tp1_hit %}<span class="badge badge-success" style="font-size:0.6rem;">TP1 ✓</span>{% endif %}
+          {% if pos.break_even %}<span class="badge badge-info" style="font-size:0.6rem;">BE ✓</span>{% endif %}
+          {% if pos.trailing_active %}<span class="badge badge-warning" style="font-size:0.6rem;">TRAIL</span>{% endif %}
         </div>
-        <span style="font-size:0.8rem;color:var(--text-muted);">AI: {{ pos.entry_ai_score }}</span>
+        <span style="font-size:0.7rem;color:var(--text-muted);">AI: {{ "%.0f"|format(pos.entry_ai_score or 0) }}</span>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-2);font-size:0.8rem;">
-        <div><span style="color:var(--text-muted);">الدخول:</span> ${{ "%.2f"|format(pos.entry_price) }}</div>
-        <div><span style="color:var(--text-muted);">الحالي:</span> ${{ "%.2f"|format(pos.current_price) }}</div>
-        <div><span style="color:var(--text-muted);">الوقف:</span> ${{ "%.2f"|format(pos.stop_loss) }}</div>
-        <div><span style="color:var(--text-muted);">الكمية:</span> {{ "%.6f"|format(pos.remaining_qty) }}</div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-2);font-size:0.75rem;">
+        <div>
+          <span style="color:var(--text-muted);">الدخول:</span>
+          <span class="ltr" dir="ltr" style="font-weight:600;">${{ "%.2f"|format(pos.entry_price) }}</span>
+        </div>
+        <div>
+          <span style="color:var(--text-muted);">الحالي:</span>
+          <span class="ltr" dir="ltr" style="font-weight:600;">${{ "%.2f"|format(pos.current_price) }}</span>
+        </div>
+        <div>
+          <span style="color:var(--text-muted);">الوقف:</span>
+          <span class="ltr" dir="ltr" style="font-weight:600;color:var(--danger-light);">${{ "%.2f"|format(pos.stop_loss) }}</span>
+        </div>
+        <div>
+          <span style="color:var(--text-muted);">الكمية:</span>
+          <span class="ltr" dir="ltr" style="font-weight:600;">{{ "%.6f"|format(pos.remaining_qty) }}</span>
+        </div>
       </div>
-      <div style="display:flex;gap:var(--sp-2);margin-top:var(--sp-2);font-size:0.75rem;">
-        {% if pos.tp1_hit %}<span class="badge badge-success">TP1 ✓</span>{% endif %}
-        {% if pos.break_even %}<span class="badge badge-info">BE ✓</span>{% endif %}
-        {% if pos.trailing_active %}<span class="badge badge-warning">TRAIL</span>{% endif %}
+
+      <!-- P&L bar -->
+      {% set entry = pos.entry_price or 1 %}
+      {% set current = pos.current_price or pos.entry_price %}
+      {% if pos.side == 'LONG' %}
+        {% set pnl_pct = ((current - entry) / entry * 100) if entry > 0 else 0 %}
+      {% else %}
+        {% set pnl_pct = ((entry - current) / entry * 100) if entry > 0 else 0 %}
+      {% endif %}
+      <div style="margin-top:var(--sp-2);text-align:center;font-weight:700;font-size:0.85rem;color:{% if pnl_pct >= 0 %}var(--accent-light){% else %}var(--danger-light){% endif %};">
+        {{ "+" if pnl_pct > 0 else "" }}{{ "%.2f"|format(pnl_pct) }}%
       </div>
     </div>
     {% endfor %}
   {% else %}
-    <div class="empty-state" style="padding:var(--sp-4);">
+    <div class="empty-state" style="padding:var(--sp-6);">
       <div class="empty-state-icon">📭</div>
       <div class="empty-state-text">لا توجد صفقات مفتوحة</div>
     </div>
   {% endif %}
 
-  <!-- Recent Trades -->
-  <div class="section-title">📜 آخر الصفقات</div>
+  <!-- ===== RECENT TRADES ===== -->
+  <div class="section-title">📜 آخر الصفقات المنجزة</div>
   {% if recent_trades %}
     {% for t in recent_trades %}
     <div class="list-item" style="border-right:3px solid {% if t.net_pnl > 0 %}var(--accent){% else %}var(--danger){% endif %};">
       <div>
         <div style="font-weight:600;font-size:0.85rem;">
           {{ t.symbol }}
-          <span class="badge {% if t.side == 'LONG' %}badge-success{% else %}badge-danger{% endif %}" style="font-size:0.65rem;">{{ t.side }}</span>
+          <span class="badge {% if t.side == 'LONG' %}badge-success{% else %}badge-danger{% endif %}" style="font-size:0.6rem;">{{ t.side }}</span>
         </div>
-        <div style="font-size:0.7rem;color:var(--text-muted);">{{ t.exit_reason }} — {{ t.exit_time }}</div>
+        <div style="font-size:0.65rem;color:var(--text-muted);">{{ t.exit_reason }} — {{ t.exit_time }}</div>
       </div>
       <div style="text-align:left;">
         <div style="font-weight:700;color:{% if t.net_pnl > 0 %}var(--accent-light){% else %}var(--danger-light){% endif %};">
           {{ "+" if t.net_pnl > 0 else "" }}${{ "%.2f"|format(t.net_pnl) }}
         </div>
-        <div style="font-size:0.7rem;color:var(--text-muted);">
+        <div style="font-size:0.65rem;color:var(--text-muted);">
           ${{ "%.2f"|format(t.entry_price) }} → ${{ "%.2f"|format(t.exit_price) }}
         </div>
       </div>
     </div>
     {% endfor %}
   {% else %}
-    <div class="empty-state" style="padding:var(--sp-4);">
+    <div class="empty-state" style="padding:var(--sp-6);">
       <div class="empty-state-icon">📝</div>
-      <div class="empty-state-text">لم تُ executing أي صفقات بعد</div>
+      <div class="empty-state-text">لم تُنجز أي صفقات بعد</div>
     </div>
   {% endif %}
 
-  <!-- Strategy Info -->
+  <!-- ===== STRATEGY INFO ===== -->
   <div class="card" style="margin-top:var(--sp-4);">
     <div class="card-title">📐 استراتيجية الذكاء الاصطناعي</div>
-    <div class="info-row"><span class="info-label">الأزواج</span><span class="info-value" style="font-size:0.75rem;">{{ bot_config.symbols if bot_config else '9 أزواج' }}</span></div>
-    <div class="info-row"><span class="info-label">الإطار الزمني</span><span class="info-value">5m, 15m, 1h, 4h</span></div>
-    <div class="info-row"><span class="info-label">المخاطرة</span><span class="info-value">{{ config.risk_per_trade_pct if config else '0.5' }}%</span></div>
-    <div class="info-row"><span class="info-label">الحد الأقصى للمخاطرة</span><span class="info-value" style="color:var(--danger);">{{ config.max_risk_per_trade_pct if config else '1.0' }}%</span></div>
-    <div class="info-row"><span class="info-label">خسارة اليوم</span><span class="info-value" style="color:var(--danger);">{{ config.daily_loss_limit_pct if config else '2.0' }}%</span></div>
-    <div class="info-row"><span class="info-label">الإيقاف الطارئ</span><span class="info-value" style="color:var(--danger);">{{ config.emergency_shutdown_pct if config else '10.0' }}%</span></div>
-    <div class="info-row"><span class="info-label">المؤشرات</span><span class="info-value">EMA, RSI, MACD, ADX, ATR, BB, Volume, Momentum</span></div>
-    <div class="info-row"><span class="info-label">كشف الاتجاه</span><span class="info-value">BULL/BEAR/SIDEWAYS/HIGH_VOL/BREAKOUT</span></div>
-    <div class="info-row"><span class="info-label">نمط التداول</span><span class="info-value"> Tradable Only with High AI Score</span></div>
+    <div class="info-row">
+      <span class="info-label">الأزواج</span>
+      <span class="info-value" style="font-size:0.7rem;">{{ config.symbols if config else '9 أزواج' }}</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">الإطار الزمني</span>
+      <span class="info-value">5m → 15m → 1h → 4h</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">المخاطرة / صفقة</span>
+      <span class="info-value">{{ config.risk_per_trade_pct if config else '0.5' }}%</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">الحد الأقصى للمخاطرة</span>
+      <span class="info-value" style="color:var(--danger);">{{ config.max_risk_per_trade_pct if config else '1.0' }}%</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">خسارة اليوم</span>
+      <span class="info-value" style="color:var(--danger);">{{ config.daily_loss_limit_pct if config else '2.0' }}%</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">الإيقاف الطارئ</span>
+      <span class="info-value" style="color:var(--danger);">{{ config.emergency_shutdown_pct if config else '10.0' }}%</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">المؤشرات</span>
+      <span class="info-value" style="font-size:0.7rem;">EMA, RSI, MACD, ADX, ATR, BB, Volume, Momentum</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">كشف الاتجاه</span>
+      <span class="info-value" style="font-size:0.7rem;">BULL/BEAR/SIDEWAYS/HIGH_VOL/BREAKOUT/BREAKDOWN</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">الإطار الزمني</span>
+      <span class="info-value" style="font-size:0.7rem;">Multi-TF Alignment + Composite Regime</span>
+    </div>
   </div>
 
   {% else %}
-  <!-- No bot state -->
+  <!-- ===== NO BOT STATE ===== -->
   <div class="empty-state" style="padding:var(--sp-8);">
-    <div class="empty-state-icon">🤖</div>
-    <div class="empty-state-text">محرك التداول الذكي جاهز</div>
-    <p style="color:var(--text-muted);font-size:0.85rem;margin-top:var(--sp-2);">اضغط تشغيل لبدء المسح التلقائي للأسواق</p>
+    <div class="empty-state-icon" style="font-size:4rem;">🤖</div>
+    <div class="empty-state-text" style="font-size:1.1rem;">محرك التداول الذكي جاهز</div>
+    <p style="color:var(--text-muted);font-size:0.85rem;margin-top:var(--sp-2);text-align:center;line-height:1.6;">
+      اضغط <strong>تشغيل</strong> لبدء المسح التلقائي للأسواق<br>
+      النظام يفحص 9 أزواج × 4 إطارات زمنية<br>
+      ويكتشف أفضل فرص التداول تلقائياً
+    </p>
+    <div style="margin-top:var(--sp-4);">
+      <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:var(--sp-2);">
+        <span class="badge badge-neutral">BTCUSDT</span>
+        <span class="badge badge-neutral">ETHUSDT</span>
+        <span class="badge badge-neutral">BNBUSDT</span>
+        <span class="badge badge-neutral">SOLUSDT</span>
+        <span class="badge badge-neutral">XRPUSDT</span>
+        <span class="badge badge-neutral">DOGEUSDT</span>
+        <span class="badge badge-neutral">ADAUSDT</span>
+        <span class="badge badge-neutral">AVAXUSDT</span>
+        <span class="badge badge-neutral">LINKUSDT</span>
+      </div>
+    </div>
   </div>
   {% endif %}
 
   <a href="/dashboard" class="back-link mt-4">⬅️ لوحة التحكم</a>
 
 </div>
+
+<style>
+@keyframes pulse-green {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(34,197,94,0); }
+}
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+</style>
 {% endblock %}

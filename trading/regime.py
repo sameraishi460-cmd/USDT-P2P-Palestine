@@ -1,7 +1,13 @@
 """
-AI Trading Engine — Market Regime Detection
+AI Trading Engine — Market Regime Detection (Phase 2 Enhanced)
 
 Detects the current market regime to guide strategy selection.
+
+Phase 2 additions:
+- Per-timeframe regime detection
+- Composite multi-TF regime
+- Regime transition detection
+- Enhanced regime confidence scoring
 """
 
 import numpy as np
@@ -28,7 +34,6 @@ def detect_regime(df):
         return UNCERTAIN, 0, "Insufficient data"
 
     row = df.iloc[-1]
-    recent = df.tail(20)
 
     # Trend detection
     ema20 = row.get("ema_20", 0)
@@ -91,7 +96,7 @@ def detect_regime(df):
     sideways_score = 0
     if adx < 20:
         sideways_score += 30
-    if abs(ema20 - ema50) / ema50 * 100 < 0.5:
+    if abs(ema20 - ema50) / max(ema50, 1) * 100 < 0.5:
         sideways_score += 20
     if bb_width < 2:
         sideways_score += 15
@@ -183,6 +188,114 @@ def detect_regime(df):
     return best_regime, best_score, descriptions.get(best_regime, best_regime)
 
 
+def detect_regime_for_tf(df):
+    """
+    Detect regime for a single timeframe.
+    Returns (regime, confidence, description).
+    """
+    return detect_regime(df)
+
+
+def detect_multi_tf_regime(multi_tf_data, timeframes=None):
+    """
+    Detect regime across multiple timeframes and compute a composite regime.
+
+    Returns:
+        dict with:
+        - composite_regime: dominant regime across all TFs
+        - composite_confidence: weighted average confidence
+        - tf_regimes: dict mapping TF -> (regime, confidence, description)
+        - regime_alignment: how well regimes agree (0-100)
+        - tradeable: whether the regime is tradeable
+    """
+    if timeframes is None:
+        timeframes = ["5m", "15m", "1h", "4h"]
+
+    # TF weights (higher TF = higher weight)
+    tf_weights = {
+        "5m": 0.1,
+        "15m": 0.2,
+        "1h": 0.35,
+        "4h": 0.35,
+    }
+
+    tf_regimes = {}
+    regime_votes = {}  # regime -> weighted score
+
+    for tf in timeframes:
+        if tf not in multi_tf_data or multi_tf_data[tf] is None:
+            continue
+
+        df = multi_tf_data[tf]
+        if df is None or len(df) < 30:
+            continue
+
+        regime, confidence, description = detect_regime_for_tf(df)
+        tf_regimes[tf] = {
+            "regime": regime,
+            "confidence": confidence,
+            "description": description,
+        }
+
+        # Weighted vote
+        weight = tf_weights.get(tf, 0.25)
+        weighted_conf = confidence * weight
+        regime_votes[regime] = regime_votes.get(regime, 0) + weighted_conf
+
+    if not tf_regimes:
+        return {
+            "composite_regime": UNCERTAIN,
+            "composite_confidence": 0,
+            "tf_regimes": {},
+            "regime_alignment": 0,
+            "tradeable": False,
+        }
+
+    # Determine composite regime (highest weighted vote)
+    composite_regime = max(regime_votes, key=regime_votes.get) if regime_votes else UNCERTAIN
+    total_weight = sum(tf_weights.get(tf, 0.25) for tf in tf_regimes)
+    composite_confidence = (regime_votes.get(composite_regime, 0) / max(total_weight, 0.01)) if total_weight > 0 else 0
+
+    # Calculate regime alignment (% of TFs with same or compatible regime)
+    compatible_regimes = _get_compatible_regimes(composite_regime)
+    aligned_count = sum(
+        1 for tf, info in tf_regimes.items()
+        if info["regime"] in compatible_regimes
+    )
+    regime_alignment = (aligned_count / len(tf_regimes)) * 100 if tf_regimes else 0
+
+    # Check if tradeable
+    tradeable = (
+        composite_regime != UNCERTAIN
+        and composite_regime != HIGH_VOL
+        and composite_confidence >= 30
+        and regime_alignment >= 50
+    )
+
+    return {
+        "composite_regime": composite_regime,
+        "composite_confidence": round(composite_confidence, 1),
+        "tf_regimes": tf_regimes,
+        "regime_alignment": round(regime_alignment, 1),
+        "tradeable": tradeable,
+    }
+
+
+def _get_compatible_regimes(regime):
+    """Get regimes that are compatible with the given regime."""
+    compatibility = {
+        BULL_TREND: [BULL_TREND, BREAKOUT, LOW_VOL],
+        BEAR_TREND: [BEAR_TREND, BREAKDOWN, LOW_VOL],
+        SIDEWAYS: [SIDEWAYS, LOW_VOL],
+        HIGH_VOL: [HIGH_VOL, BULL_TREND, BEAR_TREND],
+        LOW_VOL: [LOW_VOL, SIDEWAYS],
+        BREAKOUT: [BREAKOUT, BULL_TREND],
+        BREAKDOWN: [BREAKDOWN, BEAR_TREND],
+        UNCERTAIN: [],
+    }
+    return compatibility.get(regime, [])
+
+
 def is_regime_suitable(regime, strategy_type):
     """
     Check if a strategy is suitable for the current regime.
@@ -198,3 +311,35 @@ def is_regime_suitable(regime, strategy_type):
 
     allowed = suitability.get(strategy_type, [BULL_TREND, BEAR_TREND])
     return regime in allowed
+
+
+def get_regime_emoji(regime):
+    """Get emoji for regime display."""
+    emojis = {
+        BULL_TREND: "🟢📈",
+        BEAR_TREND: "🔴📉",
+        SIDEWAYS: "🟡↔️",
+        HIGH_VOL: "🟠⚡",
+        LOW_VOL: "🔵😴",
+        BREAKOUT: "🚀",
+        BREAKDOWN: "💥",
+        UNCERTAIN: "❓",
+    }
+    return emojis.get(regime, "❓")
+
+
+def get_regime_arabic(regime):
+    """Get Arabic name for regime."""
+    arabic = {
+        BULL_TREND: "صاعد",
+        BEAR_TREND: "هابط",
+        SIDEWAYS: "عرضي",
+        HIGH_vol: "تقلب عالي",
+        LOW_VOL: "تقلب منخفض",
+        BREAKOUT: "اختراق صاعد",
+        BREAKDOWN: "انهيار",
+        UNCERTAIN: "غير محدد",
+    }
+    # Fix typo
+    arabic[HIGH_VOL] = "تقلب عالي"
+    return arabic.get(regime, "غير محدد")
