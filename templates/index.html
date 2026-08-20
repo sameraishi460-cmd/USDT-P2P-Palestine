@@ -1,595 +1,220 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
+{% extends "base.html" %}
+{% block title %}USDT P2P Palestine — سوق USDT Palestin{% endblock %}
 
-<head>
-
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>USDT P2P Palestine 🇵🇸</title>
-
-<style>
-
-*{
-box-sizing:border-box;
-}
-
-body{
-margin:0;
-font-family:tahoma,Arial;
-background:#050b16;
-color:white;
-}
-
-
-.header{
-background:#111827;
-padding:18px;
-display:flex;
-justify-content:space-between;
-align-items:center;
-position:sticky;
-top:0;
-z-index:99;
-}
-
-
-.logo{
-font-size:24px;
-font-weight:bold;
-color:#22c55e;
-}
-
-.logo span{
-color:white;
-}
-
-
-.nav a{
-text-decoration:none;
-color:white;
-padding:10px 15px;
-border-radius:12px;
-background:#2563eb;
-margin:4px;
-display:inline-block;
-}
-
-
-.nav .green{
-background:#16a34a;
-}
-
-
-/* Trading Bot */
-
-.nav .bot{
-background:#9333ea;
-}
-
-
-.container{
-max-width:1200px;
-margin:auto;
-padding:20px;
-}
-
-
-.hero{
-background:linear-gradient(135deg,#1e293b,#0f172a);
-padding:40px 20px;
-border-radius:25px;
-text-align:center;
-margin-top:20px;
-}
-
-
-.hero h1{
-font-size:35px;
-}
-
-
-.hero p{
-color:#cbd5e1;
-font-size:18px;
-}
-
-
-.buttons a{
-display:inline-block;
-padding:15px 30px;
-margin:10px;
-border-radius:15px;
-text-decoration:none;
-color:white;
-font-size:18px;
-}
-
-
-.sell{
-background:#16a34a;
-}
-
-
-.cash{
-background:#2563eb;
-}
-
-
-/* Trading Bot button */
-
-.bot-button{
-background:#9333ea;
-}
-
-
-.features{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
-gap:15px;
-margin-top:25px;
-}
-
-
-.feature{
-background:#1e293b;
-padding:20px;
-border-radius:18px;
-text-align:center;
-}
-
-
-.feature b{
-font-size:28px;
-display:block;
-color:#22c55e;
-}
-
-
-
-.title{
-margin-top:40px;
-}
-
-
-
-.cards{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
-gap:20px;
-}
-
-
-
-.card{
-background:#111827;
-padding:22px;
-border-radius:22px;
-border:1px solid #263244;
-}
-
-
-
-.user{
-color:#22c55e;
-font-weight:bold;
-font-size:18px;
-}
-
-
-
-.info{
-background:#1e293b;
-padding:12px;
-border-radius:12px;
-margin:10px 0;
-}
-
-
-
-.price{
-font-size:26px;
-color:#22c55e;
-font-weight:bold;
-}
-
-
-
-.buy{
-display:block;
-background:#16a34a;
-padding:13px;
-border-radius:12px;
-text-align:center;
-color:white;
-text-decoration:none;
-}
-
-
-.meet{
-display:block;
-background:#2563eb;
-padding:13px;
-border-radius:12px;
-text-align:center;
-color:white;
-text-decoration:none;
-}
-
-
-.empty{
-text-align:center;
-padding:20px;
-color:#94a3b8;
-background:#111827;
-border-radius:12px;
-grid-column: 1 / -1;
-}
-
-
-.footer{
-text-align:center;
-padding:20px;
-color:#94a3b8;
-margin-top:40px;
-border-top:1px solid #1e293b;
-}
-
-</style>
-
-</head>
-
-
-<body>
-
-
-<div class="header">
-
-
-<div class="logo">
-
-🇵🇸 <span>USDT</span> P2P Palestine
-
-</div>
-
-
-
-<div class="nav">
-
-
-{% if user %}
-
-
-<a href="/dashboard">
-👤 لوحة التحكم
-</a>
-
-
-<a href="/wallet">
-💰 محفظتي
-</a>
-
-
-<a href="/">
-📢 الإعلانات
-</a>
-
-
-<!-- Trading Bot -->
-
-<a class="bot" href="/trading_bot">
-🤖 Trading Bot
-</a>
-
-
-<a href="/logout">
-🚪 خروج
-</a>
-
-
-{% else %}
-
-
-<a href="/login">
-دخول
-</a>
-
-
-<a class="green" href="/register">
-إنشاء حساب
-</a>
-
-
-{% endif %}
-
-
-</div>
-
-
-</div>
-
-
+{% block content %}
 <div class="container">
 
+  <!-- ===== Hero Section ===== -->
+  <section class="page-header animate-slideUp" style="padding:var(--sp-8) var(--sp-5);background:linear-gradient(135deg,var(--bg-surface),rgba(34,197,94,0.05),var(--bg-elevated));position:relative;overflow:hidden;">
 
-<div class="hero">
+    <!-- Decorative glow -->
+    <div style="position:absolute;top:-60px;left:50%;transform:translateX(-50%);width:300px;height:300px;background:radial-gradient(circle,rgba(34,197,94,0.08),transparent 70%);pointer-events:none;"></div>
+
+    <!-- Live Price Ticker -->
+    <div style="display:inline-flex;align-items:center;gap:var(--sp-3);background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-full);padding:var(--sp-2) var(--sp-4);margin-bottom:var(--sp-5);font-size:0.85rem;">
+      <span style="display:inline-flex;align-items:center;gap:var(--sp-1);">
+        <span style="width:8px;height:8px;border-radius:50%;background:var(--accent);display:inline-block;animation:pulse 2s infinite;"></span>
+        سعر مباشر
+      </span>
+      <span class="divider" style="width:1px;height:16px;background:var(--border-light);margin:0;"></span>
+      <span>💵 <span style="color:var(--accent-light);font-weight:700;">{{ price['usd_ils'] }}</span> ₪</span>
+      <span class="divider" style="width:1px;height:16px;background:var(--border-light);margin:0;"></span>
+      <span>🟢 <span style="color:var(--accent-light);font-weight:700;">{{ price['usdt_ils'] }}</span> ₪</span>
+    </div>
+
+    <style>@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}</style>
+
+    <h1 style="font-size:2.2rem;font-weight:900;margin-bottom:var(--sp-3);">
+      شراء وبيع <span style="color:var(--accent);">USDT</span> بأمان 🇵🇸
+    </h1>
+
+    <p style="color:var(--text-secondary);font-size:1.05rem;max-width:500px;margin:0 auto var(--sp-6);line-height:1.8;">
+      منصة فلسطينية للتداول الآمن مع حماية_escrow_ والمقابلات الشخصية
+    </p>
+
+    <div style="display:flex;flex-wrap:wrap;gap:var(--sp-3);justify-content:center;">
+      <a href="{% if user %}/create_ad{% else %}/register{% endif %}" class="btn btn-success btn-lg">
+        🟢 {% if user %}إنشاء إعلان USDT{% else %}ابدأ الآن{% endif %}
+      </a>
+      <a href="/market" class="btn btn-primary btn-lg">
+        💰 تصفّح السوق
+      </a>
+      <a href="/create_cash_ad" class="btn btn-ghost btn-lg" style="border-color:var(--border-light);">
+        🤝 مقابلة شخصية
+      </a>
+    </div>
+
+    <small style="display:block;margin-top:var(--sp-4);color:var(--text-muted);font-size:0.75rem;">
+      آخر تحديث: {{ price['updated'] }}
+    </small>
+  </section>
 
 
-<div class="info" style="font-size:22px;margin-bottom:25px;background:#0f172a;">
+  <!-- ===== Features Grid ===== -->
+  <section class="stagger" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:var(--sp-3);margin-top:var(--sp-6);">
+    <div class="stat-card">
+      <span class="stat-icon">🔐</span>
+      <div style="font-weight:600;font-size:0.85rem;">حماية Escrow</div>
+      <div style="font-size:0.75rem;color:var(--text-muted);">USDT محجوز بأمان</div>
+    </div>
+    <div class="stat-card">
+      <span class="stat-icon">🤝</span>
+      <div style="font-weight:600;font-size:0.85rem;">مقابلات مباشرة</div>
+      <div style="font-size:0.75rem;color:var(--text-muted);">تداول نقدي محلي</div>
+    </div>
+    <div class="stat-card">
+      <span class="stat-icon">⚡</span>
+      <div style="font-weight:600;font-size:0.85rem;">تنفيذ سريع</div>
+      <div style="font-size:0.75rem;color:var(--text-muted);"> الصفقات فورية</div>
+    </div>
+    <div class="stat-card">
+      <span class="stat-icon">🤖</span>
+      <div style="font-weight:600;font-size:0.85rem;">بوت تداول</div>
+      <div style="font-size:0.75rem;color:var(--text-muted);">تداول تلقائي تجريبي</div>
+    </div>
+  </section>
 
 
-💵 سعر الدولار:
+  <!-- ===== USDT Ads ===== -->
+  <div class="section-title mt-8">
+    📢 إعلانات USDT المتوفرة
+  </div>
 
-<span style="color:#22c55e;font-weight:bold;">
-{{ price["usd_ils"] }}
-</span>
-₪
+  <div class="grid grid-auto stagger">
+
+    {% for ad in ads %}
+    <div class="card card-interactive" style="border-right:3px solid var(--accent);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--sp-3);">
+        <div class="avatar" style="width:36px;height:36px;font-size:0.8rem;">{{ ad.user[0] }}</div>
+        <span class="badge badge-success">متاح</span>
+      </div>
+
+      <div style="font-weight:700;font-size:0.95rem;margin-bottom:var(--sp-2);">{{ ad.user }}</div>
+
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:var(--sp-3);">
+        <span style="color:var(--text-secondary);font-size:0.85rem;">💰 الكمية</span>
+        <span style="font-weight:700;color:var(--accent-light);">{{ ad.amount }} USDT</span>
+      </div>
+
+      <div style="background:var(--bg-input);border-radius:var(--radius-md);padding:var(--sp-3);margin-bottom:var(--sp-3);display:flex;justify-content:space-between;align-items:center;">
+        <span style="color:var(--text-muted);font-size:0.8rem;">السعر</span>
+        <span class="price-display" style="font-size:1.2rem;">{{ ad.price }} <span class="price-currency">₪</span></span>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:var(--sp-2);margin-bottom:var(--sp-3);font-size:0.8rem;color:var(--text-secondary);">
+        <span class="chip">💳 {{ ad.payment }}</span>
+        <span class="chip">🛡️ حماية</span>
+      </div>
+
+      <a href="/buy/{{ ad.id }}" class="btn btn-success btn-block">
+        شراء الآن 🚀
+      </a>
+    </div>
+
+    {% else %}
+    <div class="empty-state" style="grid-column:1/-1;">
+      <div class="empty-state-icon">📭</div>
+      <div class="empty-state-title">لا توجد إعلانات USDT</div>
+      <div class="empty-state-text">لم يُنشر أي إعلان بعد. كن أول من ينشر إعلان!</div>
+      <a href="{% if user %}/create_ad{% else %}/register{% endif %}" class="btn btn-success mt-4">
+        ➕ نشر إعلان
+      </a>
+    </div>
+    {% endfor %}
+
+  </div>
 
 
-<br>
+  <!-- ===== Cash Ads ===== -->
+  {% if cash_ads %}
+  <div class="section-title mt-8">
+    🤝 مقابلات شخصية متوفرة
+  </div>
+
+  <div class="grid grid-auto stagger">
+
+    {% for cash in cash_ads %}
+    <div class="card card-interactive" style="border-right:3px solid var(--primary);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--sp-3);">
+        <div class="avatar" style="width:36px;height:36px;font-size:0.8rem;background:var(--info-bg);border-color:rgba(59,130,246,0.3);color:var(--primary-light);">{{ cash.user[0] }}</div>
+        <span class="badge badge-info">مقابلة</span>
+      </div>
+
+      <div style="font-weight:700;font-size:0.95rem;margin-bottom:var(--sp-2);">{{ cash.user }}</div>
+
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:var(--sp-3);">
+        <span style="color:var(--text-secondary);font-size:0.85rem;">💰 الكمية</span>
+        <span style="font-weight:700;color:var(--primary-light);">{{ cash.amount }} USDT</span>
+      </div>
+
+      <div style="background:var(--bg-input);border-radius:var(--radius-md);padding:var(--sp-3);margin-bottom:var(--sp-3);display:flex;justify-content:space-between;align-items:center;">
+        <span style="color:var(--text-muted);font-size:0.8rem;">السعر</span>
+        <span class="price-display" style="font-size:1.2rem;color:var(--primary-light);">{{ cash.price }} <span class="price-currency">₪</span></span>
+      </div>
+
+      <a href="/cash_ad/{{ cash.id }}" class="btn btn-primary btn-block">
+        طلب مقابلة 🤝
+      </a>
+    </div>
+
+    {% endfor %}
+
+  </div>
+  {% endif %}
 
 
-🟢 سعر USDT:
+  <!-- ===== How It Works ===== -->
+  <div class="section-title mt-8">
+    ⚙️ كيف يعمل؟
+  </div>
 
-<span style="color:#22c55e;font-weight:bold;">
-{{ price["usdt_ils"] }}
-</span>
-₪
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:var(--sp-4);">
+    <div style="text-align:center;padding:var(--sp-4);">
+      <div style="width:48px;height:48px;border-radius:50%;background:var(--success-bg);display:flex;align-items:center;justify-content:center;margin:0 auto var(--sp-3);font-size:1.3rem;border:1px solid rgba(34,197,94,0.2);">1</div>
+      <h4 style="margin-bottom:var(--sp-1);">أنشئ حسابك</h4>
+      <p style="color:var(--text-muted);font-size:0.85rem;">سجّل حساباً مجانياً في ثوانٍ</p>
+    </div>
+    <div style="text-align:center;padding:var(--sp-4);">
+      <div style="width:48px;height:48px;border-radius:50%;background:var(--info-bg);display:flex;align-items:center;justify-content:center;margin:0 auto var(--sp-3);font-size:1.3rem;border:1px solid rgba(59,130,246,0.2);">2</div>
+      <h4 style="margin-bottom:var(--sp-1);">أضف رصيدك</h4>
+      <p style="color:var(--text-muted);font-size:0.85rem;">أودع USDT على شبكة BSC</p>
+    </div>
+    <div style="text-align:center;padding:var(--sp-4);">
+      <div style="width:48px;height:48px;border-radius:50%;background:var(--warning-bg);display:flex;align-items:center;justify-content:center;margin:0 auto var(--sp-3);font-size:1.3rem;border:1px solid rgba(245,158,11,0.2);">3</div>
+      <h4 style="margin-bottom:var(--sp-1);">نشر أو شراء</h4>
+      <p style="color:var(--text-muted);font-size:0.85rem;">انشر إعلانك أو اشترِ من السوق</p>
+    </div>
+    <div style="text-align:center;padding:var(--sp-4);">
+      <div style="width:48px;height:48px;border-radius:50%;background:var(--purple-bg);display:flex;align-items:center;justify-content:center;margin:0 auto var(--sp-3);font-size:1.3rem;border:1px solid rgba(168,85,247,0.2);">4</div>
+      <h4 style="margin-bottom:var(--sp-1);">أتمم الصفقة</h4>
+      <p style="color:var(--text-muted);font-size:0.85rem;">ادفع واستلم USDT بأمان</p>
+    </div>
+  </div>
 
 
-<br>
+  <!-- ===== Trust Section ===== -->
+  <section class="card mt-8" style="text-align:center;background:linear-gradient(135deg,var(--bg-surface),rgba(59,130,246,0.03));">
+    <h2 style="margin-bottom:var(--sp-3);">🛡️ أمانك أولويتنا</h2>
+    <p style="color:var(--text-secondary);max-width:600px;margin:0 auto var(--sp-4);line-height:1.8;">
+      نظام حماية الصفقات يضمن أن USDT محجوز بشكل آمن حتى يتم تأكيد استلام الدفع.
+      لا يمكن للبائع أو المشتري التلاعب بالصفقة.
+    </p>
+    <div style="display:flex;flex-wrap:wrap;gap:var(--sp-3);justify-content:center;">
+      <span class="chip">🔒 Escrow آمن</span>
+      <span class="chip">📱 تواصل مباشر</span>
+      <span class="chip">⚖️ حل النزاعات</span>
+      <span class="chip">🏦 تحويل بنكي</span>
+    </div>
+  </section>
 
 
-<small style="color:#94a3b8;font-size:14px;">
-آخر تحديث:
-{{ price["updated"] }}
-</small>
-
+  <!-- ===== Footer ===== -->
+  <footer style="text-align:center;padding:var(--sp-8) 0 var(--sp-4);color:var(--text-muted);font-size:0.8rem;border-top:1px solid var(--border);margin-top:var(--sp-8);">
+    <div style="font-weight:700;color:var(--accent);font-size:1rem;margin-bottom:var(--sp-2);">
+      🇵🇸 USDT P2P Palestine
+    </div>
+    <p>منصة فلسطينية آمنة لتداول USDT — 2026</p>
+  </footer>
 
 </div>
-
-
-
-<h1>
-شراء وبيع USDT بأمان 🇵🇸
-</h1>
-
-
-<p>
-منصة فلسطينية للتداول مع حماية الصفقات والمقابلات الشخصية
-</p>
-
-
-
-<div class="buttons">
-
-
-<a class="sell" href="/create_ad">
-🟢 إنشاء إعلان USDT
-</a>
-
-
-
-<a class="cash" href="/create_cash_ad">
-🤝 إنشاء مقابلة شخصية
-</a>
-
-
-<!-- Trading Bot -->
-
-<a class="bot-button" href="/trading_bot">
-🤖 Trading Bot
-</a>
-
-
-</div>
-
-
-</div>
-
-
-
-<div class="features">
-
-
-<div class="feature">
-<b>🔐</b>
-حماية الصفقات
-</div>
-
-
-<div class="feature">
-<b>🤝</b>
-مقابلات شخصية
-</div>
-
-
-<div class="feature">
-<b>⚡</b>
-سرعة التداول
-</div>
-
-
-<div class="feature">
-<b>🇵🇸</b>
-فلسطين
-</div>
-
-
-</div>
-
-
-
-<h2 class="title">
-📢 الإعلانات المتوفرة
-</h2>
-
-
-
-<h2>
-🟢 بيع USDT أونلاين
-</h2>
-
-
-
-<div class="cards">
-
-
-{% for ad in ads %}
-
-
-<div class="card">
-
-
-<div class="user">
-👤 {{ad.user}}
-</div>
-
-
-
-<div class="info">
-💰 الكمية:
-{{ad.amount}} USDT
-</div>
-
-
-
-<div class="price">
-{{ad.price}} ₪
-</div>
-
-
-
-<div class="info">
-💳 الدفع:
-<br>
-{{ad.payment}}
-</div>
-
-
-
-<a class="buy" href="/buy/{{ad.id}}">
-شراء الآن 🚀
-</a>
-
-
-</div>
-
-
-
-{% else %}
-
-
-<div class="empty">
-لا توجد إعلانات USDT
-</div>
-
-
-{% endfor %}
-
-
-
-</div>
-
-
-
-
-
-
-
-<h2 class="title">
-🤝 مقابلات شخصية متوفرة
-</h2>
-
-
-
-<div class="cards">
-
-
-
-{% for cash in cash_ads %}
-
-
-
-<div class="card">
-
-
-<div class="user">
-👤 {{cash.user}}
-</div>
-
-
-
-
-<div class="info">
-💰 {{cash.amount}} USDT
-</div>
-
-
-
-
-<div class="info">
-
-📍 {{cash.city}}
-
-<br>
-
-📌 {{cash.location}}
-
-</div>
-
-
-
-
-<div class="price">
-{{cash.price}} ₪
-</div>
-
-
-
-
-<a class="meet" href="/cash_ad/{{cash.id}}">
-طلب مقابلة 🤝
-</a>
-
-
-
-</div>
-
-
-
-{% else %}
-
-
-
-<div class="empty">
-لا توجد مقابلات شخصية حالياً
-</div>
-
-
-
-{% endfor %}
-
-
-
-</div>
-
-
-</div>
-
-
-
-
-
-
-<div class="footer">
-
-USDT P2P Palestine © 2026
-
-</div>
-
-
-
-</body>
-
-</html>
+{% endblock %}

@@ -1,619 +1,106 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
+{% extends "base.html" %}
+{% block title %}محفظتي - USDT P2P Palestine{% endblock %}
+
+{% block content %}
+<div class="container container-narrow">
+
+  <div class="page-header">
+    <h2>💰 محفظتي</h2>
+  </div>
+
+  <!-- ===== Balance Card ===== -->
+  <div class="card" style="background:linear-gradient(135deg,rgba(34,197,94,0.1),var(--bg-surface));border-color:rgba(34,197,94,0.15);text-align:center;padding:var(--sp-6);">
+    <div style="color:var(--text-muted);font-size:0.85rem;margin-bottom:var(--sp-2);">الرصيد المتاح</div>
+    <div class="price-display" style="font-size:2.5rem;">
+      {{ wallet.balance or 0 }} <span class="price-currency">USDT</span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3);margin-top:var(--sp-4);">
+      <div style="background:var(--bg-input);border-radius:var(--radius-md);padding:var(--sp-3);">
+        <div style="font-size:0.75rem;color:var(--text-muted);">🔒 محجوز</div>
+        <div style="font-weight:700;color:#fcd34d;">{{ wallet.locked or 0 }} USDT</div>
+      </div>
+      <div style="background:var(--bg-input);border-radius:var(--radius-md);padding:var(--sp-3);">
+        <div style="font-size:0.75rem;color:var(--text-muted);">📊 الإجمالي</div>
+        <div style="font-weight:700;color:var(--text-primary);">{{ (wallet.balance or 0) + (wallet.locked or 0) }} USDT</div>
+      </div>
+    </div>
+
+    <div style="margin-top:var(--sp-3);">
+      <span class="badge badge-success">🟢 نشط</span>
+    </div>
+  </div>
+
+  <!-- ===== USDT Wallet ===== -->
+  <div class="card">
+    <div class="card-title">💳 محفظة USDT BSC</div>
+
+    {% if user.usdt_wallet %}
+    <div style="margin-top:var(--sp-3);">
+      <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:var(--sp-1);">عنوانك:</div>
+      <div class="wallet-address" id="walletAddr">{{ user.usdt_wallet }}</div>
+      <button class="copy-btn mt-3" onclick="copyText(document.getElementById('walletAddr').textContent, this)">
+        📋 نسخ العنوان
+      </button>
+    </div>
+    {% else %}
+    <div class="alert alert-warning mt-3">
+      ⚠️ لم تضف عنوان USDT بعد
+    </div>
+    {% endif %}
+
+    <form method="post" action="/save_wallet" class="mt-4">
+      <div class="form-group">
+        <input class="form-input ltr" name="usdt_wallet" placeholder="أدخل عنوان BSC 0x..." dir="ltr" style="text-align:left;">
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">💾 حفظ العنوان</button>
+    </form>
+  </div>
+
+  <!-- ===== Actions ===== -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3);">
+    <a href="/usdt_deposit" class="card card-interactive" style="text-align:center;padding:var(--sp-4);">
+      <div style="font-size:1.5rem;margin-bottom:var(--sp-2);">➕</div>
+      <div style="font-weight:600;">إيداع</div>
+    </a>
+    <a href="/withdraw" class="card card-interactive" style="text-align:center;padding:var(--sp-4);">
+      <div style="font-size:1.5rem;margin-bottom:var(--sp-2);">📤</div>
+      <div style="font-weight:600;">سحب</div>
+    </a>
+    <a href="/market" class="card card-interactive" style="text-align:center;padding:var(--sp-4);">
+      <div style="font-size:1.5rem;margin-bottom:var(--sp-2);">🛒</div>
+      <div style="font-weight:600;">السوق</div>
+    </a>
+    <a href="/my_trades" class="card card-interactive" style="text-align:center;padding:var(--sp-4);">
+      <div style="font-size:1.5rem;margin-bottom:var(--sp-2);">📋</div>
+      <div style="font-weight:600;">صفقاتي</div>
+    </a>
+  </div>
+
+  <!-- ===== Protection System ===== -->
+  <div class="card">
+    <div class="card-title">🔐 نظام الحماية</div>
+    <div style="margin-top:var(--sp-3);">
+      <div class="info-row">
+        <span style="font-size:0.85rem;">1️⃣ يتم حجز USDT أثناء الصفقة</span>
+        <span style="font-size:1.1rem;">🔒</span>
+      </div>
+      <div class="info-row">
+        <span style="font-size:0.85rem;">2️⃣ المشتري يدفع للبائع</span>
+        <span style="font-size:1.1rem;">💳</span>
+      </div>
+      <div class="info-row">
+        <span style="font-size:0.85rem;">3️⃣ بعد التأكيد يتم تحويل USDT</span>
+        <span style="font-size:1.1rem;">✅</span>
+      </div>
+      <div class="info-row">
+        <span style="font-size:0.85rem;">4️⃣ الأدمن يتدخل عند وجود نزاع</span>
+        <span style="font-size:1.1rem;">⚖️</span>
+      </div>
+    </div>
+  </div>
 
-<head>
-
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>محفظتي - USDT P2P Palestine</title>
-
-<style>
-
-*{
-box-sizing:border-box;
-}
-
-body{
-
-margin:0;
-font-family:tahoma,Arial;
-background:#050816;
-color:white;
-
-}
-
-
-.container{
-
-max-width:520px;
-margin:auto;
-padding:18px;
-
-}
-
-
-
-.header{
-
-background:linear-gradient(135deg,#111827,#1e293b);
-padding:25px;
-border-radius:25px;
-text-align:center;
-margin-bottom:20px;
-
-box-shadow:0 10px 30px #0005;
-
-}
-
-
-.logo{
-
-font-size:26px;
-font-weight:bold;
-color:#22c55e;
-
-}
-
-
-
-.card{
-
-background:#111827;
-border:1px solid #243044;
-border-radius:25px;
-padding:20px;
-margin-bottom:18px;
-
-}
-
-
-
-.balance{
-
-background:linear-gradient(135deg,#16a34a,#15803d);
-padding:30px;
-border-radius:22px;
-text-align:center;
-
-}
-
-
-
-.balance h1{
-
-font-size:45px;
-margin:10px 0;
-
-}
-
-
-
-.usdt{
-
-font-size:18px;
-opacity:.9;
-
-}
-
-
-
-.box{
-
-background:#1e293b;
-padding:18px;
-border-radius:18px;
-margin-top:12px;
-text-align:center;
-
-}
-
-
-
-.label{
-
-color:#cbd5e1;
-
-}
-
-
-
-.value{
-
-font-size:25px;
-font-weight:bold;
-margin-top:8px;
-
-}
-
-
-
-.lock{
-
-color:#facc15;
-
-}
-
-
-
-.status{
-
-color:#4ade80;
-font-weight:bold;
-
-}
-
-
-
-.info{
-
-background:#0f172a;
-padding:16px;
-border-radius:18px;
-line-height:2;
-
-}
-
-
-
-.wallet-address{
-
-background:#020617;
-padding:12px;
-border-radius:12px;
-color:#4ade80;
-font-size:13px;
-word-break:break-all;
-margin-top:10px;
-
-}
-
-
-
-input{
-
-width:100%;
-padding:14px;
-border-radius:12px;
-border:0;
-margin-top:12px;
-background:#334155;
-color:white;
-font-size:15px;
-
-}
-
-
-
-.buttons{
-
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:12px;
-
-}
-
-
-
-.btn{
-
-padding:15px;
-border-radius:15px;
-text-align:center;
-text-decoration:none;
-color:white;
-border:0;
-display:block;
-font-size:15px;
-cursor:pointer;
-
-}
-
-
-
-.deposit{
-
-background:#16a34a;
-
-}
-
-
-
-.withdraw{
-
-background:#2563eb;
-
-}
-
-
-
-.market{
-
-background:#f59e0b;
-
-}
-
-
-
-.trades{
-
-background:#7c3aed;
-
-}
-
-
-
-.copy{
-
-background:#334155;
-margin-top:10px;
-
-}
-
-
-
-.back{
-
-display:block;
-background:#475569;
-padding:15px;
-border-radius:15px;
-text-align:center;
-color:white;
-text-decoration:none;
-
-}
-
-
-
-h3{
-
-margin-top:0;
-
-}
-
-
-
-</style>
-
-</head>
-
-
-<body>
-
-
-<div class="container">
-
-
-
-<div class="header">
-
-<div class="logo">
-
-🇵🇸 USDT P2P Palestine
+  <a href="/" class="back-link mt-4">⬅️ الرئيسية</a>
 
 </div>
-
-
-<h3>
-
-💰 محفظتي
-
-</h3>
-
-
-</div>
-
-
-
-
-
-<div class="card">
-
-
-<div class="balance">
-
-
-<p>
-
-الرصيد المتاح
-
-</p>
-
-
-<h1>
-
-{{ wallet.balance or 0 }}
-
-</h1>
-
-
-<div class="usdt">
-
-USDT
-
-</div>
-
-
-</div>
-
-
-
-
-
-<div class="box">
-
-<div class="label">
-
-🔒 محجوز في الصفقات
-
-</div>
-
-
-<div class="value lock">
-
-{{ wallet.locked or 0 }} USDT
-
-</div>
-
-</div>
-
-
-
-
-
-<div class="box">
-
-<div class="label">
-
-📊 إجمالي الرصيد
-
-</div>
-
-
-<div class="value">
-
-{{ (wallet.balance or 0)+(wallet.locked or 0) }} USDT
-
-</div>
-
-</div>
-
-
-
-
-<div class="box">
-
-<div class="label">
-
-حالة الحساب
-
-</div>
-
-
-<div class="status">
-
-🟢 نشط
-
-</div>
-
-</div>
-
-
-
-</div>
-
-
-
-
-
-
-
-<div class="card">
-
-
-<h3>
-
-💳 محفظة USDT BSC
-
-</h3>
-
-
-
-<div class="info">
-
-
-{% if user.usdt_wallet %}
-
-
-<div>
-
-عنوانك:
-
-</div>
-
-
-<div class="wallet-address" id="wallet">
-
-{{ user.usdt_wallet }}
-
-</div>
-
-
-
-<button onclick="copyWallet()" class="btn copy">
-
-📋 نسخ العنوان
-
-</button>
-
-
-
-{% else %}
-
-
-⚠️ لم تضف عنوان USDT بعد
-
-
-{% endif %}
-
-
-
-
-
-<form method="post" action="/save_wallet">
-
-
-<input
-
-name="usdt_wallet"
-
-placeholder="أدخل عنوان BSC 0x..."
-
->
-
-
-<button class="btn deposit">
-
-💾 حفظ العنوان
-
-</button>
-
-
-</form>
-
-
-
-</div>
-
-
-</div>
-
-
-
-
-
-
-
-<div class="card">
-
-
-<h3>
-
-🔐 نظام الحماية
-
-</h3>
-
-
-<div class="info">
-
-
-1️⃣ يتم حجز USDT أثناء الصفقة
-
-<br>
-
-2️⃣ المشتري يدفع للبائع
-
-<br>
-
-3️⃣ بعد التأكيد يتم تحويل USDT
-
-<br>
-
-4️⃣ الأدمن يتدخل عند وجود نزاع
-
-
-</div>
-
-
-</div>
-
-
-
-
-
-
-
-<div class="card">
-
-
-<div class="buttons">
-
-
-<a href="/usdt_deposit" class="btn deposit">
-
-➕ إيداع
-
-</a>
-
-
-
-<a href="/withdraw" class="btn withdraw">
-
-📤 سحب
-
-</a>
-
-
-
-<a href="/market" class="btn market">
-
-🛒 السوق
-
-</a>
-
-
-
-<a href="/profile" class="btn trades">
-
-📋 صفقاتي
-
-</a>
-
-
-
-</div>
-
-
-</div>
-
-
-
-
-
-<a href="/" class="back">
-
-⬅️ الرئيسية
-
-</a>
-
-
-
-</div>
-
-
-
-
-<script>
-
-
-function copyWallet(){
-
-let text=document.getElementById("wallet").innerText;
-
-
-navigator.clipboard.writeText(text);
-
-
-alert("✅ تم نسخ العنوان");
-
-}
-
-
-</script>
-
-
-
-</body>
-
-</html>
+{% endblock %}

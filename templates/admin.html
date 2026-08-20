@@ -1,593 +1,168 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-
-<head>
-
-<meta charset="UTF-8">
-
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>لوحة تحكم الأدمن</title>
-
-
-<style>
-
-
-*{
-box-sizing:border-box;
-}
-
-
-body{
-
-margin:0;
-padding:20px;
-background:#070d18;
-font-family:tahoma;
-color:white;
-
-}
-
-
-
-.container{
-
-max-width:1200px;
-margin:auto;
-
-}
-
-
-
-.header{
-
-background:#111827;
-padding:20px;
-border-radius:20px;
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-bottom:25px;
-
-}
-
-
-
-.logo{
-
-font-size:25px;
-font-weight:bold;
-color:#22c55e;
-
-}
-
-
-
-.logo span{
-
-color:white;
-
-}
-
-
-
-.btn{
-
-text-decoration:none;
-color:white;
-padding:12px 18px;
-border-radius:12px;
-background:#2563eb;
-display:inline-block;
-margin:5px;
-
-}
-
-
-
-.green{
-
-background:#16a34a;
-
-}
-
-
-
-.red{
-
-background:#dc2626;
-
-}
-
-
-
-
-
-.cards{
-
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
-gap:15px;
-
-}
-
-
-
-.card{
-
-background:#1e293b;
-padding:22px;
-border-radius:20px;
-text-align:center;
-border:1px solid #334155;
-
-}
-
-
-
-.card span{
-
-display:block;
-font-size:32px;
-color:#22c55e;
-font-weight:bold;
-margin-top:10px;
-
-}
-
-
-
-
-.menu{
-
-margin:25px 0;
-display:flex;
-flex-wrap:wrap;
-gap:5px;
-
-}
-
-
-
-
-
-h2{
-
-margin-top:35px;
-
-}
-
-
-
-
-
-.table-box{
-
-background:#111827;
-padding:15px;
-border-radius:20px;
-overflow:auto;
-
-}
-
-
-
-
-
-table{
-
-width:100%;
-border-collapse:collapse;
-
-}
-
-
-
-th{
-
-background:#1e293b;
-padding:15px;
-
-}
-
-
-
-td{
-
-padding:12px;
-text-align:center;
-border-bottom:1px solid #334155;
-
-}
-
-
-
-
-
-.status{
-
-color:#22c55e;
-font-weight:bold;
-
-}
-
-
-
-
-@media(max-width:600px){
-
-
-.header{
-
-flex-direction:column;
-gap:15px;
-
-}
-
-
-table{
-
-font-size:13px;
-
-}
-
-
-}
-
-
-</style>
-
-
-</head>
-
-
-
-<body>
-
-
-<div class="container">
-
-
-
-<div class="header">
-
-
-<div class="logo">
-
-🇵🇸 <span>USDT</span> P2P Admin
+{% extends "base.html" %}
+{% block title %}لوحة تحكم الأدمن - USDT P2P Palestine{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width:var(--container-max);">
+
+  <!-- ===== Admin Header ===== -->
+  <div class="page-header" style="background:linear-gradient(135deg,var(--bg-surface),rgba(59,130,246,0.06));">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:var(--sp-3);">
+      <div>
+        <h2>🛡️ لوحة تحكم الأدمن</h2>
+        <p style="color:var(--text-muted);font-size:0.85rem;margin:0;">إدارة المنصة والمستخدمين والصفقات</p>
+      </div>
+      <div style="display:flex;gap:var(--sp-2);flex-wrap:wrap;">
+        <a href="/" class="btn btn-ghost btn-sm">🏠 المنصة</a>
+        <a href="/logout" class="btn btn-danger btn-sm">🚪 خروج</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Admin Menu ===== -->
+  <div style="display:flex;flex-wrap:wrap;gap:var(--sp-2);margin-bottom:var(--sp-5);">
+    <a href="/admin_wallet" class="btn btn-primary btn-sm">💰 محفظة المنصة</a>
+    <a href="/admin_commission_page" class="btn btn-primary btn-sm">⚙️ العمولات</a>
+    <a href="/admin_cash_ads" class="btn btn-success btn-sm">🤝 إعلانات المقابلات</a>
+    <a href="/admin_search" class="btn btn-primary btn-sm">🔍 بحث</a>
+    <a href="/admin_backup" class="btn btn-primary btn-sm">💾 نسخة احتياطية</a>
+    <a href="/admin_price" class="btn btn-purple btn-sm">💲 تعديل السعر</a>
+  </div>
+
+  <!-- ===== KPI Cards ===== -->
+  <div class="stagger" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:var(--sp-3);margin-bottom:var(--sp-6);">
+    <div class="kpi-card">
+      <div class="kpi-icon blue">👥</div>
+      <div class="kpi-value" style="color:var(--primary-light);">{{ users|length }}</div>
+      <div class="kpi-label">المستخدمين</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon green">📢</div>
+      <div class="kpi-value" style="color:var(--accent-light);">{{ trades|length }}</div>
+      <div class="kpi-label">إعلانات USDT</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon yellow">🤝</div>
+      <div class="kpi-value" style="color:#fcd34d;">{{ cash_trades|length if cash_trades is defined else 0 }}</div>
+      <div class="kpi-label">صفقات المقابلات</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon purple">💰</div>
+      <div class="kpi-value">{{ profit.total if profit is defined and profit else 0 }}</div>
+      <div class="kpi-label">أرباح المنصة</div>
+    </div>
+  </div>
+
+  <!-- ===== USDT Trades Table ===== -->
+  <div class="section-title">💱 صفقات USDT</div>
+
+  <div class="table-wrapper mb-6">
+    <div class="table-scroll">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>المشتري</th>
+            <th>البائع</th>
+            <th>الكمية</th>
+            <th>الحالة</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t in trades %}
+          <tr>
+            <td>#{{ t.id }}</td>
+            <td>{{ t.buyer }}</td>
+            <td>{{ t.seller }}</td>
+            <td style="color:var(--accent-light);font-weight:600;">{{ t.amount }} USDT</td>
+            <td>
+              {% if t.status == 'COMPLETED' %}
+                <span class="badge badge-success">مكتملة</span>
+              {% elif t.status == 'PAYMENT_SENT' %}
+                <span class="badge badge-info">الدفع</span>
+              {% elif t.status == 'PENDING' %}
+                <span class="badge badge-warning">بانتظار</span>
+              {% else %}
+                <span class="badge badge-neutral">{{ t.status }}</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="5" style="text-align:center;color:var(--text-muted);padding:var(--sp-6);">لا توجد صفقات</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ===== Cash Trades Table ===== -->
+  {% if cash_trades is defined and cash_trades %}
+  <div class="section-title">📍 صفقات المقابلات الشخصية</div>
+
+  <div class="table-wrapper mb-6">
+    <div class="table-scroll">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>المشتري</th>
+            <th>البائع</th>
+            <th>الحالة</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in cash_trades %}
+          <tr>
+            <td>#{{ c.id }}</td>
+            <td>{{ c.buyer }}</td>
+            <td>{{ c.seller }}</td>
+            <td>
+              <span class="badge badge-neutral">{{ c.status }}</span>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="4" style="text-align:center;color:var(--text-muted);padding:var(--sp-6);">لا توجد صفقات</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ===== Cash Ads Table ===== -->
+  {% if cash_ads is defined and cash_ads %}
+  <div class="section-title">🤝 إعلانات المقابلات الشخصية</div>
+
+  <div class="table-wrapper mb-6">
+    <div class="table-scroll">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>البائع</th>
+            <th>المدينة</th>
+            <th>مكان اللقاء</th>
+            <th>الكمية</th>
+            <th>العمولة</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in cash_ads %}
+          <tr>
+            <td>{{ c.user }}</td>
+            <td>{{ c.city }}</td>
+            <td>{{ c.location }}</td>
+            <td style="color:var(--accent-light);font-weight:600;">{{ c.amount }} USDT</td>
+            <td>{{ c.fee }} USDT</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
 
 </div>
-
-
-
-<div>
-
-
-<a class="btn green" href="/">
-
-🏠 المنصة
-
-</a>
-
-
-<a class="btn red" href="/logout">
-
-🚪 خروج
-
-</a>
-
-
-</div>
-
-
-</div>
-
-
-
-
-
-<div class="menu">
-
-
-<a class="btn" href="/admin_wallet">
-
-💰 محفظة المنصة
-
-</a>
-
-
-
-<a class="btn" href="/admin_commission_page">
-
-⚙️ تعديل العمولات
-
-</a>
-
-
-
-<a class="btn green" href="/admin_cash_ads">
-
-🤝 إعلانات المقابلات الشخصية
-
-</a>
-
-
-
-<a class="btn" href="/admin_search">
-
-🔍 بحث
-
-</a>
-
-
-<a class="btn" href="/admin_backup">
-
-💾 نسخة احتياطية
-
-</a>
-
-
-</div>
-
-
-
-
-
-
-<div class="cards">
-
-
-
-<div class="card">
-
-👥 المستخدمين
-
-<span>
-
-{{users|length}}
-
-</span>
-
-</div>
-
-
-
-<div class="card">
-
-📢 إعلانات USDT
-
-<span>
-
-{{trades|length}}
-
-</span>
-
-</div>
-
-
-
-<div class="card">
-
-🤝 الصفقات الحالية
-
-<span>
-
-{{cash_trades|length}}
-
-</span>
-
-</div>
-
-
-
-<div class="card">
-
-💰 أرباح المنصة
-
-<span>
-
-{{profit.total if profit else 0}}
-
-</span>
-
-</div>
-
-
-
-</div>
-
-
-
-
-
-
-
-<h2>
-
-💱 صفقات USDT
-
-</h2>
-
-
-
-<div class="table-box">
-
-
-<table>
-
-
-<tr>
-
-<th>ID</th>
-<th>المشتري</th>
-<th>البائع</th>
-<th>الكمية</th>
-<th>الحالة</th>
-
-</tr>
-
-
-{% for t in trades %}
-
-
-<tr>
-
-<td>{{t.id}}</td>
-
-<td>{{t.buyer}}</td>
-
-<td>{{t.seller}}</td>
-
-<td>{{t.amount}} USDT</td>
-
-<td class="status">
-
-{{t.status}}
-
-</td>
-
-
-</tr>
-
-
-{% endfor %}
-
-
-</table>
-
-
-</div>
-
-
-
-
-
-
-
-
-<h2>
-
-🤝 إعلانات المقابلات الشخصية
-
-</h2>
-
-
-
-<div class="table-box">
-
-
-<table>
-
-
-<tr>
-
-<th>البائع</th>
-<th>المدينة</th>
-<th>مكان اللقاء</th>
-<th>الكمية</th>
-<th>العمولة</th>
-
-</tr>
-
-
-
-{% for c in cash_ads %}
-
-
-<tr>
-
-
-<td>{{c.user}}</td>
-
-<td>{{c.city}}</td>
-
-<td>{{c.location}}</td>
-
-<td>{{c.amount}} USDT</td>
-
-<td>{{c.fee}} USDT</td>
-
-
-</tr>
-
-
-{% endfor %}
-
-
-
-</table>
-
-
-</div>
-
-
-
-
-
-
-
-<h2>
-
-📍 صفقات المقابلات الشخصية
-
-</h2>
-
-
-<div class="table-box">
-
-
-<table>
-
-
-<tr>
-
-<th>ID</th>
-<th>المشتري</th>
-<th>البائع</th>
-<th>الحالة</th>
-
-
-</tr>
-
-
-
-{% for c in cash_trades %}
-
-
-<tr>
-
-<td>{{c.id}}</td>
-
-<td>{{c.buyer}}</td>
-
-<td>{{c.seller}}</td>
-
-<td class="status">
-
-{{c.status}}
-
-</td>
-
-
-</tr>
-
-
-{% endfor %}
-
-
-
-</table>
-
-
-</div>
-
-
-
-
-
-</div>
-
-
-</body>
-
-</html>
+{% endblock %}

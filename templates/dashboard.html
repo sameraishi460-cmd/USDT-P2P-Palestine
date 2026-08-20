@@ -1,621 +1,130 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
+{% extends "base.html" %}
+{% block title %}لوحة التحكم - USDT P2P Palestine{% endblock %}
 
-<head>
-
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>لوحة التحكم - USDT P2P Palestine</title>
-
-
-<style>
-
-*{
-box-sizing:border-box;
-}
-
-
-body{
-
-margin:0;
-padding:15px;
-background:#050816;
-color:white;
-font-family:tahoma,Arial;
-padding-bottom:90px;
-
-}
-
-
-.container{
-
-max-width:600px;
-margin:auto;
-
-}
-
-
-
-.header{
-
-background:linear-gradient(135deg,#16a34a,#065f46);
-padding:25px;
-border-radius:25px;
-text-align:center;
-margin-bottom:20px;
-
-}
-
-
-
-.logo{
-
-font-size:24px;
-font-weight:bold;
-
-}
-
-
-
-.card{
-
-background:#111827;
-border-radius:22px;
-padding:20px;
-margin-bottom:18px;
-border:1px solid #263244;
-
-}
-
-
-
-h3{
-
-color:#22c55e;
-margin-top:0;
-
-}
-
-
-
-.status{
-
-padding:10px;
-border-radius:12px;
-text-align:center;
-margin-top:15px;
-
-}
-
-
-.success{
-
-background:#064e3b;
-color:#86efac;
-
-}
-
-
-.warning{
-
-background:#451a03;
-color:#fed7aa;
-
-}
-
-
-
-.balance{
-
-background:linear-gradient(135deg,#064e3b,#16a34a);
-text-align:center;
-padding:25px;
-border-radius:20px;
-
-}
-
-
-
-.balance h1{
-
-font-size:40px;
-margin:10px;
-
-}
-
-
-
-.grid{
-
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:12px;
-
-}
-
-
-
-.stat{
-
-background:#020617;
-padding:15px;
-border-radius:15px;
-text-align:center;
-
-}
-
-
-
-.stat span{
-
-display:block;
-color:#94a3b8;
-font-size:14px;
-
-}
-
-
-
-.stat b{
-
-font-size:25px;
-color:#22c55e;
-
-}
-
-
-
-.actions{
-
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:12px;
-
-}
-
-
-
-.btn{
-
-padding:15px;
-border-radius:15px;
-text-decoration:none;
-color:white;
-text-align:center;
-font-size:15px;
-
-}
-
-
-
-.green{
-
-background:#16a34a;
-
-}
-
-
-
-.blue{
-
-background:#2563eb;
-
-}
-
-
-
-.yellow{
-
-background:#ca8a04;
-
-}
-
-
-
-.orange{
-
-background:#ea580c;
-
-}
-
-
-
-.gray{
-
-background:#475569;
-
-}
-
-
-
-.red{
-
-background:#dc2626;
-
-}
-
-
-
-.bottom-nav{
-
-position:fixed;
-bottom:0;
-right:0;
-left:0;
-background:#111827;
-display:flex;
-justify-content:space-around;
-padding:12px;
-border-top:1px solid #263244;
-
-}
-
-
-
-.bottom-nav a{
-
-color:white;
-text-decoration:none;
-font-size:12px;
-text-align:center;
-
-}
-
-
-
-.bottom-nav span{
-
-display:block;
-font-size:22px;
-
-}
-
-
-</style>
-
-</head>
-
-
-
-<body>
-
-
+{% block content %}
 <div class="container">
 
+  <!-- ===== Welcome Header ===== -->
+  <div class="page-header" style="background:linear-gradient(135deg,var(--bg-surface),rgba(34,197,94,0.08));">
+    <div style="display:flex;align-items:center;justify-content:center;gap:var(--sp-3);margin-bottom:var(--sp-3);">
+      <div class="avatar avatar-lg">{{ user['username'][0] }}</div>
+      <div style="text-align:right;">
+        <h2 style="margin:0;">أهلاً {{ user['username'] }} 👋</h2>
+        <p style="margin:var(--sp-1) 0 0;color:var(--text-muted);font-size:0.85rem;">
+          {% if user['verified'] == 1 %}
+            <span class="badge badge-success">✅ حساب موثق</span>
+          {% else %}
+            <span class="badge badge-warning">⚠️ الحساب غير موثق</span>
+          {% endif %}
+        </p>
+      </div>
+    </div>
+  </div>
 
 
-<div class="header">
+  <!-- ===== Balance Card ===== -->
+  <div class="card" style="background:linear-gradient(135deg,rgba(34,197,94,0.1),var(--bg-surface));border-color:rgba(34,197,94,0.15);text-align:center;padding:var(--sp-6);">
+    <div style="color:var(--text-muted);font-size:0.85rem;margin-bottom:var(--sp-2);">💰 رصيد USDT المتاح</div>
+    <div class="price-display" style="font-size:2.5rem;">
+      {{ wallet_balance|default(0) }}
+      <span class="price-currency">USDT</span>
+    </div>
+    <div style="margin-top:var(--sp-4);display:flex;gap:var(--sp-3);justify-content:center;flex-wrap:wrap;">
+      <a href="/usdt_deposit" class="btn btn-success btn-sm">➕ إيداع</a>
+      <a href="/withdraw" class="btn btn-primary btn-sm">📤 سحب</a>
+      <a href="/market" class="btn btn-ghost btn-sm">🛒 السوق</a>
+    </div>
+  </div>
 
 
-<div class="logo">
+  <!-- ===== Stats Grid ===== -->
+  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:var(--sp-3);margin-top:var(--sp-4);">
+    <div class="stat-card">
+      <span class="stat-icon">⭐</span>
+      <div class="stat-value">{{ user['rating'] }}</div>
+      <div class="stat-label">التقييم</div>
+    </div>
+    <div class="stat-card">
+      <span class="stat-icon">🤝</span>
+      <div class="stat-value">{{ trades }}</div>
+      <div class="stat-label">الصفقات</div>
+    </div>
+  </div>
 
-🇵🇸 USDT P2P Palestine
+
+  <!-- ===== Quick Actions ===== -->
+  <div class="section-title mt-6">
+    ⚡ إجراءات سريعة
+  </div>
+
+  <div class="stagger" style="display:grid;grid-template-columns:repeat(2,1fr);gap:var(--sp-3);">
+
+    <a href="/market" class="card card-interactive" style="text-align:center;padding:var(--sp-4);">
+      <div style="font-size:1.5rem;margin-bottom:var(--sp-2);">💰</div>
+      <div style="font-weight:600;font-size:0.9rem;">السوق</div>
+      <div style="font-size:0.75rem;color:var(--text-muted);">تصفح إعلانات USDT</div>
+    </a>
+
+    <a href="/create_ad" class="card card-interactive" style="text-align:center;padding:var(--sp-4);border-color:rgba(34,197,94,0.2);">
+      <div style="font-size:1.5rem;margin-bottom:var(--sp-2);">➕</div>
+      <div style="font-weight:600;font-size:0.9rem;">بيع USDT</div>
+      <div style="font-size:0.75rem;color:var(--text-muted);">إنشاء إعلان جديد</div>
+    </a>
+
+    <a href="/my_ads" class="card card-interactive" style="text-align:center;padding:var(--sp-4);">
+      <div style="font-size:1.5rem;margin-bottom:var(--sp-2);">📢</div>
+      <div style="font-weight:600;font-size:0.9rem;">إعلاناتي</div>
+      <div style="font-size:0.75rem;color:var(--text-muted);">إدارة إعلاناتك</div>
+    </a>
+
+    <a href="/my_trades" class="card card-interactive" style="text-align:center;padding:var(--sp-4);">
+      <div style="font-size:1.5rem;margin-bottom:var(--sp-2);">📋</div>
+      <div style="font-weight:600;font-size:0.9rem;">صفقاتي</div>
+      <div style="font-size:0.75rem;color:var(--text-muted);">تتبع صفقاتك</div>
+    </a>
+
+    <a href="/cash_market" class="card card-interactive" style="text-align:center;padding:var(--sp-4);border-color:rgba(59,130,246,0.2);">
+      <div style="font-size:1.5rem;margin-bottom:var(--sp-2);">🤝</div>
+      <div style="font-weight:600;font-size:0.9rem;">المقابلات</div>
+      <div style="font-size:0.75rem;color:var(--text-muted);">سوق المقابلات الشخصية</div>
+    </a>
+
+    <a href="/trading_bot" class="card card-interactive" style="text-align:center;padding:var(--sp-4);border-color:rgba(168,85,247,0.2);">
+      <div style="font-size:1.5rem;margin-bottom:var(--sp-2);">🤖</div>
+      <div style="font-weight:600;font-size:0.9rem;">بوت التداول</div>
+      <div style="font-size:0.75rem;color:var(--text-muted);">تداول تجريبي تلقائي</div>
+    </a>
+
+    <a href="/profile" class="card card-interactive" style="text-align:center;padding:var(--sp-4);">
+      <div style="font-size:1.5rem;margin-bottom:var(--sp-2);">👤</div>
+      <div style="font-weight:600;font-size:0.9rem;">حسابي</div>
+      <div style="font-size:0.75rem;color:var(--text-muted);">معلومات الملف الشخصي</div>
+    </a>
+
+    <a href="/notifications" class="card card-interactive" style="text-align:center;padding:var(--sp-4);">
+      <div style="font-size:1.5rem;margin-bottom:var(--sp-2);">🔔</div>
+      <div style="font-weight:600;font-size:0.9rem;">تنبيهاتي</div>
+      <div style="font-size:0.75rem;color:var(--text-muted);">عرض الإشعارات</div>
+    </a>
+
+  </div>
+
+
+  <!-- ===== Account Section ===== -->
+  <div class="section-title mt-6">
+    ⚙️ الحساب
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3);">
+    <a href="/edit_profile" class="card card-interactive" style="text-align:center;padding:var(--sp-3);">
+      <div style="font-size:1.2rem;margin-bottom:var(--sp-1);">✏️</div>
+      <div style="font-weight:500;font-size:0.85rem;">تعديل البيانات</div>
+    </a>
+    <a href="/logout" class="card card-interactive" style="text-align:center;padding:var(--sp-3);border-color:rgba(239,68,68,0.2);">
+      <div style="font-size:1.2rem;margin-bottom:var(--sp-1);">🚪</div>
+      <div style="font-weight:500;font-size:0.85rem;color:var(--danger);">خروج</div>
+    </a>
+  </div>
 
 </div>
-
-
-<h2>
-لوحة التحكم
-</h2>
-
-
-<p>
-أهلاً {{ user['username'] }} 👋
-</p>
-
-
-
-{% if user['verified'] == 1 %}
-
-<div class="status success">
-
-✅ حساب موثق
-
-</div>
-
-{% else %}
-
-
-<div class="status warning">
-
-⚠️ الحساب غير موثق
-
-</div>
-
-
-{% endif %}
-
-
-
-</div>
-
-
-
-
-
-
-<div class="card">
-
-
-<div class="balance">
-
-
-<p>
-💰 رصيد USDT
-</p>
-
-
-<h1>
-
-{{ wallet_balance|default(0) }}
-
-</h1>
-
-
-<span>
-
-USDT
-
-</span>
-
-
-</div>
-
-
-</div>
-
-
-
-
-
-
-
-<div class="card">
-
-
-<h3>
-
-📊 إحصائيات الحساب
-
-</h3>
-
-
-
-<div class="grid">
-
-
-
-<div class="stat">
-
-<span>
-⭐ التقييم
-</span>
-
-<b>
-{{ user['rating'] }}
-</b>
-
-</div>
-
-
-
-<div class="stat">
-
-<span>
-🤝 الصفقات
-</span>
-
-<b>
-{{ user['trades_count'] }}
-</b>
-
-</div>
-
-
-
-<div class="stat">
-
-<span>
-✅ مكتملة
-</span>
-
-<b>
-{{ completed }}
-</b>
-
-</div>
-
-
-
-<div class="stat">
-
-<span>
-📍 مقابلات
-</span>
-
-<b>
-{{ cash_completed }}
-</b>
-
-</div>
-
-
-
-</div>
-
-
-</div>
-
-
-
-
-
-
-
-<div class="card">
-
-
-<h3>
-
-⚡ الخدمات
-
-</h3>
-
-
-
-<div class="actions">
-
-
-
-<a class="btn green" href="{{ url_for('market') }}">
-
-💰 السوق
-
-</a>
-
-
-
-<a class="btn blue" href="{{ url_for('create_ad') }}">
-
-➕ بيع USDT
-
-</a>
-
-
-
-<a class="btn yellow" href="{{ url_for('my_ads') }}">
-
-📢 إعلاناتي
-
-</a>
-
-
-
-<a class="btn orange" href="{{ url_for('cash_market') }}">
-
-🤝 مقابلات
-
-</a>
-
-
-
-<a class="btn blue" href="{{ url_for('profile') }}">
-
-👤 حسابي
-
-</a>
-
-
-
-<a class="btn gray" href="{{ url_for('notifications') }}">
-
-🔔 تنبيهات
-
-</a>
-
-
-
-</div>
-
-
-</div>
-
-
-
-
-
-
-
-<div class="card">
-
-
-<h3>
-
-⚙️ الحساب
-
-</h3>
-
-
-<div class="actions">
-
-
-<a class="btn gray" href="{{ url_for('edit_profile') }}">
-
-✏️ تعديل البيانات
-
-</a>
-
-
-
-<a class="btn red" href="{{ url_for('logout') }}">
-
-🚪 خروج
-
-</a>
-
-
-
-</div>
-
-
-</div>
-
-
-
-
-
-
-<div class="bottom-nav">
-
-
-<a href="/">
-
-<span>🏠</span>
-
-الرئيسية
-
-</a>
-
-
-
-<a href="{{ url_for('market') }}">
-
-<span>💰</span>
-
-السوق
-
-</a>
-
-
-
-<a href="{{ url_for('notifications') }}">
-
-<span>🔔</span>
-
-تنبيهات
-
-</a>
-
-
-
-<a href="{{ url_for('profile') }}">
-
-<span>👤</span>
-
-حسابي
-
-</a>
-
-
-
-</div>
-
-
-
-</div>
-
-
-</body>
-
-</html>
+{% endblock %}

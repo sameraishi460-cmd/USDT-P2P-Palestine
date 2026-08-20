@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}سحب USDT - USDT P2P Palestine{% endblock %}
+
+{% block content %}
+<div class="container container-narrow">
+
+  <a href="/wallet" class="back-link mb-4">⬅️ الرجوع للمحفظة</a>
+
+  <div class="page-header" style="background:linear-gradient(135deg,rgba(59,130,246,0.06),var(--bg-surface));">
+    <h2>📤 سحب USDT</h2>
+    <p>اسحب أموالك إلى محفظتك الخارجية</p>
+  </div>
+
+  <!-- Available Balance -->
+  <div class="card" style="text-align:center;background:linear-gradient(135deg,rgba(34,197,94,0.08),var(--bg-surface));">
+    <div style="color:var(--text-muted);font-size:0.85rem;">💰 الرصيد المتاح</div>
+    <div class="price-display" style="font-size:1.8rem;">
+      {{ wallet.balance or 0 }} <span class="price-currency">USDT</span>
+    </div>
+  </div>
+
+  <!-- Withdraw Form -->
+  <form method="POST" class="card">
+    <div class="card-title">📝 تفاصيل السحب</div>
+
+    <div class="form-group mt-4">
+      <label class="form-label">💰 المبلغ المراد سحبه</label>
+      <input class="form-input" type="number" step="0.01" name="amount" placeholder="أدخل المبلغ" max="{{ wallet.balance or 0 }}" required>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">🏦 عنوان المحفظة (BSC BEP20)</label>
+      <input class="form-input ltr" type="text" name="wallet" placeholder="0x..." dir="ltr" style="text-align:left;" required>
+      <div class="form-help">أدخل عنوان محفظتك على شبكة BSC BEP20</div>
+    </div>
+
+    <div class="alert alert-info" style="margin-top:var(--sp-3);">
+      ℹ️ سيتم مراجعة طلب السحب من الإدارة قبل التنفيذ. قد يستغرق الأمر حتى 24 ساعة.
+    </div>
+
+    <button type="submit" class="btn btn-primary btn-block btn-lg mt-4">
+      📤 إرسال طلب السحب
+    </button>
+  </form>
+
+</div>
+{% endblock %}

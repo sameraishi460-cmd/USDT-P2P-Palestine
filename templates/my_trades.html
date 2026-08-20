@@ -1,423 +1,100 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-
-<head>
-
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>صفقاتي - USDT P2P Palestine</title>
-
-
-<style>
-
-*{
-box-sizing:border-box;
-}
-
-
-body{
-
-margin:0;
-padding:20px;
-background:#050816;
-color:white;
-font-family:tahoma,Arial;
-
-}
-
-
-
-.container{
-
-max-width:600px;
-margin:auto;
-
-}
-
-
-
-.header{
-
-background:linear-gradient(135deg,#111827,#1e293b);
-padding:25px;
-border-radius:25px;
-text-align:center;
-margin-bottom:20px;
-
-}
-
-
-
-.logo{
-
-font-size:25px;
-font-weight:bold;
-color:#22c55e;
-
-}
-
-
-
-.box{
-
-background:#111827;
-padding:20px;
-border-radius:22px;
-margin-bottom:20px;
-
-border:1px solid #263244;
-
-}
-
-
-
-h2{
-
-color:#22c55e;
-margin-top:0;
-
-}
-
-
-
-.card{
-
-background:#1e293b;
-padding:18px;
-border-radius:18px;
-margin-top:15px;
-
-}
-
-
-
-.number{
-
-font-size:20px;
-color:#38bdf8;
-font-weight:bold;
-
-}
-
-
-
-.info{
-
-line-height:2;
-color:#e2e8f0;
-
-}
-
-
-
-.status{
-
-display:inline-block;
-background:#064e3b;
-color:#86efac;
-padding:5px 12px;
-border-radius:20px;
-font-weight:bold;
-
-}
-
-
-
-.role{
-
-color:#38bdf8;
-font-weight:bold;
-
-}
-
-
-
-.btn{
-
-display:block;
-text-align:center;
-padding:14px;
-background:#16a34a;
-color:white;
-text-decoration:none;
-border-radius:14px;
-margin-top:15px;
-
-}
-
-
-
-.back{
-
-background:#475569;
-
-}
-
-
-
-.empty{
-
-text-align:center;
-padding:20px;
-color:#94a3b8;
-
-}
-
-
-
-</style>
-
-</head>
-
-
-<body>
-
-
-<div class="container">
-
-
-
-<div class="header">
-
-<div class="logo">
-
-🇵🇸 USDT P2P Palestine
+{% extends "base.html" %}
+{% block title %}صفقاتي - USDT P2P Palestine{% endblock %}
+
+{% block content %}
+<div class="container container-narrow">
+
+  <div class="page-header">
+    <h2>📋 صفقاتي</h2>
+  </div>
+
+  <!-- ===== USDT Trades ===== -->
+  <div class="section-title">💰 صفقات USDT</div>
+
+  <div class="stagger">
+    {% for t in trades %}
+    <div class="trade-card mb-3">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:var(--sp-3);">
+        <div>
+          <div style="font-weight:700;color:var(--primary-light);">📌 صفقة #{{ t.id }}</div>
+          <div style="font-size:0.8rem;margin-top:2px;">
+            {% if t.seller == username %}
+              <span class="badge badge-success" style="font-size:0.7rem;">🟢 أنت البائع</span>
+            {% else %}
+              <span class="badge badge-info" style="font-size:0.7rem;">🔵 أنت المشتري</span>
+            {% endif %}
+          </div>
+        </div>
+        <span>
+          {% if t.status == 'PENDING' %}
+            <span class="badge badge-warning">⏳ بانتظار</span>
+          {% elif t.status == 'PAYMENT_SENT' %}
+            <span class="badge badge-info">💳 الدفع</span>
+          {% elif t.status == 'COMPLETED' %}
+            <span class="badge badge-success">✅ مكتملة</span>
+          {% else %}
+            <span class="badge badge-neutral">{{ t.status }}</span>
+          {% endif %}
+        </span>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-2);margin-bottom:var(--sp-3);">
+        <div>
+          <span style="font-size:0.8rem;color:var(--text-muted);">💰 الكمية</span>
+          <div style="font-weight:700;color:var(--accent-light);">{{ t.amount }} USDT</div>
+        </div>
+        <div>
+          <span style="font-size:0.8rem;color:var(--text-muted);">💵 السعر</span>
+          <div style="font-weight:700;">{{ t.price }} ₪</div>
+        </div>
+      </div>
+
+      <a href="/trade/{{ t.id }}" class="btn btn-primary btn-block">فتح الصفقة 🔥</a>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">📭</div>
+      <div class="empty-state-title">لا يوجد صفقات USDT حالياً</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- ===== Cash Trades ===== -->
+  <div class="section-title mt-6">🤝 صفقات المقابلات</div>
+
+  <div class="stagger">
+    {% for c in cash_trades %}
+    <div class="trade-card mb-3">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:var(--sp-3);">
+        <div>
+          <div style="font-weight:700;color:var(--primary-light);">📌 صفقة #{{ c.id }}</div>
+          <div style="font-size:0.8rem;color:var(--text-muted);">مقابلة شخصية</div>
+        </div>
+        <span class="badge badge-neutral">{{ c.status }}</span>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-2);margin-bottom:var(--sp-3);">
+        <div>
+          <span style="font-size:0.8rem;color:var(--text-muted);">💰 الكمية</span>
+          <div style="font-weight:700;color:var(--primary-light);">{{ c.amount }} USDT</div>
+        </div>
+        <div>
+          <span style="font-size:0.8rem;color:var(--text-muted);">💵 السعر</span>
+          <div style="font-weight:700;">{{ c.price }} ₪</div>
+        </div>
+      </div>
+
+      <a href="/cash_trade/{{ c.id }}" class="btn btn-primary btn-block">فتح الصفقة 🔥</a>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">📭</div>
+      <div class="empty-state-title">لا يوجد صفقات مقابلات</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <a href="/wallet" class="back-link mt-4">⬅ الرجوع للمحفظة</a>
 
 </div>
-
-
-<h3>
-
-📋 صفقاتي
-
-</h3>
-
-
-</div>
-
-
-
-
-
-
-<div class="box">
-
-
-<h2>
-
-💰 صفقات USDT
-
-</h2>
-
-
-
-{% for t in trades %}
-
-
-<div class="card">
-
-
-<div class="number">
-
-📌 صفقة #{{t.id}}
-
-</div>
-
-
-<div class="info">
-
-
-{% if t.seller == username %}
-
-<div class="role">
-
-🟢 أنت البائع
-
-</div>
-
-{% else %}
-
-<div class="role">
-
-🔵 أنت المشتري
-
-</div>
-
-{% endif %}
-
-
-
-<br>
-
-
-💰 الكمية:
-
-<b>{{t.amount}} USDT</b>
-
-
-<br>
-
-
-💵 السعر:
-
-<b>{{t.price}} ₪</b>
-
-
-<br>
-
-
-📌 الحالة:
-
-<span class="status">
-
-{{t.status}}
-
-</span>
-
-
-
-</div>
-
-
-
-<a class="btn" href="/trade/{{t.id}}">
-
-فتح الصفقة 🔥
-
-</a>
-
-
-
-</div>
-
-
-{% else %}
-
-
-<div class="empty">
-
-لا يوجد صفقات USDT حالياً
-
-</div>
-
-
-{% endfor %}
-
-
-
-</div>
-
-
-
-
-
-
-
-
-<div class="box">
-
-
-<h2>
-
-🤝 صفقات المقابلات
-
-</h2>
-
-
-
-{% for c in cash_trades %}
-
-
-<div class="card">
-
-
-<div class="number">
-
-📌 صفقة #{{c.id}}
-
-</div>
-
-
-<div class="info">
-
-
-<br>
-
-💰 الكمية:
-
-<b>{{c.amount}} USDT</b>
-
-
-<br>
-
-
-💵 السعر:
-
-<b>{{c.price}} ₪</b>
-
-
-<br>
-
-
-📌 الحالة:
-
-<span class="status">
-
-{{c.status}}
-
-</span>
-
-
-</div>
-
-
-
-<a class="btn" href="/cash_trade/{{c.id}}">
-
-فتح الصفقة 🔥
-
-</a>
-
-
-
-</div>
-
-
-
-{% else %}
-
-
-<div class="empty">
-
-لا يوجد صفقات مقابلات
-
-</div>
-
-
-{% endfor %}
-
-
-
-</div>
-
-
-
-
-
-
-
-<a class="btn back" href="/wallet">
-
-⬅ الرجوع للمحفظة
-
-</a>
-
-
-
-</div>
-
-
-</body>
-
-</html>
+{% endblock %}

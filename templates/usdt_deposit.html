@@ -1,68 +1,60 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
+{% extends "base.html" %}
+{% block title %}إيداع USDT - USDT P2P Palestine{% endblock %}
 
-<head>
-<meta charset="UTF-8">
-<title>إيداع USDT</title>
-</head>
+{% block content %}
+<div class="container container-narrow">
 
+  <a href="/wallet" class="back-link mb-4">⬅️ الرجوع للمحفظة</a>
 
-<body>
+  <div class="page-header" style="background:linear-gradient(135deg,rgba(34,197,94,0.08),var(--bg-surface));">
+    <h2>➕ إيداع USDT</h2>
+    <p>أرسل USDT إلى محفظة المنصة</p>
+  </div>
 
-<h2>إيداع USDT</h2>
+  <!-- Network Info -->
+  <div class="card">
+    <div class="card-title">🌐 الشبكة</div>
+    <div style="display:flex;align-items:center;gap:var(--sp-2);margin-top:var(--sp-3);">
+      <span class="badge badge-success">BSC</span>
+      <span class="badge badge-info">BEP20</span>
+    </div>
+  </div>
 
+  <!-- Platform Wallet -->
+  <div class="card" style="text-align:center;">
+    <div style="color:var(--text-muted);font-size:0.85rem;margin-bottom:var(--sp-3);">عنوان محفظة المنصة</div>
+    <div class="wallet-address" id="platformWallet" style="font-size:0.75rem;padding:var(--sp-4);">
+      {{ wallet }}
+    </div>
+    <button class="copy-btn mt-3" onclick="copyText(document.getElementById('platformWallet').textContent, this)">
+      📋 نسخ العنوان
+    </button>
+  </div>
 
-<p>
-حول USDT على شبكة BSC BEP20 إلى:
-</p>
+  <!-- Security Warning -->
+  <div class="alert alert-warning">
+    ⚠️ أرسل USDT فقط على شبكة BSC BEP20. الإرسال على أي شبكة أخرى قد يؤدي لفقدان الأموال.
+  </div>
 
+  <!-- Deposit Form -->
+  <form method="POST" class="card">
+    <div class="card-title">📝 تفاصيل الإيداع</div>
 
-<h3>
-{{ wallet }}
-</h3>
+    <div class="form-group mt-4">
+      <label class="form-label">كمية USDT</label>
+      <input class="form-input" type="number" step="0.01" name="amount" placeholder="أدخل الكمية" required>
+    </div>
 
+    <div class="form-group">
+      <label class="form-label">رقم التحويل (TX Hash)</label>
+      <input class="form-input ltr" type="text" name="tx_hash" placeholder="0x..." dir="ltr" style="text-align:left;" required>
+      <div class="form-help">أدخل رقم المعاملة من محفظتك بعد إتمام التحويل</div>
+    </div>
 
-<hr>
+    <button type="submit" class="btn btn-success btn-block btn-lg mt-4">
+      📤 إرسال طلب الإيداع
+    </button>
+  </form>
 
-
-<form method="POST">
-
-
-<label>
-كمية USDT
-</label>
-
-<input 
-type="number"
-name="amount"
-step="0.01"
-required>
-
-
-<br><br>
-
-
-<label>
-رقم التحويل TX Hash
-</label>
-
-<input 
-type="text"
-name="tx_hash"
-required>
-
-
-<br><br>
-
-
-<button>
-إرسال طلب الإيداع
-</button>
-
-
-</form>
-
-
-</body>
-
-</html>
+</div>
+{% endblock %}

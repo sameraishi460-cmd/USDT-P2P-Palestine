@@ -1,285 +1,64 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
+{% extends "base.html" %}
+{% block title %}المقابلات الشخصية - USDT P2P Palestine{% endblock %}
 
-<head>
-
-<meta charset="UTF-8">
-
-<title>المقابلات الشخصية</title>
-
-
-<style>
-
-body{
-
-background:#0b1220;
-color:white;
-font-family:tahoma;
-padding:20px;
-
-}
-
-
-.container{
-
-max-width:1100px;
-margin:auto;
-
-}
-
-
-
-.header{
-
-background:#1e293b;
-padding:20px;
-border-radius:18px;
-display:flex;
-justify-content:space-between;
-align-items:center;
-
-}
-
-
-
-.btn{
-
-background:#2563eb;
-padding:12px 20px;
-border-radius:10px;
-color:white;
-text-decoration:none;
-
-}
-
-
-.green{
-
-background:#16a34a;
-
-}
-
-
-
-.cards{
-
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
-gap:20px;
-margin-top:25px;
-
-}
-
-
-
-.card{
-
-background:#1e293b;
-padding:20px;
-border-radius:18px;
-
-}
-
-
-
-.title{
-
-color:#22c55e;
-font-size:22px;
-
-}
-
-
-
-.location{
-
-background:#111827;
-padding:10px;
-border-radius:10px;
-
-}
-
-
-
-.buy{
-
-display:block;
-background:#16a34a;
-padding:12px;
-text-align:center;
-border-radius:10px;
-margin-top:15px;
-color:white;
-text-decoration:none;
-
-}
-
-
-
-</style>
-
-
-</head>
-
-
-<body>
-
-
+{% block content %}
 <div class="container">
 
+  <div class="page-header">
+    <h2>🤝 سوق المقابلات الشخصية</h2>
+    <p>تداول نقدي مباشر مع تحديد المدينة والمكان</p>
+  </div>
 
+  <a href="/create_cash_ad" class="btn btn-success btn-block mb-4">
+    ➕ إضافة إعلان مقابلة
+  </a>
 
-<div class="header">
+  <div class="grid grid-auto stagger">
+    {% for ad in ads %}
+    <div class="card card-interactive" style="border-right:3px solid var(--primary);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--sp-3);">
+        <div style="display:flex;align-items:center;gap:var(--sp-2);">
+          <div class="avatar" style="background:var(--info-bg);border-color:rgba(59,130,246,0.3);color:var(--primary-light);">{{ ad.user[0] }}</div>
+          <span style="font-weight:600;font-size:0.9rem;">{{ ad.user }}</span>
+        </div>
+        <span class="badge badge-info">مقابلة</span>
+      </div>
 
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:var(--sp-3);">
+        <span style="font-weight:700;color:var(--primary-light);font-size:1.1rem;">{{ ad.amount }} USDT</span>
+        <span style="font-weight:700;">{{ ad.price }} ₪</span>
+      </div>
 
-<h2>
-🤝 مقابلات USDT
-</h2>
+      <div style="background:var(--bg-input);border-radius:var(--radius-md);padding:var(--sp-3);margin-bottom:var(--sp-3);">
+        <div style="font-size:0.8rem;color:var(--text-muted);">
+          📍 المدينة: <strong style="color:var(--text-primary);">{{ ad.city }}</strong>
+        </div>
+        {% if ad.location is defined %}
+        <div style="font-size:0.8rem;color:var(--text-muted);">
+          📌 المكان: <strong style="color:var(--text-primary);">{{ ad.location }}</strong>
+        </div>
+        {% endif %}
+      </div>
 
+      {% if ad.notes is defined and ad.notes %}
+      <div style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:var(--sp-3);">
+        📝 {{ ad.notes }}
+      </div>
+      {% endif %}
 
-<a class="btn green" href="/create_cash_ad">
+      <a href="/cash_buy/{{ ad.id }}" class="btn btn-primary btn-block">
+        طلب مقابلة 🤝
+      </a>
+    </div>
 
-إضافة إعلان
-
-</a>
-
-
-</div>
-
-
-
-
-
-<p>
-
-تداول نقدي مباشر مع تحديد المدينة والمكان.
-
-</p>
-
-
-
-
-
-<div class="cards">
-
-
-
-{% for ad in ads %}
-
-
-
-<div class="card">
-
-
-<div class="title">
-
-{{ad.amount}} USDT
-
-</div>
-
-
-
-<br>
-
-
-السعر:
-
-<b>
-{{ad.price}}
-</b>
-
-
-
-<br><br>
-
-
-البائع:
-
-{{ad.user}}
-
-
-
-<br><br>
-
-
-<div class="location">
-
-
-📍 المدينة:
-
-{{ad.city}}
-
-
-<br>
-
-
-📌 المكان:
-
-{{ad.location}}
-
+    {% else %}
+    <div class="empty-state" style="grid-column:1/-1;">
+      <div class="empty-state-icon">📭</div>
+      <div class="empty-state-title">لا توجد إعلانات مقابلات حالياً</div>
+      <div class="empty-state-text">كن أول من ينشر إعلان مقابلة شخصية</div>
+    </div>
+    {% endfor %}
+  </div>
 
 </div>
-
-
-
-
-<br>
-
-
-ملاحظات:
-
-<br>
-
-{{ad.notes}}
-
-
-
-<br><br>
-
-
-عمولة المنصة:
-
-{{ad.fee}}
-
-
-
-<a class="buy" href="/cash_buy/{{ad.id}}">
-
-طلب مقابلة
-
-</a>
-
-
-
-</div>
-
-
-
-
-{% else %}
-
-
-<div class="card">
-
-لا توجد إعلانات مقابلات حالياً
-
-</div>
-
-
-
-{% endfor %}
-
-
-
-
-</div>
-
-
-
-</div>
-
-
-
-</body>
-
-</html>
+{% endblock %}

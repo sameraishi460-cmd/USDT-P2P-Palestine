@@ -1,200 +1,139 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
+{% extends "base.html" %}
+{% block title %}بوت التداول - USDT P2P Palestine{% endblock %}
 
-<head>
+{% block content %}
+<div class="container container-narrow">
 
-    <meta charset="UTF-8">
+  <a href="/dashboard" class="back-link mb-4">⬅️ العودة للوحة التحكم</a>
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+  <div class="page-header" style="background:linear-gradient(135deg,var(--bg-surface),rgba(168,85,247,0.06));border-color:rgba(168,85,247,0.15);">
+    <h2>🤖 بوت التداول</h2>
+    <p style="display:inline-flex;align-items:center;gap:var(--sp-2);">
+      <span class="badge badge-purple">تجريبي — Paper Trading</span>
+    </p>
+  </div>
 
-    <title>Trading Bot</title>
+  <!-- Paper Trading Warning -->
+  <div class="alert alert-info">
+    ℹ️ هذا البوت يعمل في وضع <strong>التجريبي فقط</strong> (Paper Trading). لا يستخدم أموالاً حقيقية.
+  </div>
 
-    <style>
-
-        body {
-            font-family: Arial, sans-serif;
-            background: #f5f6fa;
-            margin: 0;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 600px;
-            margin: auto;
-        }
-
-        .card {
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            margin-bottom: 15px;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
-        }
-
-        h1 {
-            margin-top: 0;
-        }
-
-        .value {
-            font-size: 24px;
-            font-weight: bold;
-        }
-
-        button {
-            width: 100%;
-            padding: 14px;
-            border: 0;
-            border-radius: 10px;
-            font-size: 17px;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-
-        .start {
-            background: #16a34a;
-            color: white;
-        }
-
-        .stop {
-            background: #dc2626;
-            color: white;
-        }
-
-        .back {
-            background: #374151;
-            color: white;
-        }
-
-        .status {
-            padding: 10px;
-            border-radius: 8px;
-            background: #eee;
-            margin-top: 10px;
-        }
-
-    </style>
-
-</head>
-
-<body>
-
-<div class="container">
-
-    <div class="card">
-
-        <h1>🤖 Trading Bot</h1>
-
-        <p>
-            Paper Trading — تجريبي
-        </p>
-
-        {% if bot %}
-
-            <div class="status">
-                🟢 البوت يعمل
-            </div>
-
-        {% else %}
-
-            <div class="status">
-                ⚪ البوت متوقف
-            </div>
-
-        {% endif %}
-
+  <!-- ===== Bot Status ===== -->
+  <div class="card" style="text-align:center;background:linear-gradient(135deg,var(--bg-surface),rgba(168,85,247,0.04));">
+    <div style="font-size:2.5rem;margin-bottom:var(--sp-2);">
+      {% if bot %}🟢{% else %}⚪{% endif %}
     </div>
-
-
-    {% if stats %}
-
-    <div class="card">
-
-        <h3>💰 رأس المال</h3>
-
-        <div class="value">
-            ${{ stats.capital }}
-        </div>
-
-    </div>
-
-
-    <div class="card">
-
-        <h3>📈 الربح</h3>
-
-        <div class="value">
-            ${{ stats.profit }}
-        </div>
-
-        <p>
-            العائد:
-            {{ stats.return_percent }}%
-        </p>
-
-    </div>
-
-
-    <div class="card">
-
-        <h3>📊 الصفقات</h3>
-
-        <div class="value">
-            {{ stats.trades }}
-        </div>
-
-    </div>
-
-    {% endif %}
-
+    <h3 style="margin-bottom:var(--sp-1);">
+      {% if bot %}البوت يعمل{% else %}البوت متوقف{% endif %}
+    </h3>
+    <p style="color:var(--text-muted);font-size:0.85rem;">
+      {% if bot %}جاري التداول على BTCUSDT{% else %}اضغط تشغيل لبدء التداول التجريبي{% endif %}
+    </p>
 
     {% if bot %}
-
-        <form
-            method="POST"
-            action="/trading_bot/stop"
-        >
-
-            <button
-                class="stop"
-                type="submit"
-            >
-                ⛔ إيقاف البوت
-            </button>
-
-        </form>
-
+    <span class="badge badge-success" style="font-size:0.8rem;">🟢 نشط — BTCUSDT 1h</span>
     {% else %}
-
-        <form
-            method="POST"
-            action="/trading_bot/start"
-        >
-
-            <button
-                class="start"
-                type="submit"
-            >
-                🚀 تشغيل البوت
-            </button>
-
-        </form>
-
+    <span class="badge badge-neutral" style="font-size:0.8rem;">⚪ متوقف</span>
     {% endif %}
+  </div>
 
+  <!-- ===== Performance Stats ===== -->
+  {% if stats %}
+  <div class="section-title mt-6">📊 أداء البوت</div>
 
-    <a href="/dashboard">
+  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:var(--sp-3);">
+    <div class="kpi-card">
+      <div class="kpi-icon green">💰</div>
+      <div class="kpi-value">${{ stats.capital }}</div>
+      <div class="kpi-label">رأس المال</div>
+    </div>
 
-        <button class="back">
-            العودة للمنصة
-        </button>
+    <div class="kpi-card">
+      <div class="kpi-icon {% if stats.profit|default(0)|float > 0 %}green{% else %}red{% endif %}">📈</div>
+      <div class="kpi-value" style="color:{% if stats.profit|default(0)|float > 0 %}var(--accent-light){% else %}#fca5a5{% endif %};">
+        ${{ stats.profit }}
+      </div>
+      <div class="kpi-label">الربح / الخسارة</div>
+    </div>
 
-    </a>
+    <div class="kpi-card">
+      <div class="kpi-icon blue">📊</div>
+      <div class="kpi-value" style="color:var(--primary-light);">{{ stats.return_percent }}%</div>
+      <div class="kpi-label">العائد</div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon purple">🔄</div>
+      <div class="kpi-value">{{ stats.trades }}</div>
+      <div class="kpi-label">عدد الصفقات</div>
+    </div>
+  </div>
+
+  <!-- ===== Strategy Info ===== -->
+  <div class="card mt-4">
+    <div class="card-title">📐 الاستراتيجية</div>
+    <div style="margin-top:var(--sp-3);">
+      <div class="info-row">
+        <span class="info-label">الأزواج</span>
+        <span class="info-value">BTCUSDT</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">الإطار الزمني</span>
+        <span class="info-value">1 ساعة</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">المخاطرة</span>
+        <span class="info-value">0.5%</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">وقف الخسارة</span>
+        <span class="info-value" style="color:var(--danger);">1.0%</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">جني الأرباح</span>
+        <span class="info-value" style="color:var(--accent-light);">1.5%</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">المؤشرات</span>
+        <span class="info-value" style="font-size:0.8rem;">EMA 20/50, RSI 14</span>
+      </div>
+    </div>
+  </div>
+
+  {% endif %}
+
+  <!-- ===== Controls ===== -->
+  <div class="card mt-4">
+    <div class="card-title">⚙️ التحكم</div>
+
+    {% if bot %}
+    <form method="POST" action="/trading_bot/stop" class="mt-3">
+      <button type="submit" class="btn btn-danger btn-block btn-lg">
+        ⛔ إيقاف البوت
+      </button>
+    </form>
+    {% else %}
+    <form method="POST" action="/trading_bot/start" class="mt-3">
+      <button type="submit" class="btn btn-success btn-block btn-lg">
+        🚀 تشغيل البوت
+      </button>
+    </form>
+    {% endif %}
+  </div>
+
+  <!-- ===== Risk Disclaimer ===== -->
+  <div class="card mt-4" style="background:rgba(239,68,68,0.05);border-color:rgba(239,68,68,0.1);">
+    <div style="display:flex;align-items:flex-start;gap:var(--sp-3);">
+      <span style="font-size:1.3rem;flex-shrink:0;">⚠️</span>
+      <div>
+        <div style="font-weight:600;margin-bottom:var(--sp-1);font-size:0.9rem;">تنبيه المخاطر</div>
+        <p style="font-size:0.8rem;color:var(--text-muted);margin:0;line-height:1.7;">
+          التداول ينطوي على مخاطر عالية. هذا البوت تجريبي فقط ولا يضمن أرباحاً.
+          لا تستثمر أكثر مما تتحمل خسارته.
+        </p>
+      </div>
+    </div>
+  </div>
 
 </div>
-
-</body>
-
-</html>
+{% endblock %}

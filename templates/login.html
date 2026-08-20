@@ -1,413 +1,193 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-
 <head>
-
-<meta charset="UTF-8">
-
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>تسجيل الدخول - USDT Exchange Palestine</title>
-
-
-<style>
-
-*{
-    box-sizing:border-box;
-}
-
-
-body{
-
-    margin:0;
-
-    font-family:Tajawal, Arial, sans-serif;
-
-    background:linear-gradient(135deg,#0f172a,#1e40af);
-
-    min-height:100vh;
-
-    display:flex;
-
-    align-items:center;
-
-    justify-content:center;
-
-}
-
-
-
-.box{
-
-    background:white;
-
-    width:92%;
-
-    max-width:420px;
-
-    padding:30px;
-
-    border-radius:25px;
-
-    box-shadow:0 15px 40px rgba(0,0,0,0.25);
-
-}
-
-
-
-.logo{
-
-    text-align:center;
-
-    font-size:30px;
-
-    font-weight:bold;
-
-    color:#16a34a;
-
-    margin-bottom:5px;
-
-}
-
-
-
-.subtitle{
-
-    text-align:center;
-
-    color:#666;
-
-    margin-bottom:25px;
-
-    font-size:14px;
-
-}
-
-
-
-h2{
-
-    text-align:center;
-
-    color:#111;
-
-    margin-bottom:20px;
-
-}
-
-
-
-.input-group{
-
-    margin-bottom:15px;
-
-}
-
-
-
-label{
-
-    display:block;
-
-    margin-bottom:5px;
-
-    color:#444;
-
-    font-size:14px;
-
-}
-
-
-
-input{
-
-    width:100%;
-
-    padding:14px;
-
-    border-radius:12px;
-
-    border:1px solid #ddd;
-
-    font-size:15px;
-
-    outline:none;
-
-    transition:.3s;
-
-}
-
-
-
-input:focus{
-
-    border-color:#2563eb;
-
-    box-shadow:0 0 5px #93c5fd;
-
-}
-
-
-
-.remember{
-
-    display:flex;
-
-    align-items:center;
-
-    gap:8px;
-
-    margin:15px 0;
-
-    font-size:14px;
-
-}
-
-
-
-.remember input{
-
-    width:auto;
-
-}
-
-
-
-button{
-
-    width:100%;
-
-    padding:14px;
-
-    background:#16a34a;
-
-    color:white;
-
-    border:none;
-
-    border-radius:12px;
-
-    font-size:17px;
-
-    cursor:pointer;
-
-    transition:.3s;
-
-}
-
-
-
-button:hover{
-
-    background:#15803d;
-
-}
-
-
-
-.telegram{
-
-    margin-top:15px;
-
-    display:block;
-
-    text-align:center;
-
-    padding:14px;
-
-    background:#229ED9;
-
-    color:white;
-
-    border-radius:12px;
-
-    text-decoration:none;
-
-    font-size:16px;
-
-}
-
-
-
-.register{
-
-    margin-top:20px;
-
-    text-align:center;
-
-    color:#2563eb;
-
-    text-decoration:none;
-
-}
-
-
-
-.home{
-
-    margin-top:12px;
-
-    text-align:center;
-
-    color:#666;
-
-    text-decoration:none;
-
-}
-
-
-
-.footer{
-
-    text-align:center;
-
-    margin-top:25px;
-
-    font-size:12px;
-
-    color:#999;
-
-}
-
-
-</style>
-
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>تسجيل الدخول - USDT P2P Palestine</title>
+  <link rel="stylesheet" href="/static/design-system.css">
+  <style>
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-deep);
+      background-image:
+        radial-gradient(ellipse at 20% 50%, rgba(34,197,94,0.06) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(59,130,246,0.06) 0%, transparent 50%);
+      padding: var(--sp-4);
+    }
+
+    .auth-wrapper {
+      width: 100%;
+      max-width: 420px;
+      animation: slideUp 0.5s ease;
+    }
+
+    .auth-brand {
+      text-align: center;
+      margin-bottom: var(--sp-6);
+    }
+
+    .auth-brand-icon {
+      width: 64px;
+      height: 64px;
+      border-radius: var(--radius-xl);
+      background: linear-gradient(135deg, var(--accent-hover), var(--accent));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.75rem;
+      margin: 0 auto var(--sp-3);
+      box-shadow: var(--shadow-glow-green);
+    }
+
+    .auth-brand h1 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: var(--sp-1);
+    }
+
+    .auth-brand p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .auth-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-2xl);
+      padding: var(--sp-6);
+    }
+
+    .auth-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: var(--sp-5);
+      color: var(--text-primary);
+    }
+
+    .auth-divider {
+      display: flex;
+      align-items: center;
+      gap: var(--sp-3);
+      margin: var(--sp-5) 0;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+
+    .auth-divider::before,
+    .auth-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .auth-links {
+      text-align: center;
+      margin-top: var(--sp-4);
+    }
+
+    .auth-links a {
+      display: block;
+      padding: var(--sp-2);
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      transition: color var(--transition-fast);
+    }
+
+    .auth-links a:hover {
+      color: var(--text-primary);
+    }
+
+    .auth-links a.primary-link {
+      color: var(--primary-light);
+      font-weight: 600;
+    }
+
+    .auth-footer {
+      text-align: center;
+      margin-top: var(--sp-5);
+      color: var(--text-muted);
+      font-size: 0.75rem;
+    }
+  </style>
 </head>
-
-
 <body>
 
+<div class="auth-wrapper">
 
-<div class="box">
+  <div class="auth-brand">
+    <div class="auth-brand-icon">🇵🇸</div>
+    <h1>USDT P2P Palestine</h1>
+    <p>منصتك الآمنة لشراء وبيع USDT</p>
+  </div>
 
+  <div class="auth-card">
 
-<div class="logo">
+    <div class="auth-title">🔐 تسجيل الدخول</div>
 
-💎 USDT Exchange Palestine
+    <form method="POST" autocomplete="on">
 
-</div>
+      <div class="form-group">
+        <label class="form-label">اسم المستخدم</label>
+        <input
+          class="form-input"
+          type="text"
+          name="username"
+          placeholder="أدخل اسم المستخدم"
+          autocomplete="username"
+          required
+          autofocus
+        >
+      </div>
 
+      <div class="form-group">
+        <label class="form-label">كلمة المرور</label>
+        <input
+          class="form-input"
+          type="password"
+          name="password"
+          placeholder="أدخل كلمة المرور"
+          autocomplete="current-password"
+          required
+        >
+      </div>
 
-<div class="subtitle">
+      <div class="form-group" style="display:flex;align-items:center;gap:var(--sp-2);">
+        <input type="checkbox" name="remember" id="remember" style="width:auto;accent-color:var(--accent);">
+        <label for="remember" style="color:var(--text-secondary);font-size:0.85rem;cursor:pointer;">
+          تذكرني لمدة 30 يوم
+        </label>
+      </div>
 
-منصتك الآمنة لشراء وبيع USDT
+      <button type="submit" class="btn btn-success btn-block btn-lg">
+        دخول
+      </button>
 
-</div>
+    </form>
 
+    <div class="auth-divider">أو</div>
 
+    <a href="/telegram_login" class="btn btn-telegram btn-block">
+      📲 دخول عبر Telegram
+    </a>
 
-<h2>
+  </div>
 
-🔐 تسجيل الدخول
+  <div class="auth-links">
+    <a href="/register" class="primary-link">إنشاء حساب جديد</a>
+    <a href="/">العودة للرئيسية</a>
+  </div>
 
-</h2>
-
-
-
-<form method="POST">
-
-
-<div class="input-group">
-
-<label>
-اسم المستخدم
-</label>
-
-<input
-
-name="username"
-
-placeholder="أدخل اسم المستخدم"
-
-required
-
->
-
-</div>
-
-
-
-<div class="input-group">
-
-<label>
-كلمة المرور
-</label>
-
-<input
-
-type="password"
-
-name="password"
-
-placeholder="أدخل كلمة المرور"
-
-required
-
->
-
-</div>
-
-
-
-<div class="remember">
-
-<input type="checkbox" name="remember">
-
-<label>
-تذكرني لمدة 30 يوم
-</label>
+  <div class="auth-footer">
+    © 2026 USDT P2P Palestine
+  </div>
 
 </div>
-
-
-
-<button type="submit">
-
-دخول
-
-</button>
-
-
-</form>
-
-
-
-<a class="telegram" href="/telegram_login">
-
-📲 دخول عبر Telegram
-
-</a>
-
-
-
-<a class="register" href="/register">
-
-إنشاء حساب جديد
-
-</a>
-
-
-
-<a class="home" href="/">
-
-العودة للرئيسية
-
-</a>
-
-
-
-<div class="footer">
-
-© USDT Exchange Palestine
-
-</div>
-
-
-
-</div>
-
 
 </body>
-
 </html>

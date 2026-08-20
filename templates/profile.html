@@ -1,447 +1,100 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-
-<head>
-
-<meta charset="UTF-8">
-
-<title>حسابي</title>
-
-
-<style>
-
-body{
-background:#0b1220;
-color:white;
-font-family:tahoma;
-padding:20px;
-}
-
-
-.container{
-max-width:1000px;
-margin:auto;
-}
-
-
-.box{
-background:#1e293b;
-padding:20px;
-border-radius:18px;
-margin-bottom:20px;
-}
-
-
-h2{
-color:#22c55e;
-}
-
-
-.info{
-
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
-gap:15px;
-
-}
-
-
-.item{
-
-background:#111827;
-padding:15px;
-border-radius:12px;
-
-}
-
-
-
-.btn{
-
-display:inline-block;
-padding:10px 18px;
-background:#2563eb;
-color:white;
-text-decoration:none;
-border-radius:10px;
-margin-top:10px;
-
-}
-
-
-.green{
-background:#16a34a;
-}
-
-
-.red{
-background:#dc2626;
-}
-
-
-
-.card{
-
-background:#111827;
-padding:15px;
-border-radius:12px;
-margin:10px 0;
-
-}
-
-
-
-.status{
-
-color:#22c55e;
-font-weight:bold;
-
-}
-
-
-
-.small{
-
-color:#94a3b8;
-font-size:14px;
-
-}
-
-
-
-</style>
-
-</head>
-
-
-
-<body>
-
-
-<div class="container">
-
-
-
-<a class="btn" href="/">
-⬅ الرئيسية
-</a>
-
-
-<a class="btn" href="/notifications">
-🔔 التنبيهات
-</a>
-
-
-
-
-
-
-<div class="box">
-
-
-<h2>
-👤 معلومات الحساب
-</h2>
-
-
-
-<div class="info">
-
-
-<div class="item">
-
-اسم المستخدم
-
-<br>
-
-<b>{{user.username}}</b>
+{% extends "base.html" %}
+{% block title %}حسابي - USDT P2P Palestine{% endblock %}
+
+{% block content %}
+<div class="container container-narrow">
+
+  <!-- ===== Profile Header ===== -->
+  <div class="card" style="text-align:center;background:linear-gradient(135deg,rgba(59,130,246,0.05),var(--bg-surface));">
+    <div class="avatar avatar-lg mx-auto mb-4">{{ user.username[0] }}</div>
+    <h2 style="margin-bottom:var(--sp-1);">{{ user.username }}</h2>
+    <div style="margin-bottom:var(--sp-3);">
+      {% if user.verified == 1 %}
+        <span class="badge badge-success">✅ حساب موثق</span>
+      {% else %}
+        <span class="badge badge-warning">⚠️ غير موثق</span>
+      {% endif %}
+    </div>
+    <div style="display:flex;justify-content:center;gap:var(--sp-6);">
+      <div>
+        <div style="font-size:0.75rem;color:var(--text-muted);">⭐ التقييم</div>
+        <div style="font-weight:700;color:var(--accent-light);">{{ user.rating }}</div>
+      </div>
+      <div>
+        <div style="font-size:0.75rem;color:var(--text-muted);">🤝 الصفقات</div>
+        <div style="font-weight:700;">{{ user.trades_count }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Personal Info ===== -->
+  <div class="card">
+    <div class="card-title">👤 معلومات الحساب</div>
+    <div style="margin-top:var(--sp-3);">
+      <div class="info-row">
+        <span class="info-label">اسم المستخدم</span>
+        <span class="info-value">{{ user.username }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">📱 الهاتف</span>
+        <span class="info-value">{{ user.phone or "غير مضاف" }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">🏦 البنك</span>
+        <span class="info-value">{{ user.bank or "غير مضاف" }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">💳 IBAN</span>
+        <span class="info-value" style="font-size:0.8rem;">{{ user.iban or "غير مضاف" }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">💵 طريقة الدفع</span>
+        <span class="info-value">{{ user.payment_method or "غير مضافة" }}</span>
+      </div>
+    </div>
+    <a href="/edit_profile" class="btn btn-primary btn-block mt-4">✏️ تعديل البيانات</a>
+  </div>
+
+  <!-- ===== Quick Links ===== -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3);">
+    <a href="/my_trades" class="card card-interactive" style="text-align:center;padding:var(--sp-4);">
+      <div style="font-size:1.3rem;margin-bottom:var(--sp-2);">💰</div>
+      <div style="font-weight:600;font-size:0.9rem;">صفقاتي</div>
+    </a>
+    <a href="/notifications" class="card card-interactive" style="text-align:center;padding:var(--sp-4);">
+      <div style="font-size:1.3rem;margin-bottom:var(--sp-2);">🔔</div>
+      <div style="font-weight:600;font-size:0.9rem;">التنبيهات</div>
+    </a>
+  </div>
+
+  <!-- ===== My Ads ===== -->
+  <div class="section-title mt-6">📢 إعلاناتي</div>
+
+  {% for a in ads %}
+  <div class="card mb-3" style="border-right:3px solid {% if a.status == 'OPEN' %}var(--accent){% else %}var(--border-light){% endif %};">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--sp-2);">
+      <span style="font-weight:600;">💰 {{ a.amount }} USDT</span>
+      {% if a.status == 'OPEN' %}
+        <span class="badge badge-success">متاح</span>
+      {% else %}
+        <span class="badge badge-neutral">{{ a.status }}</span>
+      {% endif %}
+    </div>
+    <div style="display:flex;gap:var(--sp-3);font-size:0.85rem;color:var(--text-secondary);">
+      <span>💵 {{ a.price }} ₪</span>
+      <span>💳 {{ a.payment }}</span>
+    </div>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-state-icon">📭</div>
+    <div class="empty-state-title">لا توجد إعلانات</div>
+  </div>
+  {% endfor %}
+
+  <a href="/create_ad" class="btn btn-success btn-block mt-3">➕ إضافة إعلان جديد</a>
+
+  <a href="/" class="back-link mt-4">⬅ الرئيسية</a>
 
 </div>
-
-
-
-<div class="item">
-
-الهاتف
-
-<br>
-
-<b>{{user.phone or "غير مضاف"}}</b>
-
-</div>
-
-
-
-<div class="item">
-
-البنك
-
-<br>
-
-<b>{{user.bank or "غير مضاف"}}</b>
-
-</div>
-
-
-
-<div class="item">
-
-IBAN
-
-<br>
-
-<b>{{user.iban or "غير مضاف"}}</b>
-
-</div>
-
-
-
-<div class="item">
-
-التقييم
-
-<br>
-
-⭐ {{user.rating}}
-
-</div>
-
-
-
-<div class="item">
-
-عدد الصفقات
-
-<br>
-
-{{user.trades_count}}
-
-</div>
-
-
-
-</div>
-
-
-
-<br>
-
-
-<a class="btn" href="/edit_profile">
-
-✏️ تعديل البيانات
-
-</a>
-
-
-
-</div>
-
-
-
-
-
-
-
-
-<div class="box">
-
-
-<h2>
-💰 صفقات USDT
-</h2>
-
-
-<p>
-تابع جميع عمليات البيع والشراء والصفقات المفتوحة من هنا.
-</p>
-
-
-
-<a class="btn green" href="/my_trades">
-
-💰 فتح صفقاتي
-
-</a>
-
-
-
-</div>
-
-
-
-
-
-
-
-
-<div class="box">
-
-
-<h2>
-🤝 صفقات المقابلات الشخصية
-</h2>
-
-
-
-{% for c in cash_trades %}
-
-
-<div class="card">
-
-
-<b>
-رقم الصفقة {{c.id}}
-</b>
-
-
-<br>
-
-
-💰 الكمية:
-
-{{c.amount}} USDT
-
-
-<br>
-
-
-💵 السعر:
-
-{{c.price}} ₪
-
-
-<br>
-
-
-📌 الحالة:
-
-<span class="status">
-{{c.status}}
-</span>
-
-
-
-<br>
-
-
-<a class="btn green" href="/cash_trade/{{c.id}}">
-
-فتح الصفقة
-
-</a>
-
-
-
-</div>
-
-
-
-{% else %}
-
-
-لا يوجد صفقات مقابلات
-
-
-{% endfor %}
-
-
-
-</div>
-
-
-
-
-
-
-
-
-
-<div class="box">
-
-
-<h2>
-📢 إعلاناتي
-</h2>
-
-
-
-{% for a in ads %}
-
-
-
-<div class="card">
-
-
-💰 الكمية:
-
-{{a.amount}} USDT
-
-
-<br>
-
-
-💵 السعر:
-
-{{a.price}} ₪
-
-
-<br>
-
-
-💳 الدفع:
-
-{{a.payment}}
-
-
-<br>
-
-
-📌 الحالة:
-
-<span class="status">
-
-{{a.status}}
-
-</span>
-
-
-</div>
-
-
-
-{% else %}
-
-
-لا يوجد إعلانات
-
-
-{% endfor %}
-
-
-
-
-<br>
-
-
-<a class="btn green" href="/create_ad">
-
-➕ إضافة إعلان جديد
-
-</a>
-
-
-
-</div>
-
-
-
-
-
-
-</div>
-
-
-</body>
-
-</html>
+{% endblock %}

@@ -1,59 +1,33 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
+{% extends "base.html" %}
+{% block title %}المحادثة - USDT P2P Palestine{% endblock %}
 
-<head>
-<meta charset="UTF-8">
-<title>المحادثة</title>
-<link rel="stylesheet" href="/static/style.css">
-</head>
+{% block content %}
+<div class="container container-narrow">
 
+  <div class="page-header">
+    <h2>💬 المحادثة مع {{ target }}</h2>
+  </div>
 
-<body>
+  <div class="card" style="max-height:400px;overflow-y:auto;">
+    {% for m in messages %}
+    <div class="message {% if m.sender == current_user %}message-own{% endif %}">
+      <div class="message-sender">{{ m.sender }}</div>
+      <div class="message-text">{{ m.text }}</div>
+    </div>
+    {% else %}
+    <div class="empty-state" style="padding:var(--sp-4);">
+      <div style="color:var(--text-muted);">لا توجد رسائل بعد</div>
+    </div>
+    {% endfor %}
+  </div>
 
-<h1>
-المحادثة مع {{ target }}
-</h1>
-
-
-{% for m in messages %}
-
-<div class="box">
-
-<b>
-{{ m.sender }}
-</b>
-
-<p>
-{{ m.text }}
-</p>
+  <form method="POST" action="/send_message" class="card mt-3">
+    <input type="hidden" name="receiver" value="{{ target }}">
+    <div class="form-group">
+      <input class="form-input" type="text" name="text" placeholder="اكتب رسالة...">
+    </div>
+    <button type="submit" class="btn btn-success btn-block">📨 إرسال</button>
+  </form>
 
 </div>
-
-
-{% endfor %}
-
-
-
-<form method="POST" action="/send_message">
-
-<input type="hidden" name="receiver" value="{{ target }}">
-
-
-<input 
-type="text" 
-name="text"
-placeholder="اكتب رسالة">
-
-
-<button>
-إرسال
-</button>
-
-
-</form>
-
-
-
-</body>
-
-</html>
+{% endblock %}

@@ -1,372 +1,69 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
+{% extends "base.html" %}
+{% block title %}إدارة إعلانات المقابلات{% endblock %}
 
-<head>
-
-<meta charset="UTF-8">
-
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>إدارة إعلانات المقابلات الشخصية</title>
-
-
-<style>
-
-body{
-
-background:#0f172a;
-color:white;
-font-family:tahoma;
-padding:20px;
-
-}
-
-
-.container{
-
-max-width:1200px;
-margin:auto;
-
-}
-
-
-
-.box{
-
-background:#1e293b;
-padding:25px;
-border-radius:20px;
-
-}
-
-
-
-h1{
-
-text-align:center;
-color:#22c55e;
-
-}
-
-
-
-.menu{
-
-text-align:center;
-margin-bottom:25px;
-
-}
-
-
-
-.menu a{
-
-display:inline-block;
-padding:12px 18px;
-margin:5px;
-border-radius:12px;
-background:#2563eb;
-color:white;
-text-decoration:none;
-
-}
-
-
-
-.home{
-
-background:#16a34a !important;
-
-}
-
-
-
-table{
-
-width:100%;
-border-collapse:collapse;
-margin-top:20px;
-
-}
-
-
-
-th{
-
-background:#334155;
-
-}
-
-
-
-td,th{
-
-padding:12px;
-text-align:center;
-border-bottom:1px solid #475569;
-
-}
-
-
-
-.btn{
-
-display:inline-block;
-padding:8px 14px;
-border-radius:10px;
-color:white;
-text-decoration:none;
-
-}
-
-
-
-.accept{
-
-background:#16a34a;
-
-}
-
-
-
-.reject{
-
-background:#dc2626;
-
-}
-
-
-
-.status{
-
-background:#334155;
-padding:8px;
-border-radius:10px;
-
-}
-
-
-
-</style>
-
-
-</head>
-
-
-
-<body>
-
-
-
+{% block content %}
 <div class="container">
 
+  <div class="page-header">
+    <h2>🤝 إدارة إعلانات المقابلات الشخصية</h2>
+  </div>
 
-<div class="box">
+  <div style="display:flex;gap:var(--sp-2);margin-bottom:var(--sp-5);flex-wrap:wrap;">
+    <a href="/admin" class="btn btn-ghost btn-sm">⬅️ لوحة الأدمن</a>
+    <a href="/" class="btn btn-success btn-sm">🏠 الرئيسية</a>
+  </div>
 
-
-
-<h1>
-
-🤝 إدارة إعلانات المقابلات الشخصية
-
-</h1>
-
-
-
-
-<div class="menu">
-
-
-<a href="/admin">
-
-⬅️ لوحة الأدمن
-
-</a>
-
-
-
-<a class="home" href="/">
-
-🏠 الرئيسية
-
-</a>
-
+  <div class="table-wrapper">
+    <div class="table-scroll">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>البائع</th>
+            <th>الكمية</th>
+            <th>السعر</th>
+            <th>المدينة</th>
+            <th>المكان</th>
+            <th>العمولة</th>
+            <th>الحالة</th>
+            <th>التحكم</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for ad in ads %}
+          <tr>
+            <td>#{{ ad.id }}</td>
+            <td>{{ ad.user }}</td>
+            <td style="color:var(--accent-light);font-weight:600;">{{ ad.amount }} USDT</td>
+            <td>{{ ad.price }}</td>
+            <td>{{ ad.city }}</td>
+            <td>{{ ad.location }}</td>
+            <td>{{ ad.fee }} USDT</td>
+            <td>
+              <span class="badge {% if ad.status == 'PENDING_PAYMENT' %}badge-warning{% else %}badge-neutral{% endif %}">
+                {{ ad.status }}
+              </span>
+            </td>
+            <td>
+              {% if ad.status == "PENDING_PAYMENT" %}
+              <div style="display:flex;gap:var(--sp-2);">
+                <a href="/admin_cash_accept/{{ ad.id }}" class="btn btn-success btn-sm">✅ قبول</a>
+                <a href="/admin_cash_reject/{{ ad.id }}" class="btn btn-danger btn-sm">❌ رفض</a>
+              </div>
+              {% else %}
+              <span style="color:var(--text-muted);font-size:0.8rem;">—</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="9" style="text-align:center;color:var(--text-muted);padding:var(--sp-6);">لا توجد إعلانات حالياً</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
 
 </div>
-
-
-
-
-
-<table>
-
-
-<tr>
-
-<th>ID</th>
-
-<th>البائع</th>
-
-<th>الكمية</th>
-
-<th>السعر</th>
-
-<th>المدينة</th>
-
-<th>المكان</th>
-
-<th>العمولة</th>
-
-<th>الحالة</th>
-
-<th>التحكم</th>
-
-
-</tr>
-
-
-
-
-{% for ad in ads %}
-
-
-
-<tr>
-
-
-<td>
-{{ad.id}}
-</td>
-
-
-
-<td>
-{{ad.user}}
-</td>
-
-
-
-<td>
-{{ad.amount}} USDT
-</td>
-
-
-
-<td>
-{{ad.price}}
-</td>
-
-
-
-<td>
-{{ad.city}}
-</td>
-
-
-
-<td>
-{{ad.location}}
-</td>
-
-
-
-<td>
-{{ad.fee}} USDT
-</td>
-
-
-
-
-<td>
-
-<span class="status">
-
-{{ad.status}}
-
-</span>
-
-</td>
-
-
-
-
-<td>
-
-
-
-{% if ad.status == "PENDING_PAYMENT" %}
-
-
-<a class="btn accept" href="/admin_cash_accept/{{ad.id}}">
-
-✅ قبول
-
-</a>
-
-
-<br><br>
-
-
-<a class="btn reject" href="/admin_cash_reject/{{ad.id}}">
-
-❌ رفض
-
-</a>
-
-
-
-{% else %}
-
-
-لا يوجد
-
-
-
-{% endif %}
-
-
-
-
-</td>
-
-
-
-</tr>
-
-
-
-{% else %}
-
-
-
-<tr>
-
-<td colspan="9">
-
-لا توجد إعلانات حالياً
-
-</td>
-
-</tr>
-
-
-
-{% endfor %}
-
-
-
-
-</table>
-
-
-
-</div>
-
-
-</div>
-
-
-</body>
-
-
-</html>
+{% endblock %}

@@ -1,52 +1,61 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
+{% extends "base.html" %}
+{% block title %}إيداعات USDT - USDT P2P Palestine{% endblock %}
 
-<head>
-<meta charset="UTF-8">
-<title>إيداعات USDT</title>
-</head>
+{% block content %}
+<div class="container">
 
-<body>
+  <a href="/admin" class="back-link mb-4">⬅️ الرجوع للوحة الأدمن</a>
 
-<h2>طلبات إيداع USDT</h2>
+  <div class="page-header">
+    <h2>📥 طلبات إيداع USDT</h2>
+  </div>
 
+  <div class="table-wrapper">
+    <div class="table-scroll">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>المستخدم</th>
+            <th>الكمية</th>
+            <th>TX Hash</th>
+            <th>الحالة</th>
+            <th>الإجراء</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in deposits %}
+          <tr>
+            <td>#{{ d.id }}</td>
+            <td>{{ d.username }}</td>
+            <td style="color:var(--accent-light);font-weight:600;">{{ d.amount }} USDT</td>
+            <td style="font-size:0.75rem;font-family:var(--font-mono);direction:ltr;text-align:left;max-width:200px;overflow:hidden;text-overflow:ellipsis;">{{ d.tx_hash }}</td>
+            <td>
+              {% if d.status == 'CONFIRMED' %}
+                <span class="badge badge-success">مؤكد</span>
+              {% elif d.status == 'PENDING' %}
+                <span class="badge badge-warning">قيد المراجعة</span>
+              {% else %}
+                <span class="badge badge-neutral">{{ d.status }}</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if d.status == "PENDING" %}
+              <a href="/admin_confirm_deposit/{{ d.id }}" class="btn btn-success btn-sm">✅ تأكيد</a>
+              {% else %}
+              <span style="color:var(--text-muted);">—</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="6" style="text-align:center;color:var(--text-muted);padding:var(--sp-6);">لا توجد طلبات إيداع</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
 
-{% for d in deposits %}
-
-<hr>
-
-<p>
-المستخدم:
-{{d.username}}
-</p>
-
-<p>
-الكمية:
-{{d.amount}} USDT
-</p>
-
-<p>
-TX:
-{{d.tx_hash}}
-</p>
-
-<p>
-الحالة:
-{{d.status}}
-</p>
-
-
-{% if d.status == "PENDING" %}
-
-<a href="/admin_confirm_deposit/{{d.id}}">
-تأكيد الإيداع ✅
-</a>
-
-{% endif %}
-
-
-{% endfor %}
-
-
-</body>
-</html>
+</div>
+{% endblock %}

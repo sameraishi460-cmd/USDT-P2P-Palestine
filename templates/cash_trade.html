@@ -1,203 +1,65 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
+{% extends "base.html" %}
+{% block title %}صفقة مقابلة شخصية - USDT P2P Palestine{% endblock %}
 
-<head>
+{% block content %}
+<div class="container container-narrow">
 
-<meta charset="UTF-8">
+  <div class="page-header">
+    <h2>🤝 طلب مقابلة شخصية</h2>
+    <div style="margin-top:var(--sp-2);">
+      {% if trade.status == 'PENDING' %}
+        <span class="badge badge-warning">⏳ بانتظار التأكيد</span>
+      {% elif trade.status == 'WAITING_MEETING' %}
+        <span class="badge badge-info">📅 بانتظار موعد اللقاء</span>
+      {% elif trade.status == 'MEETING_CONFIRMED' %}
+        <span class="badge badge-success">✅ تم تأكيد اللقاء</span>
+      {% else %}
+        <span class="badge badge-neutral">{{ trade.status }}</span>
+      {% endif %}
+    </div>
+  </div>
 
-<title>صفقة مقابلة شخصية</title>
+  <div class="card">
+    <div style="margin-top:var(--sp-2);">
+      <div class="info-row">
+        <span class="info-label">👤 المشتري</span>
+        <span class="info-value">{{ trade.buyer }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">👤 البائع</span>
+        <span class="info-value">{{ trade.seller }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">💰 الكمية</span>
+        <span class="info-value" style="color:var(--accent-light);">{{ trade.amount }} USDT</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">💵 السعر</span>
+        <span class="info-value">{{ trade.price }} ₪</span>
+      </div>
+    </div>
+  </div>
 
-<style>
+  <!-- Actions -->
+  <div style="display:grid;gap:var(--sp-3);margin-top:var(--sp-4);">
+    {% if trade.status == "WAITING_MEETING" %}
+    <a href="/confirm_meeting/{{ trade.id }}" class="btn btn-primary btn-block btn-lg">
+      ✅ تأكيد موعد اللقاء
+    </a>
+    {% endif %}
 
-body{
-    background:#0b1220;
-    color:white;
-    font-family:tahoma;
-    padding:20px;
-}
+    {% if trade.status == "MEETING_CONFIRMED" %}
+    <a href="/complete_cash/{{ trade.id }}" class="btn btn-success btn-block btn-lg">
+      ✅ تم إتمام الصفقة
+    </a>
+    {% endif %}
 
-.box{
-    max-width:600px;
-    margin:auto;
-    background:#1e293b;
-    padding:25px;
-    border-radius:20px;
-}
+    <a href="/cash_dispute/{{ trade.id }}" class="btn btn-danger btn-block">
+      ⚠️ فتح نزاع
+    </a>
 
-
-h2{
-    text-align:center;
-    color:#22c55e;
-}
-
-
-.item{
-    background:#334155;
-    padding:12px;
-    border-radius:10px;
-    margin:10px 0;
-}
-
-
-.btn{
-    display:block;
-    text-align:center;
-    padding:12px;
-    border-radius:10px;
-    color:white;
-    text-decoration:none;
-    margin-top:12px;
-}
-
-
-.green{
-    background:#16a34a;
-}
-
-
-.blue{
-    background:#2563eb;
-}
-
-
-.red{
-    background:#dc2626;
-}
-
-
-.gray{
-    background:#475569;
-}
-
-
-.status{
-    text-align:center;
-    font-size:18px;
-    color:#22c55e;
-}
-
-</style>
-
-</head>
-
-
-<body>
-
-
-<div class="box">
-
-
-<h2>
-🤝 طلب مقابلة شخصية
-</h2>
-
-
-<div class="status">
-
-حالة الطلب:
-{{trade.status}}
+    <a href="/" class="btn btn-ghost btn-block">🏠 الرئيسية</a>
+  </div>
 
 </div>
-
-
-
-<div class="item">
-
-👤 المشتري:
-
-<b>
-{{trade.buyer}}
-</b>
-
-</div>
-
-
-
-<div class="item">
-
-👤 البائع:
-
-<b>
-{{trade.seller}}
-</b>
-
-</div>
-
-
-
-<div class="item">
-
-💰 الكمية:
-
-<b>
-{{trade.amount}} USDT
-</b>
-
-</div>
-
-
-
-<div class="item">
-
-💵 السعر:
-
-<b>
-{{trade.price}}
-</b>
-
-</div>
-
-
-
-{% if trade.status == "WAITING_MEETING" %}
-
-
-<a class="btn blue" href="/confirm_meeting/{{trade.id}}">
-
-✅ تأكيد موعد اللقاء
-
-</a>
-
-
-{% endif %}
-
-
-
-
-{% if trade.status == "MEETING_CONFIRMED" %}
-
-
-<a class="btn green" href="/complete_cash/{{trade.id}}">
-
-✅ تم إتمام الصفقة
-
-</a>
-
-
-{% endif %}
-
-
-
-
-<a class="btn red" href="/cash_dispute/{{trade.id}}">
-
-⚠️ فتح نزاع
-
-</a>
-
-
-
-<a class="btn gray" href="/">
-
-🏠 الرئيسية
-
-</a>
-
-
-
-</div>
-
-
-</body>
-
-</html>
+{% endblock %}

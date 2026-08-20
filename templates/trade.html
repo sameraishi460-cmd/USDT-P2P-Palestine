@@ -1,855 +1,171 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-
-<head>
-
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>تفاصيل الصفقة - USDT P2P Palestine</title>
-
-
-<style>
-
-*{
-box-sizing:border-box;
-}
-
-
-body{
-
-margin:0;
-padding:15px;
-background:#050816;
-color:white;
-font-family:tahoma,Arial;
-
-}
-
-
-
-.container{
-
-max-width:600px;
-margin:auto;
-
-}
-
-
-
-.header{
-
-background:linear-gradient(135deg,#16a34a,#065f46);
-padding:25px;
-border-radius:25px;
-text-align:center;
-margin-bottom:20px;
-
-}
-
-
-
-.logo{
-
-font-size:24px;
-font-weight:bold;
-
-}
-
-
-
-.card{
-
-background:#111827;
-border-radius:22px;
-padding:20px;
-margin-bottom:18px;
-border:1px solid #263244;
-
-}
-
-
-
-.title{
-
-font-size:20px;
-color:#22c55e;
-font-weight:bold;
-margin-bottom:15px;
-
-}
-
-
-
-.info{
-
-background:#020617;
-padding:18px;
-border-radius:15px;
-line-height:2;
-
-}
-
-
-
-.payment{
-
-background:#064e3b;
-padding:18px;
-border-radius:15px;
-line-height:2;
-
-}
-
-
-
-.status{
-
-display:inline-block;
-padding:8px 15px;
-border-radius:20px;
-background:#166534;
-color:#bbf7d0;
-font-weight:bold;
-
-}
-
-
-
-.row{
-
-display:flex;
-justify-content:space-between;
-padding:10px 0;
-border-bottom:1px solid #1e293b;
-
-}
-
-
-
-.btn{
-
-display:block;
-width:100%;
-padding:15px;
-border-radius:15px;
-text-align:center;
-text-decoration:none;
-color:white;
-border:0;
-margin-top:12px;
-font-size:17px;
-cursor:pointer;
-
-}
-
-
-
-.green{
-
-background:#16a34a;
-
-}
-
-
-
-.blue{
-
-background:#2563eb;
-
-}
-
-
-
-.red{
-
-background:#dc2626;
-
-}
-
-
-
-.gray{
-
-background:#475569;
-
-}
-
-
-
-textarea,input{
-
-width:100%;
-padding:14px;
-border-radius:14px;
-background:#020617;
-color:white;
-border:1px solid #334155;
-margin-top:10px;
-
-}
-
-
-
-.message{
-
-background:#020617;
-padding:15px;
-border-radius:15px;
-margin-bottom:10px;
-
-}
-
-
-
-.time{
-
-font-size:12px;
-color:#94a3b8;
-
-}
-
-
-
-.proof{
-
-background:#020617;
-padding:15px;
-border-radius:15px;
-text-align:center;
-
-}
-
-
-
-.proof img{
-
-max-width:100%;
-border-radius:15px;
-margin-top:15px;
-
-}
-
-
-.warning{
-
-background:#451a03;
-color:#fed7aa;
-padding:15px;
-border-radius:15px;
-
-}
-
-
-</style>
-
-</head>
-
-
-<body>
-
-
-<div class="container">
-
-
-<div class="header">
-
-
-<div class="logo">
-
-🇵🇸 USDT P2P Palestine
+{% extends "base.html" %}
+{% block title %}تفاصيل الصفقة - USDT P2P Palestine{% endblock %}
+
+{% block content %}
+<div class="container container-narrow">
+
+  <div class="page-header">
+    <h2>💱 تفاصيل الصفقة #{{ trade.id }}</h2>
+  </div>
+
+  <!-- ===== Progress Steps ===== -->
+  <div class="card">
+    <div class="steps">
+      <div class="step done">
+        <div class="step-dot">✓</div>
+        <div class="step-label">إنشاء</div>
+      </div>
+      <div class="step-line {% if trade.status in ['PAYMENT_SENT','COMPLETED'] %}done{% elif trade.status == 'PENDING' %}active{% endif %}"></div>
+      <div class="step {% if trade.status == 'PAYMENT_SENT' %}active{% elif trade.status == 'COMPLETED' %}done{% endif %}">
+        <div class="step-dot">{% if trade.status == 'COMPLETED' %}✓{% else %}2{% endif %}</div>
+        <div class="step-label">الدفع</div>
+      </div>
+      <div class="step-line {% if trade.status == 'COMPLETED' %}done{% endif %}"></div>
+      <div class="step {% if trade.status == 'COMPLETED' %}done{% endif %}">
+        <div class="step-dot">{% if trade.status == 'COMPLETED' %}✓{% else %}3{% endif %}</div>
+        <div class="step-label">التأكيد</div>
+      </div>
+      <div class="step-line {% if trade.status == 'COMPLETED' %}done{% endif %}"></div>
+      <div class="step {% if trade.status == 'COMPLETED' %}done{% endif %}">
+        <div class="step-dot">{% if trade.status == 'COMPLETED' %}✓{% else %}4{% endif %}</div>
+        <div class="step-label">اكتمال</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Trade Info ===== -->
+  <div class="card">
+    <div class="card-title">📌 معلومات الصفقة</div>
+    <div style="margin-top:var(--sp-3);">
+      <div class="info-row">
+        <span class="info-label">👤 البائع</span>
+        <span class="info-value">{{ trade.seller }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">👤 المشتري</span>
+        <span class="info-value">{{ trade.buyer }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">💰 الكمية</span>
+        <span class="info-value" style="color:var(--accent-light);">{{ trade.amount }} USDT</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">💵 السعر</span>
+        <span class="info-value">{{ trade.price }} ₪</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">📌 الحالة</span>
+        <span>
+          {% if trade.status == 'PENDING' %}
+            <span class="badge badge-warning">⏳ بانتظار الدفع</span>
+          {% elif trade.status == 'PAYMENT_SENT' %}
+            <span class="badge badge-info">💳 تم إرسال الدفع</span>
+          {% elif trade.status == 'COMPLETED' %}
+            <span class="badge badge-success">✅ مكتملة</span>
+          {% else %}
+            <span class="badge badge-neutral">{{ trade.status }}</span>
+          {% endif %}
+        </span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">🔒 الحماية</span>
+        <span class="badge badge-info">{{ trade.escrow_status }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Payment Proof ===== -->
+  <div class="card">
+    <div class="card-title">📤 إثبات الدفع</div>
+
+    {% if current_user == trade.buyer %}
+      {% if trade.payment_proof %}
+        <div class="alert alert-success mt-3">✅ تم رفع إثبات الدفع</div>
+        <div style="margin-top:var(--sp-3);text-align:center;">
+          <img src="/uploads/{{ trade.payment_proof }}" style="max-width:100%;border-radius:var(--radius-lg);border:1px solid var(--border);">
+          <a href="/uploads/{{ trade.payment_proof }}" target="_blank" class="btn btn-ghost btn-sm mt-3">🔍 فتح الصورة</a>
+        </div>
+      {% else %}
+        <form action="/upload_payment/{{ trade.id }}" method="post" enctype="multipart/form-data" class="mt-3">
+          <div class="form-group">
+            <label class="form-label">اختر صورة إثبات الدفع</label>
+            <input class="form-input" type="file" name="proof" accept="image/*" required style="padding:var(--sp-2);">
+          </div>
+          <button type="submit" class="btn btn-primary btn-block">📤 رفع إثبات الدفع</button>
+        </form>
+      {% endif %}
+    {% endif %}
+
+    {% if current_user == trade.seller %}
+      {% if trade.payment_proof %}
+        <div class="alert alert-info mt-3">✅ وصل إثبات الدفع من المشتري</div>
+        <div style="margin-top:var(--sp-3);text-align:center;">
+          <img src="/uploads/{{ trade.payment_proof }}" style="max-width:100%;border-radius:var(--radius-lg);border:1px solid var(--border);">
+          <a href="/uploads/{{ trade.payment_proof }}" target="_blank" class="btn btn-ghost btn-sm mt-3">🔍 مشاهدة الإثبات</a>
+        </div>
+      {% else %}
+        <div class="alert alert-warning mt-3">⏳ بانتظار إثبات الدفع من المشتري</div>
+      {% endif %}
+    {% endif %}
+  </div>
+
+  <!-- ===== Chat ===== -->
+  <div class="card">
+    <div class="card-title">💬 محادثة الصفقة</div>
+
+    <div style="max-height:300px;overflow-y:auto;margin-top:var(--sp-3);margin-bottom:var(--sp-3);">
+      {% for m in messages %}
+      <div class="message {% if m.sender == current_user %}message-own{% endif %}">
+        <div class="message-sender">{{ m.sender }}</div>
+        <div class="message-text">{{ m.text }}</div>
+        <div class="message-time">{{ m.created }}</div>
+      </div>
+      {% else %}
+      <div class="empty-state" style="padding:var(--sp-4);">
+        <div style="color:var(--text-muted);font-size:0.9rem;">لا توجد رسائل بعد</div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <form method="post">
+      <div class="form-group">
+        <textarea class="form-textarea" name="message" placeholder="اكتب رسالة للبائع أو المشتري..." style="min-height:70px;"></textarea>
+      </div>
+      <input type="hidden" name="receiver" value="{{ trade.seller if current_user == trade.buyer else trade.buyer }}">
+      <button type="submit" class="btn btn-success btn-block">📨 إرسال الرسالة</button>
+    </form>
+  </div>
+
+  <!-- ===== Actions ===== -->
+  <div class="card">
+    <div class="card-title">⚙️ إجراءات الصفقة</div>
+
+    {% if trade.status == "PENDING" and current_user == trade.buyer %}
+    <a href="/confirm_payment/{{ trade.id }}" class="btn btn-success btn-block mt-3">
+      ✅ تم إرسال الدفع
+    </a>
+    {% endif %}
+
+    {% if trade.status == "PAYMENT_SENT" and current_user == trade.seller and trade.payment_proof %}
+    <a href="/seller_confirm/{{ trade.id }}" class="btn btn-success btn-block mt-3">
+      ✅ تأكيد استلام المبلغ وتحرير USDT
+    </a>
+    {% endif %}
+
+    {% if trade.status == "COMPLETED" %}
+    <div class="alert alert-success mt-3">
+      🎉 اكتملت الصفقة بنجاح — تم تحرير USDT
+    </div>
+    {% endif %}
+
+    {% if trade.status != "COMPLETED" %}
+    <a href="/trade_status/{{ trade.id }}/DISPUTE" class="btn btn-danger btn-block mt-3">
+      ⚠️ فتح نزاع
+    </a>
+    {% endif %}
+
+    <a href="/" class="btn btn-ghost btn-block mt-3">⬅️ الرجوع</a>
+  </div>
 
 </div>
-
-
-<h2>
-
-💱 تفاصيل الصفقة
-
-</h2>
-
-
-</div>
-
-
-
-<div class="card">
-
-
-<div class="title">
-
-📌 معلومات الصفقة
-
-</div>
-
-
-<div class="info">
-
-
-<div class="row">
-
-<span>👤 البائع</span>
-
-<b>{{trade.seller}}</b>
-
-</div>
-
-
-<div class="row">
-
-<span>👤 المشتري</span>
-
-<b>{{trade.buyer}}</b>
-
-</div>
-
-
-<div class="row">
-
-<span>💰 الكمية</span>
-
-<b>{{trade.amount}} USDT</b>
-
-</div>
-
-
-<div class="row">
-
-<span>💵 السعر</span>
-
-<b>{{trade.price}} ₪</b>
-
-</div>
-
-
-<div class="row">
-
-<span>📌 الحالة</span>
-
-<span class="status">
-
-{{trade.status}}
-
-</span>
-
-</div>
-
-
-</div>
-
-
-</div>
-
-
-<!-- بيانات الدفع -->
-
-<div class="card">
-
-
-<div class="title">
-
-💳 بيانات الدفع للبائع
-
-</div>
-
-
-
-<div class="payment">
-
-
-👤 البائع:
-
-<br>
-
-<b>{{seller_info.username}}</b>
-
-
-<br><br>
-
-
-🏦 البنك:
-
-<br>
-
-<b>
-{{seller_info.bank or "غير مضاف"}}
-</b>
-
-
-
-<br><br>
-
-
-💳 IBAN:
-
-<br>
-
-<b>
-{{seller_info.iban or "غير مضاف"}}
-</b>
-
-
-
-<br><br>
-
-
-📱 الجوال:
-
-<br>
-
-<b>
-{{seller_info.phone or "غير مضاف"}}
-</b>
-
-
-
-<br><br>
-
-
-💵 طريقة الدفع:
-
-<br>
-
-<b>
-{{seller_info.payment_method or "تحويل بنكي"}}
-</b>
-
-
-
-</div>
-
-
-</div>
-
-
-
-
-
-
-
-<!-- إثبات الدفع -->
-
-
-<div class="card">
-
-
-<div class="title">
-
-📤 إثبات الدفع
-
-</div>
-
-
-
-
-{% if current_user == trade.buyer %}
-
-
-
-{% if trade.payment_proof %}
-
-
-<div class="proof">
-
-
-✅ تم رفع إثبات الدفع
-
-
-<br>
-
-
-<img src="/uploads/{{trade.payment_proof}}">
-
-
-<a class="btn gray"
-href="/uploads/{{trade.payment_proof}}"
-target="_blank">
-
-🔍 فتح الصورة
-
-</a>
-
-
-</div>
-
-
-
-{% else %}
-
-
-
-<form action="/upload_payment/{{trade.id}}" 
-method="post"
-enctype="multipart/form-data">
-
-
-<input
-
-type="file"
-
-name="proof"
-
-accept="image/*"
-
-required>
-
-
-<button class="btn blue">
-
-📤 رفع إثبات الدفع
-
-</button>
-
-
-</form>
-
-
-
-{% endif %}
-
-
-
-{% endif %}
-
-
-
-
-
-
-{% if current_user == trade.seller %}
-
-
-
-{% if trade.payment_proof %}
-
-
-<div class="proof">
-
-
-✅ وصل إثبات الدفع من المشتري
-
-
-<br>
-
-
-<img src="/uploads/{{trade.payment_proof}}">
-
-
-
-<a class="btn gray"
-href="/uploads/{{trade.payment_proof}}"
-target="_blank">
-
-🔍 مشاهدة الإثبات
-
-</a>
-
-
-
-</div>
-
-
-
-{% else %}
-
-
-
-<div class="warning">
-
-⏳ بانتظار إثبات الدفع من المشتري
-
-</div>
-
-
-
-{% endif %}
-
-
-
-{% endif %}
-
-
-
-</div>
-
-
-
-
-
-
-
-
-<!-- المحادثة -->
-
-
-<div class="card">
-
-
-<div class="title">
-
-💬 محادثة الصفقة
-
-</div>
-
-
-
-
-{% for m in messages %}
-
-
-
-<div class="message">
-
-
-<b>
-
-{{m.sender}}
-
-</b>
-
-
-<br>
-
-
-{{m.text}}
-
-
-<br>
-
-
-<span class="time">
-
-{{m.created}}
-
-</span>
-
-
-
-</div>
-
-
-
-{% else %}
-
-
-<div class="warning">
-
-لا توجد رسائل بعد
-
-</div>
-
-
-{% endfor %}
-
-
-
-
-
-
-
-<form method="post">
-
-
-<textarea
-
-name="message"
-
-placeholder="اكتب رسالة للبائع أو المشتري..."
-
-></textarea>
-
-
-
-<button class="btn green">
-
-📨 إرسال الرسالة
-
-</button>
-
-
-
-</form>
-
-
-</div>
-
-
-
-
-
-
-
-
-<!-- إجراءات الصفقة -->
-
-
-<div class="card">
-
-
-<div class="title">
-
-⚙️ إجراءات الصفقة
-
-</div>
-
-
-
-
-
-{% if trade.status == "PENDING" 
-and current_user == trade.buyer %}
-
-
-
-<a class="btn green"
-
-href="/confirm_payment/{{trade.id}}">
-
-✅ تم إرسال الدفع
-
-</a>
-
-
-
-{% endif %}
-
-
-
-
-
-
-
-
-{% if trade.status == "PAYMENT_SENT" 
-and current_user == trade.seller %}
-
-
-
-<form method="post"
-action="/finish_trade/{{trade.id}}">
-
-
-<input
-
-type="text"
-
-name="tx_hash"
-
-placeholder="Transaction Hash لشبكة BSC"
-
-required>
-
-
-<button class="btn green">
-
-🔗 تحقق وتحرير USDT
-
-</button>
-
-
-
-</form>
-
-
-
-{% endif %}
-
-
-
-
-
-
-
-
-{% if trade.status == "PAYMENT_SENT" 
-and current_user == trade.seller 
-and trade.payment_proof %}
-
-
-
-<a class="btn green"
-
-href="/seller_confirm/{{trade.id}}">
-
-✅ تأكيد استلام المبلغ
-
-</a>
-
-
-
-{% endif %}
-
-
-
-
-
-
-
-
-{% if trade.status == "COMPLETED" %}
-
-
-
-<div class="payment">
-
-🎉 اكتملت الصفقة بنجاح
-
-<br>
-
-🔒 تم تحرير USDT
-
-</div>
-
-
-
-{% endif %}
-
-
-
-
-
-
-
-
-{% if trade.status != "COMPLETED" %}
-
-
-<a class="btn red"
-
-href="/trade_status/{{trade.id}}/DISPUTE">
-
-⚠️ فتح نزاع
-
-</a>
-
-
-{% endif %}
-
-
-
-
-
-
-<a class="btn gray"
-
-href="/">
-
-⬅️ الرجوع
-
-</a>
-
-
-
-
-</div>
-
-
-
-
-
-</div>
-
-
-</body>
-
-</html>
+{% endblock %}

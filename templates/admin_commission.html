@@ -1,108 +1,32 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
+{% extends "base.html" %}
+{% block title %}تعديل العمولة - USDT P2P Palestine{% endblock %}
 
-<head>
+{% block content %}
+<div class="container container-narrow">
 
-<meta charset="UTF-8">
+  <a href="/admin" class="back-link mb-4">⬅️ الرجوع للوحة الأدمن</a>
 
-<title>تعديل العمولة</title>
+  <div class="page-header">
+    <h2>⚙️ تعديل العمولة</h2>
+  </div>
 
-<style>
+  <form method="POST" action="/admin_commission" class="card">
 
-body{
-    background:#0f172a;
-    color:white;
-    font-family:tahoma;
-}
+    <div class="form-group">
+      <label class="form-label">💰 عمولة صفقات USDT (%)</label>
+      <input class="form-input" type="number" step="0.1" name="trade_fee" value="{{ commission.trade_fee }}">
+      <div class="form-help">النسبة المئوية المحصلة من كل صفقة</div>
+    </div>
 
-.box{
+    <div class="form-group">
+      <label class="form-label">🤝 عمولة إعلان المقابلة الشخصية (USDT)</label>
+      <input class="form-input" type="number" step="0.1" name="cash_fee" value="{{ commission.cash_fee }}">
+      <div class="form-help">المبلغ المحصل لكل إعلان مقابلة</div>
+    </div>
 
-    width:90%;
-    max-width:400px;
-    margin:50px auto;
-    background:#1e293b;
-    padding:25px;
-    border-radius:20px;
+    <button type="submit" class="btn btn-success btn-block btn-lg mt-4">💾 حفظ التعديل</button>
 
-}
-
-
-input,button{
-
-    width:100%;
-    padding:12px;
-    margin:10px 0;
-    border-radius:10px;
-    border:0;
-
-}
-
-
-button{
-
-    background:#16a34a;
-    color:white;
-    font-size:16px;
-
-}
-
-
-</style>
-
-</head>
-
-
-<body>
-
-
-<div class="box">
-
-
-<h2>
-⚙️ تعديل العمولة
-</h2>
-
-
-<form method="POST" action="/admin_commission">
-
-
-<label>
-عمولة صفقات USDT %
-</label>
-
-
-<input 
-type="number"
-step="0.1"
-name="trade_fee"
-value="{{commission.trade_fee}}"
->
-
-
-<label>
-عمولة إعلان المقابلة الشخصية USDT
-</label>
-
-
-<input 
-type="number"
-step="0.1"
-name="cash_fee"
-value="{{commission.cash_fee}}"
->
-
-
-<button>
-💾 حفظ التعديل
-</button>
-
-
-</form>
-
+  </form>
 
 </div>
-
-
-</body>
-
-</html>
+{% endblock %}

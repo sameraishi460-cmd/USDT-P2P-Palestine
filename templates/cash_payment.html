@@ -1,251 +1,45 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-
-<head>
-
-<meta charset="UTF-8">
-
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>دفع إعلان مقابلة شخصية</title>
-
-
-<style>
-
-body{
-
-background:#070d18;
-color:white;
-font-family:tahoma;
-padding:20px;
-
-}
-
-
-
-.box{
-
-max-width:500px;
-margin:auto;
-background:#111827;
-padding:25px;
-border-radius:25px;
-
-}
-
-
-
-h2{
-
-text-align:center;
-color:#22c55e;
-
-}
-
-
-
-.info{
-
-background:#1e293b;
-padding:15px;
-border-radius:15px;
-margin:15px 0;
-
-}
-
-
-
-.wallet{
-
-background:#334155;
-padding:12px;
-border-radius:12px;
-word-break:break-all;
-
-}
-
-
-
-button{
-
-width:100%;
-padding:14px;
-border:0;
-border-radius:12px;
-background:#16a34a;
-color:white;
-font-size:17px;
-margin-top:15px;
-
-}
-
-
-
-.copy{
-
-background:#2563eb;
-
-}
-
-
-
-.back{
-
-display:block;
-text-align:center;
-margin-top:15px;
-background:#475569;
-padding:12px;
-border-radius:12px;
-color:white;
-text-decoration:none;
-
-}
-
-
-</style>
-
-
-</head>
-
-
-<body>
-
-
-<div class="box">
-
-
-
-<h2>
-
-💳 دفع إعلان مقابلة شخصية
-
-</h2>
-
-
-
-
-<div class="info">
-
-رسوم الإعلان:
-
-<br><br>
-
-<b>
-
-{{fee}} USDT
-
-</b>
+{% extends "base.html" %}
+{% block title %}دفع إعلان مقابلة شخصية{% endblock %}
+
+{% block content %}
+<div class="container container-narrow">
+
+  <a href="/" class="back-link mb-4">⬅️ الرجوع للرئيسية</a>
+
+  <div class="page-header">
+    <h2>💳 دفع إعلان مقابلة شخصية</h2>
+  </div>
+
+  <!-- Fee -->
+  <div class="card" style="text-align:center;">
+    <div style="color:var(--text-muted);font-size:0.85rem;">رسوم الإعلان</div>
+    <div class="price-display" style="font-size:1.5rem;">
+      {{ fee }} <span class="price-currency">USDT</span>
+    </div>
+  </div>
+
+  <!-- Platform Wallet -->
+  <div class="card">
+    <div class="card-title">🏦 أرسل الدفع إلى محفظة المنصة</div>
+    <div class="wallet-address mt-3" id="payWallet">{{ wallet }}</div>
+    <button class="copy-btn mt-3" onclick="copyText(document.getElementById('payWallet').textContent, this)">
+      📋 نسخ عنوان المحفظة
+    </button>
+  </div>
+
+  <!-- Confirm Payment -->
+  <form method="POST" action="/cash_payment_sent" class="card">
+    <input type="hidden" name="amount" value="{{ amount }}">
+    <input type="hidden" name="price" value="{{ price }}">
+    <input type="hidden" name="city" value="{{ city }}">
+    <input type="hidden" name="location" value="{{ location }}">
+    <input type="hidden" name="notes" value="{{ notes }}">
+    <input type="hidden" name="plan" value="{{ plan }}">
+
+    <button type="submit" class="btn btn-success btn-block btn-lg">
+      ✅ تم إرسال الدفع
+    </button>
+  </form>
 
 </div>
-
-
-
-
-
-<div class="info">
-
-أرسل الدفع إلى محفظة المنصة:
-
-<br><br>
-
-
-<div class="wallet" id="wallet">
-
-
-{{wallet}}
-
-
-</div>
-
-
-
-<button class="copy" onclick="copyWallet()">
-
-📋 نسخ عنوان المحفظة
-
-</button>
-
-
-
-</div>
-
-
-
-
-
-
-
-<form method="POST" action="/cash_payment_sent">
-
-
-
-<input type="hidden" name="amount" value="{{amount}}">
-
-<input type="hidden" name="price" value="{{price}}">
-
-<input type="hidden" name="city" value="{{city}}">
-
-<input type="hidden" name="location" value="{{location}}">
-
-<input type="hidden" name="notes" value="{{notes}}">
-
-<input type="hidden" name="plan" value="{{plan}}">
-
-
-
-
-
-<button>
-
-✅ تم إرسال الدفع
-
-</button>
-
-
-
-</form>
-
-
-
-
-<a class="back" href="/">
-
-⬅️ الرجوع للرئيسية
-
-</a>
-
-
-
-
-</div>
-
-
-
-
-
-<script>
-
-
-function copyWallet(){
-
-
-let text=document.getElementById("wallet").innerText;
-
-
-navigator.clipboard.writeText(text);
-
-
-alert("تم نسخ عنوان المحفظة ✅");
-
-
-}
-
-
-</script>
-
-
-
-</body>
-
-</html>
+{% endblock %}

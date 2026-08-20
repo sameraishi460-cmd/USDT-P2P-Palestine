@@ -1,190 +1,47 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-
-<head>
-
-<meta charset="UTF-8">
-
-<title>تعديل الملف الشخصي</title>
-
-<style>
-
-body{
-background:#050b16;
-color:white;
-font-family:tahoma;
-padding:20px;
-}
-
-.container{
-max-width:500px;
-margin:auto;
-}
-
-.card{
-background:#111827;
-padding:25px;
-border-radius:20px;
-}
-
-h2{
-text-align:center;
-color:#22c55e;
-}
-
-
-input,select{
-
-width:100%;
-padding:15px;
-margin:10px 0;
-border-radius:12px;
-border:0;
-font-size:16px;
-
-}
-
-
-button{
-
-width:100%;
-padding:15px;
-background:#16a34a;
-color:white;
-border:0;
-border-radius:15px;
-font-size:18px;
-
-}
-
-
-.back{
-
-display:block;
-margin-top:15px;
-background:#475569;
-padding:15px;
-text-align:center;
-border-radius:15px;
-color:white;
-text-decoration:none;
-
-}
-
-</style>
-
-</head>
-
-
-<body>
-
-
-<div class="container">
-
-
-<div class="card">
-
-
-<h2>
-💳 بيانات الدفع
-</h2>
-
-
-<form method="POST">
-
-
-<label>
-📱 رقم الجوال
-</label>
-
-<input 
-type="text"
-name="phone"
-value="{{user.phone or ''}}"
-placeholder="مثال: 059xxxxxxx"
-required
->
-
-
-
-<label>
-🏦 اسم البنك
-</label>
-
-<input 
-type="text"
-name="bank"
-value="{{user.bank or ''}}"
-placeholder="مثال: بنك فلسطين"
-required
->
-
-
-
-<label>
-💳 رقم الحساب / IBAN
-</label>
-
-
-<input 
-type="text"
-name="iban"
-value="{{user.iban or ''}}"
-placeholder="رقم الحساب أو IBAN"
-required
->
-
-
-
-
-<label>
-💵 طريقة الدفع
-</label>
-
-
-<select name="payment_method">
-
-
-<option value="تحويل بنكي">
-تحويل بنكي
-</option>
-
-
-<option value="محفظة إلكترونية">
-محفظة إلكترونية
-</option>
-
-
-<option value="نقدي">
-نقدي
-</option>
-
-
-</select>
-
-
-
-<button>
-💾 حفظ البيانات
-</button>
-
-
-</form>
-
-
-
-<a class="back" href="/profile">
-⬅️ رجوع
-</a>
-
-
+{% extends "base.html" %}
+{% block title %}تعديل الملف الشخصي{% endblock %}
+
+{% block content %}
+<div class="container container-narrow">
+
+  <a href="/profile" class="back-link mb-4">⬅️ رجوع للملف الشخصي</a>
+
+  <div class="page-header">
+    <h2>💳 بيانات الدفع</h2>
+    <p>حدّث معلوماتك الشخصية وبيانات الدفع</p>
+  </div>
+
+  <form method="POST" class="card">
+
+    <div class="form-group">
+      <label class="form-label">📱 رقم الجوال</label>
+      <input class="form-input" type="text" name="phone" value="{{ user.phone or '' }}" placeholder="مثال: 059xxxxxxx" required>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">🏦 اسم البنك</label>
+      <input class="form-input" type="text" name="bank" value="{{ user.bank or '' }}" placeholder="مثال: بنك فلسطين" required>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">💳 رقم الحساب / IBAN</label>
+      <input class="form-input" type="text" name="iban" value="{{ user.iban or '' }}" placeholder="رقم الحساب أو IBAN" required>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">💵 طريقة الدفع</label>
+      <select class="form-select" name="payment_method">
+        <option value="تحويل بنكي" {% if user.payment_method == 'تحويل بنكي' %}selected{% endif %}>تحويل بنكي</option>
+        <option value="محفظة إلكترونية" {% if user.payment_method == 'محفظة إلكترونية' %}selected{% endif %}>محفظة إلكترونية</option>
+        <option value="نقدي" {% if user.payment_method == 'نقدي' %}selected{% endif %}>نقدي</option>
+      </select>
+    </div>
+
+    <button type="submit" class="btn btn-success btn-block btn-lg mt-4">
+      💾 حفظ البيانات
+    </button>
+
+  </form>
 
 </div>
-
-
-</div>
-
-
-</body>
-
-</html>
+{% endblock %}

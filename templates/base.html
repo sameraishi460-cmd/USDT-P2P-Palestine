@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#0a0e1a">
+  <title>{% block title %}USDT P2P Palestine{% endblock %}</title>
+  <link rel="stylesheet" href="/static/design-system.css">
+  {% block head %}{% endblock %}
+</head>
+<body>
+
+<!-- ===== Navbar ===== -->
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a href="/" class="navbar-brand">
+      🇵🇸 <span>USDT</span> P2P
+    </a>
+    <div class="navbar-links">
+      {% if session.get('user') %}
+        <a href="/dashboard">لوحة التحكم</a>
+        <a href="/market">السوق</a>
+        <a href="/wallet">المحفظة</a>
+        <a href="/trading_bot">🤖 بوت</a>
+        <a href="/notifications">🔔</a>
+        <a href="/profile" class="avatar" style="width:34px;height:34px;font-size:0.75rem;">{{ session['user'][0] }}</a>
+        <a href="/logout" class="btn-nav" style="background:var(--bg-elevated);color:var(--text-secondary);">خروج</a>
+      {% else %}
+        <a href="/login" class="btn-nav" style="background:var(--bg-elevated);">دخول</a>
+        <a href="/register" class="btn-nav-accent btn-nav">حساب جديد</a>
+      {% endif %}
+    </div>
+  </div>
+</nav>
+
+<!-- ===== Flash Messages ===== -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+  <div class="flash-container" id="flashContainer">
+    {% for category, message in messages %}
+    <div class="flash flash-{{ category }}" onclick="this.remove()">
+      {% if category == 'success' %}✅{% elif category == 'danger' %}❌{% elif category == 'warning' %}⚠️{% else %}ℹ️{% endif %}
+      {{ message }}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+{% endwith %}
+
+<!-- ===== Content ===== -->
+<main>
+  {% block content %}{% endblock %}
+</main>
+
+<!-- ===== Bottom Navigation (Mobile) ===== -->
+{% if session.get('user') %}
+<nav class="bottom-nav" aria-label="التنقل السفلي">
+  <div class="bottom-nav-inner">
+    <a href="/" class="{% if request.path == '/' %}active{% endif %}">
+      <span class="nav-icon">🏠</span>
+      الرئيسية
+    </a>
+    <a href="/market" class="{% if request.path == '/market' %}active{% endif %}">
+      <span class="nav-icon">💰</span>
+      السوق
+    </a>
+    <a href="/create_ad" class="{% if request.path == '/create_ad' %}active{% endif %}">
+      <span class="nav-icon">➕</span>
+      بيع
+    </a>
+    <a href="/notifications" class="{% if request.path == '/notifications' %}active{% endif %}">
+      <span class="nav-icon">🔔</span>
+      تنبيهات
+    </a>
+    <a href="/profile" class="{% if request.path == '/profile' %}active{% endif %}">
+      <span class="nav-icon">👤</span>
+      حسابي
+    </a>
+  </div>
+</nav>
+{% endif %}
+
+<!-- ===== Scripts ===== -->
+<script>
+// Auto-dismiss flash messages
+document.addEventListener('DOMContentLoaded', function() {
+  var flashes = document.querySelectorAll('.flash');
+  flashes.forEach(function(flash) {
+    setTimeout(function() {
+      flash.style.opacity = '0';
+      flash.style.transform = 'translateY(-12px)';
+      flash.style.transition = 'all 0.3s ease';
+      setTimeout(function() { flash.remove(); }, 300);
+    }, 4000);
+  });
+});
+
+// Copy to clipboard utility
+function copyText(text, btn) {
+  navigator.clipboard.writeText(text).then(function() {
+    if (btn) {
+      btn.classList.add('copied');
+      var orig = btn.innerHTML;
+      btn.innerHTML = '✅ تم النسخ';
+      setTimeout(function() {
+        btn.classList.remove('copied');
+        btn.innerHTML = orig;
+      }, 2000);
+    } else {
+      showToast('✅ تم النسخ');
+    }
+  });
+}
+
+// Toast notification
+function showToast(msg) {
+  var existing = document.querySelector('.toast');
+  if (existing) existing.remove();
+  var t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  t.style.display = 'block';
+  document.body.appendChild(t);
+  setTimeout(function() {
+    t.style.opacity = '0';
+    setTimeout(function() { t.remove(); }, 300);
+  }, 2500);
+}
+</script>
+
+{% block scripts %}{% endblock %}
+
+</body>
+</html>

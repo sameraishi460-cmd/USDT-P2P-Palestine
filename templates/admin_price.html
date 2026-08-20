@@ -1,56 +1,30 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
+{% extends "base.html" %}
+{% block title %}تعديل السعر - USDT P2P Palestine{% endblock %}
 
-<head>
-<title>تعديل السعر</title>
-</head>
+{% block content %}
+<div class="container container-narrow">
 
+  <a href="/admin" class="back-link mb-4">⬅️ الرجوع للوحة الأدمن</a>
 
-<body>
+  <div class="page-header">
+    <h2>💲 تعديل أسعار السوق</h2>
+  </div>
 
+  <form method="POST" class="card">
 
-<h2>
-تعديل أسعار السوق
-</h2>
+    <div class="form-group">
+      <label class="form-label">💵 سعر الدولار مقابل الشيكل</label>
+      <input class="form-input" type="number" step="0.01" name="usd_ils" value="{{ price.usd_ils }}">
+    </div>
 
+    <div class="form-group">
+      <label class="form-label">🟢 سعر USDT مقابل الشيكل</label>
+      <input class="form-input" type="number" step="0.01" name="usdt_ils" value="{{ price.usdt_ils }}">
+    </div>
 
-<form method="POST">
+    <button type="submit" class="btn btn-success btn-block btn-lg mt-4">💾 حفظ السعر</button>
 
+  </form>
 
-<label>
-سعر الدولار مقابل الشيكل
-</label>
-
-<input 
-name="usd_ils"
-value="{{price.usd_ils}}"
->
-
-
-<br><br>
-
-
-<label>
-سعر USDT مقابل الشيكل
-</label>
-
-<input 
-name="usdt_ils"
-value="{{price.usdt_ils}}"
->
-
-
-<br><br>
-
-
-<button>
-حفظ السعر
-</button>
-
-
-</form>
-
-
-</body>
-
-</html>
+</div>
+{% endblock %}

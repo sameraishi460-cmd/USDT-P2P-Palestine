@@ -1,202 +1,52 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
+{% extends "base.html" %}
+{% block title %}تفاصيل المقابلة - USDT P2P Palestine{% endblock %}
 
-<head>
+{% block content %}
+<div class="container container-narrow">
 
-<meta charset="UTF-8">
+  <a href="/cash_market" class="back-link mb-4">⬅️ رجوع للإعلانات</a>
 
-<title>تفاصيل المقابلة الشخصية</title>
+  <div class="page-header">
+    <h2>🤝 تفاصيل المقابلة</h2>
+    <span class="badge badge-success">متاح للطلب ✅</span>
+  </div>
 
-<style>
+  <div class="card">
+    <div style="margin-top:var(--sp-2);">
+      <div class="info-row">
+        <span class="info-label">👤 البائع</span>
+        <span class="info-value">{{ ad.user }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">💰 الكمية</span>
+        <span class="info-value" style="color:var(--accent-light);">{{ ad.amount }} USDT</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">💵 السعر</span>
+        <span class="info-value">{{ ad.price }} ₪</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">📍 المدينة</span>
+        <span class="info-value">{{ ad.city }}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">📌 مكان اللقاء</span>
+        <span class="info-value">{{ ad.location }}</span>
+      </div>
+      {% if ad.notes is defined %}
+      <div class="info-row">
+        <span class="info-label">📝 ملاحظات</span>
+        <span class="info-value" style="font-size:0.85rem;">{{ ad.notes }}</span>
+      </div>
+      {% endif %}
+    </div>
+  </div>
 
-body{
-    background:#0b1220;
-    color:white;
-    font-family:tahoma;
-    padding:20px;
-}
+  <a href="/cash_buy/{{ ad.id }}" class="btn btn-success btn-block btn-lg mt-4">
+    🤝 طلب مقابلة
+  </a>
 
-.box{
-    max-width:500px;
-    margin:30px auto;
-    background:#1e293b;
-    padding:25px;
-    border-radius:20px;
-}
-
-
-h2{
-    text-align:center;
-    color:#22c55e;
-}
-
-
-.item{
-    background:#334155;
-    padding:12px;
-    border-radius:10px;
-    margin:10px 0;
-}
-
-
-.btn{
-
-    display:block;
-    text-align:center;
-    color:white;
-    text-decoration:none;
-    padding:13px;
-    border-radius:10px;
-    margin-top:15px;
-
-}
-
-
-.buy{
-    background:#16a34a;
-}
-
-
-.back{
-    background:#2563eb;
-}
-
-
-.home{
-    background:#475569;
-}
-
-
-.status{
-    color:#22c55e;
-    text-align:center;
-    font-size:18px;
-}
-
-</style>
-
-</head>
-
-
-<body>
-
-
-<div class="box">
-
-
-<h2>
-🤝 تفاصيل المقابلة
-</h2>
-
-
-
-<div class="status">
-
-متاح للطلب ✅
+  <a href="/" class="back-link mt-4">🏠 الصفحة الرئيسية</a>
 
 </div>
-
-
-
-<div class="item">
-
-👤 البائع:
-
-<b>
-{{ad.user}}
-</b>
-
-</div>
-
-
-
-<div class="item">
-
-💰 الكمية:
-
-<b>
-{{ad.amount}} USDT
-</b>
-
-</div>
-
-
-
-<div class="item">
-
-💵 السعر:
-
-<b>
-{{ad.price}}
-</b>
-
-</div>
-
-
-
-<div class="item">
-
-📍 المدينة:
-
-<b>
-{{ad.city}}
-</b>
-
-</div>
-
-
-
-<div class="item">
-
-📌 مكان اللقاء:
-
-<b>
-{{ad.location}}
-</b>
-
-</div>
-
-
-
-<div class="item">
-
-📝 ملاحظات:
-
-<b>
-{{ad.notes}}
-</b>
-
-</div>
-
-
-
-<a class="btn buy" href="/cash_buy/{{ad.id}}">
-
-🤝 طلب مقابلة
-
-</a>
-
-
-
-<a class="btn back" href="/cash_market">
-
-⬅️ رجوع للإعلانات
-
-</a>
-
-
-
-<a class="btn home" href="/">
-
-🏠 الصفحة الرئيسية
-
-</a>
-
-
-
-</div>
-
-
-</body>
-
-</html>
+{% endblock %}
