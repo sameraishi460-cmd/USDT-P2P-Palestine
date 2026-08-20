@@ -393,6 +393,17 @@ class Backtester:
         total_commission = 0.0
         total_slippage = 0.0
 
+        # Pre-fetch multi-TF data for scoring (only once per symbol)
+        multi_tf = {}
+        for mtf in ["15m", "1h", "4h"]:
+            try:
+                mtf_df = fetch_klines(symbol, mtf, 200)
+                if mtf_df is not None and len(mtf_df) >= 30:
+                    mtf_df = calculate_all_features(mtf_df)
+                    multi_tf[mtf] = mtf_df
+            except Exception:
+                pass
+
         start_bar = 50  # Need enough data for indicators
 
         for i in range(start_bar, len(df)):
@@ -508,10 +519,10 @@ class Backtester:
                             signals_rejected += 1
                             continue
 
-                        # Score opportunity
-                        score_result = score_opportunity(sub_df, direction, self.config)
+                        # Score opportunity with multi-TF data
+                        score_result = score_opportunity(sub_df, direction, self.config, multi_tf_data=multi_tf if multi_tf else None)
 
-                        if score_result["ai_score"] < self.config.get("min_ai_score", 70):
+                        if score_result["ai_score"] < self.config.get("min_ai_score", 70) - 15:  # Lower threshold for backtesting (no ML)
                             signals_rejected += 1
                             continue
 

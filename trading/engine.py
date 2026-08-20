@@ -34,6 +34,11 @@ from trading.regime import detect_regime, detect_multi_tf_regime
 from trading.scoring import score_opportunity
 from trading.risk_manager import RiskEngine
 from trading.position_manager import PositionManager
+from trading.notifications import (
+    notify_signal, notify_trade_opened, notify_trade_closed,
+    notify_tp_reached, notify_sl_hit, notify_error,
+    notify_emergency_stop, notify_risk_limit,
+)
 
 
 class AIEngine:
@@ -159,6 +164,10 @@ class AIEngine:
         con.close()
 
         self.stop_bot(username)
+        try:
+            notify_emergency_stop(username, len(positions))
+        except Exception:
+            pass
         return True, f"Emergency stop: closed {len(positions)} positions"
 
     def _run_loop(self, username, bot_id, config, stop_event):
@@ -486,6 +495,19 @@ class AIEngine:
         print(f"ENTRY: {side} {quantity:.6f} {symbol} @ {fill_price:.2f} "
               f"(AI: {score_result['ai_score']:.1f})")
 
+        # Send notification
+        try:
+            bot = con.execute("SELECT username FROM trading_bots WHERE id=?", (bot_id,)).fetchone()
+            if bot:
+                notify_trade_opened(bot["username"], {
+                    "symbol": symbol, "side": side, "quantity": quantity,
+                    "entry_price": fill_price, "stop_loss": score_result["stop_loss"],
+                    "take_profit1": score_result.get("take_profit1", 0),
+                    "ai_score": score_result["ai_score"],
+                })
+        except Exception:
+            pass
+
     def _manage_positions(self, con, bot_id, config, pos_manager, risk_engine):
         """Monitor and manage all open positions."""
         positions = get_open_positions(con, bot_id)
@@ -539,6 +561,32 @@ class AIEngine:
                     reason=reason, position_id=pos["id"])
 
         print(f"EXIT: {pos['symbol']} @ {fill_price:.2f} | PnL: {net_pnl:.2f} | Reason: {reason}")
+
+        # Send notification
+        try:
+            bot = con.execute("SELECT username FROM trading_bots WHERE id=?", (bot_id,)).fetchone()
+            if bot:
+                username = bot["username"]
+                trade_data = {
+                    "symbol": pos["symbol"], "side": pos["side"],
+                    "net_pnl": net_pnl, "exit_reason": reason,
+                    "holding_periods": self._holding_periods(pos),
+                    "ai_score": pos["entry_ai_score"],
+                }
+                if reason in ("STOP_LOSS",):
+                    notify_sl_hit(username, {
+                        "symbol": pos["symbol"], "side": pos["side"],
+                        "pnl": net_pnl, "price": fill_price,
+                    })
+                elif reason in ("TAKE_PROFIT2", "TRAILING_STOP"):
+                    notify_tp_reached(username, {
+                        "symbol": pos["symbol"], "side": pos["side"],
+                        "pnl": net_pnl, "price": fill_price,
+                        "tp_level": reason,
+                    })
+                notify_trade_closed(username, trade_data)
+        except Exception:
+            pass
 
     def _partial_close(self, con, bot_id, pos, price, reason, config):
         """Partial position close for TP1."""

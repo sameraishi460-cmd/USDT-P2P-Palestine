@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+{% block title %}إعدادات إشعارات التداول — USDT P2P Palestine{% endblock %}
+{% block content %}
+<div class="container container-narrow">
+
+  <a href="/trading_bot" class="back-link">⬅️ محرك التداول</a>
+
+  <div class="page-header" style="background:linear-gradient(135deg,rgba(168,85,247,0.1),var(--bg-surface));border-color:rgba(168,85,247,0.15);">
+    <h2>🔔 إعدادات إشعارات التداول</h2>
+  </div>
+
+  <!-- Paper Trading Warning -->
+  <div class="card" style="background:linear-gradient(135deg,rgba(59,130,246,0.08),var(--bg-surface));border-color:rgba(59,130,246,0.12);padding:var(--sp-3) var(--sp-4);margin-bottom:var(--sp-4);">
+    <div style="display:flex;align-items:center;gap:var(--sp-2);">
+      <span style="font-size:1.1rem;">🧪</span>
+      <div>
+        <div style="font-weight:700;font-size:0.85rem;color:var(--blue-light);">وضع تجريبي فقط</div>
+        <div style="font-size:0.7rem;color:var(--text-muted);">جميع الإشعارات تتعلق بصفقات ورقية — لا أموال حقيقية</div>
+      </div>
+    </div>
+  </div>
+
+  <form method="POST" action="/trading_bot/notifications">
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+
+    <!-- Master Toggle -->
+    <div class="card" style="padding:var(--sp-4);">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div style="font-weight:700;font-size:0.9rem;">🔔 تفعيل الإشعارات</div>
+          <div style="font-size:0.7rem;color:var(--text-muted);">تشغيل/إيقاف جميع إشعارات التداول</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" name="enabled" {% if prefs.enabled %}checked{% endif %}>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Signal Notifications -->
+    <div class="card" style="padding:var(--sp-4);">
+      <div style="font-weight:700;font-size:0.9rem;margin-bottom:var(--sp-3);">📊 إشعارات الإشارات</div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-3);">
+        <div>
+          <div style="font-size:0.85rem;">إشارات AI</div>
+          <div style="font-size:0.65rem;color:var(--text-muted);">عند اكتشاف فرصة تداول</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" name="notify_signals" {% if prefs.notify_signals %}checked{% endif %}>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">الحد الأدنى لنقاط AI للإشعار</label>
+        <input class="form-input" type="number" name="min_ai_score" value="{{ prefs.min_ai_score or 70 }}" min="50" max="100" step="5">
+        <div class="form-help">إشعار فقط عندما نقاط AI ≥ هذا الرقم</div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3);">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div style="font-size:0.85rem;">🟢 شراء (LONG)</div>
+          <label class="toggle">
+            <input type="checkbox" name="notify_long" {% if prefs.notify_long %}checked{% endif %}>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div style="font-size:0.85rem;">🔴 بيع (SHORT)</div>
+          <label class="toggle">
+            <input type="checkbox" name="notify_short" {% if prefs.notify_short %}checked{% endif %}>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Trade Notifications -->
+    <div class="card" style="padding:var(--sp-4);">
+      <div style="font-weight:700;font-size:0.9rem;margin-bottom:var(--sp-3);">💰 إشعارات الصفقات</div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-3);">
+        <div>
+          <div style="font-size:0.85rem;">🎯 وصول جني الأرباح</div>
+          <div style="font-size:0.65rem;color:var(--text-muted);">عند الوصول لـ TP1 أو TP2</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" name="notify_tp" {% if prefs.notify_tp %}checked{% endif %}>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-3);">
+        <div>
+          <div style="font-size:0.85rem;">🛑 وصول وقف الخسارة</div>
+          <div style="font-size:0.65rem;color:var(--text-muted);">عند الوصول لـ SL</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" name="notify_sl" {% if prefs.notify_sl %}checked{% endif %}>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div style="font-size:0.85rem;">📋 التقارير اليومية</div>
+          <div style="font-size:0.65rem;color:var(--text-muted);">ملخص يومي للأداء</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" name="daily_reports" {% if prefs.daily_reports %}checked{% endif %}>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Error Notifications -->
+    <div class="card" style="padding:var(--sp-4);">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div style="font-size:0.85rem;">⚠️ إشعارات الأخطاء</div>
+          <div style="font-size:0.65rem;color:var(--text-muted);">أخطاء البوت، فشل API، حدود المخاطرة</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" name="notify_errors" {% if prefs.notify_errors %}checked{% endif %}>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary btn-block btn-lg mt-4" onclick="haptic('success')">
+      💾 حفظ الإعدادات
+    </button>
+  </form>
+
+</div>
+
+<style>
+.toggle {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 26px;
+  flex-shrink: 0;
+}
+.toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background: var(--bg-input);
+  border-radius: 26px;
+  transition: 0.3s;
+}
+.toggle-slider:before {
+  content: "";
+  position: absolute;
+  height: 20px;
+  width: 20px;
+  left: 3px;
+  bottom: 3px;
+  background: var(--text-muted);
+  border-radius: 50%;
+  transition: 0.3s;
+}
+.toggle input:checked + .toggle-slider {
+  background: var(--accent);
+}
+.toggle input:checked + .toggle-slider:before {
+  transform: translateX(22px);
+  background: white;
+}
+</style>
+{% endblock %}

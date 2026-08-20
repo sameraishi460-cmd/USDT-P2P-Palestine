@@ -276,6 +276,13 @@
     </div>
   </div>
 
+  <!-- Quick Links -->
+  <div style="display:flex;gap:var(--sp-2);margin-bottom:var(--sp-3);">
+    <a href="/trading_bot/notifications" class="btn btn-primary" style="flex:1;font-size:0.75rem;padding:var(--sp-2);">
+      🔔 إعدادات الإشعارات
+    </a>
+  </div>
+
   <!-- ===== CONTROLS ===== -->
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-2);margin-bottom:var(--sp-3);">
     {% if not bot or bot.status != 'RUNNING' %}
@@ -302,10 +309,16 @@
     </form>
   </div>
 
-  <form method="POST" action="/trading_bot/emergency" style="margin-bottom:var(--sp-4);">
+  <form method="POST" action="/trading_bot/emergency" style="margin-bottom:var(--sp-2);">
     <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
     <button type="submit" class="btn btn-danger btn-block" onclick="return confirm('⚠️ إيقاف طارئ — سيتم إغلاق جميع الصفقات المفتوحة فوراً؟')">
       🛑 إيقاف طارئ — إغلاق كل الصفقات
+    </button>
+  </form>
+  <form method="POST" action="/trading_bot/close_all" style="margin-bottom:var(--sp-4);">
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="btn btn-warning btn-block" onclick="return confirm('⚠️ سيغلق جميع الصفقات المفتوحة عند السعر الحالي.')">
+      📊 إغلاق كل الصفقات (ypse)
     </button>
   </form>
 

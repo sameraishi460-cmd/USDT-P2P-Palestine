@@ -2443,6 +2443,97 @@ def run_walkforward():
 
 
 # ===============================
+# TRADING NOTIFICATION PREFERENCES
+# ===============================
+@app.route("/trading_bot/notifications", methods=["GET", "POST"])
+@login_required
+def trading_notifications():
+    username = session.get("user")
+    from trading.notifications import (
+        create_notification_prefs_table, get_notification_prefs, save_notification_prefs,
+    )
+
+    con = connect()
+    create_notification_prefs_table(con)
+
+    if request.method == "POST":
+        if not validate_csrf():
+            con.close()
+            return redirect("/trading_bot/notifications")
+
+        prefs = {
+            "enabled": request.form.get("enabled") == "on",
+            "daily_reports": request.form.get("daily_reports") == "on",
+            "min_ai_score": float(request.form.get("min_ai_score", 70)),
+            "notify_long": request.form.get("notify_long") == "on",
+            "notify_short": request.form.get("notify_short") == "on",
+            "notify_tp": request.form.get("notify_tp") == "on",
+            "notify_sl": request.form.get("notify_sl") == "on",
+            "notify_signals": request.form.get("notify_signals") == "on",
+            "notify_errors": request.form.get("notify_errors") == "on",
+        }
+        save_notification_prefs(con, username, prefs)
+        con.close()
+        flash("تم حفظ إعدادات الإشعارات", "success")
+        return redirect("/trading_bot/notifications")
+
+    prefs = get_notification_prefs(con, username)
+    con.close()
+    return render_template("trading_notifications.html", prefs=prefs)
+
+
+@app.route("/trading_bot/close_all", methods=["POST"])
+@login_required
+def close_all_positions():
+    if not validate_csrf():
+        return redirect("/trading_bot")
+
+    username = session.get("user")
+    engine = get_engine()
+
+    # Get all open positions
+    con = engine._connect()
+    bot = con.execute(
+        "SELECT * FROM trading_bots WHERE username=?", (username,)
+    ).fetchone()
+    if not bot:
+        con.close()
+        return redirect("/trading_bot")
+
+    from trading.db import get_open_positions, close_position, record_order
+    from trading.market_data import fetch_ticker
+
+    positions = get_open_positions(con, bot["id"])
+    closed_count = 0
+
+    for pos in positions:
+        ticker = fetch_ticker(pos["symbol"])
+        exit_price = ticker["price"] if ticker else pos["current_price"] or pos["entry_price"]
+
+        if pos["side"] == "LONG":
+            pnl = (exit_price - pos["entry_price"]) * pos["remaining_qty"]
+        else:
+            pnl = (pos["entry_price"] - exit_price) * pos["remaining_qty"]
+
+        commission = exit_price * pos["remaining_qty"] * 0.001
+        net_pnl = pnl - commission
+
+        close_position(con, pos["id"], exit_price, "MANUAL_CLOSE", pnl, net_pnl, 0)
+        record_order(con, bot["id"], pos["symbol"],
+                    "SELL" if pos["side"] == "LONG" else "BUY",
+                    "MARKET", exit_price, pos["remaining_qty"],
+                    commission=commission, reason="MANUAL_CLOSE",
+                    position_id=pos["id"])
+        closed_count += 1
+
+    con.commit()
+    con.close()
+
+    flash(f"تم إغلاق {closed_count} صفقات مفتوحة", "warning")
+    return redirect("/trading_bot")
+
+
+# ===============================
 # ADMIN PANEL
 # ===============================
 @app.route("/admin")
