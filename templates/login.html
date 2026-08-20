@@ -1,193 +1,37 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>تسجيل الدخول - USDT P2P Palestine</title>
-  <link rel="stylesheet" href="/static/design-system.css">
-  <style>
-    body {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--bg-deep);
-      background-image:
-        radial-gradient(ellipse at 20% 50%, rgba(34,197,94,0.06) 0%, transparent 50%),
-        radial-gradient(ellipse at 80% 20%, rgba(59,130,246,0.06) 0%, transparent 50%);
-      padding: var(--sp-4);
-    }
+{% extends "base.html" %}
+{% block title %}دخول - USDT P2P Palestine{% endblock %}
+{% block content %}
+<div class="container container-narrow" style="padding-top:var(--sp-8);">
 
-    .auth-wrapper {
-      width: 100%;
-      max-width: 420px;
-      animation: slideUp 0.5s ease;
-    }
-
-    .auth-brand {
-      text-align: center;
-      margin-bottom: var(--sp-6);
-    }
-
-    .auth-brand-icon {
-      width: 64px;
-      height: 64px;
-      border-radius: var(--radius-xl);
-      background: linear-gradient(135deg, var(--accent-hover), var(--accent));
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.75rem;
-      margin: 0 auto var(--sp-3);
-      box-shadow: var(--shadow-glow-green);
-    }
-
-    .auth-brand h1 {
-      font-size: 1.5rem;
-      font-weight: 800;
-      color: var(--text-primary);
-      margin-bottom: var(--sp-1);
-    }
-
-    .auth-brand p {
-      color: var(--text-muted);
-      font-size: 0.9rem;
-    }
-
-    .auth-card {
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-2xl);
-      padding: var(--sp-6);
-    }
-
-    .auth-title {
-      font-size: 1.2rem;
-      font-weight: 700;
-      text-align: center;
-      margin-bottom: var(--sp-5);
-      color: var(--text-primary);
-    }
-
-    .auth-divider {
-      display: flex;
-      align-items: center;
-      gap: var(--sp-3);
-      margin: var(--sp-5) 0;
-      color: var(--text-muted);
-      font-size: 0.8rem;
-    }
-
-    .auth-divider::before,
-    .auth-divider::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: var(--border);
-    }
-
-    .auth-links {
-      text-align: center;
-      margin-top: var(--sp-4);
-    }
-
-    .auth-links a {
-      display: block;
-      padding: var(--sp-2);
-      color: var(--text-secondary);
-      font-size: 0.9rem;
-      transition: color var(--transition-fast);
-    }
-
-    .auth-links a:hover {
-      color: var(--text-primary);
-    }
-
-    .auth-links a.primary-link {
-      color: var(--primary-light);
-      font-weight: 600;
-    }
-
-    .auth-footer {
-      text-align: center;
-      margin-top: var(--sp-5);
-      color: var(--text-muted);
-      font-size: 0.75rem;
-    }
-  </style>
-</head>
-<body>
-
-<div class="auth-wrapper">
-
-  <div class="auth-brand">
-    <div class="auth-brand-icon">🇵🇸</div>
-    <h1>USDT P2P Palestine</h1>
-    <p>منصتك الآمنة لشراء وبيع USDT</p>
+  <div style="text-align:center;margin-bottom:var(--sp-8);">
+    <div style="font-size:3rem;margin-bottom:var(--sp-3);">🇵🇸</div>
+    <h1 style="font-size:1.8rem;">مرحباً بك</h1>
+    <p style="color:var(--text-muted);font-size:0.9rem;margin-top:var(--sp-2);">ادخل إلى حسابك في USDT P2P Palestine</p>
   </div>
 
-  <div class="auth-card">
+  <form method="POST" action="/login" class="card">
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
 
-    <div class="auth-title">🔐 تسجيل الدخول</div>
+    <div class="form-group">
+      <label class="form-label">👤 اسم المستخدم</label>
+      <input class="form-input" type="text" name="username" placeholder="أدخل اسم المستخدم" required autocomplete="username" autofocus>
+    </div>
 
-    <form method="POST" autocomplete="on">
+    <div class="form-group">
+      <label class="form-label">🔒 كلمة المرور</label>
+      <input class="form-input" type="password" name="password" placeholder="أدخل كلمة المرور" required autocomplete="current-password">
+    </div>
 
-      <div class="form-group">
-        <label class="form-label">اسم المستخدم</label>
-        <input
-          class="form-input"
-          type="text"
-          name="username"
-          placeholder="أدخل اسم المستخدم"
-          autocomplete="username"
-          required
-          autofocus
-        >
-      </div>
+    <button type="submit" class="btn btn-success btn-block btn-lg" onclick="haptic('success')">
+      🚀 دخول
+    </button>
+  </form>
 
-      <div class="form-group">
-        <label class="form-label">كلمة المرور</label>
-        <input
-          class="form-input"
-          type="password"
-          name="password"
-          placeholder="أدخل كلمة المرور"
-          autocomplete="current-password"
-          required
-        >
-      </div>
-
-      <div class="form-group" style="display:flex;align-items:center;gap:var(--sp-2);">
-        <input type="checkbox" name="remember" id="remember" style="width:auto;accent-color:var(--accent);">
-        <label for="remember" style="color:var(--text-secondary);font-size:0.85rem;cursor:pointer;">
-          تذكرني لمدة 30 يوم
-        </label>
-      </div>
-
-      <button type="submit" class="btn btn-success btn-block btn-lg">
-        دخول
-      </button>
-
-    </form>
-
-    <div class="auth-divider">أو</div>
-
-    <a href="/telegram_login" class="btn btn-telegram btn-block">
-      📲 دخول عبر Telegram
-    </a>
-
-  </div>
-
-  <div class="auth-links">
-    <a href="/register" class="primary-link">إنشاء حساب جديد</a>
-    <a href="/">العودة للرئيسية</a>
-  </div>
-
-  <div class="auth-footer">
-    © 2026 USDT P2P Palestine
+  <div style="text-align:center;margin-top:var(--sp-6);">
+    <p style="color:var(--text-muted);font-size:0.85rem;">
+      ليس لديك حساب؟ <a href="/register" style="color:var(--accent-light);font-weight:600;">سجل الآن</a>
+    </p>
   </div>
 
 </div>
-
-</body>
-</html>
+{% endblock %}

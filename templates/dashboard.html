@@ -1,16 +1,15 @@
 {% extends "base.html" %}
 {% block title %}لوحة التحكم - USDT P2P Palestine{% endblock %}
-
 {% block content %}
 <div class="container">
 
-  <!-- ===== Welcome Header ===== -->
+  <!-- Welcome -->
   <div class="page-header" style="background:linear-gradient(135deg,var(--bg-surface),rgba(34,197,94,0.08));">
-    <div style="display:flex;align-items:center;justify-content:center;gap:var(--sp-3);margin-bottom:var(--sp-3);">
+    <div style="display:flex;align-items:center;gap:var(--sp-3);justify-content:center;">
       <div class="avatar avatar-lg">{{ user['username'][0] }}</div>
       <div style="text-align:right;">
-        <h2 style="margin:0;">أهلاً {{ user['username'] }} 👋</h2>
-        <p style="margin:var(--sp-1) 0 0;color:var(--text-muted);font-size:0.85rem;">
+        <h2 style="margin:0;font-size:1.3rem;">أهلاً {{ user['username'] }} 👋</h2>
+        <p style="margin:var(--sp-1) 0 0;">
           {% if user['verified'] == 1 %}
             <span class="badge badge-success">✅ حساب موثق</span>
           {% else %}
@@ -21,110 +20,103 @@
     </div>
   </div>
 
-
-  <!-- ===== Balance Card ===== -->
+  <!-- Balance Card -->
   <div class="card" style="background:linear-gradient(135deg,rgba(34,197,94,0.1),var(--bg-surface));border-color:rgba(34,197,94,0.15);text-align:center;padding:var(--sp-6);">
-    <div style="color:var(--text-muted);font-size:0.85rem;margin-bottom:var(--sp-2);">💰 رصيد USDT المتاح</div>
-    <div class="price-display" style="font-size:2.5rem;">
+    <div style="font-size:0.85rem;color:var(--text-muted);margin-bottom:var(--sp-2);">💰 رصيد USDT المتاح</div>
+    <div class="price-display" style="font-size:2.2rem;">
       {{ wallet_balance|default(0) }}
       <span class="price-currency">USDT</span>
     </div>
-    <div style="margin-top:var(--sp-4);display:flex;gap:var(--sp-3);justify-content:center;flex-wrap:wrap;">
+    {% if wallet_locked|default(0) > 0 %}
+    <div style="font-size:0.8rem;color:var(--warning-light);margin-top:var(--sp-2);">
+      🔒 محجوز: {{ wallet_locked }} USDT
+    </div>
+    {% endif %}
+    <div style="display:flex;gap:var(--sp-2);justify-content:center;margin-top:var(--sp-4);flex-wrap:wrap;">
       <a href="/usdt_deposit" class="btn btn-success btn-sm">➕ إيداع</a>
       <a href="/withdraw" class="btn btn-primary btn-sm">📤 سحب</a>
       <a href="/market" class="btn btn-ghost btn-sm">🛒 السوق</a>
     </div>
   </div>
 
-
-  <!-- ===== Stats Grid ===== -->
-  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:var(--sp-3);margin-top:var(--sp-4);">
+  <!-- Stats -->
+  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:var(--sp-3);">
     <div class="stat-card">
       <span class="stat-icon">⭐</span>
-      <div class="stat-value">{{ user['rating'] }}</div>
+      <div class="stat-value">{{ user['rating']|default(5.0) }}</div>
       <div class="stat-label">التقييم</div>
     </div>
     <div class="stat-card">
       <span class="stat-icon">🤝</span>
-      <div class="stat-value">{{ trades }}</div>
+      <div class="stat-value">{{ trades|default(0) }}</div>
       <div class="stat-label">الصفقات</div>
     </div>
   </div>
 
-
-  <!-- ===== Quick Actions ===== -->
-  <div class="section-title mt-6">
-    ⚡ إجراءات سريعة
-  </div>
-
-  <div class="stagger" style="display:grid;grid-template-columns:repeat(2,1fr);gap:var(--sp-3);">
-
+  <!-- Quick Actions -->
+  <div class="section-title mt-6">⚡ إجراءات سريعة</div>
+  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:var(--sp-3);">
     <a href="/market" class="card card-interactive" style="text-align:center;padding:var(--sp-4);">
       <div style="font-size:1.5rem;margin-bottom:var(--sp-2);">💰</div>
       <div style="font-weight:600;font-size:0.9rem;">السوق</div>
-      <div style="font-size:0.75rem;color:var(--text-muted);">تصفح إعلانات USDT</div>
+      <div style="font-size:0.7rem;color:var(--text-muted);">تصفح إعلانات USDT</div>
     </a>
-
     <a href="/create_ad" class="card card-interactive" style="text-align:center;padding:var(--sp-4);border-color:rgba(34,197,94,0.2);">
       <div style="font-size:1.5rem;margin-bottom:var(--sp-2);">➕</div>
       <div style="font-weight:600;font-size:0.9rem;">بيع USDT</div>
-      <div style="font-size:0.75rem;color:var(--text-muted);">إنشاء إعلان جديد</div>
+      <div style="font-size:0.7rem;color:var(--text-muted);">إنشاء إعلان جديد</div>
     </a>
-
     <a href="/my_ads" class="card card-interactive" style="text-align:center;padding:var(--sp-4);">
       <div style="font-size:1.5rem;margin-bottom:var(--sp-2);">📢</div>
       <div style="font-weight:600;font-size:0.9rem;">إعلاناتي</div>
-      <div style="font-size:0.75rem;color:var(--text-muted);">إدارة إعلاناتك</div>
+      <div style="font-size:0.7rem;color:var(--text-muted);">إدارة إعلاناتك</div>
     </a>
-
     <a href="/my_trades" class="card card-interactive" style="text-align:center;padding:var(--sp-4);">
       <div style="font-size:1.5rem;margin-bottom:var(--sp-2);">📋</div>
       <div style="font-weight:600;font-size:0.9rem;">صفقاتي</div>
-      <div style="font-size:0.75rem;color:var(--text-muted);">تتبع صفقاتك</div>
+      <div style="font-size:0.7rem;color:var(--text-muted);">تتبع صفقاتك</div>
     </a>
-
     <a href="/cash_market" class="card card-interactive" style="text-align:center;padding:var(--sp-4);border-color:rgba(59,130,246,0.2);">
       <div style="font-size:1.5rem;margin-bottom:var(--sp-2);">🤝</div>
       <div style="font-weight:600;font-size:0.9rem;">المقابلات</div>
-      <div style="font-size:0.75rem;color:var(--text-muted);">سوق المقابلات الشخصية</div>
+      <div style="font-size:0.7rem;color:var(--text-muted);">سوق المقابلات الشخصية</div>
     </a>
-
     <a href="/trading_bot" class="card card-interactive" style="text-align:center;padding:var(--sp-4);border-color:rgba(168,85,247,0.2);">
       <div style="font-size:1.5rem;margin-bottom:var(--sp-2);">🤖</div>
       <div style="font-weight:600;font-size:0.9rem;">بوت التداول</div>
-      <div style="font-size:0.75rem;color:var(--text-muted);">تداول تجريبي تلقائي</div>
+      <div style="font-size:0.7rem;color:var(--text-muted);">تداول تجريبي تلقائي</div>
     </a>
-
     <a href="/profile" class="card card-interactive" style="text-align:center;padding:var(--sp-4);">
       <div style="font-size:1.5rem;margin-bottom:var(--sp-2);">👤</div>
       <div style="font-weight:600;font-size:0.9rem;">حسابي</div>
-      <div style="font-size:0.75rem;color:var(--text-muted);">معلومات الملف الشخصي</div>
-    </a>
-
-    <a href="/notifications" class="card card-interactive" style="text-align:center;padding:var(--sp-4);">
-      <div style="font-size:1.5rem;margin-bottom:var(--sp-2);">🔔</div>
-      <div style="font-weight:600;font-size:0.9rem;">تنبيهاتي</div>
-      <div style="font-size:0.75rem;color:var(--text-muted);">عرض الإشعارات</div>
-    </a>
-
-  </div>
-
-
-  <!-- ===== Account Section ===== -->
-  <div class="section-title mt-6">
-    ⚙️ الحساب
-  </div>
-
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3);">
-    <a href="/edit_profile" class="card card-interactive" style="text-align:center;padding:var(--sp-3);">
-      <div style="font-size:1.2rem;margin-bottom:var(--sp-1);">✏️</div>
-      <div style="font-weight:500;font-size:0.85rem;">تعديل البيانات</div>
-    </a>
-    <a href="/logout" class="card card-interactive" style="text-align:center;padding:var(--sp-3);border-color:rgba(239,68,68,0.2);">
-      <div style="font-size:1.2rem;margin-bottom:var(--sp-1);">🚪</div>
-      <div style="font-weight:500;font-size:0.85rem;color:var(--danger);">خروج</div>
+      <div style="font-size:0.7rem;color:var(--text-muted);">معلوماتك</div>
     </a>
   </div>
+
+  <!-- Recent Trades -->
+  {% if recent_trades %}
+  <div class="section-title mt-6">📋 آخر الصفقات</div>
+  {% for trade in recent_trades %}
+  <a href="/trade/{{ trade.id }}" class="card card-interactive" style="padding:var(--sp-3);">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <div style="font-weight:600;font-size:0.85rem;">صفقة #{{ trade.id }}</div>
+        <div style="font-size:0.75rem;color:var(--text-muted);">
+          {% if trade.buyer == session['user'] %}شراء{% else %}بيع{% endif %} — {{ trade.amount }} USDT
+        </div>
+      </div>
+      <span class="status-badge status-{{ trade.status|lower|replace('_','-') }}">
+        {% if trade.status == 'PENDING' %}⏳ بانتظار الدفع
+        {% elif trade.status == 'PAYMENT_SENT' %}💳 تم الدفع
+        {% elif trade.status == 'COMPLETED' %}✅ مكتملة
+        {% elif trade.status == 'CANCELLED' %}❌ ملغاة
+        {% elif trade.status == 'DISPUTED' %}⚠️ نزاع
+        {% else %}{{ trade.status }}{% endif %}
+      </span>
+    </div>
+  </a>
+  {% endfor %}
+  {% endif %}
 
 </div>
 {% endblock %}

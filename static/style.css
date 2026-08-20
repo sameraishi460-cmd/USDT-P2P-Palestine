@@ -1,2 +1,2 @@
-/* Legacy compatibility - main design system is in /static/design-system.css */
-@import url('/static/design-system.css');
+/* Legacy style.css - All styles moved to /static/design-system.css */
+@import url('design-system.css');

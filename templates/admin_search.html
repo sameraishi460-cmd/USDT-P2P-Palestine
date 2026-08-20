@@ -1,42 +1,61 @@
 {% extends "base.html" %}
-{% block title %}بحث الأدمن - USDT P2P Palestine{% endblock %}
-
+{% block title %}بحث - USDT P2P Palestine{% endblock %}
 {% block content %}
-<div class="container container-narrow">
-
-  <a href="/admin" class="back-link mb-4">⬅️ الرجوع للوحة الأدمن</a>
-
-  <div class="page-header">
-    <h2>🔍 نتائج البحث</h2>
-  </div>
-
-  <div class="stagger">
-    {% for t in trades %}
-    <div class="trade-card mb-3">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:var(--sp-2);">
-        <div style="font-weight:700;color:var(--primary-light);">📌 صفقة #{{ t.id }}</div>
-        <span class="badge {% if t.status == 'COMPLETED' %}badge-success{% elif t.status == 'PENDING' %}badge-warning{% else %}badge-info{% endif %}">
-          {{ t.status }}
-        </span>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-2);">
-        <div>
-          <span style="font-size:0.8rem;color:var(--text-muted);">المشتري</span>
-          <div style="font-weight:600;">{{ t.buyer }}</div>
-        </div>
-        <div>
-          <span style="font-size:0.8rem;color:var(--text-muted);">البائع</span>
-          <div style="font-weight:600;">{{ t.seller }}</div>
-        </div>
-      </div>
+<div class="container">
+  <a href="/admin" class="back-link">⬅️ لوحة الأدمن</a>
+  <div class="page-header"><h2>🔍 بحث</h2></div>
+  <form method="POST" class="card">
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+    <div style="display:flex;gap:var(--sp-2);">
+      <input class="form-input" type="text" name="q" placeholder="ابحث عن مستخدم، صفقة، أو tx hash..." value="{{ query }}" style="flex:1;">
+      <button type="submit" class="btn btn-primary">🔍</button>
     </div>
-    {% else %}
-    <div class="empty-state">
-      <div class="empty-state-icon">🔍</div>
-      <div class="empty-state-title">لا توجد نتائج</div>
+  </form>
+
+  {% if results %}
+    {% if results.users %}
+    <div class="section-title">👥 المستخدمين</div>
+    {% for u in results.users %}
+    <div class="card" style="padding:var(--sp-3);">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <span style="font-weight:600;">{{ u.username }}</span>
+          <span class="badge {% if u.status == 'ADMIN' %}badge-purple{% elif u.status == 'BANNED' %}badge-danger{% else %}badge-success{% endif %}">{{ u.status }}</span>
+        </div>
+        <span class="badge badge-info">⭐ {{ u.rating }}</span>
+      </div>
     </div>
     {% endfor %}
-  </div>
+    {% endif %}
 
+    {% if results.trades %}
+    <div class="section-title">📋 الصفقات</div>
+    {% for t in results.trades %}
+    <div class="card" style="padding:var(--sp-3);">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-weight:600;">#{{ t.id }} — {{ t.buyer }} → {{ t.seller }}</span>
+        <span class="status-badge status-{{ t.status|lower }}">{{ t.status }}</span>
+      </div>
+      <div style="font-size:0.8rem;color:var(--text-muted);">{{ t.amount }} USDT — {{ t.price }} ₪</div>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    {% if results.deposits %}
+    <div class="section-title">📥 الإيداعات</div>
+    {% for d in results.deposits %}
+    <div class="card" style="padding:var(--sp-3);">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-weight:600;">{{ d.username }} — {{ d.amount }} USDT</span>
+        <span class="status-badge status-{{ d.status|lower }}">{{ d.status }}</span>
+      </div>
+    </div>
+    {% endfor %}
+    {% endif %}
+
+    {% if not results.users and not results.trades and not results.deposits %}
+    <div class="empty-state"><div class="empty-state-icon">🔍</div><div class="empty-state-text">لا توجد نتائج</div></div>
+    {% endif %}
+  {% endif %}
 </div>
 {% endblock %}

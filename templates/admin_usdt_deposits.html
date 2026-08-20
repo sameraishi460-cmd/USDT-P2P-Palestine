@@ -1,61 +1,34 @@
 {% extends "base.html" %}
 {% block title %}إيداعات USDT - USDT P2P Palestine{% endblock %}
-
 {% block content %}
 <div class="container">
-
-  <a href="/admin" class="back-link mb-4">⬅️ الرجوع للوحة الأدمن</a>
-
-  <div class="page-header">
-    <h2>📥 طلبات إيداع USDT</h2>
-  </div>
-
-  <div class="table-wrapper">
-    <div class="table-scroll">
-      <table class="table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>المستخدم</th>
-            <th>الكمية</th>
-            <th>TX Hash</th>
-            <th>الحالة</th>
-            <th>الإجراء</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for d in deposits %}
-          <tr>
-            <td>#{{ d.id }}</td>
-            <td>{{ d.username }}</td>
-            <td style="color:var(--accent-light);font-weight:600;">{{ d.amount }} USDT</td>
-            <td style="font-size:0.75rem;font-family:var(--font-mono);direction:ltr;text-align:left;max-width:200px;overflow:hidden;text-overflow:ellipsis;">{{ d.tx_hash }}</td>
-            <td>
-              {% if d.status == 'CONFIRMED' %}
-                <span class="badge badge-success">مؤكد</span>
-              {% elif d.status == 'PENDING' %}
-                <span class="badge badge-warning">قيد المراجعة</span>
-              {% else %}
-                <span class="badge badge-neutral">{{ d.status }}</span>
-              {% endif %}
-            </td>
-            <td>
-              {% if d.status == "PENDING" %}
-              <a href="/admin_confirm_deposit/{{ d.id }}" class="btn btn-success btn-sm">✅ تأكيد</a>
-              {% else %}
-              <span style="color:var(--text-muted);">—</span>
-              {% endif %}
-            </td>
-          </tr>
-          {% else %}
-          <tr>
-            <td colspan="6" style="text-align:center;color:var(--text-muted);padding:var(--sp-6);">لا توجد طلبات إيداع</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+  <a href="/admin" class="back-link">⬅️ لوحة الأدمن</a>
+  <div class="page-header"><h2>📥 إيداعات USDT</h2></div>
+  {% for d in deposits %}
+  <div class="card" style="padding:var(--sp-3);border-right:3px solid {% if d.status == 'PENDING' %}var(--warning){% elif d.status == 'CONFIRMED' %}var(--accent){% else %}var(--danger){% endif %};">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <div style="font-weight:600;">{{ d.username }}</div>
+        <div style="font-size:0.8rem;color:var(--text-muted);">{{ d.amount }} USDT — {{ d.created }}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:var(--sp-2);">
+        <span class="status-badge status-{{ d.status|lower }}">{{ d.status }}</span>
+        {% if d.status == 'PENDING' %}
+        <form method="POST" action="/admin_confirm_deposit/{{ d.id }}" style="display:inline;">
+          <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-success btn-sm">✅</button>
+        </form>
+        <form method="POST" action="/admin_reject_deposit/{{ d.id }}" style="display:inline;">
+          <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-danger btn-sm">❌</button>
+        </form>
+        {% endif %}
+      </div>
     </div>
   </div>
-
+  {% endfor %}
+  {% if not deposits %}
+  <div class="empty-state"><div class="empty-state-icon">📥</div><div class="empty-state-text">لا توجد إيداعات</div></div>
+  {% endif %}
 </div>
 {% endblock %}

@@ -1,66 +1,51 @@
 {% extends "base.html" %}
 {% block title %}إعلاناتي - USDT P2P Palestine{% endblock %}
-
 {% block content %}
-<div class="container container-narrow">
+<div class="container">
+  <div class="page-header"><h2>📢 إعلاناتي</h2></div>
 
-  <div class="page-header">
-    <h2>📢 إعلاناتي</h2>
-  </div>
-
-  <a href="/create_ad" class="btn btn-success btn-block mb-4">
-    ➕ إنشاء إعلان USDT جديد
-  </a>
-
-  <div class="stagger">
-    {% for ad in ads %}
-    <div class="card mb-3" style="border-right:3px solid {% if ad.status == 'OPEN' %}var(--accent){% elif ad.status == 'SOLD' %}var(--warning){% else %}var(--border-light){% endif %};">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:var(--sp-3);">
-        <div>
-          <div style="font-weight:700;">🟢 إعلان USDT</div>
-          <div style="font-size:0.8rem;color:var(--text-muted);">رقم #{{ ad.id }}</div>
-        </div>
-        {% if ad.status == 'OPEN' %}
-          <span class="badge badge-success">متاح</span>
-        {% elif ad.status == 'SOLD' %}
-          <span class="badge badge-warning">مباع</span>
-        {% else %}
-          <span class="badge badge-neutral">{{ ad.status }}</span>
-        {% endif %}
-      </div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3);">
-        <div style="background:var(--bg-input);border-radius:var(--radius-md);padding:var(--sp-3);">
-          <div style="font-size:0.75rem;color:var(--text-muted);">💰 الكمية</div>
-          <div style="font-weight:700;color:var(--accent-light);">{{ ad.amount }} USDT</div>
-        </div>
-        <div style="background:var(--bg-input);border-radius:var(--radius-md);padding:var(--sp-3);">
-          <div style="font-size:0.75rem;color:var(--text-muted);">💵 السعر</div>
-          <div style="font-weight:700;">{{ ad.price }} ₪</div>
-        </div>
-      </div>
-
-      <div style="margin-top:var(--sp-3);">
-        <span class="chip">💳 {{ ad.payment }}</span>
-      </div>
-
-      {% if ad.created %}
-      <div style="margin-top:var(--sp-2);font-size:0.8rem;color:var(--text-muted);">
-        📅 {{ ad.created }}
-      </div>
-      {% endif %}
+  {% if ads %}
+  <div class="section-title">💰 إعلانات USDT</div>
+  {% for ad in ads %}
+  <div class="ad-card" style="border-right-color:{% if ad.status == 'OPEN' %}var(--accent){% elif ad.status == 'SOLD' %}var(--warning){% else %}var(--danger){% endif %};">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--sp-2);">
+      <span style="font-weight:700;">{{ ad.title or ad.user }}</span>
+      <span class="badge {% if ad.status == 'OPEN' %}badge-success{% elif ad.status == 'SOLD' %}badge-warning{% else %}badge-neutral{% endif %}">
+        {% if ad.status == 'OPEN' %}متاح{% elif ad.status == 'SOLD' %}مباع{% else %}{{ ad.status }}{% endif %}
+      </span>
     </div>
-
-    {% else %}
-    <div class="empty-state">
-      <div class="empty-state-icon">📭</div>
-      <div class="empty-state-title">لا يوجد لديك إعلانات حالياً</div>
-      <div class="empty-state-text">أنشئ أول إعلان لبدء التداول</div>
+    <div style="display:flex;justify-content:space-between;font-size:0.85rem;">
+      <span style="color:var(--accent-light);font-weight:600;">{{ ad.amount }} USDT</span>
+      <span style="font-weight:600;">{{ ad.price }} ₪</span>
     </div>
-    {% endfor %}
   </div>
+  {% endfor %}
+  {% endif %}
 
-  <a href="/dashboard" class="back-link mt-4">⬅️ العودة للوحة التحكم</a>
+  {% if cash_ads %}
+  <div class="section-title mt-6">🤝 مقابلات شخصية</div>
+  {% for ad in cash_ads %}
+  <div class="ad-card" style="border-right-color:var(--primary);">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--sp-2);">
+      <span style="font-weight:700;">{{ ad.city or '' }} {{ ad.location or ad.title }}</span>
+      <span class="badge {% if ad.status == 'OPEN' %}badge-success{% elif ad.status == 'SOLD' %}badge-warning{% else %}badge-neutral{% endif %}">
+        {% if ad.status == 'OPEN' %}متاح{% elif ad.status == 'SOLD' %}مباع{% else %}{{ ad.status }}{% endif %}
+      </span>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:0.85rem;">
+      <span style="color:var(--accent-light);">{{ ad.amount }} USDT</span>
+      <span>{{ ad.price }} ₪</span>
+    </div>
+  </div>
+  {% endfor %}
+  {% endif %}
 
+  {% if not ads and not cash_ads %}
+  <div class="empty-state">
+    <div class="empty-state-icon">📭</div>
+    <div class="empty-state-text">ليس لديك إعلانات بعد</div>
+    <a href="/create_ad" class="btn btn-primary">➕ أضف إعلانك</a>
+  </div>
+  {% endif %}
 </div>
 {% endblock %}

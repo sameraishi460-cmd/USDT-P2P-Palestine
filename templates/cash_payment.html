@@ -1,45 +1,15 @@
 {% extends "base.html" %}
-{% block title %}دفع إعلان مقابلة شخصية{% endblock %}
-
+{% block title %}دفع كاش - USDT P2P Palestine{% endblock %}
 {% block content %}
 <div class="container container-narrow">
-
-  <a href="/" class="back-link mb-4">⬅️ الرجوع للرئيسية</a>
-
-  <div class="page-header">
-    <h2>💳 دفع إعلان مقابلة شخصية</h2>
-  </div>
-
-  <!-- Fee -->
-  <div class="card" style="text-align:center;">
-    <div style="color:var(--text-muted);font-size:0.85rem;">رسوم الإعلان</div>
-    <div class="price-display" style="font-size:1.5rem;">
-      {{ fee }} <span class="price-currency">USDT</span>
+  <a href="/my_trades" class="back-link">⬅️ صفقاتي</a>
+  <div class="page-header"><h2>💳 الدفع النقدي</h2></div>
+  <div class="card">
+    <div style="text-align:center;">
+      <div style="font-size:2rem;margin-bottom:var(--sp-3);">🤝</div>
+      <p style="color:var(--text-secondary);">التق بالبائع في المكان المحدد وقم بالدفع النقدي مباشرة</p>
     </div>
   </div>
-
-  <!-- Platform Wallet -->
-  <div class="card">
-    <div class="card-title">🏦 أرسل الدفع إلى محفظة المنصة</div>
-    <div class="wallet-address mt-3" id="payWallet">{{ wallet }}</div>
-    <button class="copy-btn mt-3" onclick="copyText(document.getElementById('payWallet').textContent, this)">
-      📋 نسخ عنوان المحفظة
-    </button>
-  </div>
-
-  <!-- Confirm Payment -->
-  <form method="POST" action="/cash_payment_sent" class="card">
-    <input type="hidden" name="amount" value="{{ amount }}">
-    <input type="hidden" name="price" value="{{ price }}">
-    <input type="hidden" name="city" value="{{ city }}">
-    <input type="hidden" name="location" value="{{ location }}">
-    <input type="hidden" name="notes" value="{{ notes }}">
-    <input type="hidden" name="plan" value="{{ plan }}">
-
-    <button type="submit" class="btn btn-success btn-block btn-lg">
-      ✅ تم إرسال الدفع
-    </button>
-  </form>
-
+  <a href="/my_trades" class="btn btn-primary btn-block">📋 العودة للصفقات</a>
 </div>
 {% endblock %}

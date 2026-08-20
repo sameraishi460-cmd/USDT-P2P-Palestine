@@ -1,47 +1,38 @@
 {% extends "base.html" %}
-{% block title %}تعديل الملف الشخصي{% endblock %}
-
+{% block title %}تعديل الملف - USDT P2P Palestine{% endblock %}
 {% block content %}
 <div class="container container-narrow">
-
-  <a href="/profile" class="back-link mb-4">⬅️ رجوع للملف الشخصي</a>
-
-  <div class="page-header">
-    <h2>💳 بيانات الدفع</h2>
-    <p>حدّث معلوماتك الشخصية وبيانات الدفع</p>
-  </div>
-
-  <form method="POST" class="card">
-
+  <a href="/profile" class="back-link">⬅️ حسابي</a>
+  <div class="page-header"><h2>✏️ تعديل الملف الشخصي</h2></div>
+  <form method="POST" action="/edit_profile" class="card">
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
     <div class="form-group">
-      <label class="form-label">📱 رقم الجوال</label>
-      <input class="form-input" type="text" name="phone" value="{{ user.phone or '' }}" placeholder="مثال: 059xxxxxxx" required>
+      <label class="form-label">📱 الهاتف</label>
+      <input class="form-input ltr" type="tel" name="phone" placeholder="رقم الهاتف" value="{{ user['phone'] or '' }}" dir="ltr" style="text-align:left;">
     </div>
-
     <div class="form-group">
-      <label class="form-label">🏦 اسم البنك</label>
-      <input class="form-input" type="text" name="bank" value="{{ user.bank or '' }}" placeholder="مثال: بنك فلسطين" required>
+      <label class="form-label">🏦 البنك</label>
+      <input class="form-input" type="text" name="bank" placeholder="اسم البنك" value="{{ user['bank'] or '' }}">
     </div>
-
     <div class="form-group">
-      <label class="form-label">💳 رقم الحساب / IBAN</label>
-      <input class="form-input" type="text" name="iban" value="{{ user.iban or '' }}" placeholder="رقم الحساب أو IBAN" required>
+      <label class="form-label">💳 الآيبان (IBAN)</label>
+      <input class="form-input ltr" type="text" name="iban" placeholder="SA..." value="{{ user['iban'] or '' }}" dir="ltr" style="text-align:left;">
     </div>
-
     <div class="form-group">
       <label class="form-label">💵 طريقة الدفع</label>
-      <select class="form-select" name="payment_method">
-        <option value="تحويل بنكي" {% if user.payment_method == 'تحويل بنكي' %}selected{% endif %}>تحويل بنكي</option>
-        <option value="محفظة إلكترونية" {% if user.payment_method == 'محفظة إلكترونية' %}selected{% endif %}>محفظة إلكترونية</option>
-        <option value="نقدي" {% if user.payment_method == 'نقدي' %}selected{% endif %}>نقدي</option>
+      <select class="form-input" name="payment_method">
+        <option value="">اختر...</option>
+        <option value="BANK" {% if user['payment_method'] == 'BANK' %}selected{% endif %}>تحويل بنكي</option>
+        <option value="CASH" {% if user['payment_method'] == 'CASH' %}selected{% endif %}>نقدي</option>
+        <option value="PAYPAL" {% if user['payment_method'] == 'PAYPAL' %}selected{% endif %}>PayPal</option>
+        <option value="WISE" {% if user['payment_method'] == 'WISE' %}selected{% endif %}>Wise</option>
       </select>
     </div>
-
-    <button type="submit" class="btn btn-success btn-block btn-lg mt-4">
-      💾 حفظ البيانات
-    </button>
-
+    <div class="form-group">
+      <label class="form-label">💰 محفظة USDT (BSC)</label>
+      <input class="form-input ltr" type="text" name="usdt_wallet" placeholder="0x..." value="{{ user['usdt_wallet'] or '' }}" dir="ltr" style="text-align:left;">
+    </div>
+    <button type="submit" class="btn btn-primary btn-block btn-lg">💾 حفظ التغييرات</button>
   </form>
-
 </div>
 {% endblock %}

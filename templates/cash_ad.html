@@ -1,52 +1,35 @@
 {% extends "base.html" %}
-{% block title %}تفاصيل المقابلة - USDT P2P Palestine{% endblock %}
-
+{% block title %}إعلان مقابلة - USDT P2P Palestine{% endblock %}
 {% block content %}
 <div class="container container-narrow">
+  <a href="/cash_market" class="back-link">⬅️ سوق المقابلات</a>
 
-  <a href="/cash_market" class="back-link mb-4">⬅️ رجوع للإعلانات</a>
-
-  <div class="page-header">
-    <h2>🤝 تفاصيل المقابلة</h2>
-    <span class="badge badge-success">متاح للطلب ✅</span>
+  <div class="page-header" style="background:linear-gradient(135deg,rgba(59,130,246,0.06),var(--bg-surface));">
+    <h2>🤝 إعلان مقابلة شخصية</h2>
   </div>
 
   <div class="card">
-    <div style="margin-top:var(--sp-2);">
-      <div class="info-row">
-        <span class="info-label">👤 البائع</span>
-        <span class="info-value">{{ ad.user }}</span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">💰 الكمية</span>
-        <span class="info-value" style="color:var(--accent-light);">{{ ad.amount }} USDT</span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">💵 السعر</span>
-        <span class="info-value">{{ ad.price }} ₪</span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">📍 المدينة</span>
-        <span class="info-value">{{ ad.city }}</span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">📌 مكان اللقاء</span>
-        <span class="info-value">{{ ad.location }}</span>
-      </div>
-      {% if ad.notes is defined %}
-      <div class="info-row">
-        <span class="info-label">📝 ملاحظات</span>
-        <span class="info-value" style="font-size:0.85rem;">{{ ad.notes }}</span>
-      </div>
-      {% endif %}
+    <div class="ad-card-seller">
+      <div class="avatar avatar-sm">{{ ad.user[0] }}</div>
+      <div style="font-weight:700;">{{ ad.user }}</div>
     </div>
+
+    <div class="info-row"><span class="info-label">🏙️ المدينة</span><span class="info-value">{{ ad.city or 'غير محدد' }}</span></div>
+    <div class="info-row"><span class="info-label">📍 نقطة اللقاء</span><span class="info-value">{{ ad.location or 'غير محدد' }}</span></div>
+    <div class="info-row"><span class="info-label">💰 الكمية</span><span class="info-value" style="color:var(--accent-light);">{{ ad.amount }} USDT</span></div>
+    <div class="info-row"><span class="info-label">💲 السعر</span><span class="info-value">{{ ad.price }} ₪</span></div>
+    {% if ad.notes %}
+    <div class="info-row"><span class="info-label">📝 ملاحظات</span><span class="info-value">{{ ad.notes }}</span></div>
+    {% endif %}
+    <div class="info-row"><span class="info-label">📅 التاريخ</span><span class="info-value">{{ ad.created }}</span></div>
   </div>
 
-  <a href="/cash_buy/{{ ad.id }}" class="btn btn-success btn-block btn-lg mt-4">
-    🤝 طلب مقابلة
-  </a>
-
-  <a href="/" class="back-link mt-4">🏠 الصفحة الرئيسية</a>
-
+  {% if ad.status == 'OPEN' and session.get('user') and session['user'] != ad.user %}
+  <a href="/cash_buy/{{ ad.id }}" class="btn btn-primary btn-block btn-lg" onclick="haptic('success')">🛒 شراء هذه المقابلة</a>
+  {% elif session.get('user') == ad.user %}
+  <div class="alert alert-info">ℹ️ هذا إعلانك</div>
+  {% elif not session.get('user') %}
+  <a href="/login" class="btn btn-primary btn-block btn-lg">🔑 تسجيل الدخول للشراء</a>
+  {% endif %}
 </div>
 {% endblock %}

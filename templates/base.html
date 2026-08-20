@@ -2,8 +2,10 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#0a0e1a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>{% block title %}USDT P2P Palestine{% endblock %}</title>
   <link rel="stylesheet" href="/static/design-system.css">
   {% block head %}{% endblock %}
@@ -23,10 +25,9 @@
         <a href="/wallet">المحفظة</a>
         <a href="/trading_bot">🤖 بوت</a>
         <a href="/notifications">🔔</a>
-        <a href="/profile" class="avatar" style="width:34px;height:34px;font-size:0.75rem;">{{ session['user'][0] }}</a>
-        <a href="/logout" class="btn-nav" style="background:var(--bg-elevated);color:var(--text-secondary);">خروج</a>
+        <a href="/profile" class="avatar avatar-sm">{{ session['user'][0] }}</a>
       {% else %}
-        <a href="/login" class="btn-nav" style="background:var(--bg-elevated);">دخول</a>
+        <a href="/login" class="btn-nav">دخول</a>
         <a href="/register" class="btn-nav-accent btn-nav">حساب جديد</a>
       {% endif %}
     </div>
@@ -82,6 +83,15 @@
 
 <!-- ===== Scripts ===== -->
 <script>
+// Telegram WebApp init
+(function() {
+  if (window.Telegram && Telegram.WebApp) {
+    Telegram.WebApp.ready();
+    Telegram.WebApp.expand();
+    document.body.classList.add('telegram-app');
+  }
+})();
+
 // Auto-dismiss flash messages
 document.addEventListener('DOMContentLoaded', function() {
   var flashes = document.querySelectorAll('.flash');
@@ -95,21 +105,28 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 });
 
-// Copy to clipboard utility
+// Copy to clipboard
 function copyText(text, btn) {
-  navigator.clipboard.writeText(text).then(function() {
-    if (btn) {
-      btn.classList.add('copied');
-      var orig = btn.innerHTML;
-      btn.innerHTML = '✅ تم النسخ';
-      setTimeout(function() {
-        btn.classList.remove('copied');
-        btn.innerHTML = orig;
-      }, 2000);
-    } else {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(function() {
+      if (btn) {
+        var orig = btn.innerHTML;
+        btn.innerHTML = '✅ تم النسخ';
+        btn.classList.add('copied');
+        setTimeout(function() { btn.innerHTML = orig; btn.classList.remove('copied'); }, 2000);
+      }
       showToast('✅ تم النسخ');
-    }
-  });
+    });
+  } else {
+    // Fallback
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast('✅ تم النسخ');
+  }
 }
 
 // Toast notification
@@ -123,8 +140,19 @@ function showToast(msg) {
   document.body.appendChild(t);
   setTimeout(function() {
     t.style.opacity = '0';
+    t.style.transition = 'opacity 0.3s';
     setTimeout(function() { t.remove(); }, 300);
   }, 2500);
+}
+
+// Haptic feedback (Telegram)
+function haptic(type) {
+  if (window.Telegram && Telegram.WebApp && Telegram.WebApp.HapticFeedback) {
+    if (type === 'success') Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+    else if (type === 'error') Telegram.WebApp.HapticFeedback.notificationOccurred('error');
+    else if (type === 'warning') Telegram.WebApp.HapticFeedback.notificationOccurred('warning');
+    else Telegram.WebApp.HapticFeedback.impactOccurred('medium');
+  }
 }
 </script>
 

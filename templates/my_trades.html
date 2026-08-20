@@ -1,100 +1,59 @@
 {% extends "base.html" %}
 {% block title %}صفقاتي - USDT P2P Palestine{% endblock %}
-
 {% block content %}
-<div class="container container-narrow">
+<div class="container">
+  <div class="page-header"><h2>📋 صفقاتي</h2></div>
 
-  <div class="page-header">
-    <h2>📋 صفقاتي</h2>
-  </div>
-
-  <!-- ===== USDT Trades ===== -->
+  {% if trades %}
   <div class="section-title">💰 صفقات USDT</div>
-
-  <div class="stagger">
-    {% for t in trades %}
-    <div class="trade-card mb-3">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:var(--sp-3);">
-        <div>
-          <div style="font-weight:700;color:var(--primary-light);">📌 صفقة #{{ t.id }}</div>
-          <div style="font-size:0.8rem;margin-top:2px;">
-            {% if t.seller == username %}
-              <span class="badge badge-success" style="font-size:0.7rem;">🟢 أنت البائع</span>
-            {% else %}
-              <span class="badge badge-info" style="font-size:0.7rem;">🔵 أنت المشتري</span>
-            {% endif %}
-          </div>
+  {% for t in trades %}
+  <a href="/trade/{{ t.id }}" class="card card-interactive">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <div style="display:flex;align-items:center;gap:var(--sp-2);">
+          <span style="font-weight:700;">صفقة #{{ t.id }}</span>
+          <span class="badge {% if t.buyer == username %}badge-info{% else %}badge-success{% endif %}">
+            {% if t.buyer == username %}شراء{% else %}بيع{% endif %}
+          </span>
         </div>
-        <span>
-          {% if t.status == 'PENDING' %}
-            <span class="badge badge-warning">⏳ بانتظار</span>
-          {% elif t.status == 'PAYMENT_SENT' %}
-            <span class="badge badge-info">💳 الدفع</span>
-          {% elif t.status == 'COMPLETED' %}
-            <span class="badge badge-success">✅ مكتملة</span>
-          {% else %}
-            <span class="badge badge-neutral">{{ t.status }}</span>
-          {% endif %}
-        </span>
-      </div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-2);margin-bottom:var(--sp-3);">
-        <div>
-          <span style="font-size:0.8rem;color:var(--text-muted);">💰 الكمية</span>
-          <div style="font-weight:700;color:var(--accent-light);">{{ t.amount }} USDT</div>
-        </div>
-        <div>
-          <span style="font-size:0.8rem;color:var(--text-muted);">💵 السعر</span>
-          <div style="font-weight:700;">{{ t.price }} ₪</div>
+        <div style="font-size:0.8rem;color:var(--text-muted);margin-top:var(--sp-1);">
+          {{ t.amount }} USDT — {{ t.price }} ₪
         </div>
       </div>
+      <span class="status-badge status-{{ t.status|lower|replace('_','-') }}">
+        {% if t.status == 'PENDING' %}⏳ بانتظار الدفع
+        {% elif t.status == 'PAYMENT_SENT' %}💳 تم الدفع
+        {% elif t.status == 'COMPLETED' %}✅ مكتملة
+        {% elif t.status == 'CANCELLED' %}❌ ملغاة
+        {% elif t.status == 'DISPUTED' %}⚠️ نزاع
+        {% else %}{{ t.status }}{% endif %}
+      </span>
+    </div>
+  </a>
+  {% endfor %}
+  {% endif %}
 
-      <a href="/trade/{{ t.id }}" class="btn btn-primary btn-block">فتح الصفقة 🔥</a>
+  {% if cash_trades %}
+  <div class="section-title mt-6">🤝 صفقات شخصية</div>
+  {% for t in cash_trades %}
+  <a href="/cash_trade/{{ t.id }}" class="card card-interactive" style="border-right-color:var(--primary);">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <span style="font-weight:700;">صفقة كاش #{{ t.id }}</span>
+        <div style="font-size:0.8rem;color:var(--text-muted);">{{ t.amount }} USDT — {{ t.price }} ₪</div>
+      </div>
+      <span class="status-badge status-{{ t.status|lower }}">{{ t.status }}</span>
     </div>
-    {% else %}
-    <div class="empty-state">
-      <div class="empty-state-icon">📭</div>
-      <div class="empty-state-title">لا يوجد صفقات USDT حالياً</div>
-    </div>
-    {% endfor %}
+  </a>
+  {% endfor %}
+  {% endif %}
+
+  {% if not trades and not cash_trades %}
+  <div class="empty-state">
+    <div class="empty-state-icon">📋</div>
+    <div class="empty-state-text">ليس لديك صفقات بعد</div>
+    <a href="/market" class="btn btn-primary">🛒 تصفّح السوق</a>
   </div>
-
-  <!-- ===== Cash Trades ===== -->
-  <div class="section-title mt-6">🤝 صفقات المقابلات</div>
-
-  <div class="stagger">
-    {% for c in cash_trades %}
-    <div class="trade-card mb-3">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:var(--sp-3);">
-        <div>
-          <div style="font-weight:700;color:var(--primary-light);">📌 صفقة #{{ c.id }}</div>
-          <div style="font-size:0.8rem;color:var(--text-muted);">مقابلة شخصية</div>
-        </div>
-        <span class="badge badge-neutral">{{ c.status }}</span>
-      </div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-2);margin-bottom:var(--sp-3);">
-        <div>
-          <span style="font-size:0.8rem;color:var(--text-muted);">💰 الكمية</span>
-          <div style="font-weight:700;color:var(--primary-light);">{{ c.amount }} USDT</div>
-        </div>
-        <div>
-          <span style="font-size:0.8rem;color:var(--text-muted);">💵 السعر</span>
-          <div style="font-weight:700;">{{ c.price }} ₪</div>
-        </div>
-      </div>
-
-      <a href="/cash_trade/{{ c.id }}" class="btn btn-primary btn-block">فتح الصفقة 🔥</a>
-    </div>
-    {% else %}
-    <div class="empty-state">
-      <div class="empty-state-icon">📭</div>
-      <div class="empty-state-title">لا يوجد صفقات مقابلات</div>
-    </div>
-    {% endfor %}
-  </div>
-
-  <a href="/wallet" class="back-link mt-4">⬅ الرجوع للمحفظة</a>
-
+  {% endif %}
 </div>
 {% endblock %}

@@ -1,92 +1,49 @@
 {% extends "base.html" %}
-{% block title %}نشر إعلان مقابلة شخصية{% endblock %}
-
+{% block title %}إنشاء إعلان مقابلة - USDT P2P Palestine{% endblock %}
 {% block content %}
 <div class="container container-narrow">
+  <a href="/cash_market" class="back-link">⬅️ سوق المقابلات</a>
+  <div class="page-header"><h2>🤝 إنشاء إعلان مقابلة شخصية</h2></div>
 
-  <a href="/cash_market" class="back-link mb-4">⬅️ الرجوع لسوق المقابلات</a>
-
-  <div class="page-header">
-    <h2>🤝 نشر إعلان مقابلة شخصية</h2>
-  </div>
-
-  <!-- Balance -->
   <div class="card" style="text-align:center;background:linear-gradient(135deg,rgba(34,197,94,0.08),var(--bg-surface));">
-    <div style="color:var(--text-muted);font-size:0.85rem;">💰 رصيد محفظتك</div>
-    <div class="price-display" style="font-size:1.5rem;">
-      {{ wallet_balance }} <span class="price-currency">USDT</span>
-    </div>
+    <div style="font-size:0.8rem;color:var(--text-muted);">💰 رصيدك المتاح</div>
+    <div class="price-display" style="font-size:1.5rem;">{{ wallet_balance|default(0) }} <span class="price-currency">USDT</span></div>
   </div>
 
-  <!-- Pricing Plans -->
-  <div class="card">
-    <div class="card-title">💳 رسوم الإعلان</div>
-    <div style="margin-top:var(--sp-3);">
-      <div class="info-row">
-        <span>🟢 أسبوع</span>
-        <span style="font-weight:700;color:var(--accent-light);">2 USDT</span>
+  <form method="POST" action="/create_cash_ad">
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+    <div class="card">
+      <div class="card-title">📝 تفاصيل المقابلة</div>
+      <div class="form-group mt-4">
+        <label class="form-label">🏙️ المدينة</label>
+        <input class="form-input" type="text" name="city" placeholder="مثال: رام الله" required>
       </div>
-      <div class="info-row">
-        <span>🔵 أسبوعين</span>
-        <span style="font-weight:700;color:var(--primary-light);">6 USDT</span>
+      <div class="form-group">
+        <label class="form-label">📍 نقطة اللقاء</label>
+        <input class="form-input" type="text" name="location" placeholder="مثال: وسط البلد" required>
       </div>
-      <div class="info-row">
-        <span>🟣 شهر كامل</span>
-        <span style="font-weight:700;color:var(--purple);">15 USDT</span>
+      <div class="form-group">
+        <label class="form-label">💰 الكمية (USDT)</label>
+        <input class="form-input" type="number" step="0.01" min="1" name="amount" placeholder="أدخل الكمية" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">💲 السعر (₪ لكل USDT)</label>
+        <input class="form-input" type="number" step="0.01" min="0.01" name="price" placeholder="السعر" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">📝 ملاحظات إضافية</label>
+        <textarea class="form-input" name="notes" placeholder="تفاصيل إضافية عن المقابلة..." rows="3"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">📅 مدة الإعلان</label>
+        <select class="form-input" name="plan">
+          <option value="day">يوم واحد</option>
+          <option value="week" selected>أسبوع</option>
+          <option value="month">شهر</option>
+        </select>
       </div>
     </div>
-    <p style="font-size:0.8rem;color:var(--text-muted);margin-top:var(--sp-3);">سيتم خصم رسوم الإعلان مباشرة من محفظتك عند التأكيد.</p>
-  </div>
-
-  {% if wallet_balance < 2 %}
-  <div class="alert alert-warning">
-    �️ رصيدك غير كافي. تحتاج على الأقل 2 USDT لنشر إعلان أسبوع.
-  </div>
-  {% endif %}
-
-  <!-- Form -->
-  <form method="POST" class="card">
-
-    <div class="form-group">
-      <label class="form-label">كمية USDT المتوفرة للبيع</label>
-      <input class="form-input" type="number" step="0.01" name="amount" placeholder="مثال: 500" required>
-    </div>
-
-    <div class="form-group">
-      <label class="form-label">السعر بالدولار</label>
-      <input class="form-input" type="number" step="0.01" name="price" placeholder="مثال: 500" required>
-    </div>
-
-    <div class="form-group">
-      <label class="form-label">المدينة</label>
-      <input class="form-input" name="city" placeholder="مثال: طولكرم" required>
-    </div>
-
-    <div class="form-group">
-      <label class="form-label">مكان المقابلة</label>
-      <input class="form-input" name="location" placeholder="مثال: وسط المدينة" required>
-    </div>
-
-    <div class="form-group">
-      <label class="form-label">ملاحظات إضافية</label>
-      <textarea class="form-textarea" name="notes" placeholder="اكتب أي تفاصيل إضافية"></textarea>
-    </div>
-
-    <div class="form-group">
-      <label class="form-label">اختر مدة الإعلان</label>
-      <select class="form-select" name="plan">
-        <option value="week">🟢 أسبوع - 2 USDT</option>
-        <option value="two_weeks">🔵 أسبوعين - 6 USDT</option>
-        <option value="month">🟣 شهر كامل - 15 USDT</option>
-      </select>
-    </div>
-
-    {% if wallet_balance >= 2 %}
-    <button type="submit" class="btn btn-success btn-block btn-lg">🚀 تأكيد ونشر الإعلان</button>
-    {% else %}
-    <button type="submit" class="btn btn-ghost btn-block btn-lg" disabled>🔒 رصيد غير كافي</button>
-    {% endif %}
+    <button type="submit" class="btn btn-primary btn-block btn-lg mt-4" onclick="haptic('success')">🚀 نشر الإعلان</button>
   </form>
-
 </div>
 {% endblock %}

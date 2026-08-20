@@ -1,27 +1,13 @@
 {% extends "base.html" %}
-{% block title %}تم إرسال الدفع - USDT P2P Palestine{% endblock %}
-
+{% block title %}تم بنجاح - USDT P2P Palestine{% endblock %}
 {% block content %}
-<div class="container container-narrow">
-
-  <div style="text-align:center;padding:var(--sp-8) 0;">
-    <div style="font-size:4rem;margin-bottom:var(--sp-4);animation:slideUp 0.5s ease;">✅</div>
-
-    <h1 style="margin-bottom:var(--sp-3);color:var(--accent);">تم إرسال الطلب بنجاح</h1>
-
-    <p style="color:var(--text-secondary);font-size:1rem;line-height:1.8;max-width:400px;margin:0 auto var(--sp-6);">
-      تم استلام طلب إعلان المقابلة الشخصية.
-      <br>
-      ⏳ الإعلان الآن قيد مراجعة الإدارة.
-      <br>
-      سيتم تفعيله بعد تأكيد الدفع.
-    </p>
-
-    <div style="display:grid;gap:var(--sp-3);max-width:300px;margin:0 auto;">
-      <a href="/" class="btn btn-success btn-block btn-lg">🏠 العودة للرئيسية</a>
-      <a href="/profile" class="btn btn-primary btn-block btn-lg">👤 الذهاب إلى حسابي</a>
-    </div>
+<div class="container container-narrow" style="text-align:center;padding-top:var(--sp-12);">
+  <div style="font-size:4rem;margin-bottom:var(--sp-4);">✅</div>
+  <h1 style="margin-bottom:var(--sp-3);">تم بنجاح</h1>
+  <p style="color:var(--text-muted);margin-bottom:var(--sp-6);">تمت المعاملة بنجاح</p>
+  <div style="display:flex;gap:var(--sp-3);justify-content:center;flex-wrap:wrap;">
+    <a href="/dashboard" class="btn btn-primary">🏠 لوحة التحكم</a>
+    <a href="/market" class="btn btn-success">🛒 السوق</a>
   </div>
-
 </div>
 {% endblock %}

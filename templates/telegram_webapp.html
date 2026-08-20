@@ -1,45 +1,14 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>USDT P2P Telegram</title>
-  <link rel="stylesheet" href="/static/design-system.css">
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <style>
-    body {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-    }
-    .loading-card {
-      background: var(--bg-surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-2xl);
-      padding: var(--sp-8);
-      max-width: 360px;
-    }
-  </style>
-</head>
-<body>
-  <div class="loading-card">
-    <div style="font-size:2rem;margin-bottom:var(--sp-3);">🚀</div>
-    <h2 style="margin-bottom:var(--sp-2);">جاري تسجيل الدخول...</h2>
-    <p style="color:var(--text-muted);">منصة USDT P2P Palestine</p>
-    <div class="spinner mx-auto mt-4"></div>
+{% extends "base.html" %}
+{% block title %}USDT P2P Palestine{% endblock %}
+{% block content %}
+<div class="container" style="text-align:center;padding-top:var(--sp-12);">
+  <div style="font-size:4rem;margin-bottom:var(--sp-4);">🇵🇸</div>
+  <h1 style="margin-bottom:var(--sp-3);">USDT P2P Palestine</h1>
+  <p style="color:var(--text-muted);margin-bottom:var(--sp-6);">شراء وبيع USDT بأمان 🔐</p>
+  <div style="display:flex;flex-direction:column;gap:var(--sp-3);max-width:300px;margin:0 auto;">
+    <a href="/market" class="btn btn-success btn-lg btn-block">💰 سوق USDT</a>
+    <a href="/wallet" class="btn btn-primary btn-lg btn-block">👛 المحفظة</a>
+    <a href="/create_ad" class="btn btn-ghost btn-lg btn-block">➕ إنشاء إعلان</a>
   </div>
-
-  <script>
-    var tg = window.Telegram.WebApp;
-    tg.ready();
-    var user = tg.initDataUnsafe.user;
-    if (user) {
-      window.location.href = "/telegram_auth?id=" + user.id + "&username=" + (user.username || "") + "&first_name=" + (user.first_name || "");
-    } else {
-      document.querySelector('.loading-card').innerHTML = '<div style="font-size:2rem;margin-bottom:var(--sp-3);">❌</div><h2 style="color:var(--danger);">لا توجد بيانات تلجرام</h2><a href="/" class="btn btn-ghost mt-4">العودة للرئيسية</a>';
-    }
-  </script>
-</body>
-</html>
+</div>
+{% endblock %}

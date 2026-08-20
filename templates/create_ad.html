@@ -1,133 +1,96 @@
 {% extends "base.html" %}
-{% block title %}إنشاء إعلان بيع USDT{% endblock %}
-
+{% block title %}إنشاء إعلان - USDT P2P Palestine{% endblock %}
 {% block content %}
 <div class="container container-narrow">
 
-  <a href="/" class="back-link mb-4">⬅ العودة للرئيسية</a>
+  <a href="/market" class="back-link">⬅️ العودة للسوق</a>
 
-  <div class="page-header" style="background:linear-gradient(135deg,rgba(34,197,94,0.1),var(--bg-surface));">
-    <h2>🚀 بيع USDT</h2>
-    <p>أنشئ إعلانك وابدأ التداول</p>
+  <div class="page-header">
+    <h2>➕ إنشاء إعلان USDT</h2>
+    <p style="color:var(--text-muted);font-size:0.85rem;">أضف إعلانك لبيع USDT</p>
   </div>
 
-  <!-- Wallet Balance -->
+  <!-- Balance Check -->
+  {% if error == 'insufficient_balance' %}
+  <div class="card" style="border-color:rgba(239,68,68,0.2);background:linear-gradient(135deg,var(--danger-dim),var(--bg-surface));">
+    <div style="text-align:center;">
+      <div style="font-size:2rem;margin-bottom:var(--sp-2);">⚠️</div>
+      <h3 style="color:var(--danger-light);margin-bottom:var(--sp-2);">رصيد USDT غير كافٍ</h3>
+      <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:var(--sp-4);">
+        تحتاج {{ required }} USDT ولديك فقط {{ available }} USDT
+      </p>
+      <div style="display:flex;gap:var(--sp-2);justify-content:center;flex-wrap:wrap;">
+        <a href="/usdt_deposit" class="btn btn-success" onclick="haptic('success')">📥 إيداع USDT</a>
+        <a href="/wallet" class="btn btn-primary">💰 المحفظة</a>
+      </div>
+    </div>
+  </div>
+  {% else %}
   <div class="card" style="background:linear-gradient(135deg,rgba(34,197,94,0.08),var(--bg-surface));text-align:center;">
-    <div style="color:var(--text-muted);font-size:0.85rem;">💰 رصيد محفظتك</div>
-    <div class="price-display" style="font-size:1.8rem;">
+    <div style="font-size:0.8rem;color:var(--text-muted);">💰 رصيدك المتاح</div>
+    <div class="price-display" style="font-size:1.5rem;">
       {{ wallet_balance|default(0) }} <span class="price-currency">USDT</span>
     </div>
-  </div>
-
-  <!-- Market Price -->
-  <div class="card" style="text-align:center;">
-    <div style="color:var(--text-muted);font-size:0.85rem;">📊 سعر السوق</div>
-    <div style="font-weight:700;font-size:1.3rem;color:var(--primary-light);">
-      1 USDT ≈ {{ price.usdt_ils if price else "3.70" }} ₪
+    {% if wallet_balance|default(0) <= 0 %}
+    <div style="margin-top:var(--sp-2);">
+      <a href="/usdt_deposit" class="btn btn-success btn-sm">📥 إيداع USDT</a>
     </div>
-  </div>
-
-  {% if wallet_balance|default(0) <= 0 %}
-  <div class="alert alert-danger">
-    ⚠️ لا يوجد لديك USDT كافي. قم بإيداع USDT أولاً لإنشاء إعلان بيع.
+    {% endif %}
   </div>
   {% endif %}
 
-  <!-- Payment Info -->
-  <div class="card">
-    <div class="card-title">💳 بيانات الدفع</div>
-    <div style="margin-top:var(--sp-3);">
-      <div class="info-row">
-        <span class="info-label">📱 الهاتف</span>
-        <span class="info-value">{{ user.phone if user.phone else "غير مضاف" }}</span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">🏦 البنك</span>
-        <span class="info-value">{{ user.bank if user.bank else "غير مضاف" }}</span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">💳 طريقة الدفع</span>
-        <span class="info-value">{{ user.payment_method if user.payment_method else "غير مضافة" }}</span>
-      </div>
-    </div>
-  </div>
+  <form method="POST" action="/create_ad">
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
 
-  <!-- Ad Form -->
-  <form method="POST" onsubmit="return checkBalance()" class="card">
-    <div class="card-title">📝 تفاصيل الإعلان</div>
+    <div class="card">
+      <div class="card-title">📝 تفاصيل الإعلان</div>
 
-    <div class="form-group mt-4">
-      <label class="form-label">عنوان الإعلان</label>
-      <input class="form-input" name="title" placeholder="مثال: بيع USDT سريع" required>
-    </div>
+      <div class="form-group mt-4">
+        <label class="form-label">📄 عنوان الإعلان</label>
+        <input class="form-input" type="text" name="title" placeholder="مثال: بيع USDT بسعر ممتاز" maxlength="100">
+      </div>
 
-    <div class="form-row">
       <div class="form-group">
-        <label class="form-label">كمية USDT</label>
-        <input class="form-input" id="amount" type="number" step="0.01" name="amount" placeholder="100" oninput="calculate()" required>
+        <label class="form-label">💰 الكمية (USDT)</label>
+        <input class="form-input" type="number" step="0.01" min="1" name="amount" placeholder="أدخل الكمية" required>
       </div>
+
       <div class="form-group">
-        <label class="form-label">سعر 1 USDT بالشيكل</label>
-        <input class="form-input" id="price" type="number" step="0.01" name="price" value="{{ price.usdt_ils if price else 3.70 }}" oninput="calculate()" required>
+        <label class="form-label">💲 السعر (₪ لكل USDT)</label>
+        <input class="form-input" type="number" step="0.01" min="0.01" name="price" placeholder="مثال: 3.72" required>
+        {% if price %}
+        <div class="form-help">السعر الحالي في السوق: {{ price['usdt_ils'] }} ₪</div>
+        {% endif %}
       </div>
-    </div>
 
-    <div class="form-row">
       <div class="form-group">
-        <label class="form-label">أقل كمية</label>
-        <input class="form-input" type="number" step="0.01" name="min_amount" placeholder="10">
+        <label class="form-label">💳 طريقة الدفع</label>
+        <select class="form-input" name="payment">
+          <option value="BANK">تحويل بنكي</option>
+          <option value="CASH">نقدي</option>
+          <option value="PAYPAL">PayPal</option>
+          <option value="WISE">Wise</option>
+          <option value="OTHER">أخرى</option>
+        </select>
       </div>
+
       <div class="form-group">
-        <label class="form-label">أعلى كمية</label>
-        <input class="form-input" type="number" step="0.01" name="max_amount" placeholder="100">
+        <label class="form-label">💵 الحد الأدنى (USDT)</label>
+        <input class="form-input" type="number" step="0.01" name="min_amount" placeholder="اختياري" value="0">
       </div>
-    </div>
 
-    <div class="form-group">
-      <label class="form-label">طريقة الدفع</label>
-      <select class="form-select" name="payment">
-        <option value="BANK">🏦 بنك</option>
-        <option value="CASH">💵 كاش</option>
-        <option value="PAYPAL">💳 PayPal</option>
-        <option value="OTHER">🌐 أخرى</option>
-      </select>
-    </div>
-
-    <!-- Live Total -->
-    <div style="background:var(--success-bg);border:1px solid rgba(34,197,94,0.2);border-radius:var(--radius-lg);padding:var(--sp-4);text-align:center;margin:var(--sp-4) 0;">
-      <div style="font-size:0.85rem;color:var(--text-muted);">القيمة الإجمالية</div>
-      <div style="font-size:1.5rem;font-weight:800;color:var(--accent);">
-        <span id="total">0</span> ₪
+      <div class="form-group">
+        <label class="form-label">💵 الحد الأعلى (USDT)</label>
+        <input class="form-input" type="number" step="0.01" name="max_amount" placeholder="اختياري" value="0">
       </div>
+
+      <input type="hidden" name="type" value="SELL">
     </div>
 
-    {% if wallet_balance|default(0) > 0 %}
-    <button type="submit" class="btn btn-success btn-block btn-lg">✅ نشر الإعلان</button>
-    {% else %}
-    <button type="submit" class="btn btn-ghost btn-block btn-lg" disabled>🔒 الرصيد غير كافي</button>
-    {% endif %}
+    <button type="submit" class="btn btn-success btn-block btn-lg mt-4" onclick="haptic('success')">
+      🚀 نشر الإعلان
+    </button>
   </form>
 
 </div>
-{% endblock %}
-
-{% block scripts %}
-<script>
-var balance = {{ wallet_balance|default(0) }};
-
-function calculate() {
-  var a = parseFloat(document.getElementById("amount").value) || 0;
-  var p = parseFloat(document.getElementById("price").value) || 0;
-  document.getElementById("total").textContent = (a * p).toFixed(2);
-}
-
-function checkBalance() {
-  var a = parseFloat(document.getElementById("amount").value) || 0;
-  if (a > balance) {
-    alert("❌ الكمية أكبر من رصيدك");
-    return false;
-  }
-  return true;
-}
-</script>
 {% endblock %}

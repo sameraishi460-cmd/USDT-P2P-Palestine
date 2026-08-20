@@ -1,6 +1,5 @@
 {% extends "base.html" %}
 {% block title %}محفظتي - USDT P2P Palestine{% endblock %}
-
 {% block content %}
 <div class="container container-narrow">
 
@@ -8,9 +7,9 @@
     <h2>💰 محفظتي</h2>
   </div>
 
-  <!-- ===== Balance Card ===== -->
+  <!-- Balance Card -->
   <div class="card" style="background:linear-gradient(135deg,rgba(34,197,94,0.1),var(--bg-surface));border-color:rgba(34,197,94,0.15);text-align:center;padding:var(--sp-6);">
-    <div style="color:var(--text-muted);font-size:0.85rem;margin-bottom:var(--sp-2);">الرصيد المتاح</div>
+    <div style="font-size:0.85rem;color:var(--text-muted);margin-bottom:var(--sp-2);">الرصيد المتاح</div>
     <div class="price-display" style="font-size:2.5rem;">
       {{ wallet.balance or 0 }} <span class="price-currency">USDT</span>
     </div>
@@ -18,7 +17,7 @@
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3);margin-top:var(--sp-4);">
       <div style="background:var(--bg-input);border-radius:var(--radius-md);padding:var(--sp-3);">
         <div style="font-size:0.75rem;color:var(--text-muted);">🔒 محجوز</div>
-        <div style="font-weight:700;color:#fcd34d;">{{ wallet.locked or 0 }} USDT</div>
+        <div style="font-weight:700;color:var(--warning-light);">{{ wallet.locked or 0 }} USDT</div>
       </div>
       <div style="background:var(--bg-input);border-radius:var(--radius-md);padding:var(--sp-3);">
         <div style="font-size:0.75rem;color:var(--text-muted);">📊 الإجمالي</div>
@@ -27,45 +26,19 @@
     </div>
 
     <div style="margin-top:var(--sp-3);">
-      <span class="badge badge-success">🟢 نشط</span>
+      <span class="badge badge-success">🟢 نشط — BSC BEP-20</span>
     </div>
   </div>
 
-  <!-- ===== USDT Wallet ===== -->
-  <div class="card">
-    <div class="card-title">💳 محفظة USDT BSC</div>
-
-    {% if user.usdt_wallet %}
-    <div style="margin-top:var(--sp-3);">
-      <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:var(--sp-1);">عنوانك:</div>
-      <div class="wallet-address" id="walletAddr">{{ user.usdt_wallet }}</div>
-      <button class="copy-btn mt-3" onclick="copyText(document.getElementById('walletAddr').textContent, this)">
-        📋 نسخ العنوان
-      </button>
-    </div>
-    {% else %}
-    <div class="alert alert-warning mt-3">
-      ⚠️ لم تضف عنوان USDT بعد
-    </div>
-    {% endif %}
-
-    <form method="post" action="/save_wallet" class="mt-4">
-      <div class="form-group">
-        <input class="form-input ltr" name="usdt_wallet" placeholder="أدخل عنوان BSC 0x..." dir="ltr" style="text-align:left;">
-      </div>
-      <button type="submit" class="btn btn-primary btn-block">💾 حفظ العنوان</button>
-    </form>
-  </div>
-
-  <!-- ===== Actions ===== -->
+  <!-- Actions -->
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3);">
     <a href="/usdt_deposit" class="card card-interactive" style="text-align:center;padding:var(--sp-4);">
       <div style="font-size:1.5rem;margin-bottom:var(--sp-2);">➕</div>
-      <div style="font-weight:600;">إيداع</div>
+      <div style="font-weight:600;">إيداع USDT</div>
     </a>
     <a href="/withdraw" class="card card-interactive" style="text-align:center;padding:var(--sp-4);">
       <div style="font-size:1.5rem;margin-bottom:var(--sp-2);">📤</div>
-      <div style="font-weight:600;">سحب</div>
+      <div style="font-weight:600;">سحب USDT</div>
     </a>
     <a href="/market" class="card card-interactive" style="text-align:center;padding:var(--sp-4);">
       <div style="font-size:1.5rem;margin-bottom:var(--sp-2);">🛒</div>
@@ -77,30 +50,57 @@
     </a>
   </div>
 
-  <!-- ===== Protection System ===== -->
+  <!-- Wallet Address -->
   <div class="card">
-    <div class="card-title">🔐 نظام الحماية</div>
-    <div style="margin-top:var(--sp-3);">
-      <div class="info-row">
-        <span style="font-size:0.85rem;">1️⃣ يتم حجز USDT أثناء الصفقة</span>
-        <span style="font-size:1.1rem;">🔒</span>
-      </div>
-      <div class="info-row">
-        <span style="font-size:0.85rem;">2️⃣ المشتري يدفع للبائع</span>
-        <span style="font-size:1.1rem;">💳</span>
-      </div>
-      <div class="info-row">
-        <span style="font-size:0.85rem;">3️⃣ بعد التأكيد يتم تحويل USDT</span>
-        <span style="font-size:1.1rem;">✅</span>
-      </div>
-      <div class="info-row">
-        <span style="font-size:0.85rem;">4️⃣ الأدمن يتدخل عند وجود نزاع</span>
-        <span style="font-size:1.1rem;">⚖️</span>
-      </div>
+    <div class="card-title">💳 محفظة USDT BSC</div>
+    {% if user and user['usdt_wallet'] %}
+    <div class="wallet-address" id="walletAddr">{{ user['usdt_wallet'] }}</div>
+    <button class="copy-btn mt-3" onclick="copyText(document.getElementById('walletAddr').textContent, this)">
+      📋 نسخ العنوان
+    </button>
+    {% else %}
+    <div class="alert alert-warning">
+      ⚠️ لم تضف عنوان USDT بعد
     </div>
+    {% endif %}
+
+    <form method="post" action="/save_wallet" class="mt-4">
+      <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+      <div class="form-group">
+        <input class="form-input ltr" name="usdt_wallet" placeholder="أدخل عنوان BSC 0x..." dir="ltr" style="text-align:left;" value="{{ user['usdt_wallet'] if user else '' }}">
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">💾 حفظ العنوان</button>
+    </form>
   </div>
 
-  <a href="/" class="back-link mt-4">⬅️ الرئيسية</a>
+  <!-- Transaction History -->
+  {% if history %}
+  <div class="card">
+    <div class="card-title">📜 سجل المعاملات</div>
+    {% for h in history %}
+    <div class="list-item">
+      <div>
+        <div style="font-size:0.85rem;font-weight:600;">
+          {% if h.action == 'USDT_RECEIVED' %}📥 إيداع
+          {% elif h.action == 'ESCROW_LOCK' %}🔒 حجز_escrow
+          {% elif h.action == 'ESCROW_RELEASE' %}📤 تحرير
+          {% elif h.action == 'PLATFORM_FEE' %}🏦 رسوم
+          {% elif h.action == 'WITHDRAWAL' %}📤 سحب
+          {% elif h.action == 'REFUND' %}↩️ إرجاع
+          {% elif h.action == 'ADMIN_CREDIT' %}💰 إضافة أدمين
+          {% else %}{{ h.action }}{% endif %}
+        </div>
+        <div style="font-size:0.7rem;color:var(--text-muted);">{{ h.created }}</div>
+      </div>
+      <div style="font-weight:700;color:{% if h.action in ('USDT_RECEIVED','ESCROW_RELEASE','REFUND','ADMIN_CREDIT','WITHDRAWAL_REFUND') %}var(--accent-light){% elif h.action in ('ESCROW_LOCK','PLATFORM_FEE','WITHDRAWAL') %}var(--warning-light){% else %}var(--text-primary){% endif %};">
+        {% if h.action in ('USDT_RECEIVED','ESCROW_RELEASE','REFUND','ADMIN_CREDIT','WITHDRAWAL_REFUND') %}+{% else %}-{% endif %}{{ h.amount }} USDT
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <a href="/dashboard" class="back-link mt-4">⬅️ لوحة التحكم</a>
 
 </div>
 {% endblock %}

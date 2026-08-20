@@ -1,45 +1,28 @@
 {% extends "base.html" %}
-{% block title %}الإعلانات المتوفرة - USDT P2P Palestine{% endblock %}
-
+{% block title %}جميع الإعلانات - USDT P2P Palestine{% endblock %}
 {% block content %}
 <div class="container">
-
-  <div class="page-header">
-    <h2>📢 الإعلانات المنشورة</h2>
+  <div class="page-header"><h2>📢 جميع الإعلانات</h2></div>
+  <div style="display:flex;gap:var(--sp-2);margin-bottom:var(--sp-4);">
+    <a href="/market" class="btn btn-primary" style="flex:1;">💰 سوق USDT</a>
+    <a href="/cash_market" class="btn btn-ghost" style="flex:1;">🤝 مقابلات</a>
   </div>
-
-  <div class="grid grid-auto stagger">
-    {% for ad in ads %}
-    <div class="card card-interactive" style="border-right:3px solid {% if ad.type == 'online' %}var(--accent){% else %}var(--primary){% endif %};">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--sp-3);">
-        <span style="font-weight:700;">
-          {% if ad.type == "online" %}🟢 إعلان USDT{% else %}🤝 مقابلة شخصية{% endif %}
-        </span>
-        <span class="badge {% if ad.type == 'online' %}badge-success{% else %}badge-info{% endif %}">
-          {{ ad.status }}
-        </span>
-      </div>
-
-      <div style="color:var(--text-secondary);margin-bottom:var(--sp-2);">👤 {{ ad.user }}</div>
-
-      <div style="display:flex;justify-content:space-between;margin-bottom:var(--sp-3);">
-        <span style="font-weight:700;color:var(--accent-light);">{{ ad.amount }} USDT</span>
-        <span style="font-weight:600;">{{ ad.price }} ₪</span>
-      </div>
-
-      {% if ad.type == "online" %}
-      <a href="/buy/{{ ad.id }}" class="btn btn-success btn-block">شراء الآن 🚀</a>
-      {% else %}
-      <a href="/cash_ad/{{ ad.id }}" class="btn btn-primary btn-block">تفاصيل المقابلة 🤝</a>
-      {% endif %}
+  {% if ads %}
+  {% for ad in ads %}
+  <div class="ad-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--sp-2);">
+      <span style="font-weight:700;">{{ ad.user }}</span>
+      <span class="badge badge-success">متاح</span>
     </div>
-    {% else %}
-    <div class="empty-state" style="grid-column:1/-1;">
-      <div class="empty-state-icon">📭</div>
-      <div class="empty-state-title">لا توجد إعلانات</div>
+    <div style="display:flex;justify-content:space-between;">
+      <span style="color:var(--accent-light);font-weight:600;">{{ ad.amount }} USDT</span>
+      <span style="font-weight:600;">{{ ad.price }} ₪</span>
     </div>
-    {% endfor %}
+    <a href="/buy/{{ ad.id }}" class="btn btn-success btn-block btn-sm mt-3">شراء USDT</a>
   </div>
-
+  {% endfor %}
+  {% else %}
+  <div class="empty-state"><div class="empty-state-icon">📭</div><div class="empty-state-text">لا توجد إعلانات</div></div>
+  {% endif %}
 </div>
 {% endblock %}

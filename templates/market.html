@@ -1,69 +1,71 @@
 {% extends "base.html" %}
 {% block title %}سوق USDT - USDT P2P Palestine{% endblock %}
-
 {% block content %}
 <div class="container">
 
   <div class="page-header">
     <h2>💰 سوق USDT</h2>
-    <p>شراء وبيع العملات الرقمية بأمان وحماية كاملة</p>
+    <p style="color:var(--text-muted);font-size:0.85rem;">
+      {% if price %}السعر الحالي: <span style="color:var(--accent-light);font-weight:700;">{{ price['usdt_ils'] }} ₪</span>{% endif %}
+    </p>
   </div>
 
-  <!-- ===== Ads ===== -->
-  <div class="section-title">
-    📢 إعلانات USDT للبيع
+  <!-- Filters -->
+  <div class="card" style="padding:var(--sp-3);">
+    <div style="display:flex;gap:var(--sp-2);flex-wrap:wrap;">
+      <a href="/market" class="btn btn-success btn-sm" style="flex:1;">💵 شراء USDT</a>
+      <a href="/create_ad" class="btn btn-primary btn-sm" style="flex:1;">➕ بيع USDT</a>
+      <a href="/cash_market" class="btn btn-ghost btn-sm" style="flex:1;">🤝 مقابلة شخصية</a>
+    </div>
   </div>
 
-  <div class="stagger">
-
+  <!-- Ad Cards -->
+  {% if ads %}
+    <div class="section-title">📢 إعلانات USDT المتاحة</div>
     {% for ad in ads %}
-    <div class="card mb-3" style="border-right:3px solid var(--accent);">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:var(--sp-3);">
-        <div style="display:flex;align-items:center;gap:var(--sp-3);">
-          <div class="avatar">{{ ad['user'][0] }}</div>
-          <div>
-            <div style="font-weight:700;">{{ ad['user'] }}</div>
-            <div style="font-size:0.8rem;color:var(--text-muted);">بائع</div>
-          </div>
+    <div class="ad-card">
+      <div class="ad-card-seller">
+        <div class="avatar avatar-sm">{{ ad.user[0] }}</div>
+        <div style="flex:1;">
+          <div style="font-weight:700;font-size:0.9rem;">{{ ad.user }}</div>
+          <div style="font-size:0.7rem;color:var(--text-muted);">{{ ad.payment }}</div>
         </div>
         <span class="badge badge-success">متاح</span>
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3);margin-bottom:var(--sp-4);">
-        <div style="background:var(--bg-input);border-radius:var(--radius-md);padding:var(--sp-3);">
-          <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:2px;">💰 الكمية</div>
-          <div style="font-weight:700;color:var(--accent-light);font-size:1.1rem;">{{ ad['amount'] }} USDT</div>
+      {% if ad.title %}
+      <div style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:var(--sp-3);">📝 {{ ad.title }}</div>
+      {% endif %}
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3);margin-bottom:var(--sp-3);">
+        <div style="background:var(--bg-input);border-radius:var(--radius-sm);padding:var(--sp-3);text-align:center;">
+          <div style="font-size:0.7rem;color:var(--text-muted);">💰 الكمية</div>
+          <div style="font-weight:700;color:var(--accent-light);">{{ ad.amount }} USDT</div>
         </div>
-        <div style="background:var(--bg-input);border-radius:var(--radius-md);padding:var(--sp-3);">
-          <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:2px;">💵 سعر 1 USDT</div>
-          <div style="font-weight:700;color:var(--text-primary);font-size:1.1rem;">{{ ad['price'] }} ₪</div>
+        <div style="background:var(--bg-input);border-radius:var(--radius-sm);padding:var(--sp-3);text-align:center;">
+          <div style="font-size:0.7rem;color:var(--text-muted);">💲 السعر</div>
+          <div style="font-weight:700;color:var(--text-primary);font-size:1.1rem;">{{ ad.price }} ₪</div>
         </div>
       </div>
 
-      <div style="display:flex;align-items:center;gap:var(--sp-2);margin-bottom:var(--sp-3);flex-wrap:wrap;">
-        <span class="chip">💳 {{ ad['payment'] }}</span>
-        <span class="chip">🛡️ حماية المنصة</span>
+      <div style="display:flex;gap:var(--sp-2);">
+        <a href="/buy/{{ ad.id }}" class="btn btn-success btn-block" onclick="haptic('success')">
+          🛒 شراء {{ ad.amount }} USDT
+        </a>
       </div>
-
-      <a href="/buy/{{ ad['id'] }}" class="btn btn-success btn-block">
-        شراء USDT 🚀
-      </a>
-    </div>
-
-    {% else %}
-    <div class="empty-state">
-      <div class="empty-state-icon">📭</div>
-      <div class="empty-state-title">لا توجد إعلانات بيع حالياً</div>
-      <div class="empty-state-text">لم يتم نشر أي إعلان USDT بعد</div>
     </div>
     {% endfor %}
-
-  </div>
-
-
-  <a href="/dashboard" class="back-link mt-4 mb-4" style="display:inline-flex;">
-    ⬅️ الرجوع للوحة التحكم
-  </a>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">📭</div>
+      <div class="empty-state-text">لا توجد إعلانات USDT حالياً</div>
+      {% if user %}
+        <a href="/create_ad" class="btn btn-primary">➕ أضف إعلانك الآن</a>
+      {% else %}
+        <a href="/register" class="btn btn-primary">سجل حساب وابدأ</a>
+      {% endif %}
+    </div>
+  {% endif %}
 
 </div>
 {% endblock %}

@@ -1,171 +1,208 @@
 {% extends "base.html" %}
-{% block title %}تفاصيل الصفقة - USDT P2P Palestine{% endblock %}
-
+{% block title %}صفقة #{{ trade.id }} - USDT P2P Palestine{% endblock %}
 {% block content %}
 <div class="container container-narrow">
 
-  <div class="page-header">
-    <h2>💱 تفاصيل الصفقة #{{ trade.id }}</h2>
+  <a href="/my_trades" class="back-link">⬅️ صفقاتي</a>
+
+  <!-- Trade Header -->
+  <div class="card" style="text-align:center;background:linear-gradient(135deg,var(--bg-surface),rgba(34,197,94,0.05));">
+    <div style="font-size:0.8rem;color:var(--text-muted);">صفقة رقم</div>
+    <h2 style="margin:var(--sp-1) 0;">#{{ trade.id }}</h2>
+    <span class="status-badge status-{{ trade.status|lower|replace('_','-') }}" style="font-size:0.8rem;padding:6px 14px;">
+      {% if trade.status == 'PENDING' %}⏳ بانتظار الدفع
+      {% elif trade.status == 'PAYMENT_SENT' %}💳 تم الدفع — بانتظار التحرير
+      {% elif trade.status == 'COMPLETED' %}✅ مكتملة
+      {% elif trade.status == 'CANCELLED' %}❌ ملغاة
+      {% elif trade.status == 'DISPUTED' %}⚠️ نزاع مفتوح
+      {% else %}{{ trade.status }}{% endif %}
+    </span>
   </div>
 
-  <!-- ===== Progress Steps ===== -->
+  <!-- Progress Steps -->
+  {% if trade.status not in ('COMPLETED', 'CANCELLED') %}
   <div class="card">
     <div class="steps">
-      <div class="step done">
-        <div class="step-dot">✓</div>
+      <div class="step {% if trade.status in ('PENDING','PAYMENT_SENT','COMPLETED') %}completed{% endif %}">
+        <div class="step-number">{% if trade.status in ('PENDING','PAYMENT_SENT','COMPLETED') %}✓{% else %}1{% endif %}</div>
         <div class="step-label">إنشاء</div>
       </div>
-      <div class="step-line {% if trade.status in ['PAYMENT_SENT','COMPLETED'] %}done{% elif trade.status == 'PENDING' %}active{% endif %}"></div>
-      <div class="step {% if trade.status == 'PAYMENT_SENT' %}active{% elif trade.status == 'COMPLETED' %}done{% endif %}">
-        <div class="step-dot">{% if trade.status == 'COMPLETED' %}✓{% else %}2{% endif %}</div>
+      <div class="step {% if trade.status in ('PAYMENT_SENT','COMPLETED') %}completed{% endif %} {% if trade.status == 'PENDING' %}active{% endif %}">
+        <div class="step-number">{% if trade.status in ('PAYMENT_SENT','COMPLETED') %}✓{% else %}2{% endif %}</div>
         <div class="step-label">الدفع</div>
       </div>
-      <div class="step-line {% if trade.status == 'COMPLETED' %}done{% endif %}"></div>
-      <div class="step {% if trade.status == 'COMPLETED' %}done{% endif %}">
-        <div class="step-dot">{% if trade.status == 'COMPLETED' %}✓{% else %}3{% endif %}</div>
-        <div class="step-label">التأكيد</div>
+      <div class="step {% if trade.status == 'COMPLETED' %}completed{% endif %} {% if trade.status == 'PAYMENT_SENT' %}active{% endif %}">
+        <div class="step-number">{% if trade.status == 'COMPLETED' %}✓{% else %}3{% endif %}</div>
+        <div class="step-label">التحرير</div>
       </div>
-      <div class="step-line {% if trade.status == 'COMPLETED' %}done{% endif %}"></div>
-      <div class="step {% if trade.status == 'COMPLETED' %}done{% endif %}">
-        <div class="step-dot">{% if trade.status == 'COMPLETED' %}✓{% else %}4{% endif %}</div>
-        <div class="step-label">اكتمال</div>
+      <div="step {% if trade.status == 'COMPLETED' %}active{% endif %}">
+        <div class="step-number">4</div>
+        <div class="step-label">اكتملت</div>
       </div>
     </div>
   </div>
+  {% endif %}
 
-  <!-- ===== Trade Info ===== -->
+  <!-- Trade Details -->
   <div class="card">
-    <div class="card-title">📌 معلومات الصفقة</div>
-    <div style="margin-top:var(--sp-3);">
-      <div class="info-row">
-        <span class="info-label">👤 البائع</span>
-        <span class="info-value">{{ trade.seller }}</span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">👤 المشتري</span>
-        <span class="info-value">{{ trade.buyer }}</span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">💰 الكمية</span>
-        <span class="info-value" style="color:var(--accent-light);">{{ trade.amount }} USDT</span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">💵 السعر</span>
-        <span class="info-value">{{ trade.price }} ₪</span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">📌 الحالة</span>
-        <span>
-          {% if trade.status == 'PENDING' %}
-            <span class="badge badge-warning">⏳ بانتظار الدفع</span>
-          {% elif trade.status == 'PAYMENT_SENT' %}
-            <span class="badge badge-info">💳 تم إرسال الدفع</span>
-          {% elif trade.status == 'COMPLETED' %}
-            <span class="badge badge-success">✅ مكتملة</span>
-          {% else %}
-            <span class="badge badge-neutral">{{ trade.status }}</span>
-          {% endif %}
-        </span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">🔒 الحماية</span>
-        <span class="badge badge-info">{{ trade.escrow_status }}</span>
-      </div>
+    <div class="card-title">📋 تفاصيل الصفقة</div>
+    <div class="info-row">
+      <span class="info-label">🛒 المشتري</span>
+      <span class="info-value">{{ trade.buyer }}</span>
     </div>
-  </div>
-
-  <!-- ===== Payment Proof ===== -->
-  <div class="card">
-    <div class="card-title">📤 إثبات الدفع</div>
-
-    {% if current_user == trade.buyer %}
-      {% if trade.payment_proof %}
-        <div class="alert alert-success mt-3">✅ تم رفع إثبات الدفع</div>
-        <div style="margin-top:var(--sp-3);text-align:center;">
-          <img src="/uploads/{{ trade.payment_proof }}" style="max-width:100%;border-radius:var(--radius-lg);border:1px solid var(--border);">
-          <a href="/uploads/{{ trade.payment_proof }}" target="_blank" class="btn btn-ghost btn-sm mt-3">🔍 فتح الصورة</a>
-        </div>
-      {% else %}
-        <form action="/upload_payment/{{ trade.id }}" method="post" enctype="multipart/form-data" class="mt-3">
-          <div class="form-group">
-            <label class="form-label">اختر صورة إثبات الدفع</label>
-            <input class="form-input" type="file" name="proof" accept="image/*" required style="padding:var(--sp-2);">
-          </div>
-          <button type="submit" class="btn btn-primary btn-block">📤 رفع إثبات الدفع</button>
-        </form>
-      {% endif %}
+    <div class="info-row">
+      <span class="info-label">🏪 البائع</span>
+      <span class="info-value">{{ trade.seller }}</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">💰 الكمية</span>
+      <span class="info-value" style="color:var(--accent-light);">{{ trade.amount }} USDT</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">💲 السعر</span>
+      <span class="info-value">{{ trade.price }} ₪</span>
+    </div>
+    {% if trade.fee > 0 %}
+    <div class="info-row">
+      <span class="info-label">📊 رسوم</span>
+      <span class="info-value" style="color:var(--warning-light);">{{ trade.fee }} ₪</span>
+    </div>
     {% endif %}
-
-    {% if current_user == trade.seller %}
-      {% if trade.payment_proof %}
-        <div class="alert alert-info mt-3">✅ وصل إثبات الدفع من المشتري</div>
-        <div style="margin-top:var(--sp-3);text-align:center;">
-          <img src="/uploads/{{ trade.payment_proof }}" style="max-width:100%;border-radius:var(--radius-lg);border:1px solid var(--border);">
-          <a href="/uploads/{{ trade.payment_proof }}" target="_blank" class="btn btn-ghost btn-sm mt-3">🔍 مشاهدة الإثبات</a>
-        </div>
-      {% else %}
-        <div class="alert alert-warning mt-3">⏳ بانتظار إثبات الدفع من المشتري</div>
-      {% endif %}
-    {% endif %}
+    <div class="info-row">
+      <span class="info-label">🔒 الحماية</span>
+      <span class="info-value">
+        {% if trade.escrow_status == 'LOCKED' %}
+          <span class="badge badge-success">🔒 محجوز</span>
+        {% elif trade.escrow_status == 'RELEASED' %}
+          <span class="badge badge-info">✅ تم التحرير</span>
+        {% elif trade.escrow_status == 'REFUNDED' %}
+          <span class="badge badge-warning">↩️ مُرتجع</span>
+        {% else %}
+          {{ trade.escrow_status }}
+        {% endif %}
+      </span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">🕐 التاريخ</span>
+      <span class="info-value" style="font-size:0.8rem;">{{ trade.created }}</span>
+    </div>
   </div>
 
-  <!-- ===== Chat ===== -->
+  <!-- Payment Proof -->
+  {% if trade.payment_proof %}
   <div class="card">
-    <div class="card-title">💬 محادثة الصفقة</div>
+    <div class="card-title">📸 إثبات الدفع</div>
+    <a href="/uploads/{{ trade.payment_proof }}" target="_blank">
+      <img src="/uploads/{{ trade.payment_proof }}" alt="إثبات الدفع" style="width:100%;border-radius:var(--radius-md);margin-top:var(--sp-2);">
+    </a>
+  </div>
+  {% endif %}
 
-    <div style="max-height:300px;overflow-y:auto;margin-top:var(--sp-3);margin-bottom:var(--sp-3);">
-      {% for m in messages %}
-      <div class="message {% if m.sender == current_user %}message-own{% endif %}">
-        <div class="message-sender">{{ m.sender }}</div>
-        <div class="message-text">{{ m.text }}</div>
-        <div class="message-time">{{ m.created }}</div>
-      </div>
-      {% else %}
-      <div class="empty-state" style="padding:var(--sp-4);">
-        <div style="color:var(--text-muted);font-size:0.9rem;">لا توجد رسائل بعد</div>
-      </div>
-      {% endfor %}
-    </div>
-
-    <form method="post">
-      <div class="form-group">
-        <textarea class="form-textarea" name="message" placeholder="اكتب رسالة للبائع أو المشتري..." style="min-height:70px;"></textarea>
-      </div>
-      <input type="hidden" name="receiver" value="{{ trade.seller if current_user == trade.buyer else trade.buyer }}">
-      <button type="submit" class="btn btn-success btn-block">📨 إرسال الرسالة</button>
+  <!-- Action Buttons -->
+  {% if trade.status == 'PENDING' and trade.buyer == current_user %}
+  <div class="card">
+    <div class="card-title">💳 تأكيد الدفع</div>
+    <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:var(--sp-3);">
+      بعد الدفع للبائع، اضغط الزر أدناه
+    </p>
+    <form method="POST" action="/confirm_payment/{{ trade.id }}" style="margin-bottom:var(--sp-3);">
+      <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="btn btn-primary btn-block btn-lg" onclick="haptic('success')">
+        ✅ لقد قمت بالدفع
+      </button>
+    </form>
+    <div class="divider"></div>
+    <form method="POST" action="/cancel_trade/{{ trade.id }}">
+      <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="btn btn-danger btn-block btn-sm">❌ إلغاء الصفقة</button>
     </form>
   </div>
+  {% endif %}
 
-  <!-- ===== Actions ===== -->
+  {% if trade.status == 'PAYMENT_SENT' and trade.buyer == current_user %}
+  <!-- Upload Proof -->
   <div class="card">
-    <div class="card-title">⚙️ إجراءات الصفقة</div>
+    <div class="card-title">📸 رفع إثبات الدفع</div>
+    <form method="POST" action="/upload_payment/{{ trade.id }}" enctype="multipart/form-data">
+      <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+      <div class="form-group">
+        <input class="form-input" type="file" name="proof" accept="image/*" required>
+        <div class="form-help">صورة إثبات الدفع (JPG, PNG)</div>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block" onclick="haptic('')">📤 رفع الإثبات</button>
+    </form>
+  </div>
+  {% endif %}
 
-    {% if trade.status == "PENDING" and current_user == trade.buyer %}
-    <a href="/confirm_payment/{{ trade.id }}" class="btn btn-success btn-block mt-3">
-      ✅ تم إرسال الدفع
-    </a>
-    {% endif %}
+  {% if trade.status == 'PAYMENT_SENT' and trade.seller == current_user %}
+  <div class="card">
+    <div class="card-title">🔒 تحرير USDT</div>
+    <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:var(--sp-3);">
+      تأكد من استلام الدفع قبل التحرير
+    </p>
+    <form method="POST" action="/seller_confirm/{{ trade.id }}">
+      <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="btn btn-success btn-block btn-lg" onclick="haptic('success')">
+        ✅ تحرير USDT للمشتري
+      </button>
+    </form>
+  </div>
+  {% endif %}
 
-    {% if trade.status == "PAYMENT_SENT" and current_user == trade.seller and trade.payment_proof %}
-    <a href="/seller_confirm/{{ trade.id }}" class="btn btn-success btn-block mt-3">
-      ✅ تأكيد استلام المبلغ وتحرير USDT
-    </a>
-    {% endif %}
+  <!-- Dispute -->
+  {% if trade.status not in ('COMPLETED', 'CANCELLED') %}
+  <div class="card">
+    <div class="card-title">⚠️ فتح نزاع</div>
+    <form method="POST" action="/open_dispute/{{ trade.id }}">
+      <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+      <div class="form-group">
+        <textarea class="form-input" name="reason" placeholder="اشرح سبب النزاع..." required maxlength="500"></textarea>
+      </div>
+      <button type="submit" class="btn btn-warning btn-block btn-sm" onclick="haptic('warning')">
+        ⚠️ فتح نزاع
+      </button>
+    </form>
+  </div>
+  {% endif %}
 
-    {% if trade.status == "COMPLETED" %}
-    <div class="alert alert-success mt-3">
-      🎉 اكتملت الصفقة بنجاح — تم تحرير USDT
+  <!-- Chat -->
+  <div class="card">
+    <div class="card-title">💬 المحادثة</div>
+    <div class="chat-container" id="chatContainer">
+      {% if messages %}
+        {% for msg in messages %}
+        <div class="chat-msg">
+          <div class="chat-bubble {% if msg.sender == current_user %}own{% else %}other{% endif %}">
+            {{ msg.text }}
+            <div class="chat-time">{{ msg.created }}</div>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div style="text-align:center;color:var(--text-muted);font-size:0.85rem;padding:var(--sp-4);">
+          لا توجد رسائل بعد
+        </div>
+      {% endif %}
     </div>
+    {% if trade.status not in ('COMPLETED', 'CANCELLED') %}
+    <form method="POST" action="/trade/{{ trade.id }}">
+      <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="receiver" value="{{ trade.seller if trade.buyer == current_user else trade.buyer }}">
+      <div style="display:flex;gap:var(--sp-2);">
+        <input class="form-input" type="text" name="message" placeholder="اكتب رسالة..." required maxlength="1000" style="flex:1;">
+        <button type="submit" class="btn btn-primary">إرسال</button>
+      </div>
+    </form>
     {% endif %}
-
-    {% if trade.status != "COMPLETED" %}
-    <a href="/trade_status/{{ trade.id }}/DISPUTE" class="btn btn-danger btn-block mt-3">
-      ⚠️ فتح نزاع
-    </a>
-    {% endif %}
-
-    <a href="/" class="btn btn-ghost btn-block mt-3">⬅️ الرجوع</a>
   </div>
 
 </div>
+
+{% block scripts %}
+<script>
+  // Auto-scroll chat
+  var chat = document.getElementById('chatContainer');
+  if (chat) chat.scrollTop = chat.scrollHeight;
+</script>
+{% endblock %}
 {% endblock %}

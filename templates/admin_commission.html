@@ -1,32 +1,35 @@
 {% extends "base.html" %}
-{% block title %}تعديل العمولة - USDT P2P Palestine{% endblock %}
-
+{% block title %}إعدادات العمولة - USDT P2P Palestine{% endblock %}
 {% block content %}
 <div class="container container-narrow">
+  <a href="/admin" class="back-link">⬅️ لوحة الأدمن</a>
+  <div class="page-header"><h2>⚙️ إعدادات العمولة</h2></div>
 
-  <a href="/admin" class="back-link mb-4">⬅️ الرجوع للوحة الأدمن</a>
-
-  <div class="page-header">
-    <h2>⚙️ تعديل العمولة</h2>
+  <div class="card" style="text-align:center;background:linear-gradient(135deg,rgba(168,85,247,0.08),var(--bg-surface));">
+    <div style="font-size:0.85rem;color:var(--text-muted);">💰 إجمالي الرسوم المحصلة</div>
+    <div class="price-display" style="font-size:1.8rem;">{{ total_fees }} <span class="price-currency">USDT</span></div>
   </div>
 
-  <form method="POST" action="/admin_commission" class="card">
-
-    <div class="form-group">
-      <label class="form-label">💰 عمولة صفقات USDT (%)</label>
-      <input class="form-input" type="number" step="0.1" name="trade_fee" value="{{ commission.trade_fee }}">
-      <div class="form-help">النسبة المئوية المحصلة من كل صفقة</div>
+  <form method="POST" class="card">
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+    <div class="card-title">⚙️ الإعدادات</div>
+    <div class="form-group mt-4">
+      <label class="form-label">📊 نسبة رسوم P2P (%)</label>
+      <input class="form-input" type="number" step="0.1" min="0" max="10" name="p2p_fee_percent" value="{{ config.p2p_fee_percent }}">
     </div>
-
     <div class="form-group">
-      <label class="form-label">🤝 عمولة إعلان المقابلة الشخصية (USDT)</label>
-      <input class="form-input" type="number" step="0.1" name="cash_fee" value="{{ commission.cash_fee }}">
-      <div class="form-help">المبلغ المحصل لكل إعلان مقابلة</div>
+      <label class="form-label">🤝 نسبة رسوم الكاش (%)</label>
+      <input class="form-input" type="number" step="0.1" min="0" max="10" name="cash_fee_percent" value="{{ config.cash_fee_percent }}">
     </div>
-
-    <button type="submit" class="btn btn-success btn-block btn-lg mt-4">💾 حفظ التعديل</button>
-
+    <div class="form-group">
+      <label class="form-label">⬇️ الحد الأدنى للرسوم (USDT)</label>
+      <input class="form-input" type="number" step="0.1" min="0" name="min_fee" value="{{ config.min_fee }}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">⬆️ الحد الأعلى للرسوم (USDT)</label>
+      <input class="form-input" type="number" step="0.1" min="0" name="max_fee" value="{{ config.max_fee }}">
+    </div>
+    <button type="submit" class="btn btn-primary btn-block btn-lg">💾 حفظ الإعدادات</button>
   </form>
-
 </div>
 {% endblock %}

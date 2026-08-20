@@ -1,100 +1,47 @@
 {% extends "base.html" %}
 {% block title %}حسابي - USDT P2P Palestine{% endblock %}
-
 {% block content %}
 <div class="container container-narrow">
-
-  <!-- ===== Profile Header ===== -->
-  <div class="card" style="text-align:center;background:linear-gradient(135deg,rgba(59,130,246,0.05),var(--bg-surface));">
-    <div class="avatar avatar-lg mx-auto mb-4">{{ user.username[0] }}</div>
-    <h2 style="margin-bottom:var(--sp-1);">{{ user.username }}</h2>
-    <div style="margin-bottom:var(--sp-3);">
-      {% if user.verified == 1 %}
-        <span class="badge badge-success">✅ حساب موثق</span>
+  <div class="page-header">
+    <div class="avatar avatar-lg" style="margin:0 auto var(--sp-3);">{{ user['username'][0] }}</div>
+    <h2>{{ user['username'] }}</h2>
+    <div style="display:flex;gap:var(--sp-2);justify-content:center;margin-top:var(--sp-2);flex-wrap:wrap;">
+      {% if user['verified'] == 1 %}
+        <span class="badge badge-success">✅ موثق</span>
       {% else %}
         <span class="badge badge-warning">⚠️ غير موثق</span>
       {% endif %}
-    </div>
-    <div style="display:flex;justify-content:center;gap:var(--sp-6);">
-      <div>
-        <div style="font-size:0.75rem;color:var(--text-muted);">⭐ التقييم</div>
-        <div style="font-weight:700;color:var(--accent-light);">{{ user.rating }}</div>
-      </div>
-      <div>
-        <div style="font-size:0.75rem;color:var(--text-muted);">🤝 الصفقات</div>
-        <div style="font-weight:700;">{{ user.trades_count }}</div>
-      </div>
+      <span class="badge badge-info">⭐ {{ user['rating']|default(5.0) }}</span>
     </div>
   </div>
 
-  <!-- ===== Personal Info ===== -->
+  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:var(--sp-3);">
+    <div class="stat-card">
+      <span class="stat-icon">🤝</span>
+      <div class="stat-value">{{ completed_trades|default(0) }}</div>
+      <div class="stat-label">صفقة مكتملة</div>
+    </div>
+    <div class="stat-card">
+      <span class="stat-icon">📢</span>
+      <div class="stat-value">{{ ads_count|default(0) }}</div>
+      <div class="stat-label">إعلان</div>
+    </div>
+  </div>
+
   <div class="card">
-    <div class="card-title">👤 معلومات الحساب</div>
-    <div style="margin-top:var(--sp-3);">
-      <div class="info-row">
-        <span class="info-label">اسم المستخدم</span>
-        <span class="info-value">{{ user.username }}</span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">📱 الهاتف</span>
-        <span class="info-value">{{ user.phone or "غير مضاف" }}</span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">🏦 البنك</span>
-        <span class="info-value">{{ user.bank or "غير مضاف" }}</span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">💳 IBAN</span>
-        <span class="info-value" style="font-size:0.8rem;">{{ user.iban or "غير مضاف" }}</span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">💵 طريقة الدفع</span>
-        <span class="info-value">{{ user.payment_method or "غير مضافة" }}</span>
-      </div>
-    </div>
-    <a href="/edit_profile" class="btn btn-primary btn-block mt-4">✏️ تعديل البيانات</a>
+    <div class="card-title">📋 المعلومات الشخصية</div>
+    <div class="info-row"><span class="info-label">📱 الهاتف</span><span class="info-value">{{ user['phone'] or 'غير مضاف' }}</span></div>
+    <div class="info-row"><span class="info-label">🏦 البنك</span><span class="info-value">{{ user['bank'] or 'غير مضاف' }}</span></div>
+    <div class="info-row"><span class="info-label">💳 الآيبان</span><span class="info-value ltr">{{ user['iban'] or 'غير مضاف' }}</span></div>
+    <div class="info-row"><span class="info-label">💵 طريقة الدفع</span><span class="info-value">{{ user['payment_method'] or 'غير مضاف' }}</span></div>
+    <div class="info-row"><span class="info-label">💰 محفظة USDT</span><span class="info-value ltr" style="font-size:0.7rem;">{{ user['usdt_wallet'] or 'غير مضاف' }}</span></div>
+    <div class="info-row"><span class="info-label">📊 عدد الصفقات</span><span class="info-value">{{ user['trades_count']|default(0) }}</span></div>
   </div>
 
-  <!-- ===== Quick Links ===== -->
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3);">
-    <a href="/my_trades" class="card card-interactive" style="text-align:center;padding:var(--sp-4);">
-      <div style="font-size:1.3rem;margin-bottom:var(--sp-2);">💰</div>
-      <div style="font-weight:600;font-size:0.9rem;">صفقاتي</div>
-    </a>
-    <a href="/notifications" class="card card-interactive" style="text-align:center;padding:var(--sp-4);">
-      <div style="font-size:1.3rem;margin-bottom:var(--sp-2);">🔔</div>
-      <div style="font-weight:600;font-size:0.9rem;">التنبيهات</div>
-    </a>
+  <div style="display:flex;gap:var(--sp-3);">
+    <a href="/edit_profile" class="btn btn-primary" style="flex:1;">✏️ تعديل</a>
+    <a href="/my_ads" class="btn btn-ghost" style="flex:1;">📢 إعلاناتي</a>
+    <a href="/my_trades" class="btn btn-ghost" style="flex:1;">📋 صفقاتي</a>
   </div>
-
-  <!-- ===== My Ads ===== -->
-  <div class="section-title mt-6">📢 إعلاناتي</div>
-
-  {% for a in ads %}
-  <div class="card mb-3" style="border-right:3px solid {% if a.status == 'OPEN' %}var(--accent){% else %}var(--border-light){% endif %};">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--sp-2);">
-      <span style="font-weight:600;">💰 {{ a.amount }} USDT</span>
-      {% if a.status == 'OPEN' %}
-        <span class="badge badge-success">متاح</span>
-      {% else %}
-        <span class="badge badge-neutral">{{ a.status }}</span>
-      {% endif %}
-    </div>
-    <div style="display:flex;gap:var(--sp-3);font-size:0.85rem;color:var(--text-secondary);">
-      <span>💵 {{ a.price }} ₪</span>
-      <span>💳 {{ a.payment }}</span>
-    </div>
-  </div>
-  {% else %}
-  <div class="empty-state">
-    <div class="empty-state-icon">📭</div>
-    <div class="empty-state-title">لا توجد إعلانات</div>
-  </div>
-  {% endfor %}
-
-  <a href="/create_ad" class="btn btn-success btn-block mt-3">➕ إضافة إعلان جديد</a>
-
-  <a href="/" class="back-link mt-4">⬅ الرئيسية</a>
-
 </div>
 {% endblock %}

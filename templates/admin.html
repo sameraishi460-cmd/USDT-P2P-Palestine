@@ -1,168 +1,151 @@
 {% extends "base.html" %}
-{% block title %}لوحة تحكم الأدمن - USDT P2P Palestine{% endblock %}
-
+{% block title %}لوحة الأدمن - USDT P2P Palestine{% endblock %}
 {% block content %}
-<div class="container" style="max-width:var(--container-max);">
-
-  <!-- ===== Admin Header ===== -->
+<div class="container">
   <div class="page-header" style="background:linear-gradient(135deg,var(--bg-surface),rgba(59,130,246,0.06));">
-    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:var(--sp-3);">
-      <div>
-        <h2>🛡️ لوحة تحكم الأدمن</h2>
-        <p style="color:var(--text-muted);font-size:0.85rem;margin:0;">إدارة المنصة والمستخدمين والصفقات</p>
-      </div>
-      <div style="display:flex;gap:var(--sp-2);flex-wrap:wrap;">
-        <a href="/" class="btn btn-ghost btn-sm">🏠 المنصة</a>
-        <a href="/logout" class="btn btn-danger btn-sm">🚪 خروج</a>
-      </div>
-    </div>
+    <h2>📊 لوحة الإدارة</h2>
   </div>
 
-  <!-- ===== Admin Menu ===== -->
-  <div style="display:flex;flex-wrap:wrap;gap:var(--sp-2);margin-bottom:var(--sp-5);">
-    <a href="/admin_wallet" class="btn btn-primary btn-sm">💰 محفظة المنصة</a>
-    <a href="/admin_commission_page" class="btn btn-primary btn-sm">⚙️ العمولات</a>
-    <a href="/admin_cash_ads" class="btn btn-success btn-sm">🤝 إعلانات المقابلات</a>
-    <a href="/admin_search" class="btn btn-primary btn-sm">🔍 بحث</a>
-    <a href="/admin_backup" class="btn btn-primary btn-sm">💾 نسخة احتياطية</a>
-    <a href="/admin_price" class="btn btn-purple btn-sm">💲 تعديل السعر</a>
-  </div>
-
-  <!-- ===== KPI Cards ===== -->
-  <div class="stagger" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:var(--sp-3);margin-bottom:var(--sp-6);">
+  <!-- KPI Cards -->
+  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:var(--sp-3);margin-bottom:var(--sp-4);">
     <div class="kpi-card">
       <div class="kpi-icon blue">👥</div>
-      <div class="kpi-value" style="color:var(--primary-light);">{{ users|length }}</div>
+      <div class="kpi-value">{{ total_users|default(0) }}</div>
       <div class="kpi-label">المستخدمين</div>
     </div>
     <div class="kpi-card">
-      <div class="kpi-icon green">📢</div>
-      <div class="kpi-value" style="color:var(--accent-light);">{{ trades|length }}</div>
-      <div class="kpi-label">إعلانات USDT</div>
+      <div class="kpi-icon green">🤝</div>
+      <div class="kpi-value">{{ completed_trades|default(0) }}</div>
+      <div class="kpi-label">صفقات مكتملة</div>
     </div>
     <div class="kpi-card">
-      <div class="kpi-icon yellow">🤝</div>
-      <div class="kpi-value" style="color:#fcd34d;">{{ cash_trades|length if cash_trades is defined else 0 }}</div>
-      <div class="kpi-label">صفقات المقابلات</div>
+      <div class="kpi-icon yellow">💰</div>
+      <div class="kpi-value">{{ total_volume|default(0) }}</div>
+      <div class="kpi-label">حجم التداول (USDT)</div>
     </div>
     <div class="kpi-card">
-      <div class="kpi-icon purple">💰</div>
-      <div class="kpi-value">{{ profit.total if profit is defined and profit else 0 }}</div>
-      <div class="kpi-label">أرباح المنصة</div>
+      <div class="kpi-icon purple">🏦</div>
+      <div class="kpi-value">{{ total_fees|default(0) }}</div>
+      <div class="kpi-label">إجمالي الرسوم</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon yellow">📥</div>
+      <div class="kpi-value">{{ pending_deposits|default(0) }}</div>
+      <div class="kpi-label">إيداعات بانتظار المراجعة</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon red">📤</div>
+      <div class="kpi-value">{{ pending_withdrawals|default(0) }}</div>
+      <div class="kpi-label">سحوبات بانتظار المراجعة</div>
     </div>
   </div>
 
-  <!-- ===== USDT Trades Table ===== -->
-  <div class="section-title">💱 صفقات USDT</div>
-
-  <div class="table-wrapper mb-6">
-    <div class="table-scroll">
-      <table class="table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>المشتري</th>
-            <th>البائع</th>
-            <th>الكمية</th>
-            <th>الحالة</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for t in trades %}
-          <tr>
-            <td>#{{ t.id }}</td>
-            <td>{{ t.buyer }}</td>
-            <td>{{ t.seller }}</td>
-            <td style="color:var(--accent-light);font-weight:600;">{{ t.amount }} USDT</td>
-            <td>
-              {% if t.status == 'COMPLETED' %}
-                <span class="badge badge-success">مكتملة</span>
-              {% elif t.status == 'PAYMENT_SENT' %}
-                <span class="badge badge-info">الدفع</span>
-              {% elif t.status == 'PENDING' %}
-                <span class="badge badge-warning">بانتظار</span>
-              {% else %}
-                <span class="badge badge-neutral">{{ t.status }}</span>
-              {% endif %}
-            </td>
-          </tr>
-          {% else %}
-          <tr>
-            <td colspan="5" style="text-align:center;color:var(--text-muted);padding:var(--sp-6);">لا توجد صفقات</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+  <!-- Quick Links -->
+  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:var(--sp-3);margin-bottom:var(--sp-4);">
+    <a href="/admin_commission" class="card card-interactive" style="text-align:center;padding:var(--sp-3);">
+      <div style="font-size:1.2rem;">⚙️</div>
+      <div style="font-size:0.8rem;font-weight:600;">العمولات</div>
+    </a>
+    <a href="/admin_price" class="card card-interactive" style="text-align:center;padding:var(--sp-3);">
+      <div style="font-size:1.2rem;">💲</div>
+      <div style="font-size:0.8rem;font-weight:600;">سعر السوق</div>
+    </a>
+    <a href="/admin_wallet" class="card card-interactive" style="text-align:center;padding:var(--sp-3);">
+      <div style="font-size:1.2rem;">👛</div>
+      <div style="font-size:0.8rem;font-weight:600;">محافظ المستخدمين</div>
+    </a>
+    <a href="/admin_cash_ads" class="card card-interactive" style="text-align:center;padding:var(--sp-3);">
+      <div style="font-size:1.2rem;">🤝</div>
+      <div style="font-size:0.8rem;font-weight:600;">إعلانات كاش</div>
+    </a>
+    <a href="/admin_usdt_deposits" class="card card-interactive" style="text-align:center;padding:var(--sp-3);">
+      <div style="font-size:1.2rem;">📥</div>
+      <div style="font-size:0.8rem;font-weight:600;">إيداعات USDT</div>
+    </a>
+    <a href="/admin_search" class="card card-interactive" style="text-align:center;padding:var(--sp-3);">
+      <div style="font-size:1.2rem;">🔍</div>
+      <div style="font-size:0.8rem;font-weight:600;">بحث</div>
+    </a>
   </div>
 
-  <!-- ===== Cash Trades Table ===== -->
-  {% if cash_trades is defined and cash_trades %}
-  <div class="section-title">📍 صفقات المقابلات الشخصية</div>
-
-  <div class="table-wrapper mb-6">
-    <div class="table-scroll">
-      <table class="table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>المشتري</th>
-            <th>البائع</th>
-            <th>الحالة</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for c in cash_trades %}
-          <tr>
-            <td>#{{ c.id }}</td>
-            <td>{{ c.buyer }}</td>
-            <td>{{ c.seller }}</td>
-            <td>
-              <span class="badge badge-neutral">{{ c.status }}</span>
-            </td>
-          </tr>
-          {% else %}
-          <tr>
-            <td colspan="4" style="text-align:center;color:var(--text-muted);padding:var(--sp-6);">لا توجد صفقات</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+  <!-- Pending Deposits -->
+  {% set pending_list = deposits|selectattr('status', 'equalto', 'PENDING')|list %}
+  {% if pending_list|length > 0 %}
+  <div class="section-title">📥 إيداعات بانتظار المراجعة</div>
+  {% for d in pending_list %}
+    <div class="card" style="border-right:3px solid var(--warning);">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-weight:700;">{{ d.username }}</div>
+          <div style="font-size:0.8rem;color:var(--text-muted);">{{ d.amount }} USDT — {{ d.created }}</div>
+          <div style="font-size:0.7rem;color:var(--text-muted);font-family:monospace;word-break:break-all;">TX: {{ d.tx_hash[:20] }}...</div>
+        </div>
+        <div style="display:flex;gap:var(--sp-2);">
+          <form method="POST" action="/admin_confirm_deposit/{{ d.id }}">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-success btn-sm">✅ تأكيد</button>
+          </form>
+          <form method="POST" action="/admin_reject_deposit/{{ d.id }}">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-danger btn-sm">❌ رفض</button>
+          </form>
+        </div>
+      </div>
     </div>
-  </div>
+  {% endfor %}
+  {% endif %}
+  {% if withdrawals|selectattr('status', 'equalto', 'PENDING')|list|length > 0 %}
+  <div class="section-title">📤 سحوبات بانتظار المراجعة</div>
+  {% for w in withdrawals %}
+    {% if w.status == 'PENDING' %}
+    <div class="card" style="border-right:3px solid var(--warning);">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-weight:700;">{{ w.username }}</div>
+          <div style="font-size:0.8rem;color:var(--text-muted);">{{ w.amount }} USDT → {{ w.wallet[:15] }}...</div>
+        </div>
+        <div style="display:flex;gap:var(--sp-2);">
+          <form method="POST" action="/admin_approve_withdraw/{{ w.id }}">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-success btn-sm">✅ اعتماد</button>
+          </form>
+          <form method="POST" action="/admin_reject_withdraw/{{ w.id }}">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-danger btn-sm">❌ رفض</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  {% endfor %}
   {% endif %}
 
-  <!-- ===== Cash Ads Table ===== -->
-  {% if cash_ads is defined and cash_ads %}
-  <div class="section-title">🤝 إعلانات المقابلات الشخصية</div>
-
-  <div class="table-wrapper mb-6">
-    <div class="table-scroll">
-      <table class="table">
-        <thead>
-          <tr>
-            <th>البائع</th>
-            <th>المدينة</th>
-            <th>مكان اللقاء</th>
-            <th>الكمية</th>
-            <th>العمولة</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for c in cash_ads %}
-          <tr>
-            <td>{{ c.user }}</td>
-            <td>{{ c.city }}</td>
-            <td>{{ c.location }}</td>
-            <td style="color:var(--accent-light);font-weight:600;">{{ c.amount }} USDT</td>
-            <td>{{ c.fee }} USDT</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+  <!-- Credit User -->
+  <div class="card">
+    <div class="card-title">💰 إضافة USDT لمستخدم</div>
+    <form method="POST" action="/admin_credit_user">
+      <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+      <div style="display:flex;gap:var(--sp-2);">
+        <input class="form-input" type="text" name="username" placeholder="اسم المستخدم" required style="flex:1;">
+        <input class="form-input" type="number" step="0.01" name="amount" placeholder="المبلغ" required style="flex:1;">
+        <button type="submit" class="btn btn-success">إضافة</button>
+      </div>
+    </form>
   </div>
-  {% endif %}
 
+  <!-- Recent Trades -->
+  <div class="section-title">📋 آخر الصفقات</div>
+  {% for t in trades|slice(20) %}
+  <div class="card" style="padding:var(--sp-3);">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div style="font-size:0.85rem;">
+        <span style="font-weight:600;">#{{ t.id }}</span>
+        <span style="color:var(--text-muted);">{{ t.buyer }} → {{ t.seller }}</span>
+      </div>
+      <span class="status-badge status-{{ t.status|lower|replace('_','-') }}">{{ t.status }}</span>
+    </div>
+    <div style="font-size:0.75rem;color:var(--text-muted);">{{ t.amount }} USDT — {{ t.price }} ₪</div>
+  </div>
+  {% endfor %}
 </div>
 {% endblock %}
