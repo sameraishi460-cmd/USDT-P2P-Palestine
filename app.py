@@ -34,8 +34,31 @@ app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024  # 5MB upload limit
 # Session security
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+app.config["SESSION_COOKIE_SECURE"] = False  # Set True behind HTTPS
 
 os.makedirs("uploads", exist_ok=True)
+
+
+# ===============================
+# SIMPLE RATE LIMITER (in-memory)
+# ===============================
+_rate_limits = {}  # key -> [count, window_start]
+
+def check_rate_limit(key, max_requests=10, window_seconds=60):
+    """Simple sliding window rate limiter. Returns True if allowed."""
+    import time
+    now = time.time()
+    if key not in _rate_limits:
+        _rate_limits[key] = [1, now]
+        return True
+    count, window_start = _rate_limits[key]
+    if now - window_start > window_seconds:
+        _rate_limits[key] = [1, now]
+        return True
+    if count >= max_requests:
+        return False
+    _rate_limits[key][0] += 1
+    return True
 
 # ===============================
 # TELEGRAM BOT CONFIG
@@ -50,10 +73,11 @@ DATABASE = "database.db"
 
 
 def connect():
-    con = sqlite3.connect(DATABASE, check_same_thread=False)
+    con = sqlite3.connect(DATABASE, check_same_thread=False, timeout=30)
     con.row_factory = sqlite3.Row
     con.execute("PRAGMA journal_mode=WAL")
     con.execute("PRAGMA foreign_keys=ON")
+    con.execute("PRAGMA busy_timeout=30000")
     return con
 
 
@@ -352,6 +376,8 @@ def setup_database():
     add_column(con, "withdraw_requests", "processed_at", "DATETIME")
     add_column(con, "usdt_deposits", "sender_wallet", "TEXT DEFAULT ''")
     add_column(con, "usdt_deposits", "confirmed_at", "DATETIME")
+    add_column(con, "users", "first_name", "TEXT DEFAULT ''")
+    add_column(con, "users", "referred_by", "TEXT DEFAULT ''")
     # wallet_history columns are created fresh, no migration needed
 
     # Set default platform config
@@ -457,8 +483,11 @@ def admin_required(func):
 # ===============================
 # WALLET & LEDGER
 # ===============================
-def create_wallet_if_missing(username):
-    con = connect()
+def create_wallet_if_missing(username, con=None):
+    """Create wallet if missing. Uses caller's connection if provided."""
+    own_con = con is None
+    if own_con:
+        con = connect()
     wallet = con.execute(
         "SELECT * FROM wallets WHERE username=?", (username,)
     ).fetchone()
@@ -467,38 +496,49 @@ def create_wallet_if_missing(username):
             "INSERT INTO wallets (username, balance, locked) VALUES(?,0,0)",
             (username,)
         )
-        con.commit()
-    con.close()
+        if own_con:
+            con.commit()
+    if own_con:
+        con.close()
 
 
-def get_balance(username):
-    con = connect()
+def get_balance(username, con=None):
+    """Get wallet balance. Uses caller's connection if provided."""
+    own_con = con is None
+    if own_con:
+        con = connect()
     wallet = con.execute(
         "SELECT * FROM wallets WHERE username=?", (username,)
     ).fetchone()
-    con.close()
+    if own_con:
+        con.close()
     if wallet:
         return wallet["balance"], wallet["locked"]
     return 0.0, 0.0
 
 
-def wallet_log(username, action, amount, ref_id=0, note=""):
-    """Record every balance change in the ledger."""
-    con = connect()
+def wallet_log(username, action, amount, ref_id=0, note="", con=None):
+    """Record every balance change in the ledger. Uses caller's connection if provided."""
+    own_con = con is None
+    if own_con:
+        con = connect()
     wallet = con.execute(
         "SELECT balance FROM wallets WHERE username=?", (username,)
     ).fetchone()
     balance_before = wallet["balance"] if wallet else 0
-    balance_after = balance_before + amount if action in (
-        "USDT_RECEIVED", "ESCROW_RELEASE", "REFUND", "WITHDRAWAL_REFUND"
-    ) else balance_before - amount if action in (
-        "ESCROW_LOCK", "PLATFORM_FEE", "WITHDRAWAL"
-    ) else balance_before
-    # For actions that only affect locked, keep balance_after == balance_before
-    if action == "ESCROW_LOCK":
-        balance_after = balance_before
-    if action == "ESCROW_RELEASE":
-        balance_after = balance_before
+    balance_after = balance_before
+    # Only compute net balance change for actions that actually modify balance
+    if action in ("USDT_RECEIVED", "WITHDRAWAL_REFUND"):
+        balance_after = balance_before + amount
+    elif action in ("PLATFORM_FEE", "WITHDRAWAL"):
+        balance_after = balance_before - amount
+    elif action == "ESCROW_RELEASE":
+        # Escrow release credits buyer, logged from buyer's perspective
+        balance_after = balance_before + amount
+    elif action == "REFUND":
+        # Refund credits the recipient
+        balance_after = balance_before + amount
+    # ESCROW_LOCK does not change available balance (moves to locked)
 
     con.execute(
         """INSERT INTO wallet_history
@@ -506,15 +546,19 @@ def wallet_log(username, action, amount, ref_id=0, note=""):
         VALUES(?,?,?,?,?,?,?)""",
         (username, action, amount, balance_before, balance_after, ref_id, note)
     )
-    con.commit()
-    con.close()
+    if own_con:
+        con.commit()
+        con.close()
 
 
-def modify_balance(username, amount_delta, action, ref_id=0, note=""):
-    """Atomically modify balance with ledger entry."""
-    con = connect()
+def modify_balance(username, amount_delta, action, ref_id=0, note="", con=None):
+    """Atomically modify balance with ledger entry. Uses caller's connection if provided."""
+    own_con = con is None
+    if own_con:
+        con = connect()
     try:
-        con.execute("BEGIN IMMEDIATE")
+        if own_con:
+            con.execute("BEGIN IMMEDIATE")
         wallet = con.execute(
             "SELECT balance, locked FROM wallets WHERE username=?",
             (username,)
@@ -528,8 +572,9 @@ def modify_balance(username, amount_delta, action, ref_id=0, note=""):
 
         new_balance = wallet["balance"] + amount_delta
         if new_balance < 0:
-            con.execute("ROLLBACK")
-            con.close()
+            if own_con:
+                con.execute("ROLLBACK")
+                con.close()
             return False
 
         con.execute(
@@ -543,38 +588,49 @@ def modify_balance(username, amount_delta, action, ref_id=0, note=""):
             (username, action, abs(amount_delta),
              wallet["balance"], new_balance, ref_id, note)
         )
-        con.commit()
-        con.close()
+        if own_con:
+            con.commit()
+            con.close()
         return True
     except Exception:
-        con.execute("ROLLBACK")
-        con.close()
+        if own_con:
+            try:
+                con.execute("ROLLBACK")
+            except Exception:
+                pass
+            con.close()
         return False
 
 
-def modify_locked(username, amount_delta):
-    """Modify locked balance atomically."""
-    con = connect()
+def modify_locked(username, amount_delta, con=None):
+    """Modify locked balance atomically. Uses caller's connection if provided."""
+    own_con = con is None
+    if own_con:
+        con = connect()
     try:
         wallet = con.execute(
             "SELECT locked FROM wallets WHERE username=?", (username,)
         ).fetchone()
         if not wallet:
-            con.close()
+            if own_con:
+                con.close()
             return False
         new_locked = wallet["locked"] + amount_delta
         if new_locked < 0:
-            con.close()
+            if own_con:
+                con.close()
             return False
         con.execute(
             "UPDATE wallets SET locked=? WHERE username=?",
             (new_locked, username)
         )
-        con.commit()
-        con.close()
+        if own_con:
+            con.commit()
+            con.close()
         return True
     except Exception:
-        con.close()
+        if own_con:
+            con.close()
         return False
 
 
@@ -600,23 +656,27 @@ def calculate_fee(amount, trade_type="p2p"):
 # ===============================
 # NOTIFICATIONS
 # ===============================
-def notify(username, title, message, send_telegram=False):
-    con = connect()
+def notify(username, title, message, send_telegram=False, con=None):
+    """Create notification. Uses caller's connection if provided."""
+    own_con = con is None
+    if own_con:
+        con = connect()
     con.execute(
         "INSERT INTO notifications (username, title, message) VALUES(?,?,?)",
         (username, title, message)
     )
-    con.commit()
-    con.close()
+    if own_con:
+        con.commit()
+        con.close()
 
     if send_telegram:
         try:
-            con2 = connect()
-            user = con2.execute(
+            tg_con = connect()
+            user = tg_con.execute(
                 "SELECT telegram_id FROM users WHERE username=?",
                 (username,)
             ).fetchone()
-            con2.close()
+            tg_con.close()
             if user and user["telegram_id"]:
                 telegram_bot.send_message(
                     int(user["telegram_id"]),
@@ -707,6 +767,9 @@ create_admin_account()
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
+        if not check_rate_limit(f"register:{request.remote_addr}", 5, 300):
+            flash("تم تجاوز حد المحاولات، يرجى الانتظار", "danger")
+            return redirect("/register")
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "")
 
@@ -728,7 +791,7 @@ def register():
                 "INSERT INTO users (username, password) VALUES(?,?)",
                 (username, generate_password_hash(password))
             )
-            create_wallet_if_missing(username)
+            create_wallet_if_missing(username, con=con)
             con.commit()
             session["user"] = username
             con.close()
@@ -748,6 +811,9 @@ def register():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
+        if not check_rate_limit(f"login:{request.remote_addr}", 10, 300):
+            flash("تم تجاوز حد المحاولات، يرجى الانتظار", "danger")
+            return redirect("/login")
         username = request.form.get("username", "").strip()
         password = request.form.get("password", "")
 
@@ -781,6 +847,8 @@ def telegram_login():
 
 @app.route("/telegram_auth", methods=["POST"])
 def telegram_auth():
+    if not check_rate_limit(f"tg_auth:{request.remote_addr}", 10, 60):
+        return "Rate limited", 429
     telegram_id = request.form.get("telegram_id")
     username = request.form.get("username", "")
     first_name = request.form.get("first_name", "")
@@ -826,7 +894,7 @@ def telegram_auth():
             (username, generate_password_hash(str(telegram_id)),
              telegram_id, first_name)
         )
-        create_wallet_if_missing(username)
+        create_wallet_if_missing(username, con=con)
         con.commit()
 
     con.close()
@@ -1500,6 +1568,9 @@ def wallet():
 @login_required
 def usdt_deposit():
     if request.method == "POST":
+        if not check_rate_limit(f"deposit:{session.get('user')}", 5, 600):
+            flash("تم تجاوز حد المحاولات", "danger")
+            return redirect("/usdt_deposit")
         if not validate_csrf():
             return redirect("/usdt_deposit")
 
@@ -1616,10 +1687,9 @@ def admin_confirm_deposit(id):
         flash("لم يتم التحقق من المعاملة على الشبكة", "danger")
         return redirect("/admin")
 
-    create_wallet_if_missing(deposit["username"])
+    create_wallet_if_missing(deposit["username"], con=con)
 
     try:
-        con.execute("BEGIN IMMEDIATE")
         con.execute(
             "UPDATE wallets SET balance=balance+? WHERE username=?",
             (deposit["amount"], deposit["username"])
@@ -1679,6 +1749,10 @@ def withdraw():
     ).fetchone()
 
     if request.method == "POST":
+        if not check_rate_limit(f"withdraw:{session.get('user')}", 5, 600):
+            con.close()
+            flash("تم تجاوز حد المحاولات", "danger")
+            return redirect("/withdraw")
         if not validate_csrf():
             con.close()
             return redirect("/withdraw")
@@ -2430,7 +2504,7 @@ def admin_resolve_dispute(trade_id):
                 (datetime.now(), trade_id)
             )
             wallet_log(trade["seller"], "ESCROW_RELEASE", trade["amount"],
-                       ref_id=trade_id, note="Dispute resolved - release to buyer")
+                       ref_id=trade_id, note="Dispute resolved - release to buyer", con=con)
 
         elif action == "refund":
             # Refund to seller
@@ -2443,7 +2517,7 @@ def admin_resolve_dispute(trade_id):
                 (trade_id,)
             )
             wallet_log(trade["seller"], "REFUND", trade["amount"],
-                       ref_id=trade_id, note="Dispute resolved - refund to seller")
+                       ref_id=trade_id, note="Dispute resolved - refund to seller", con=con)
 
         con.commit()
     except Exception:
