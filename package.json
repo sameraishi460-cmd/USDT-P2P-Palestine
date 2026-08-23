@@ -1,0 +1,23 @@
+{
+  "name": "usdt-p2p-palestine",
+  "version": "2.0.0",
+  "private": true,
+  "description": "USDT P2P Palestine — Cloudflare Workers + D1 + R2 + Pages",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "check": "tsc --noEmit",
+    "db:migrate:local": "wrangler d1 migrations apply usdt-palestine-db --local",
+    "db:migrate:remote": "wrangler d1 migrations apply usdt-palestine-db --remote",
+    "tail": "wrangler tail"
+  },
+  "dependencies": {
+    "hono": "^4.6.14"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20241127.0",
+    "typescript": "^5.7.2",
+    "wrangler": "^3.95.0"
+  }
+}

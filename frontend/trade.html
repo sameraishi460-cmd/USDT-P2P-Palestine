@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>الصفقة — USDT P2P Palestine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<div class="navbar">
+  <span class="logo" id="tradeTitle">📄صفقة</span>
+  <div class="actions"><a href="/trades.html" style="font-size:22px;">⬅️</a></div>
+</div>
+<div class="container">
+  <!-- Steps -->
+  <div class="card" id="stepsCard" style="display:none;">
+    <div class="steps" id="steps"></div>
+  </div>
+
+  <!-- Trade Info -->
+  <div class="card" id="infoCard">
+    <div class="skeleton" style="height:120px;"></div>
+  </div>
+
+  <!-- Actions -->
+  <div id="actionsPanel" style="display:none;"></div>
+
+  <!-- Chat -->
+  <div class="card" id="chatCard" style="display:none;">
+    <div class="card-title">💬 المحادثة</div>
+    <div class="chat-box" id="chatBox"></div>
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <input id="chatInput" type="text" placeholder="اكتب رسالة..." style="flex:1;">
+      <button onclick="sendMsg()" class="btn btn-primary" style="flex:0;min-width:60px;min-height:40px;font-size:13px;">إرسال</button>
+    </div>
+  </div>
+</div>
+<div id="toast"></div>
+<script src="assets/app.js"></script>
+<script>
+  if (!requireAuth('/')) throw new Error('auth');
+  const tradeId = new URLSearchParams(location.search).get('id');
+  const adId = new URLSearchParams(location.search).get('ad_id');
+  const me = getUser()?.username;
+  let trade = null;
+
+  (async function() {
+    // If ad_id, buy the ad first
+    if (adId && !tradeId) {
+      const r = await post('/market/buy/' + adId, { amount: Number(prompt('أدخل كمية USDT:')) || 0 });
+      if (r?.ok) { toast('✅ تم إنشاء الصفقة #' + r.trade_id); location.href = '/trade.html?id=' + r.trade_id; return; }
+      else { toast(r?.error || 'فشل إنشاء الصفقة', 4000); return; }
+    }
+    if (!tradeId) { location.href = '/trades.html'; return; }
+
+    trade = await get('/trades/' + tradeId);
+    if (!trade?.ok) { $('#infoCard').innerHTML = '<div class="empty">الصفقة غير موجودة</div>'; return; }
+    const t = trade.trade;
+
+    // Title
+    $('#tradeTitle').textContent = '📄 صفقة #' + t.id;
+
+    // Steps
+    const statuses = ['PENDING','PAYMENT_SENT','CONFIRMING','COMPLETED'];
+    const labels = ['إنشاء','دفع','تأكيد','瞵فراج'];
+    const currentIdx = statuses.indexOf(t.status);
+    $('#stepsCard').style.display = 'block';
+    $('#steps').innerHTML = statuses.map((s,i) => `
+      <div class="step ${i <= currentIdx ? 'done' : ''}">
+        <div class="dot">${i < currentIdx ? '✓' : i + 1}</div>
+        <div>${labels[i]}</div>
+      </div>
+    `).join('');
+
+    // Info
+    const other = t.buyer === me ? t.seller : t.buyer;
+    const iAmBuyer = t.buyer === me;
+    const price = t.price ? Number(t.price).toFixed(2) + ' ILS' : '';
+    $('#infoCard').innerHTML = `
+      <div class="grid-2">
+        <div><div class="kpi-label">المبلغ</div><div style="font-weight:800;font-size:22px;">${Number(t.amount).toFixed(2)} USDT</div></div>
+        <div><div class="kpi-label">السعر</div><div style="font-weight:700;">${price}</div></div>
+      </div>
+      <div style="margin-top:10px;">
+        <div class="muted">المستخدم الآخر: <b>${escHtml(other)}</b> (${iAmBuyer ? 'بائع' : 'مشتري'})</div>
+        <div class="muted">الحالة: ${statusBadge(t.status)}</div>
+        ${t.payment_method ? '<div class="muted">طريقة الدفع: ' + escHtml(t.payment_method) + '</div>' : ''}
+        <div class="muted">أنشئت: ${new Date(t.created).toLocaleString('ar')}</div>
+      </div>`;
+
+    // Actions
+    let actions = '';
+    if (t.status === 'PENDING' && iAmBuyer) {
+      actions += `<button onclick="confirmPayment()" class="btn btn-primary">💳 لقد قمت بالدفع</button>`;
+    }
+    if (t.status === 'PAYMENT_SENT' && !iAmBuyer) {
+      actions += `<button onclick="confirmRelease()" class="btn btn-primary">🔓 تحرير USDT</button>`;
+    }
+    if (['PENDING','PAYMENT_SENT'].includes(t.status)) {
+      actions += `<button onclick="cancelTrade()" class="btn btn-danger" style="margin-top:8px;">❌ إلغاء الصفقة</button>`;
+    }
+    if (t.status === 'COMPLETED' && !trade.reviewed) {
+      actions += `<div style="margin-top:10px;"><label>تقييمك</label><input id="reviewStars" type="number" min="1" max="5" value="5" style="width:80px;"> <button onclick="submitReview()" class="btn btn-outline" style="min-height:40px;flex:0;width:auto;display:inline-flex;">⭐ تقييم</button></div>`;
+    }
+    if (actions) { $('#actionsPanel').style.display = 'block'; $('#actionsPanel').innerHTML = `<div class="card">${actions}</div>`; }
+
+    // Chat
+    $('#chatCard').style.display = 'block';
+    loadChat();
+    setInterval(loadChat, 5000);
+  })();
+
+  async function loadChat() {
+    const r = await get('/trades/' + tradeId);
+    if (!r?.ok) return;
+    const msgs = r.messages || [];
+    $('#chatBox').innerHTML = msgs.map(m => `<div class="msg ${m.sender === me ? 'me' : 'them'}">${escHtml(m.text)}</div>`).join('');
+    $('#chatBox').scrollTop = $('#chatBox').scrollHeight;
+  }
+
+  async function sendMsg() {
+    const text = $('#chatInput').value.trim();
+    if (!text) return;
+    $('#chatInput').value = '';
+    await post('/trades/' + tradeId + '/message', { text });
+    loadChat();
+  }
+
+  async function confirmPayment() {
+    if (!confirm('هل أنت متأكد أنك قمت بالدفع؟')) return;
+    const proof = prompt('أدخل رقم التحويل / TX Hash (اختياري):') || '';
+    const r = await post('/trades/' + tradeId + '/confirm-payment', { proof_key: proof });
+    if (r?.ok) toast('✅ تم تأكيد الدفع'); else toast(r?.error || 'خطأ', 4000);
+    location.reload();
+  }
+
+  async function confirmRelease() {
+    if (!confirm('هل تأكدت من استلام الدفع وترغب في تحرير USDT؟')) return;
+    const r = await post('/trades/' + tradeId + '/seller-confirm', {});
+    if (r?.ok) toast('✅ تم تحرير USDT'); else toast(r?.error || 'خطأ', 4000);
+    location.reload();
+  }
+
+  async function cancelTrade() {
+    if (!confirm('هل أنت متأكد من إلغاء الصفقة؟')) return;
+    const r = await post('/trades/' + tradeId + '/cancel', {});
+    if (r?.ok) toast('❌ تم إلغاء الصفقة'); else toast(r?.error || 'خطأ', 4000);
+    location.href = '/trades.html';
+  }
+
+  async function submitReview() {
+    const stars = Number($('#reviewStars').value);
+    const r = await post('/reviews/' + tradeId, { to_user: trade.trade.buyer === me ? trade.trade.seller : trade.trade.buyer, rating: stars, comment: '' });
+    if (r?.ok) toast('⭐ شكراً لتقييمك'); else toast(r?.error || 'خطأ', 4000);
+    location.reload();
+  }
+</script>
+</body>
+</html>

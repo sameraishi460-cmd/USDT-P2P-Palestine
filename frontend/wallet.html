@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>المحفظة — USDT P2P Palestine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<div class="navbar">
+  <span class="logo">💰 المحفظة</span>
+  <div class="actions"><a href="/" style="font-size:22px;">🏠</a></div>
+</div>
+<div class="container">
+  <!-- Balance -->
+  <div class="card" style="background:linear-gradient(135deg,#0b2b21,#0b1a14);text-align:center;">
+    <div class="muted">الرصيد المتاح (USDT)</div>
+    <div class="big-num" id="balance" style="color:var(--primary);">—</div>
+    <div class="grid-2" style="margin-top:10px;">
+      <div><div class="muted">مقفل</div><div style="font-weight:700;color:var(--warning);" id="locked">0.00</div></div>
+      <div><div class="muted">الإجمالي</div><div style="font-weight:700;" id="total">0.00</div></div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div style="display:flex;gap:8px;margin-bottom:14px;">
+    <button onclick="showTab('deposit')" class="btn btn-primary" style="flex:1;min-height:40px;font-size:13px;" id="tabDeposit">📥 إيداع</button>
+    <button onclick="showTab('withdraw')" class="btn btn-outline" style="flex:1;min-height:40px;font-size:13px;" id="tabWithdraw">📤 سحب</button>
+    <button onclick="showTab('history')" class="btn btn-outline" style="flex:1;min-height:40px;font-size:13px;" id="tabHistory">📋 السجل</button>
+  </div>
+
+  <!-- Deposit -->
+  <div id="panelDeposit">
+    <div class="card">
+      <div class="card-title">📥 إيداع USDT</div>
+      <div class="alert alert-info">الشبكة: <b>BSC (BEP-20)</b> فقط — لا تُرسل على شبكات أخرى</div>
+      <label>عنوان الإيداع</label>
+      <div class="addr-box">
+        <span id="depositAddr" style="flex:1;">0x659dd7cba24363c903abe3fddfc89eb30ffbf58a</span>
+        <button class="copy-btn" onclick="copyText($('#depositAddr').textContent)">📋 نسخ</button>
+      </div>
+      <div class="alert alert-warning" style="margin-top:10px;">⚠️ أرسل USDT فقط على شبكة BSC (BEP-20). إرسال على شبكة أخرى = خسارة الأموال.</div>
+      <label>المبلغ (USDT)</label>
+      <input id="depAmount" type="number" min="1" step="0.01" placeholder="10">
+      <label>المحفظة المرسلة</label>
+      <input id="depWallet" type="text" placeholder="0x...">
+      <label>رقم العملية (TX Hash)</label>
+      <input id="depTxHash" type="text" placeholder="0x..." style="direction:ltr;text-align:left;">
+      <button onclick="submitDeposit()" class="btn btn-primary" style="margin-top:14px;" id="depBtn">✅ تسجيل الإيداع</button>
+    </div>
+  </div>
+
+  <!-- Withdraw -->
+  <div id="panelWithdraw" style="display:none;">
+    <div class="card">
+      <div class="card-title">📤 سحب USDT</div>
+      <div class="muted" style="margin-bottom:10px;">المتاح للسحب: <b id="wdAvail">0</b> USDT</div>
+      <label>المبلغ (USDT)</label>
+      <input id="wdAmount" type="number" min="1" step="0.01" placeholder="10">
+      <label>محفظة BEP-20</label>
+      <input id="wdAddress" type="text" placeholder="0x..." style="direction:ltr;text-align:left;">
+      <button onclick="submitWithdraw()" class="btn btn-warning" style="margin-top:14px;" id="wdBtn">📤 طلب سحب</button>
+    </div>
+  </div>
+
+  <!-- History -->
+  <div id="panelHistory" style="display:none;">
+    <div id="historyList" class="empty"><div class="skeleton"></div></div>
+  </div>
+</div>
+<div class="bottom-nav">
+  <a href="/"><span class="icon">🏠</span>الرئيسية</a>
+  <a href="/market.html"><span class="icon">🛒</span>السوق</a>
+  <a href="/trades.html"><span class="icon">📄</span>الصفقات</a>
+  <a href="/wallet.html" class="active"><span class="icon">💰</span>المحفظة</a>
+  <a href="/profile.html"><span class="icon">👤</span>حسابي</a>
+</div>
+<div id="toast"></div>
+<script src="assets/app.js"></script>
+<script>
+  if (!requireAuth('/wallet.html')) throw new Error('auth');
+
+  (async function() {
+    // Set active tab from hash
+    const h = location.hash.replace('#','');
+    if (['deposit','withdraw','history'].includes(h)) showTab(h);
+
+    // Load wallet
+    const w = await get('/wallet');
+    if (w?.ok) {
+      $('#balance').textContent = Number(w.balance).toFixed(2);
+      $('#locked').textContent = Number(w.locked).toFixed(2);
+      $('#total').textContent = (Number(w.balance) + Number(w.locked)).toFixed(2);
+      $('#wdAvail').textContent = Number(w.balance).toFixed(2);
+    }
+
+    // Load wallet address
+    const addr = await get('/wallet/deposit-info');
+    if (addr?.ok && addr.deposit_address) $('#depositAddr').textContent = addr.deposit_address;
+  })();
+
+  function showTab(tab) {
+    ['deposit','withdraw','history'].forEach(t => {
+      $('#panel' + t[0].toUpperCase() + t.slice(1)).style.display = t === tab ? 'block' : 'none';
+    });
+    $('#tabDeposit').className = tab === 'deposit' ? 'btn btn-primary' : 'btn btn-outline';
+    $('#tabWithdraw').className = tab === 'withdraw' ? 'btn btn-warning' : 'btn btn-outline';
+    $('#tabHistory').className = tab === 'history' ? 'btn btn-primary' : 'btn btn-outline';
+    if (tab === 'history') loadHistory();
+  }
+
+  async function submitDeposit() {
+    const r = await post('/wallet/deposit', {
+      amount: Number($('#depAmount').value),
+      sender_wallet: $('#depWallet').value.trim(),
+      tx_hash: $('#depTxHash').value.trim(),
+    });
+    if (r?.ok) { toast('✅ تم تسجيل طلب الإيداع'); loadWallet(); }
+    else toast(r?.error || 'خطأ', 4000);
+  }
+
+  async function submitWithdraw() {
+    if (!confirm('هل أنت متأكد من طلب السحب؟')) return;
+    const r = await post('/wallet/withdraw', {
+      amount: Number($('#wdAmount').value),
+      address: $('#wdAddress').value.trim(),
+    });
+    if (r?.ok) toast('✅ تم إرسال طلب السحب');
+    else toast(r?.error || 'خطأ', 4000);
+  }
+
+  async function loadHistory() {
+    const r = await get('/wallet/history?limit=50');
+    if (r?.ok && r.history?.length) {
+      $('#historyList').innerHTML = r.history.map(h => `
+        <div class="row-item" style="cursor:default;">
+          <div style="font-size:20px;">${h.action === 'DEPOSIT' ? '📥' : h.action === 'WITHDRAWAL' ? '📤' : '📋'}</div>
+          <div class="row-main">
+            <div class="row-title">${h.action} ${h.tx_hash ? '<span style="direction:ltr;font-size:11px;color:var(--text-dim);">' + h.tx_hash.slice(0,12) + '…</span>' : ''}</div>
+            <div class="row-sub">${h.note || ''} · ${new Date(h.created).toLocaleString('ar')}</div>
+          </div>
+          <div style="font-weight:700;color:${['DEPOSIT','ESCROW_RELEASE','REFUND'].includes(h.action)?'var(--primary)':'var(--warning)'}">
+            ${['DEPOSIT','ESCROW_RELEASE','REFUND'].includes(h.action)?'+':''}-${Number(h.amount).toFixed(2)}
+          </div>
+        </div>
+      `).join('');
+    } else {
+      $('#historyList').innerHTML = '<div class="empty"><div class="icon">📋</div>لا يوجد سجل بعد</div>';
+    }
+  }
+
+  async function loadWallet() {
+    const w = await get('/wallet');
+    if (w?.ok) { $('#balance').textContent = Number(w.balance).toFixed(2); $('#locked').textContent = Number(w.locked).toFixed(2); $('#total').textContent = (Number(w.balance) + Number(w.locked)).toFixed(2); $('#wdAvail').textContent = Number(w.balance).toFixed(2); }
+  }
+</script>
+</body>
+</html>

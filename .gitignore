@@ -5,3 +5,5 @@ database.db-shm
 database.db-wal
 backtest_results.json
 walkforward_results.json
+node_modules/
+bun.lock

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ملفي الشخصي — USDT P2P Palestine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<div class="navbar">
+  <span class="logo">👤 الملف الشخصي</span>
+  <div class="actions"><a href="/" style="font-size:22px;">🏠</a></div>
+</div>
+<div class="container">
+  <div id="profileCard" class="card" style="text-align:center;">
+    <div class="skeleton" style="height:100px;"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">📝 تعديل المعلومات</div>
+    <div id="editMsg" class="alert alert-success" style="display:none;"></div>
+    <form id="editForm">
+      <label>الاسم الأول</label><input id="eName" type="text">
+      <label>رقم الهاتف</label><input id="ePhone" type="tel">
+      <label>البنك</label><input id="eBank" type="text">
+      <label>IBAN</label><input id="eIban" type="text">
+      <label>طريقة الدفع</label><input id="ePayMethod" type="text" placeholder="تحويل بنكي / فودافون كاش">
+      <button type="submit" class="btn btn-primary" style="margin-top:14px;">💾 حفظ التعديلات</button>
+    </form>
+  </div>
+  <button onclick="logout()" class="btn btn-danger" style="margin-top:10px;">🚪 تسجيل الخروج</button>
+  <div id="adminLink" style="display:none;text-align:center;margin-top:14px;"><a href="/admin.html" class="btn btn-outline" style="color:var(--gold);border-color:var(--gold);">⚙️ لوحة التحكم</a></div>
+</div>
+<div class="bottom-nav">
+  <a href="/"><span class="icon">🏠</span>الرئيسية</a>
+  <a href="/market.html"><span class="icon">🛒</span>السوق</a>
+  <a href="/trades.html"><span class="icon">📄</span>الصفقات</a>
+  <a href="/wallet.html"><span class="icon">💰</span>المحفظة</a>
+  <a href="/profile.html" class="active"><span class="icon">👤</span>حسابي</a>
+</div>
+<div id="toast"></div>
+<script src="assets/app.js"></script>
+<script>
+  if (!requireAuth('/profile.html')) throw new Error('auth');
+  (async function() {
+    const r = await get('/profile');
+    if (!r?.ok) return;
+    const p = r.profile;
+    $('#profileCard').innerHTML = `
+      ${profileAvatar(p.username)}
+      <h2 style="margin-top:8px;">${escHtml(p.username)} ${p.verified ? '<span class="badge badge-verified">✓ موثق</span>' : ''}</h2>
+      ${p.first_name ? '<div class="muted">' + escHtml(p.first_name) + '</div>' : ''}
+      <div class="grid-3" style="margin-top:14px;">
+        <div><div class="kpi-label">صفقات</div><div style="font-weight:700;">${r.stats?.total || 0}</div></div>
+        <div><div class="kpi-label">مكتملة</div><div style="font-weight:700;color:var(--primary);">${r.stats?.completed || 0}</div></div>
+        <div><div class="kpi-label">نزاعات</div><div style="font-weight:700;color:var(--warning);">${r.stats?.disputed || 0}</div></div>
+      </div>
+      <div class="muted" style="margin-top:10px;">عضو منذ: ${new Date(p.created_at).toLocaleDateString('ar')}</div>`;
+    $('#eName').value = p.first_name || '';
+    $('#ePhone').value = p.phone || '';
+    $('#eBank').value = p.bank || '';
+    $('#eIban').value = p.iban || '';
+    $('#ePayMethod').value = p.payment_method || '';
+    if (getUser()?.isAdmin) $('#adminLink').style.display = 'block';
+  })();
+
+  $('#editForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const r = await post('/profile/edit', {
+      first_name: $('#eName').value.trim(),
+      phone: $('#ePhone').value.trim(),
+      bank: $('#eBank').value.trim(),
+      iban: $('#eIban').value.trim(),
+      payment_method: $('#ePayMethod').value.trim(),
+    });
+    if (r?.ok) { toast('✅ تم الحفظ'); location.reload(); }
+    else toast(r?.error || 'خطأ', 4000);
+  };
+
+  function logout() {
+    post('/auth/logout').finally(() => { clearAuth(); location.href = '/'; });
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,72 @@
+# ============================================================
+# USDT P2P Palestine — Cloudflare Worker Configuration
+# ============================================================
+# SECURITY: Never put secrets in this file. Use:
+#   wrangler secret put SECRET_KEY
+#   wrangler secret put TELEGRAM_BOT_TOKEN
+#   wrangler secret put ADMIN_PASSWORD
+# ============================================================
+
+name = "usdt-palestine-api"
+main = "src/index.ts"
+compatibility_date = "2024-12-01"
+account_id = ""  # Set via: wrangler login (auto-detected)
+
+# ------------------------------------------------------------
+# D1 Database
+# Create with: wrangler d1 create usdt-palestine-db
+# Then paste the returned database_id below.
+# ------------------------------------------------------------
+[[d1_databases]]
+binding = "DB"
+database_name = "usdt-palestine-db"
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
+
+# ------------------------------------------------------------
+# R2 Bucket (payment proofs, evidence uploads)
+# Create with: wrangler r2 bucket create usdt-palestine-uploads
+# ------------------------------------------------------------
+[[r2_buckets]]
+binding = "R2"
+bucket_name = "usdt-palestine-uploads"
+
+# ------------------------------------------------------------
+# KV Namespace (rate limiting, CSRF tokens)
+# Create with: wrangler kv namespace create RATE_LIMIT
+# ------------------------------------------------------------
+[[kv_namespaces]]
+binding = "RATE_LIMIT"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
+
+# ------------------------------------------------------------
+# ------------------------------------------------------------
+# Secrets required (set via `wrangler secret put <NAME>`):
+#   SECRET_KEY              — session/JWT signing key
+#   TELEGRAM_BOT_TOKEN      — NEW token (old one is compromised)
+#   TELEGRAM_WEBHOOK_SECRET — random string passed to setWebhook
+#   ADMIN_PASSWORD          — admin dashboard password
+# ------------------------------------------------------------
+[vars]
+ENVIRONMENT = "development"
+APP_URL = "http://localhost:8788"
+PLATFORM_WALLET = "0x659dd7cba24363c903abe3fddfc89eb30ffbf58a"
+USDT_CONTRACT = "0x55d398326f99059fF775485246999027B3197955"
+BSC_RPC_URL = "https://bsc-dataseed.binance.org/"
+USDT_DECIMALS = "6"
+TELEGRAM_ADMIN_ID = ""  # Set via vars or secret — never hardcode
+
+# ------------------------------------------------------------
+# Cron Triggers — price updater every hour
+# ------------------------------------------------------------
+[triggers]
+crons = ["0 * * * *"]
+
+# ------------------------------------------------------------
+# Observability
+# ------------------------------------------------------------
+[observability]
+enabled = true
+
+[env.production]
+name = "usdt-palestine-api"
+vars = { ENVIRONMENT = "production", APP_URL = "https://usdt-palestine.pages.dev" }

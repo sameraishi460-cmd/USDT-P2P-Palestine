@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>لوحة التحكم — USDT P2P Palestine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<div class="navbar">
+  <span class="logo" style="color:var(--gold);">⚙️ لوحة التحكم</span>
+  <div class="actions"><a href="/" style="font-size:22px;">🏠</a></div>
+</div>
+<div class="container">
+  <!-- KPIs -->
+  <div class="grid-3" id="kpis">
+    <div class="card" style="text-align:center;"><div class="kpi-label">المستخدمون</div><div class="big-num" id="kUsers" style="font-size:20px;">—</div></div>
+    <div class="card" style="text-align:center;"><div class="kpi-label">الصفقات النشطة</div><div class="big-num" id="kActive" style="font-size:20px;color:var(--info);">—</div></div>
+    <div class="card" style="text-align:center;"><div class="kpi-label">حجم التداول</div><div class="big-num" id="kVolume" style="font-size:20px;color:var(--primary);">—</div></div>
+  </div>
+  <div class="grid-3">
+    <div class="card" style="text-align:center;"><div class="kpi-label">عمولات</div><div class="big-num" id="kFees" style="font-size:18px;color:var(--gold);">—</div></div>
+    <div class="card" style="text-align:center;"><div class="kpi-label">إيداعات بانتظار</div><div class="big-num" id="kDep" style="font-size:18px;color:var(--warning);">—</div></div>
+    <div class="card" style="text-align:center;"><div class="kpi-label">سحوبات بانتظار</div><div class="big-num" id="kWd" style="font-size:18px;color:var(--warning);">—</div></div>
+  </div>
+
+  <!-- Tabs -->
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin:14px 0;">
+    <button onclick="showSection('users')" class="btn btn-outline admin-tab active" data-s="users" style="min-height:36px;font-size:12px;flex:0;width:auto;">👥</button>
+    <button onclick="showSection('trades')" class="btn btn-outline admin-tab" data-s="trades" style="min-height:36px;font-size:12px;flex:0;width:auto;">📄</button>
+    <button onclick="showSection('deposits')" class="btn btn-outline admin-tab" data-s="deposits" style="min-height:36px;font-size:12px;flex:0;width:auto;">📥</button>
+    <button onclick="showSection('withdrawals')" class="btn btn-outline admin-tab" data-s="withdrawals" style="min-height:36px;font-size:12px;flex:0;width:auto;">📤</button>
+    <button onclick="showSection('price')" class="btn btn-outline admin-tab" data-s="price" style="min-height:36px;font-size:12px;flex:0;width:auto;">💲</button>
+    <button onclick="showSection('search')" class="btn btn-outline admin-tab" data-s="search" style="min-height:36px;font-size:12px;flex:0;width:auto;">🔍</button>
+  </div>
+
+  <!-- Search -->
+  <div id="sec-search" style="display:none;" class="card">
+    <form id="searchForm" style="display:flex;gap:8px;">
+      <input id="searchQ" type="text" placeholder="بحث بالاسم / tx hash / محفظة" style="flex:1;min-height:40px;">
+      <button type="submit" class="btn btn-primary" style="flex:0;width:auto;min-height:40px;">🔍</button>
+    </form>
+    <div id="searchResults" style="margin-top:10px;"></div>
+  </div>
+
+  <div id="sec-users"></div>
+  <div id="sec-trades" style="display:none;"></div>
+  <div id="sec-deposits" style="display:none;"></div>
+  <div id="sec-withdrawals" style="display:none;"></div>
+  <div id="sec-price" style="display:none;" class="card">
+    <div class="card-title">💲 أسعار السوق</div>
+    <div class="muted">تحديث السعر تلقائي عبر Cron. يمكنك التحديث يدوياً:</div>
+    <form id="priceForm">
+      <label>USD/ILS</label><input id="pUsd" type="number" step="0.01">
+      <label>USDT/ILS</label><input id="pUsdt" type="number" step="0.01">
+      <button type="submit" class="btn btn-primary" style="margin-top:10px;">💾 تحديث</button>
+    </form>
+  </div>
+</div>
+<div id="toast"></div>
+<script src="assets/app.js"></script>
+<script>
+  if (!requireAuth('/admin.html')) throw new Error('auth');
+  if (!getUser()?.isAdmin) { document.body.innerHTML = '<div class="container" style="text-align:center;padding:60px;"><div class="empty"><div class="icon">🔒</div>غير مصرح لك</div></div>'; throw new Error('auth'); }
+
+  let currentSection = 'users';
+  function showSection(s) {
+    currentSection = s;
+    ['users','trades','deposits','withdrawals','price','search'].forEach(sec => {
+      document.getElementById('sec-' + sec).style.display = sec === s ? 'block' : 'none';
+    });
+    document.querySelectorAll('.admin-tab').forEach(b => b.classList.toggle('active', b.dataset.s === s));
+  }
+
+  (async function() {
+    const d = await get('/admin/');
+    if (!d?.ok) return;
+    const k = d.kpis;
+    $('#kUsers').textContent = k.total_users;
+    $('#kActive').textContent = k.active_trades;
+    $('#kVolume').textContent = Number(k.total_volume).toFixed(2);
+    $('#kFees').textContent = Number(k.platform_fees).toFixed(2);
+    $('#kDep').textContent = k.pending_deposits;
+    $('#kWd').textContent = k.pending_withdrawals;
+
+    // Users
+    const users = await get('/admin/users');
+    if (users?.ok && users.users?.length) {
+      $('#sec-users').innerHTML = '<div class="card"><div class="card-title">👥 المستخدمون</div>' + users.users.map(u => `
+        <div class="row-item" style="cursor:default;">
+          ${profileAvatar(u.username)}
+          <div class="row-main">
+            <div class="row-title">${escHtml(u.username)} ${u.status === 'ADMIN' ? '<span class="badge" style="background:var(--gold);color:#000;">ADMIN</span>' : ''} ${u.verified ? '<span class="badge badge-verified">✓</span>' : ''}</div>
+            <div class="row-sub">${u.phone || ''} · ${escHtml(u.status)} · ${new Date(u.created_at).toLocaleDateString('ar')}</div>
+          </div>
+          <div style="display:flex;gap:4px;">
+            ${u.status !== 'BANNED' ? `<button onclick="banUser('${escHtml(u.username)}')" class="btn btn-danger" style="min-height:30px;font-size:11px;padding:4px 8px;">🚫</button>` : `<button onclick="unbanUser('${escHtml(u.username)}')" class="btn btn-outline" style="min-height:30px;font-size:11px;padding:4px 8px;">✅</button>`}
+            ${!u.verified ? `<button onclick="verifyUser('${escHtml(u.username)}')" class="btn btn-outline" style="min-height:30px;font-size:11px;padding:4px 8px;border-color:var(--gold);color:var(--gold);">✓</button>` : ''}
+          </div>
+        </div>
+      `).join('') + '</div>';
+    }
+
+    // Withdrawals pending
+    const wds = await get('/admin/withdrawals?status=PENDING');
+    if (wds?.ok && wds.withdrawals?.length) {
+      $('#sec-withdrawals').innerHTML = '<div class="card"><div class="card-title">📤 سحوبات بانتظار</div>' + wds.withdrawals.map(w => `
+        <div class="row-item" style="cursor:default;">
+          <div class="row-main">
+            <div class="row-title">${escHtml(w.username)} — ${Number(w.amount).toFixed(2)} USDT</div>
+            <div class="row-sub" style="direction:ltr;text-align:left;">${escHtml(w.address)}</div>
+          </div>
+          <div style="display:flex;gap:4px;">
+            <button onclick="approveWd(${w.id})" class="btn btn-primary" style="min-height:30px;font-size:11px;padding:4px 10px;">✅</button>
+            <button onclick="rejectWd(${w.id})" class="btn btn-danger" style="min-height:30px;font-size:11px;padding:4px 10px;">❌</button>
+          </div>
+        </div>
+      `).join('') + '</div>';
+    }
+
+    // Price form
+    const price = await get('/market/price');
+    if (price?.ok && price.price) { $('#pUsd').value = price.price.usd_ils; $('#pUsdt').value = price.price.usdt_ils; }
+  })();
+
+  async function banUser(u) { if (!confirm('حظر ' + u + '?')) return; await post('/admin/users/' + u + '/ban'); toast('🚫 تم الحظر'); location.reload(); }
+  async function unbanUser(u) { await post('/admin/users/' + u + '/unban'); toast('✅ تم إلغاء الحظر'); location.reload(); }
+  async function verifyUser(u) { await post('/admin/users/' + u + '/verify'); toast('✅ تم التوثيق'); location.reload(); }
+  async function approveWd(id) { if (!confirm('اعتماد السحب؟')) return; const r = await post('/admin/withdrawals/' + id + '/approve', {}); if (r?.ok) { toast('✅ تمت الموافقة'); location.reload(); } else toast(r?.error || 'خطأ', 4000); }
+  async function rejectWd(id) { if (!confirm('رفض السحب؟')) return; const r = await post('/admin/withdrawals/' + id + '/reject', {}); if (r?.ok) { toast('❌ تم الرفض'); location.reload(); } else toast(r?.error || 'خطأ', 4000); }
+
+  $('#searchForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const q = $('#searchQ').value.trim();
+    const r = await post('/admin/search', { q });
+    if (r?.ok) { $('#searchResults').innerHTML = '<pre style="font-size:12px;overflow-x:auto;">' + JSON.stringify(r.results, null, 2) + '</pre>'; }
+  };
+
+  $('#priceForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const r = await post('/admin/price', { usd_ils: Number($('#pUsd').value), usdt_ils: Number($('#pUsdt').value) });
+    if (r?.ok) toast('✅ تم تحديث السعر'); else toast(r?.error || 'خطأ', 4000);
+  };
+</script>
+</body>
+</html>

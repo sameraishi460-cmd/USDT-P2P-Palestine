@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>الإشعارات — USDT P2P Palestine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<div class="navbar">
+  <span class="logo">🔔 الإشعارات</span>
+  <div class="actions">
+    <button onclick="markAllRead()" class="btn btn-outline" style="min-height:36px;font-size:12px;flex:0;width:auto;display:inline-flex;">✓ قراءة الكل</button>
+    <a href="/" style="font-size:22px;">🏠</a>
+  </div>
+</div>
+<div class="container">
+  <div id="notifList" class="empty"><div class="skeleton"></div><div class="skeleton"></div></div>
+</div>
+<div id="toast"></div>
+<script src="assets/app.js"></script>
+<script>
+  if (!requireAuth('/notifications.html')) throw new Error('auth');
+  (async function() {
+    const r = await get('/notifications');
+    if (r?.ok && r.notifications?.length) {
+      $('#notifList').innerHTML = r.notifications.map(n => `
+        <div class="row-item" style="opacity:${n.seen ? '.65' : '1'};cursor:default;">
+          <div style="font-size:22px;">${n.seen ? '📩' : '🔔'}</div>
+          <div class="row-main">
+            <div class="row-title">${escHtml(n.title)}</div>
+            <div class="row-sub">${escHtml(n.message)}</div>
+            <div class="muted" style="margin-top:4px;">${new Date(n.created).toLocaleString('ar')}</div>
+          </div>
+        </div>
+      `).join('');
+    } else {
+      $('#notifList').innerHTML = '<div class="empty"><div class="icon">🔔</div>لا إشعارات جديدة</div>';
+    }
+  })();
+  async function markAllRead() {
+    await post('/notifications/mark-read');
+    toast('✅ تم تحديد الكل كمقروء');
+    location.reload();
+  }
+</script>
+</body>
+</html>
