@@ -39,8 +39,10 @@ app.get("/api/health", async (c) => {
   const checks: Record<string, string> = {};
   // D1
   try { await c.env.DB.prepare("SELECT 1").first(); checks.database = "up"; } catch { checks.database = "down"; }
-  // Telegram token configured
+  // Secrets status (never expose values)
   checks.telegram = c.env.TELEGRAM_BOT_TOKEN ? "configured" : "no_token";
+  checks.secret_key = c.env.SECRET_KEY ? "configured" : "missing";
+  checks.admin_password = c.env.ADMIN_PASSWORD ? "configured" : "missing";
   // BSC RPC quick check
   try {
     const r = await fetch(c.env.BSC_RPC_URL, {
@@ -51,11 +53,27 @@ app.get("/api/health", async (c) => {
     });
     checks.bsc_rpc = r.ok ? "up" : "degraded";
   } catch { checks.bsc_rpc = "down"; }
-  // Platform config
+  // Platform config — auto-seed if missing
   try {
     const pw = await c.env.DB.prepare("SELECT value FROM platform_config WHERE key='p2p_fee_percent'").first();
-    checks.config = pw ? "loaded" : "defaults";
-  } catch { checks.config = "error"; }
+    if (pw) {
+      checks.config = "loaded";
+    } else {
+      // Seed default config rows
+      const defaults: [string, string][] = [
+        ["p2p_fee_percent", "1.0"],
+        ["cash_fee_percent", "1.0"],
+        ["min_fee", "0.1"],
+        ["max_fee", "100.0"],
+      ];
+      for (const [k, v] of defaults) {
+        await c.env.DB.prepare("INSERT OR IGNORE INTO platform_config (key, value) VALUES (?, ?)").bind(k, v).run();
+      }
+      // Seed market price if missing
+      await c.env.DB.prepare("INSERT OR IGNORE INTO market_price (id, usd_ils, usdt_ils) VALUES (1, 3.7, 3.7)").run();
+      checks.config = "seeded";
+    }
+  } catch (e: any) { checks.config = "error: " + (e?.message || "unknown"); }
   const allUp = checks.database === "up";
   return c.json({
     ok: allUp,
@@ -96,8 +114,14 @@ app.get("/*", async (c) => {
 app.notFound((c) => c.json({ error: "المسار غير موجود" }, 404));
 
 app.onError((err, c) => {
-  console.error("[worker] unhandled error:", err?.message, err?.stack?.slice(0, 500));
-  return c.json({ error: "حدث خطأ داخلي، حاول لاحقاً" }, 500);
+  const msg = err?.message || String(err);
+  console.error("[worker] unhandled error:", msg, err?.stack?.slice(0, 500));
+  // Surface D1 table-missing errors so the admin can diagnose.
+  const isTableMissing = msg.includes("no such table") || msg.includes("SQLITE_ERROR");
+  return c.json({
+    error: "حدث خطأ داخلي، حاول لاحقاً",
+    ...(isTableMissing ? { detail: "D1 table missing — run migrations" } : {}),
+  }, 500);
 });
 
 // ------------------------------------------------------------
