@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0a0e18">
 <title>السوق — USDT P2P Palestine</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -10,31 +11,52 @@
 </head>
 <body>
 <div class="navbar">
-  <span class="logo">🛒 السوق</span>
-  <div class="actions"><a href="/" style="font-size:22px;">🏠</a></div>
+  <span class="logo">🛒 سوق USDT</span>
+  <div class="actions">
+    <a href="/" style="font-size:20px;">🏠</a>
+  </div>
 </div>
 <div class="container">
   <!-- Filters -->
-  <div class="card" style="display:flex;gap:8px;flex-wrap:wrap;">
-    <select id="filterType" style="flex:1;min-width:100px;min-height:40px;">
-      <option value="">الكل</option>
-      <option value="SELL">بيع USDT (شراء)</option>
-      <option value="BUY">شراء USDT (بيع)</option>
-    </select>
-    <input id="filterPayment" type="text" placeholder="طريقة الدفع" style="flex:1;min-width:100px;min-height:40px;">
-    <input id="filterMin" type="number" placeholder="الحد الأدنى" style="width:80px;min-height:40px;">
-    <input id="filterMax" type="number" placeholder="الحد الأقصى" style="width:80px;min-height:40px;">
-    <button onclick="loadAds()" class="btn btn-primary" style="flex:0;min-width:80px;min-height:40px;font-size:13px;">بحث</button>
+  <div class="card" style="padding:14px;">
+    <div class="flex-row flex-wrap gap-8">
+      <select id="fType" style="flex:1;min-width:120px;min-height:42px;">
+        <option value="">الكل</option>
+        <option value="SELL">بيع USDT 🛒</option>
+        <option value="BUY">شراء USDT 💰</option>
+      </select>
+      <select id="fSort" style="flex:1;min-width:100px;min-height:42px;">
+        <option value="price">أفضل سعر</option>
+        <option value="rating">أعلى تقييم</option>
+        <option value="trades">الأكثر صفقات</option>
+      </select>
+    </div>
+    <div class="flex-row flex-wrap gap-8" style="margin-top:8px;">
+      <input id="fPayment" type="text" placeholder="طريقة الدفع" style="flex:1;min-width:100px;min-height:42px;font-size:14px;">
+      <input id="fMin" type="number" placeholder="الحد الأدنى" style="width:90px;min-height:42px;font-size:14px;">
+      <input id="fMax" type="number" placeholder="الحد الأقصى" style="width:90px;min-height:42px;font-size:14px;">
+      <button onclick="loadAds()" class="btn btn-primary btn-sm" style="min-height:42px;">🔍</button>
+    </div>
   </div>
 
-  <div id="adsList" class="empty"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></div>
+  <!-- Trust -->
+  <div class="trust-banner" style="margin-bottom:14px;font-size:12px;">
+    🛡️ جميع المعاملات محمية بالضمان · لا يتم تحرير USDT حتى تأكيد الدفع
+  </div>
+
+  <!-- Results -->
+  <div id="resultsInfo" class="muted text-sm" style="margin-bottom:10px;"></div>
+  <div id="adsList">
+    <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
+  </div>
+  <button id="loadMoreBtn" class="btn btn-ghost" style="display:none;margin-top:10px;" onclick="loadMore()">تحميل المزيد</button>
 
   <!-- Create Ad -->
-  <a href="/create_ad.html" id="createAdBtn" class="btn btn-primary" style="display:none;margin-top:14px;">➕ إنشاء إعلان جديد</a>
+  <a href="/create_ad.html" id="createBtn" class="btn btn-primary" style="display:none;margin-top:14px;">➕ إنشاء إعلان</a>
 </div>
 <div class="bottom-nav">
   <a href="/"><span class="icon">🏠</span>الرئيسية</a>
-  <a href="/market.html" id="nav-market" class="active"><span class="icon">🛒</span>السوق</a>
+  <a href="/market.html" class="active"><span class="icon">🛒</span>السوق</a>
   <a href="/trades.html"><span class="icon">📄</span>الصفقات</a>
   <a href="/wallet.html"><span class="icon">💰</span>المحفظة</a>
   <a href="/profile.html"><span class="icon">👤</span>حسابي</a>
@@ -42,38 +64,65 @@
 <div id="toast"></div>
 <script src="assets/app.js"></script>
 <script>
-  highlightNav('nav-market');
-  const params = new URLSearchParams(location.search);
-  if (params.get('filter')) $('#filterType').value = params.get('filter');
-  if (getUser()) $('#createAdBtn').style.display = 'flex';
+highlightNav('nav-market');
+const params = new URLSearchParams(location.search);
+if (params.get('filter')) $('#fType').value = params.get('filter');
+if (getUser()) $('#createBtn').style.display = 'flex';
 
-  async function loadAds() {
-    const type = $('#filterType').value;
-    const payment = $('#filterPayment').value.trim();
-    const min = $('#filterMin').value;
-    const max = $('#filterMax').value;
-    let q = '/market?limit=50';
-    if (type) q += '&type=' + type;
-    if (payment) q += '&payment=' + encodeURIComponent(payment);
-    if (min) q += '&min_price=' + min;
-    if (max) q += '&max_price=' + max;
-    const r = await get(q);
-    if (r?.ok && r.ads?.length) {
-      $('#adsList').innerHTML = r.ads.map(a => `
-        <a href="/trade.html?ad_id=${a.id}" class="row-item" style="text-decoration:none;">
-          ${profileAvatar(a.user)}
-          <div class="row-main">
-            <div class="row-title">${escHtml(a.user)} ${a.user_verified ? '<span class="badge badge-verified" style="font-size:10px;">✓</span>' : ''}</div>
-            <div class="row-sub">${escHtml(a.title || '')} · ${escHtml(a.payment_method || 'USDT')}<br>${Number(a.min_amount||0).toFixed(1)}-${Number(a.max_amount||0).toFixed(1)} USDT</div>
-          </div>
-          <div class="price">${Number(a.price).toFixed(2)}<br><span style="font-size:11px;color:var(--text-dim);">ILS</span></div>
-        </a>
-      `).join('');
-    } else {
-      $('#adsList').innerHTML = '<div class="empty"><div class="icon">📭</div>لا توجد إعلانات مطابقة</div>';
-    }
-  }
-  loadAds();
+let currentOffset = 0;
+const PAGE_SIZE = 20;
+let allLoaded = false;
+
+async function loadAds(append) {
+  if (!append) { currentOffset = 0; allLoaded = false; }
+  const type = $('#fType').value;
+  const payment = $('#fPayment').value.trim();
+  const min = $('#fMin').value;
+  const max = $('#fMax').value;
+  const sort = $('#fSort').value;
+  let q = `/market?limit=${PAGE_SIZE}&offset=${currentOffset}&sort=${sort}`;
+  if (type) q += '&type=' + type;
+  if (payment) q += '&payment=' + encodeURIComponent(payment);
+  if (min) q += '&min_amount=' + min;
+  if (max) q += '&max_amount=' + max;
+
+  if (!append) showLoading($('#adsList'));
+  const r = await get(q);
+  if (!r?.ok) return;
+
+  const ads = r.ads || [];
+  if (ads.length < PAGE_SIZE) allLoaded = true;
+  currentOffset += ads.length;
+
+  $('#resultsInfo').textContent = `${r.total || 0} إعلان`;
+  $('#loadMoreBtn').style.display = allLoaded ? 'none' : 'flex';
+
+  if (!ads.length && !append) { showEmpty($('#adsList'), '📭', 'لا توجد إعلانات مطابقة'); return; }
+
+  const html = ads.map(a => `
+    <a href="/trade.html?ad_id=${a.id}" class="list-item" style="text-decoration:none;">
+      ${profileAvatar(a.user)}
+      <div class="list-main">
+        <div class="list-title">${escHtml(a.user)} ${verifiedBadge(a.verified)}</div>
+        <div class="list-sub">
+          ${escHtml(a.title || '')} · ${escHtml(a.payment || 'USDT')}<br>
+          ${formatNum(a.min_amount, 1)}-${formatNum(a.max_amount, 1)} USDT · ${a.trades_count || 0} صفقة
+          ${a.rating ? ' · ⭐ ' + formatNum(a.rating, 1) : ''}
+        </div>
+      </div>
+      <div class="list-right">
+        <div class="price-big">${formatNum(a.price)} ILS</div>
+        <div class="text-xs text-dim">${a.type === 'SELL' ? 'بيع' : 'شراء'}</div>
+      </div>
+    </a>
+  `).join('');
+
+  if (append) $('#adsList').insertAdjacentHTML('beforeend', html);
+  else $('#adsList').innerHTML = html;
+}
+
+function loadMore() { loadAds(true); }
+loadAds();
 </script>
 </body>
 </html>

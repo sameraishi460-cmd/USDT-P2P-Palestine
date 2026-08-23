@@ -34,12 +34,34 @@ app.use("*", securityHeaders);
 // Health
 // ------------------------------------------------------------
 app.get("/api/health", async (c) => {
+  const checks: Record<string, string> = {};
+  // D1
+  try { await c.env.DB.prepare("SELECT 1").first(); checks.database = "up"; } catch { checks.database = "down"; }
+  // Telegram token configured
+  checks.telegram = c.env.TELEGRAM_BOT_TOKEN ? "configured" : "no_token";
+  // BSC RPC quick check
   try {
-    await c.env.DB.prepare("SELECT 1").first();
-    return c.json({ ok: true, service: "usdt-palestine-worker", db: "up", time: new Date().toISOString() });
-  } catch {
-    return c.json({ ok: false, db: "down" }, 503);
-  }
+    const r = await fetch(c.env.BSC_RPC_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ jsonrpc: "2.0", method: "eth_blockNumber", params: [], id: 1 }),
+      signal: AbortSignal.timeout(5000),
+    });
+    checks.bsc_rpc = r.ok ? "up" : "degraded";
+  } catch { checks.bsc_rpc = "down"; }
+  // Platform config
+  try {
+    const pw = await c.env.DB.prepare("SELECT value FROM platform_config WHERE key='p2p_fee_percent'").first();
+    checks.config = pw ? "loaded" : "defaults";
+  } catch { checks.config = "error"; }
+  const allUp = checks.database === "up";
+  return c.json({
+    ok: allUp,
+    service: "usdt-palestine-worker",
+    environment: c.env.ENVIRONMENT || "development",
+    checks,
+    time: new Date().toISOString(),
+  }, allUp ? 200 : 503);
 });
 
 // ------------------------------------------------------------

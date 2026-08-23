@@ -3,68 +3,62 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0a0e18">
 <title>تسجيل الدخول — USDT P2P Palestine</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/app.css">
 </head>
 <body>
-<div class="container" style="max-width:420px;margin-top:50px;">
-  <div style="text-align:center;margin-bottom:30px;">
-    <div style="font-size:42px;">🇵🇸</div>
-    <h1 style="margin:10px 0 4px;font-size:22px;font-weight:800;color:var(--primary);">USDT P2P Palestine</h1>
-    <p class="muted">تداول USDT آمن بالضمان</p>
+<div class="container" style="max-width:420px;padding-top:60px;">
+  <div class="text-center" style="margin-bottom:30px;">
+    <div style="font-size:48px;margin-bottom:8px;">🇵🇸</div>
+    <h1 style="font-size:24px;font-weight:800;color:var(--primary);">USDT P2P Palestine</h1>
+    <p class="muted" style="margin-top:4px;">تداول USDT آمن بالضمان</p>
   </div>
 
   <div id="errorBox" class="alert alert-error" style="display:none;"></div>
 
-  <form id="loginForm">
-    <label>اسم المستخدم</label>
-    <input id="username" type="text" autocomplete="username" required placeholder="username">
-
-    <label>كلمة المرور</label>
-    <input id="password" type="password" autocomplete="current-password" required placeholder="••••••">
-
-    <button type="submit" class="btn btn-primary" id="loginBtn" style="margin-top:20px;">
-      🔐 تسجيل الدخول
-    </button>
+  <form id="loginForm" class="card">
+    <div class="form-group">
+      <label>اسم المستخدم</label>
+      <input id="username" type="text" autocomplete="username" required placeholder="username">
+    </div>
+    <div class="form-group">
+      <label>كلمة المرور</label>
+      <input id="password" type="password" autocomplete="current-password" required placeholder="••••••">
+    </div>
+    <button type="submit" class="btn btn-primary" id="loginBtn">🔐 تسجيل الدخول</button>
   </form>
 
-  <div style="text-align:center;margin:18px 0;">
-    <a href="/register.html" style="color:var(--text-dim);font-size:14px;">
-      ليس لديك حساب؟ <b style="color:var(--primary);">سجّل الآن</b>
-    </a>
+  <div class="text-center" style="margin:16px 0;">
+    <a href="/register.html" class="text-sm text-dim">ليس لديك حساب؟ <b class="text-primary">سجّل الآن</b></a>
   </div>
 
-  <button onclick="telegramLogin()" class="btn btn-outline" style="margin-top:4px;">
+  <button onclick="telegramLogin()" class="btn btn-ghost" id="tgBtn">
     <span style="font-size:18px;">✈️</span> الدخول عبر Telegram
   </button>
 </div>
 <script src="assets/app.js"></script>
 <script>
-  // Telegram WebApp init: show back button etc
-  if (window.Telegram?.WebApp) { Telegram.WebApp.ready(); Telegram.WebApp.BackButton.show(); Telegram.WebApp.BackButton.onClick(() => location.href = '/'); }
+if (window.Telegram?.WebApp) { Telegram.WebApp.ready(); Telegram.WebApp.BackButton.show(); Telegram.WebApp.BackButton.onClick(() => location.href = '/'); }
+const returnTo = new URLSearchParams(location.search).get('returnTo') || '/';
 
-  const returnTo = new URLSearchParams(location.search).get('returnTo') || '/';
+$('#loginForm').onsubmit = async (e) => {
+  e.preventDefault();
+  const btn = $('#loginBtn'); btn.disabled = true; btn.textContent = 'جاري الدخول...';
+  const r = await post('/auth/login', { username: $('#username').value.trim(), password: $('#password').value });
+  if (!r?.ok) { $('#errorBox').style.display = 'block'; $('#errorBox').textContent = r?.error || 'خطأ في تسجيل الدخول'; btn.disabled = false; btn.textContent = '🔐 تسجيل الدخول'; return; }
+  setCsrf(r.csrf_token); setUser(r.user || { username: r.username, isAdmin: r.is_admin }); location.href = returnTo;
+};
 
-  $('#loginForm').onsubmit = async (e) => {
-    e.preventDefault();
-    const btn = $('#loginBtn'); btn.disabled = true; btn.textContent = 'جاري الدخول...';
-    const r = await post('/auth/login', { username: $('#username').value.trim(), password: $('#password').value });
-    if (!r?.ok) { $('#errorBox').style.display = 'block'; $('#errorBox').textContent = r?.error || 'خطأ في تسجيل الدخول'; btn.disabled = false; btn.textContent = '🔐 تسجيل الدخول'; return; }
-    setCsrf(r.csrf_token);
-    setUser(r.user || { username: r.username, isAdmin: r.is_admin });
-    location.href = returnTo;
-  };
-
-  async function telegramLogin() {
-    if (!window.Telegram?.WebApp?.initData) { toast('افتح هذا الرابط من داخل Telegram'); return; }
-    const r = await post('/auth/telegram', { initData: Telegram.WebApp.initData });
-    if (!r?.ok) { $('#errorBox').style.display = 'block'; $('#errorBox').textContent = r?.error || 'فشل التحقق من Telegram'; return; }
-    setCsrf(r.csrf_token);
-    setUser(r.user || { username: r.username, isAdmin: r.is_admin });
-    location.href = returnTo;
-  }
+async function telegramLogin() {
+  if (!window.Telegram?.WebApp?.initData) { toast('افتح من داخل Telegram'); return; }
+  $('#tgBtn').disabled = true;
+  const r = await post('/auth/telegram', { initData: Telegram.WebApp.initData });
+  if (!r?.ok) { $('#errorBox').style.display = 'block'; $('#errorBox').textContent = r?.error || 'فشل التحقق'; $('#tgBtn').disabled = false; return; }
+  setCsrf(r.csrf_token); setUser(r.user || { username: r.username, isAdmin: r.is_admin }); location.href = returnTo;
+}
 </script>
 </body>
 </html>

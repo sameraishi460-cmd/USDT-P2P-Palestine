@@ -3,50 +3,70 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0a0e18">
 <title>USDT P2P Palestine</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/app.css">
 </head>
 <body>
+<!-- Navbar -->
 <div class="navbar">
   <span class="logo">🇵🇸 USDT P2P</span>
   <div class="actions">
-    <span id="notifBell" style="cursor:pointer;" onclick="location.href='/notifications.html'">🔔<span id="notifCount" style="display:none;background:var(--danger);border-radius:50%;padding:1px 5px;font-size:10px;color:#fff;position:relative;top:-6px;right:4px;"></span></span>
-    <a href="/profile.html" style="font-size:22px;">👤</a>
+    <a href="/notifications.html" style="position:relative;">🔔<span id="notifDot" class="status-dot red" style="display:none;position:absolute;top:-2px;right:-2px;"></span></a>
+    <a href="/profile.html">👤</a>
   </div>
 </div>
+
 <div class="container">
-  <!-- Price Card -->
-  <div class="card" style="background:linear-gradient(135deg,#0b2b21,#0b1a14);text-align:center;">
-    <div class="muted" style="margin-bottom:4px;">سعر USDT اليوم</div>
-    <div class="big-num" id="priceValue" style="color:var(--primary);">—</div>
-    <div class="muted">ILS / 1 USDT</div>
+  <!-- Trust Banner -->
+  <div class="trust-banner" style="margin-bottom:14px;">
+    <span style="font-size:18px;">🛡️</span>
+    <span>جميع الصفقات محمية بضمان USDT Palestine</span>
+  </div>
+
+  <!-- Price + Balance Card -->
+  <div class="card card-accent" style="text-align:center;">
+    <div class="muted text-sm">سعر USDT اليوم</div>
+    <div class="text-2xl text-primary" id="priceValue">—</div>
+    <div class="muted text-xs">ILS / 1 USDT · تحديث تلقائي</div>
+  </div>
+
+  <!-- Balance (auth only) -->
+  <div id="balanceCard" class="card" style="display:none;">
+    <div class="grid-2" style="margin-bottom:14px;">
+      <div class="kpi"><div class="kpi-label">المتاح</div><div class="kpi-value text-primary" id="balAvail">0</div></div>
+      <div class="kpi"><div class="kpi-label">مقفل</div><div class="kpi-value text-warning" id="balLocked">0</div></div>
+    </div>
+    <div class="grid-2">
+      <a href="/wallet.html#deposit" class="btn btn-primary" style="min-height:44px;font-size:14px;">📥 إيداع</a>
+      <a href="/wallet.html#withdraw" class="btn btn-ghost" style="min-height:44px;font-size:14px;border-color:var(--warning);color:var(--warning);">📤 سحب</a>
+    </div>
   </div>
 
   <!-- Quick Actions -->
-  <div class="grid-2">
-    <a href="/market.html?filter=SELL" class="btn btn-primary" style="background:linear-gradient(135deg,#059669,#047857);">🛒 شراء USDT</a>
-    <a href="/market.html?filter=BUY" class="btn btn-outline" style="border-color:var(--info);color:var(--info);">💰 بيع USDT</a>
+  <div class="grid-2" style="margin-bottom:14px;">
+    <a href="/market.html?filter=SELL" class="btn btn-primary" style="min-height:52px;">🛒 شراء USDT</a>
+    <a href="/market.html?filter=BUY" class="btn btn-ghost" style="min-height:52px;">💰 بيع USDT</a>
   </div>
 
-  <!-- Balance Card (auth only) -->
-  <div id="balanceCard" class="card" style="display:none;margin-top:14px;">
-    <div class="grid-2">
-      <div><div class="kpi-label">رصيد المتاح</div><div class="big-num" id="balAvail" style="font-size:20px;">0</div></div>
-      <div><div class="kpi-label">رصيد مقفل</div><div class="big-num" id="balLocked" style="font-size:20px;color:var(--warning);">0</div></div>
-    </div>
-    <div style="display:flex;gap:8px;margin-top:12px;">
-      <a href="/wallet.html" class="btn btn-outline" style="flex:1;min-height:40px;font-size:13px;">💰 المحفظة</a>
-      <a href="/wallet.html#deposit" class="btn btn-primary" style="flex:1;min-height:40px;font-size:13px;">📥 إيداع</a>
-      <a href="/wallet.html#withdraw" class="btn btn-outline" style="flex:1;min-height:40px;font-size:13px;border-color:var(--warning);color:var(--warning);">📤 سحب</a>
-    </div>
+  <!-- Latest Ads -->
+  <div class="flex-between" style="margin-bottom:10px;">
+    <span class="card-title" style="margin:0;">🛒 أحدث الإعلانات</span>
+    <a href="/market.html" class="text-sm text-primary">عرض الكل ←</a>
+  </div>
+  <div id="adsList">
+    <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
   </div>
 
-  <!-- Open Ads -->
-  <div class="section">
-    <div class="card-title">🛒 أحدث الإعلانات</div>
-    <div id="adsList" class="empty"><div class="icon">🔍</div>جاري تحميل الإعلانات...</div>
+  <!-- Recent Trades (auth only) -->
+  <div id="recentTradesSection" style="display:none;margin-top:14px;">
+    <div class="flex-between" style="margin-bottom:10px;">
+      <span class="card-title" style="margin:0;">📄 صفقاتي الأخيرة</span>
+      <a href="/trades.html" class="text-sm text-primary">عرض الكل ←</a>
+    </div>
+    <div id="recentTrades"></div>
   </div>
 </div>
 
@@ -59,41 +79,72 @@
   <a href="/profile.html" id="nav-profile"><span class="icon">👤</span>حسابي</a>
 </div>
 <div id="toast"></div>
+
 <script src="assets/app.js"></script>
 <script>
-  (async function() {
-    highlightNav('nav-home');
-    // Load price
-    const price = await getMarketPrice();
-    if (price) $('#priceValue').textContent = Number(price.usdt_ils).toFixed(2);
+highlightNav('nav-home');
+if (window.Telegram?.WebApp) { Telegram.WebApp.ready(); Telegram.WebApp.expand(); }
 
-    // Balance (auth only)
-    const user = getUser();
-    if (user) {
-      $('#balanceCard').style.display = 'block';
-      const w = await get('/wallet');
-      if (w?.ok) { $('#balAvail').textContent = w.balance.toFixed(2); $('#balLocked').textContent = w.locked.toFixed(2); }
-      const n = await get('/notifications');
-      if (n?.ok && n.unread > 0) { $('#notifCount').style.display = 'inline'; $('#notifCount').textContent = n.unread; }
+(async function() {
+  // Price
+  const price = await getMarketPrice();
+  if (price) { $('#priceValue').textContent = formatNum(price.usdt_ils); }
+
+  // Auth-dependent sections
+  const user = getUser();
+  if (user) {
+    $('#balanceCard').style.display = 'block';
+    const w = await get('/wallet');
+    if (w?.ok) {
+      $('#balAvail').textContent = formatNum(w.balance);
+      $('#balLocked').textContent = formatNum(w.locked);
     }
+    // Notifications
+    const n = await get('/notifications');
+    if (n?.ok && n.unread > 0) { $('#notifDot').style.display = 'inline-block'; }
 
-    // Ads
-    const ads = await get('/market?type=SELL&limit=20');
-    if (ads?.ok && ads.ads?.length) {
-      $('#adsList').innerHTML = ads.ads.map(a => `
-        <a href="/trade.html?ad_id=${a.id}" class="row-item" style="text-decoration:none;">
-          ${profileAvatar(a.user)}
-          <div class="row-main">
-            <div class="row-title">${escHtml(a.user)} ${a.user_verified ? '<span class="badge badge-verified" style="font-size:10px;">✓</span>' : ''}</div>
-            <div class="row-sub">${escHtml(a.payment_method || 'USDT')} · ${Number(a.min_amount||0).toFixed(1)}-${Number(a.max_amount||0).toFixed(1)} USDT</div>
+    // Recent trades
+    const trades = await get('/trades/');
+    if (trades?.ok && trades.trades?.length) {
+      $('#recentTradesSection').style.display = 'block';
+      const me = user.username;
+      $('#recentTrades').innerHTML = trades.trades.slice(0, 5).map(t => {
+        const other = t.buyer === me ? t.seller : t.buyer;
+        return `<a href="/trade.html?id=${t.id}" class="list-item" style="text-decoration:none;">
+          ${profileAvatar(other, true)}
+          <div class="list-main">
+            <div class="list-title">#${t.id} ${escHtml(other)}</div>
+            <div class="list-sub">${escHtml(t.ad_title || 'صفقة USDT')} · ${formatDate(t.created)}</div>
           </div>
-          <div class="price">${Number(a.price).toFixed(2)} ILS</div>
-        </a>
-      `).join('');
-    } else {
-      $('#adsList').innerHTML = '<div class="empty"><div class="icon">📭</div>لا توجد إعلانات مفتوحة حالياً</div>';
+          <div class="list-right">
+            <div class="price-big">${formatNum(t.amount)} USDT</div>
+            ${statusBadge(t.status)}
+          </div>
+        </a>`;
+      }).join('');
     }
-  })();
+  }
+
+  // Ads
+  const ads = await get('/market?type=SELL&limit=10');
+  if (ads?.ok && ads.ads?.length) {
+    $('#adsList').innerHTML = ads.ads.map(a => `
+      <a href="/trade.html?ad_id=${a.id}" class="list-item" style="text-decoration:none;">
+        ${profileAvatar(a.user)}
+        <div class="list-main">
+          <div class="list-title">${escHtml(a.user)} ${verifiedBadge(a.verified)}</div>
+          <div class="list-sub">${escHtml(a.payment || 'USDT')} · ${formatNum(a.min_amount, 1)}-${formatNum(a.max_amount, 1)} USDT</div>
+        </div>
+        <div class="list-right">
+          <div class="price-big">${formatNum(a.price)} ILS</div>
+          <div class="text-xs text-dim">${a.trades_count || 0} صفقة</div>
+        </div>
+      </a>
+    `).join('');
+  } else {
+    showEmpty($('#adsList'), '📭', 'لا توجد إعلانات مفتوحة حالياً');
+  }
+})();
 </script>
 </body>
 </html>

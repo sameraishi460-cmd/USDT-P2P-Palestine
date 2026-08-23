@@ -13,6 +13,17 @@ import { formBody } from "../utils/body";
 const market = new Hono<AppEnv>();
 
 // ============================================================
+// GET /api/market/price — current market price (public)
+// ============================================================
+market.get("/price", async (c) => {
+  const row = await c.env.DB.prepare(
+    "SELECT id, usd_ils, usdt_ils, updated FROM market_price WHERE id = 1"
+  ).first<{ id: number; usd_ils: number; usdt_ils: number; updated: string }>();
+  if (!row) return c.json({ ok: true, price: { usd_ils: 3.7, usdt_ils: 3.7, updated: null } });
+  return c.json({ ok: true, price: row });
+});
+
+// ============================================================
 // GET /api/market — open ads with optional filters
 // Query: type=SELL|BUY, payment=..., min_amount=..., max_amount=..., q=...
 // ============================================================
@@ -38,12 +49,29 @@ market.get("/", async (c) => {
   if (Number.isFinite(maxAmount)) { sql += " AND a.min_amount <= ?"; params.push(maxAmount); }
   if (q) { sql += " AND (a.title LIKE ? OR a.user LIKE ?)"; params.push(`%${q}%`, `%${q}%`); }
 
-  sql += " ORDER BY a.price ASC, u.rating DESC LIMIT 100";
+  // Sorting
+  const sort = c.req.query("sort") || "price";
+  if (sort === "rating") sql += " ORDER BY u.rating DESC, a.price ASC";
+  else if (sort === "trades") sql += " ORDER BY u.trades_count DESC, a.price ASC";
+  else sql += " ORDER BY a.price ASC, u.rating DESC";
+
+  // Pagination
+  const limit = Math.min(Number(c.req.query("limit") || "50"), 100);
+  const offset = Math.max(Number(c.req.query("offset") || "0"), 0);
+  sql += ` LIMIT ? OFFSET ?`;
+  params.push(limit, offset);
+
+  // Count for pagination
+  let countSql = `SELECT COUNT(*) AS total FROM ads a JOIN users u ON a.user = u.username WHERE a.status = 'OPEN'`;
+  const countParams: any[] = [];
+  if (type === "SELL" || type === "BUY") { countSql += " AND a.type = ?"; countParams.push(type); }
+  if (payment) { countSql += " AND a.payment LIKE ?"; countParams.push(`%${payment}%`); }
 
   const ads = await c.env.DB.prepare(sql).bind(...params).all();
+  const countRow = await c.env.DB.prepare(countSql).bind(...countParams).first<{ total: number }>();
   const price = await c.env.DB.prepare("SELECT usd_ils, usdt_ils FROM market_price WHERE id = 1").first();
 
-  return c.json({ ok: true, ads: ads.results ?? [], price });
+  return c.json({ ok: true, ads: ads.results ?? [], price, total: countRow?.total ?? 0, limit, offset });
 });
 
 // ============================================================

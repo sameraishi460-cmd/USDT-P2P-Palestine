@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0a0e18">
 <title>صفقاتي — USDT P2P Palestine</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -11,10 +12,19 @@
 <body>
 <div class="navbar">
   <span class="logo">📄 صفقاتي</span>
-  <div class="actions"><a href="/" style="font-size:22px;">🏠</a></div>
+  <div class="actions"><a href="/" style="font-size:20px;">🏠</a></div>
 </div>
 <div class="container">
-  <div id="tradesList" class="empty"><div class="skeleton"></div><div class="skeleton"></div></div>
+  <!-- Filter Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="filterTrades('')" id="fAll">الكل</button>
+    <button class="tab-btn" onclick="filterTrades('PENDING')" id="fPending">بانتظار</button>
+    <button class="tab-btn" onclick="filterTrades('PAYMENT_SENT')" id="fPaid">تم الدفع</button>
+    <button class="tab-btn" onclick="filterTrades('COMPLETED')" id="fDone">مكتملة</button>
+  </div>
+  <div id="tradesList">
+    <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
+  </div>
 </div>
 <div class="bottom-nav">
   <a href="/"><span class="icon">🏠</span>الرئيسية</a>
@@ -26,30 +36,46 @@
 <div id="toast"></div>
 <script src="assets/app.js"></script>
 <script>
-  if (!requireAuth('/trades.html')) throw new Error('auth');
-  highlightNav('nav-trades');
-  (async function() {
-    const me = getUser()?.username;
-    const r = await get('/trades/');
-    if (r?.ok && r.trades?.length) {
-      $('#tradesList').innerHTML = r.trades.map(t => {
-        const other = t.buyer === me ? t.seller : t.buyer;
-        return `<a href="/trade.html?id=${t.id}" class="row-item" style="text-decoration:none;">
-          ${profileAvatar(other)}
-          <div class="row-main">
-            <div class="row-title">#${t.id} — ${escHtml(other)}</div>
-            <div class="row-sub">${escHtml(t.ad_title || 'صفقة USDT')} · ${new Date(t.created).toLocaleString('ar')}</div>
-          </div>
-          <div style="text-align:left;">
-            <div style="font-weight:700;">${Number(t.amount).toFixed(2)}</div>
-            ${statusBadge(t.status)}
-          </div>
-        </a>`;
-      }).join('');
-    } else {
-      $('#tradesList').innerHTML = '<div class="empty"><div class="icon">📄</div>لا توجد صفقات بعد<br><a href="/market.html" style="color:var(--primary);">ابدأ بالسوق →</a></div>';
-    }
-  })();
+if (!requireAuth('/trades.html')) throw new Error('auth');
+highlightNav('nav-trades');
+const me = getUser()?.username;
+let allTrades = [];
+
+(async function() {
+  const r = await get('/trades/');
+  if (r?.ok && r.trades?.length) {
+    allTrades = r.trades;
+    renderTrades(allTrades);
+  } else {
+    showEmpty($('#tradesList'), '📄', 'لا توجد صفقات بعد<br><a href="/market.html" class="text-primary">ابدأ بالسوق ←</a>');
+  }
+})();
+
+function filterTrades(status) {
+  $$('.tab-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  const filtered = status ? allTrades.filter(t => t.status === status) : allTrades;
+  renderTrades(filtered);
+}
+
+function renderTrades(trades) {
+  if (!trades.length) { showEmpty($('#tradesList'), '📭', 'لا توجد صفقات في هذا القسم'); return; }
+  $('#tradesList').innerHTML = trades.map(t => {
+    const other = t.buyer === me ? t.seller : t.buyer;
+    const iAmBuyer = t.buyer === me;
+    return `<a href="/trade.html?id=${t.id}" class="list-item" style="text-decoration:none;">
+      ${profileAvatar(other, true)}
+      <div class="list-main">
+        <div class="list-title">#${t.id} ${escHtml(other)}</div>
+        <div class="list-sub">${escHtml(t.ad_title || 'صفقة USDT')} · ${iAmBuyer ? '🛒 شراء' : '💰 بيع'} · ${formatDate(t.created)}</div>
+      </div>
+      <div class="list-right">
+        <div class="price-big">${formatNum(t.amount)} USDT</div>
+        ${statusBadge(t.status)}
+      </div>
+    </a>`;
+  }).join('');
+}
 </script>
 </body>
 </html>
