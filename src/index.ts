@@ -25,12 +25,31 @@ import uploadRoutes from "./routes/uploads";
 import { handleTelegramUpdate } from "./telegram/webhook";
 import { runScheduledTasks } from "./cron";
 import { serveStaticFile } from "./static";
+import { ensureTables } from "./db-init";
 
 
 const app = new Hono<AppEnv>();
 
 // Global security headers on every response.
 app.use("*", securityHeaders);
+
+// Auto-migrate D1 tables on the first request after deployment.
+// Idempotent — ensureTables() checks if tables exist before creating them.
+let _dbReady = false;
+app.use("/api/*", async (c, next) => {
+  if (!_dbReady) {
+    try {
+      const result = await ensureTables(c.env.DB);
+      if (result.migrated) {
+        console.log(`[db-init] Auto-migrated: ${result.tableCount} tables created`);
+      }
+      _dbReady = true;
+    } catch (e: any) {
+      console.error("[db-init] Migration failed:", e?.message);
+    }
+  }
+  await next();
+});
 
 // ------------------------------------------------------------
 // Health
@@ -53,6 +72,14 @@ app.get("/api/health", async (c) => {
     });
     checks.bsc_rpc = r.ok ? "up" : "degraded";
   } catch { checks.bsc_rpc = "down"; }
+  // Run auto-migration first, then check config
+  try {
+    const migration = await ensureTables(c.env.DB);
+    if (migration.migrated) {
+      console.log(`[health] Auto-migrated: ${migration.tableCount} tables`);
+      _dbReady = true;
+    }
+  } catch { /* migration failed — will surface below */ }
   // Platform config — auto-seed if table exists but empty; skip gracefully if table missing
   try {
     const pw = await c.env.DB.prepare("SELECT value FROM platform_config WHERE key='p2p_fee_percent'").first();
