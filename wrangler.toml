@@ -20,7 +20,7 @@ account_id = ""  # Set via: wrangler login (auto-detected)
 [[d1_databases]]
 binding = "DB"
 database_name = "usdt-palestine-db"
-database_id = "REPLACE_WITH_D1_DATABASE_ID"
+database_id = "e370f0be-61da-4158-b403-59e3366e2326"
 
 # ------------------------------------------------------------
 # R2 Bucket (payment proofs, evidence uploads)
@@ -36,7 +36,7 @@ bucket_name = "usdt-palestine-uploads"
 # ------------------------------------------------------------
 [[kv_namespaces]]
 binding = "RATE_LIMIT"
-id = "REPLACE_WITH_KV_NAMESPACE_ID"
+id = "29311a2c63f24e0d884c33dc785bdf2c"
 
 # ------------------------------------------------------------
 # ------------------------------------------------------------
