@@ -46,8 +46,8 @@ id = "29311a2c63f24e0d884c33dc785bdf2c"
 #   ADMIN_PASSWORD          — admin dashboard password
 # ------------------------------------------------------------
 [vars]
-ENVIRONMENT = "development"
-APP_URL = "http://localhost:8788"
+ENVIRONMENT = "production"
+APP_URL = "https://usdt-p2p-palestine.sameraishi460.workers.dev"
 PLATFORM_WALLET = "0x659dd7cba24363c903abe3fddfc89eb30ffbf58a"
 USDT_CONTRACT = "0x55d398326f99059fF775485246999027B3197955"
 BSC_RPC_URL = "https://bsc-dataseed.binance.org/"
@@ -67,9 +67,9 @@ crons = ["0 * * * *"]
 enabled = true
 
 [env.staging]
-name = "usdt-palestine-api-staging"
-vars = { ENVIRONMENT = "staging", APP_URL = "https://usdt-palestine-api-staging.YOUR_SUBDOMAIN.workers.dev" }
+name = "usdt-p2p-palestine-staging"
+vars = { ENVIRONMENT = "staging", APP_URL = "https://usdt-p2p-palestine-staging.sameraishi460.workers.dev" }
 
 [env.production]
 name = "usdt-p2p-palestine"
-vars = { ENVIRONMENT = "production", APP_URL = "https://usdt-palestine.pages.dev" }
+vars = { ENVIRONMENT = "production", APP_URL = "https://usdt-p2p-palestine.sameraishi460.workers.dev" }
