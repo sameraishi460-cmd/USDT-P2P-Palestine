@@ -14,17 +14,11 @@
  */
 
 // ---------------------------------------------------------------
-// Combined SQL — exact copy from the 3 migration files.
-// We concatenate them and use D1 exec() for multi-statement support.
+// Individual CREATE TABLE statements — each is a single D1 call.
+// This avoids issues with multi-statement exec() or semicolon splitting.
 // ---------------------------------------------------------------
-const MIGRATION_SQL = `
--- ============================================================
--- USDT P2P Palestine — D1 Migration 0001: Initial Schema
--- ============================================================
-PRAGMA foreign_keys = ON;
-
--- USERS
-CREATE TABLE IF NOT EXISTS users (
+const TABLES: string[] = [
+  `CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT UNIQUE NOT NULL,
     password TEXT NOT NULL,
@@ -41,19 +35,17 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TEXT DEFAULT (datetime('now')),
     first_name TEXT DEFAULT '',
     referred_by TEXT DEFAULT ''
-);
+  )`,
 
--- WALLETS
-CREATE TABLE IF NOT EXISTS wallets (
+  `CREATE TABLE IF NOT EXISTS wallets (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT UNIQUE NOT NULL,
     balance REAL DEFAULT 0.0,
     locked REAL DEFAULT 0.0,
     FOREIGN KEY (username) REFERENCES users(username)
-);
+  )`,
 
--- WALLET HISTORY (audit ledger)
-CREATE TABLE IF NOT EXISTS wallet_history (
+  `CREATE TABLE IF NOT EXISTS wallet_history (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT NOT NULL,
     action TEXT NOT NULL,
@@ -64,10 +56,9 @@ CREATE TABLE IF NOT EXISTS wallet_history (
     note TEXT DEFAULT '',
     created TEXT DEFAULT (datetime('now')),
     FOREIGN KEY (username) REFERENCES users(username)
-);
+  )`,
 
--- ADS (USDT P2P)
-CREATE TABLE IF NOT EXISTS ads (
+  `CREATE TABLE IF NOT EXISTS ads (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user TEXT NOT NULL,
     title TEXT NOT NULL,
@@ -80,10 +71,9 @@ CREATE TABLE IF NOT EXISTS ads (
     min_amount REAL DEFAULT 0,
     max_amount REAL DEFAULT 0,
     FOREIGN KEY (user) REFERENCES users(username)
-);
+  )`,
 
--- TRADES
-CREATE TABLE IF NOT EXISTS trades (
+  `CREATE TABLE IF NOT EXISTS trades (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     ad_id INTEGER NOT NULL,
     buyer TEXT NOT NULL,
@@ -105,10 +95,9 @@ CREATE TABLE IF NOT EXISTS trades (
     FOREIGN KEY (ad_id) REFERENCES ads(id),
     FOREIGN KEY (buyer) REFERENCES users(username),
     FOREIGN KEY (seller) REFERENCES users(username)
-);
+  )`,
 
--- MESSAGES (trade chat)
-CREATE TABLE IF NOT EXISTS messages (
+  `CREATE TABLE IF NOT EXISTS messages (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     sender TEXT NOT NULL,
     receiver TEXT NOT NULL,
@@ -116,10 +105,9 @@ CREATE TABLE IF NOT EXISTS messages (
     created TEXT DEFAULT (datetime('now')),
     FOREIGN KEY (sender) REFERENCES users(username),
     FOREIGN KEY (receiver) REFERENCES users(username)
-);
+  )`,
 
--- NOTIFICATIONS
-CREATE TABLE IF NOT EXISTS notifications (
+  `CREATE TABLE IF NOT EXISTS notifications (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT NOT NULL,
     title TEXT NOT NULL,
@@ -127,10 +115,9 @@ CREATE TABLE IF NOT EXISTS notifications (
     seen INTEGER DEFAULT 0,
     created TEXT DEFAULT (datetime('now')),
     FOREIGN KEY (username) REFERENCES users(username)
-);
+  )`,
 
--- REVIEWS
-CREATE TABLE IF NOT EXISTS reviews (
+  `CREATE TABLE IF NOT EXISTS reviews (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     trade_id INTEGER NOT NULL,
     from_user TEXT NOT NULL,
@@ -141,10 +128,9 @@ CREATE TABLE IF NOT EXISTS reviews (
     FOREIGN KEY (trade_id) REFERENCES trades(id),
     FOREIGN KEY (from_user) REFERENCES users(username),
     FOREIGN KEY (to_user) REFERENCES users(username)
-);
+  )`,
 
--- CASH ADS
-CREATE TABLE IF NOT EXISTS cash_ads (
+  `CREATE TABLE IF NOT EXISTS cash_ads (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user TEXT NOT NULL,
     title TEXT NOT NULL,
@@ -158,10 +144,9 @@ CREATE TABLE IF NOT EXISTS cash_ads (
     notes TEXT DEFAULT '',
     plan TEXT DEFAULT 'week',
     FOREIGN KEY (user) REFERENCES users(username)
-);
+  )`,
 
--- CASH TRADES
-CREATE TABLE IF NOT EXISTS cash_trades (
+  `CREATE TABLE IF NOT EXISTS cash_trades (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     ad_id INTEGER NOT NULL,
     buyer TEXT NOT NULL,
@@ -174,10 +159,9 @@ CREATE TABLE IF NOT EXISTS cash_trades (
     meeting_location TEXT DEFAULT '',
     completed_at TEXT,
     FOREIGN KEY (ad_id) REFERENCES cash_ads(id)
-);
+  )`,
 
--- CASH AD PAYMENTS
-CREATE TABLE IF NOT EXISTS cash_ad_payments (
+  `CREATE TABLE IF NOT EXISTS cash_ad_payments (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     ad_id INTEGER NOT NULL,
     username TEXT NOT NULL,
@@ -187,10 +171,9 @@ CREATE TABLE IF NOT EXISTS cash_ad_payments (
     tx_ref TEXT DEFAULT '',
     created TEXT DEFAULT (datetime('now')),
     FOREIGN KEY (ad_id) REFERENCES cash_ads(id)
-);
+  )`,
 
--- DISPUTES
-CREATE TABLE IF NOT EXISTS disputes (
+  `CREATE TABLE IF NOT EXISTS disputes (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     trade_id INTEGER NOT NULL,
     trade_type TEXT DEFAULT 'USDT',
@@ -203,10 +186,9 @@ CREATE TABLE IF NOT EXISTS disputes (
     created TEXT DEFAULT (datetime('now')),
     resolved_at TEXT,
     FOREIGN KEY (trade_id) REFERENCES trades(id)
-);
+  )`,
 
--- USDT DEPOSITS
-CREATE TABLE IF NOT EXISTS usdt_deposits (
+  `CREATE TABLE IF NOT EXISTS usdt_deposits (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT NOT NULL,
     amount REAL NOT NULL,
@@ -216,10 +198,9 @@ CREATE TABLE IF NOT EXISTS usdt_deposits (
     sender_wallet TEXT DEFAULT '',
     confirmed_at TEXT,
     FOREIGN KEY (username) REFERENCES users(username)
-);
+  )`,
 
--- WITHDRAW REQUESTS
-CREATE TABLE IF NOT EXISTS withdraw_requests (
+  `CREATE TABLE IF NOT EXISTS withdraw_requests (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT NOT NULL,
     amount REAL NOT NULL,
@@ -229,33 +210,22 @@ CREATE TABLE IF NOT EXISTS withdraw_requests (
     tx_hash TEXT DEFAULT '',
     processed_at TEXT,
     FOREIGN KEY (username) REFERENCES users(username)
-);
+  )`,
 
--- MARKET PRICE
-CREATE TABLE IF NOT EXISTS market_price (
+  `CREATE TABLE IF NOT EXISTS market_price (
     id INTEGER PRIMARY KEY CHECK (id = 1),
     usd_ils REAL DEFAULT 3.70,
     usdt_ils REAL DEFAULT 3.70,
     updated TEXT DEFAULT (datetime('now'))
-);
+  )`,
 
-INSERT OR IGNORE INTO market_price (id, usd_ils, usdt_ils) VALUES (1, 3.70, 3.70);
-
--- PLATFORM CONFIG
-CREATE TABLE IF NOT EXISTS platform_config (
+  `CREATE TABLE IF NOT EXISTS platform_config (
     key TEXT PRIMARY KEY,
     value TEXT,
     updated TEXT DEFAULT (datetime('now'))
-);
+  )`,
 
--- Default commission config
-INSERT OR IGNORE INTO platform_config (key, value) VALUES ('p2p_fee_percent', '1.0');
-INSERT OR IGNORE INTO platform_config (key, value) VALUES ('cash_fee_percent', '1.0');
-INSERT OR IGNORE INTO platform_config (key, value) VALUES ('min_fee', '0.1');
-INSERT OR IGNORE INTO platform_config (key, value) VALUES ('max_fee', '100.0');
-
--- AUDIT LOG
-CREATE TABLE IF NOT EXISTS audit_log (
+  `CREATE TABLE IF NOT EXISTS audit_log (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     actor TEXT NOT NULL,
     actor_role TEXT DEFAULT 'user',
@@ -264,10 +234,10 @@ CREATE TABLE IF NOT EXISTS audit_log (
     details TEXT DEFAULT '',
     ip TEXT DEFAULT '',
     created TEXT DEFAULT (datetime('now'))
-);
+  )`,
 
--- TRADING ENGINE TABLES (isolated — kept for compatibility)
-CREATE TABLE IF NOT EXISTS trading_bots (
+  // Trading engine tables (isolated, kept for compatibility)
+  `CREATE TABLE IF NOT EXISTS trading_bots (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT NOT NULL,
     status TEXT DEFAULT 'STOPPED',
@@ -285,9 +255,9 @@ CREATE TABLE IF NOT EXISTS trading_bots (
     last_trade TEXT,
     created_at TEXT DEFAULT (datetime('now')),
     updated_at TEXT DEFAULT (datetime('now'))
-);
+  )`,
 
-CREATE TABLE IF NOT EXISTS trading_positions (
+  `CREATE TABLE IF NOT EXISTS trading_positions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     bot_id INTEGER NOT NULL,
     symbol TEXT NOT NULL,
@@ -313,9 +283,9 @@ CREATE TABLE IF NOT EXISTS trading_positions (
     pnl REAL DEFAULT 0,
     status TEXT DEFAULT 'OPEN',
     FOREIGN KEY (bot_id) REFERENCES trading_bots(id)
-);
+  )`,
 
-CREATE TABLE IF NOT EXISTS trading_orders (
+  `CREATE TABLE IF NOT EXISTS trading_orders (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     bot_id INTEGER NOT NULL,
     position_id INTEGER,
@@ -331,9 +301,9 @@ CREATE TABLE IF NOT EXISTS trading_orders (
     reason TEXT DEFAULT '',
     created_at TEXT DEFAULT (datetime('now')),
     FOREIGN KEY (bot_id) REFERENCES trading_bots(id)
-);
+  )`,
 
-CREATE TABLE IF NOT EXISTS trading_trades (
+  `CREATE TABLE IF NOT EXISTS trading_trades (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     bot_id INTEGER NOT NULL,
     symbol TEXT NOT NULL,
@@ -355,9 +325,9 @@ CREATE TABLE IF NOT EXISTS trading_trades (
     entry_tf TEXT DEFAULT '',
     strategy TEXT DEFAULT '',
     FOREIGN KEY (bot_id) REFERENCES trading_bots(id)
-);
+  )`,
 
-CREATE TABLE IF NOT EXISTS trading_signals (
+  `CREATE TABLE IF NOT EXISTS trading_signals (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     bot_id INTEGER,
     symbol TEXT NOT NULL,
@@ -378,9 +348,9 @@ CREATE TABLE IF NOT EXISTS trading_signals (
     executed INTEGER DEFAULT 0,
     reject_reason TEXT DEFAULT '',
     created_at TEXT DEFAULT (datetime('now'))
-);
+  )`,
 
-CREATE TABLE IF NOT EXISTS trading_equity (
+  `CREATE TABLE IF NOT EXISTS trading_equity (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     bot_id INTEGER NOT NULL,
     equity REAL NOT NULL,
@@ -389,9 +359,9 @@ CREATE TABLE IF NOT EXISTS trading_equity (
     open_positions INTEGER DEFAULT 0,
     timestamp TEXT DEFAULT (datetime('now')),
     FOREIGN KEY (bot_id) REFERENCES trading_bots(id)
-);
+  )`,
 
-CREATE TABLE IF NOT EXISTS trading_daily_stats (
+  `CREATE TABLE IF NOT EXISTS trading_daily_stats (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     bot_id INTEGER NOT NULL,
     date TEXT NOT NULL,
@@ -408,9 +378,9 @@ CREATE TABLE IF NOT EXISTS trading_daily_stats (
     profit_factor REAL DEFAULT 0,
     FOREIGN KEY (bot_id) REFERENCES trading_bots(id),
     UNIQUE(bot_id, date)
-);
+  )`,
 
-CREATE TABLE IF NOT EXISTS trading_models (
+  `CREATE TABLE IF NOT EXISTS trading_models (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     version TEXT NOT NULL,
     model_type TEXT NOT NULL,
@@ -424,9 +394,9 @@ CREATE TABLE IF NOT EXISTS trading_models (
     is_active INTEGER DEFAULT 0,
     status TEXT DEFAULT 'TRAINED',
     created_at TEXT DEFAULT (datetime('now'))
-);
+  )`,
 
-CREATE TABLE IF NOT EXISTS trading_backtests (
+  `CREATE TABLE IF NOT EXISTS trading_backtests (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     model_id INTEGER,
     symbol TEXT,
@@ -453,9 +423,9 @@ CREATE TABLE IF NOT EXISTS trading_backtests (
     equity_curve TEXT DEFAULT '[]',
     parameters TEXT DEFAULT '{}',
     created_at TEXT DEFAULT (datetime('now'))
-);
+  )`,
 
-CREATE TABLE IF NOT EXISTS trading_market_data (
+  `CREATE TABLE IF NOT EXISTS trading_market_data (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     symbol TEXT NOT NULL,
     timeframe TEXT NOT NULL,
@@ -463,23 +433,23 @@ CREATE TABLE IF NOT EXISTS trading_market_data (
     volume REAL,
     timestamp TEXT NOT NULL,
     fetched_at TEXT DEFAULT (datetime('now'))
-);
+  )`,
 
-CREATE TABLE IF NOT EXISTS trading_settings (
+  `CREATE TABLE IF NOT EXISTS trading_settings (
     key TEXT PRIMARY KEY,
     value TEXT,
     updated TEXT DEFAULT (datetime('now'))
-);
+  )`,
 
-CREATE TABLE IF NOT EXISTS trading_performance_log (
+  `CREATE TABLE IF NOT EXISTS trading_performance_log (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     bot_id INTEGER,
     metric TEXT NOT NULL,
     value REAL NOT NULL,
     timestamp TEXT DEFAULT (datetime('now'))
-);
+  )`,
 
-CREATE TABLE IF NOT EXISTS trading_scanner_log (
+  `CREATE TABLE IF NOT EXISTS trading_scanner_log (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     bot_id INTEGER,
     symbol TEXT NOT NULL,
@@ -493,9 +463,9 @@ CREATE TABLE IF NOT EXISTS trading_scanner_log (
     executed INTEGER DEFAULT 0,
     reject_reason TEXT DEFAULT '',
     timestamp TEXT DEFAULT (datetime('now'))
-);
+  )`,
 
-CREATE TABLE IF NOT EXISTS trading_notification_prefs (
+  `CREATE TABLE IF NOT EXISTS trading_notification_prefs (
     username TEXT PRIMARY KEY,
     enabled INTEGER DEFAULT 1,
     daily_reports INTEGER DEFAULT 1,
@@ -507,133 +477,119 @@ CREATE TABLE IF NOT EXISTS trading_notification_prefs (
     notify_signals INTEGER DEFAULT 1,
     notify_errors INTEGER DEFAULT 1,
     updated_at TEXT DEFAULT (datetime('now'))
-);
-`;
+  )`,
 
-const INDEXES_SQL = `
--- ============================================================
--- USDT P2P Palestine — D1 Migration 0002: Indexes
--- ============================================================
-CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
-CREATE INDEX IF NOT EXISTS idx_users_telegram ON users(telegram_id);
-CREATE INDEX IF NOT EXISTS idx_users_status ON users(status);
-CREATE INDEX IF NOT EXISTS idx_wallets_username ON wallets(username);
-CREATE INDEX IF NOT EXISTS idx_wallet_history_username ON wallet_history(username, created);
-CREATE INDEX IF NOT EXISTS idx_wallet_history_ref ON wallet_history(reference_id);
-CREATE INDEX IF NOT EXISTS idx_ads_user ON ads(user, status);
-CREATE INDEX IF NOT EXISTS idx_ads_status ON ads(status, created);
-CREATE INDEX IF NOT EXISTS idx_trades_buyer ON trades(buyer, status);
-CREATE INDEX IF NOT EXISTS idx_trades_seller ON trades(seller, status);
-CREATE INDEX IF NOT EXISTS idx_trades_status ON trades(status, created);
-CREATE INDEX IF NOT EXISTS idx_trades_ad_id ON trades(ad_id);
-CREATE INDEX IF NOT EXISTS idx_trades_escrow ON trades(escrow_status);
-CREATE INDEX IF NOT EXISTS idx_messages_pair ON messages(sender, receiver, created);
-CREATE INDEX IF NOT EXISTS idx_notifications_username ON notifications(username, seen);
-CREATE INDEX IF NOT EXISTS idx_notifications_created ON notifications(username, created);
-CREATE INDEX IF NOT EXISTS idx_reviews_trade ON reviews(trade_id);
-CREATE INDEX IF NOT EXISTS idx_reviews_to_user ON reviews(to_user);
-CREATE INDEX IF NOT EXISTS idx_cash_ads_user ON cash_ads(user, status);
-CREATE INDEX IF NOT EXISTS idx_cash_ads_status ON cash_ads(status, created);
-CREATE INDEX IF NOT EXISTS idx_cash_trades_ad ON cash_trades(ad_id);
-CREATE INDEX IF NOT EXISTS idx_disputes_trade ON disputes(trade_id);
-CREATE INDEX IF NOT EXISTS idx_disputes_status ON disputes(status);
-CREATE INDEX IF NOT EXISTS idx_deposits_username ON usdt_deposits(username, status);
-CREATE INDEX IF NOT EXISTS idx_deposits_status ON usdt_deposits(status, created);
-CREATE INDEX IF NOT EXISTS idx_withdrawals_username ON withdraw_requests(username, status);
-CREATE INDEX IF NOT EXISTS idx_withdrawals_status ON withdraw_requests(status, created);
-CREATE INDEX IF NOT EXISTS idx_audit_actor ON audit_log(actor, created);
-CREATE INDEX IF NOT EXISTS idx_audit_action ON audit_log(action, created);
-CREATE INDEX IF NOT EXISTS idx_tb_username ON trading_bots(username);
-CREATE INDEX IF NOT EXISTS idx_tp_bot ON trading_positions(bot_id, status);
-CREATE INDEX IF NOT EXISTS idx_tp_symbol ON trading_positions(symbol, status);
-CREATE INDEX IF NOT EXISTS idx_tt_bot ON trading_trades(bot_id, exit_time);
-CREATE INDEX IF NOT EXISTS idx_to_bot ON trading_orders(bot_id, created_at);
-CREATE INDEX IF NOT EXISTS idx_ts_bot ON trading_signals(bot_id, created_at);
-CREATE INDEX IF NOT EXISTS idx_te_bot ON trading_equity(bot_id, timestamp);
-CREATE INDEX IF NOT EXISTS idx_tds_bot_date ON trading_daily_stats(bot_id, date);
-CREATE INDEX IF NOT EXISTS idx_tsl_bot ON trading_scanner_log(bot_id, timestamp);
-`;
-
-const UPLOADS_SQL = `
--- ============================================================
--- USDT P2P Palestine — D1 Migration 0003: Uploads metadata
--- ============================================================
-CREATE TABLE IF NOT EXISTS uploads (
+  // Uploads (from migration 0003)
+  `CREATE TABLE IF NOT EXISTS uploads (
     id TEXT PRIMARY KEY,
     key TEXT NOT NULL UNIQUE,
     owner TEXT NOT NULL,
-    kind TEXT NOT NULL CHECK (kind IN ('payment-proof', 'evidence')),
+    kind TEXT NOT NULL,
     mime TEXT NOT NULL,
     size INTEGER NOT NULL,
     created DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-CREATE INDEX IF NOT EXISTS idx_uploads_owner ON uploads(owner, created);
-CREATE INDEX IF NOT EXISTS idx_uploads_kind ON uploads(kind);
-`;
+  )`,
+];
+
+const INDEXES: string[] = [
+  `CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)`,
+  `CREATE INDEX IF NOT EXISTS idx_users_telegram ON users(telegram_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_users_status ON users(status)`,
+  `CREATE INDEX IF NOT EXISTS idx_wallets_username ON wallets(username)`,
+  `CREATE INDEX IF NOT EXISTS idx_wallet_history_username ON wallet_history(username, created)`,
+  `CREATE INDEX IF NOT EXISTS idx_wallet_history_ref ON wallet_history(reference_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_ads_user ON ads(user, status)`,
+  `CREATE INDEX IF NOT EXISTS idx_ads_status ON ads(status, created)`,
+  `CREATE INDEX IF NOT EXISTS idx_trades_buyer ON trades(buyer, status)`,
+  `CREATE INDEX IF NOT EXISTS idx_trades_seller ON trades(seller, status)`,
+  `CREATE INDEX IF NOT EXISTS idx_trades_status ON trades(status, created)`,
+  `CREATE INDEX IF NOT EXISTS idx_trades_ad_id ON trades(ad_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_trades_escrow ON trades(escrow_status)`,
+  `CREATE INDEX IF NOT EXISTS idx_messages_pair ON messages(sender, receiver, created)`,
+  `CREATE INDEX IF NOT EXISTS idx_notifications_username ON notifications(username, seen)`,
+  `CREATE INDEX IF NOT EXISTS idx_notifications_created ON notifications(username, created)`,
+  `CREATE INDEX IF NOT EXISTS idx_reviews_trade ON reviews(trade_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_reviews_to_user ON reviews(to_user)`,
+  `CREATE INDEX IF NOT EXISTS idx_cash_ads_user ON cash_ads(user, status)`,
+  `CREATE INDEX IF NOT EXISTS idx_cash_ads_status ON cash_ads(status, created)`,
+  `CREATE INDEX IF NOT EXISTS idx_cash_trades_ad ON cash_trades(ad_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_disputes_trade ON disputes(trade_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_disputes_status ON disputes(status)`,
+  `CREATE INDEX IF NOT EXISTS idx_deposits_username ON usdt_deposits(username, status)`,
+  `CREATE INDEX IF NOT EXISTS idx_deposits_status ON usdt_deposits(status, created)`,
+  `CREATE INDEX IF NOT EXISTS idx_withdrawals_username ON withdraw_requests(username, status)`,
+  `CREATE INDEX IF NOT EXISTS idx_withdrawals_status ON withdraw_requests(status, created)`,
+  `CREATE INDEX IF NOT EXISTS idx_audit_actor ON audit_log(actor, created)`,
+  `CREATE INDEX IF NOT EXISTS idx_audit_action ON audit_log(action, created)`,
+  `CREATE INDEX IF NOT EXISTS idx_tb_username ON trading_bots(username)`,
+  `CREATE INDEX IF NOT EXISTS idx_tp_bot ON trading_positions(bot_id, status)`,
+  `CREATE INDEX IF NOT EXISTS idx_tp_symbol ON trading_positions(symbol, status)`,
+  `CREATE INDEX IF NOT EXISTS idx_tt_bot ON trading_trades(bot_id, exit_time)`,
+  `CREATE INDEX IF NOT EXISTS idx_to_bot ON trading_orders(bot_id, created_at)`,
+  `CREATE INDEX IF NOT EXISTS idx_ts_bot ON trading_signals(bot_id, created_at)`,
+  `CREATE INDEX IF NOT EXISTS idx_te_bot ON trading_equity(bot_id, timestamp)`,
+  `CREATE INDEX IF NOT EXISTS idx_tds_bot_date ON trading_daily_stats(bot_id, date)`,
+  `CREATE INDEX IF NOT EXISTS idx_tsl_bot ON trading_scanner_log(bot_id, timestamp)`,
+  `CREATE INDEX IF NOT EXISTS idx_uploads_owner ON uploads(owner, created)`,
+  `CREATE INDEX IF NOT EXISTS idx_uploads_kind ON uploads(kind)`,
+];
+
+const SEEDS: string[] = [
+  `INSERT OR IGNORE INTO platform_config (key, value) VALUES ('p2p_fee_percent', '1.0')`,
+  `INSERT OR IGNORE INTO platform_config (key, value) VALUES ('cash_fee_percent', '1.0')`,
+  `INSERT OR IGNORE INTO platform_config (key, value) VALUES ('min_fee', '0.1')`,
+  `INSERT OR IGNORE INTO platform_config (key, value) VALUES ('max_fee', '100.0')`,
+  `INSERT OR IGNORE INTO market_price (id, usd_ils, usdt_ils) VALUES (1, 3.70, 3.70)`,
+];
 
 /**
  * Check if tables exist and auto-create if missing.
  * Idempotent — safe to call on every request.
- *
- * Uses D1's exec() for reliable multi-statement execution,
- * falling back to individual prepare().run() if exec is unavailable.
  */
 export async function ensureTables(db: D1Database): Promise<{ migrated: boolean; tableCount: number }> {
   // Quick check: does platform_config exist?
   try {
     const row = await db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='platform_config'").first();
     if (row) {
-      const count = await db.prepare("SELECT COUNT(*) as cnt FROM sqlite_master WHERE type='table' AND type != 'sqlite_sequence'").first<{ cnt: number }>();
+      const count = await db.prepare("SELECT COUNT(*) as cnt FROM sqlite_master WHERE type='table'").first<{ cnt: number }>();
       return { migrated: false, tableCount: count?.cnt ?? 0 };
     }
   } catch { /* table doesn't exist */ }
 
-  // Tables missing — apply migration using exec() for multi-statement support
-  console.log("[db-init] Tables missing — applying auto-migration...");
+  // Tables missing — create each table individually
+  console.log("[db-init] Tables missing — creating all tables individually...");
 
-  const allSql = MIGRATION_SQL + "\n" + INDEXES_SQL + "\n" + UPLOADS_SQL;
-
-  // D1 exec() supports multi-statement SQL strings natively.
-  // If exec is not available, fall back to splitting and running individually.
-  try {
-    // @ts-ignore — exec() exists on D1Database but may not be in all type defs
-    if (typeof db.exec === "function") {
-      // @ts-ignore
-      await db.exec(allSql);
-      console.log("[db-init] exec() migration succeeded");
-    } else {
-      // Fallback: split by semicolons and run each statement
-      const statements = allSql
-        .split(";")
-        .map((s) => s.trim())
-        .filter((s) => s.length > 0 && !s.startsWith("--"));
-
-      for (const stmt of statements) {
-        try {
-          await db.prepare(stmt).run();
-        } catch (e: any) {
-          // Ignore "already exists" errors for idempotency
-          if (!e?.message?.includes("already exists")) {
-            console.error("[db-init] statement error:", e?.message, stmt.slice(0, 100));
-          }
-        }
+  let created = 0;
+  for (const sql of TABLES) {
+    try {
+      await db.prepare(sql).run();
+      created++;
+    } catch (e: any) {
+      if (!e?.message?.includes("already exists")) {
+        console.error("[db-init] create table error:", e?.message?.slice(0, 100));
       }
-      console.log("[db-init] fallback split migration succeeded");
-    }
-  } catch (e: any) {
-    console.error("[db-init] migration exec failed:", e?.message);
-    // Try individual statement fallback even if exec threw
-    const statements = allSql
-      .split(";")
-      .map((s) => s.trim())
-      .filter((s) => s.length > 0 && !s.startsWith("--"));
-
-    for (const stmt of statements) {
-      try {
-        await db.prepare(stmt).run();
-      } catch { /* ignore errors — individual stmt fallback */ }
     }
   }
+
+  // Create indexes
+  for (const sql of INDEXES) {
+    try {
+      await db.prepare(sql).run();
+    } catch (e: any) {
+      if (!e?.message?.includes("already exists")) {
+        console.error("[db-init] create index error:", e?.message?.slice(0, 100));
+      }
+    }
+  }
+
+  // Seed config
+  for (const sql of SEEDS) {
+    try {
+      await db.prepare(sql).run();
+    } catch { /* ignore duplicates */ }
+  }
+
+  console.log(`[db-init] Created ${created}/${TABLES.length} tables`);
 
   const count = await db.prepare("SELECT COUNT(*) as cnt FROM sqlite_master WHERE type='table'").first<{ cnt: number }>();
   return { migrated: true, tableCount: count?.cnt ?? 0 };
