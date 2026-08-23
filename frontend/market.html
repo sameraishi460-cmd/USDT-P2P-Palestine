@@ -8,52 +8,82 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/app.css">
+<style>
+.filter-bar { display:flex; gap:6px; overflow-x:auto; padding-bottom:8px; margin-bottom:12px; }
+.filter-chip { flex-shrink:0; padding:8px 14px; border-radius:20px; font-size:12px; font-weight:700;
+  background:var(--bg-surface); border:1px solid var(--border); color:var(--text-dim); cursor:pointer; }
+.filter-chip.active { background:var(--primary-bg); border-color:var(--primary); color:var(--primary); }
+.trust-bar { display:flex; align-items:center; gap:6px; margin-top:4px; }
+.trust-fill { height:4px; border-radius:2px; background:var(--border); flex:1; max-width:80px; }
+.trust-fill-inner { height:100%; border-radius:2px; background:var(--primary); }
+.vip-badge { font-size:10px; padding:2px 6px; border-radius:10px; background:var(--gold-bg); color:var(--gold); }
+.featured-glow { border-color: var(--gold) !important; box-shadow: 0 0 12px rgba(255,215,0,.15); }
+.sort-bar { display:flex; gap:6px; margin-bottom:12px; flex-wrap:wrap; }
+.price-bar { display:flex; gap:8px; margin-bottom:12px; }
+.price-bar input { flex:1; min-width:0; padding:8px 12px; font-size:13px; }
+</style>
 </head>
 <body>
 <div class="navbar">
-  <span class="logo">🛒 سوق USDT</span>
+  <a href="/" style="text-decoration:none;"><span class="logo">🇵🇸 USDT P2P</span></a>
   <div class="actions">
-    <a href="/" style="font-size:20px;">🏠</a>
+    <a href="/notifications.html" style="position:relative;">🔔</a>
+    <a href="/profile.html">👤</a>
   </div>
 </div>
 <div class="container">
-  <!-- Filters -->
-  <div class="card" style="padding:14px;">
-    <div class="flex-row flex-wrap gap-8">
-      <select id="fType" style="flex:1;min-width:120px;min-height:42px;">
-        <option value="">الكل</option>
-        <option value="SELL">بيع USDT 🛒</option>
-        <option value="BUY">شراء USDT 💰</option>
-      </select>
-      <select id="fSort" style="flex:1;min-width:100px;min-height:42px;">
-        <option value="price">أفضل سعر</option>
-        <option value="rating">أعلى تقييم</option>
-        <option value="trades">الأكثر صفقات</option>
-      </select>
+  <!-- Price Card -->
+  <div class="card card-accent" style="text-align:center;margin-bottom:12px;">
+    <div class="muted text-sm">سعر USDT اليوم</div>
+    <div class="text-xl text-primary font-extrabold" id="priceVal">—</div>
+    <div class="muted text-xs" id="priceStats"></div>
+  </div>
+
+  <!-- Type Filter -->
+  <div class="filter-bar" id="typeFilter">
+    <button class="filter-chip active" data-filter="all">الكل</button>
+    <button class="filter-chip" data-filter="SELL">💰 بيع USDT</button>
+    <button class="filter-chip" data-filter="BUY">🛒 شراء USDT</button>
+  </div>
+
+  <!-- Advanced Filters -->
+  <div class="card" style="margin-bottom:12px;">
+    <div class="flex-between" style="margin-bottom:8px;cursor:pointer;" onclick="toggleFilters()">
+      <span class="text-sm font-bold">🔍 فلاتر متقدمة</span>
+      <span class="text-sm text-dim" id="filterArrow">▼</span>
     </div>
-    <div class="flex-row flex-wrap gap-8" style="margin-top:8px;">
-      <input id="fPayment" type="text" placeholder="طريقة الدفع" style="flex:1;min-width:100px;min-height:42px;font-size:14px;">
-      <input id="fMin" type="number" placeholder="الحد الأدنى" style="width:90px;min-height:42px;font-size:14px;">
-      <input id="fMax" type="number" placeholder="الحد الأقصى" style="width:90px;min-height:42px;font-size:14px;">
-      <button onclick="loadAds()" class="btn btn-primary btn-sm" style="min-height:42px;">🔍</button>
+    <div id="advancedFilters" style="display:none;">
+      <div class="price-bar">
+        <input id="minAmount" type="number" placeholder="الحد الأدنى" step="1">
+        <input id="maxAmount" type="number" placeholder="الحد الأعلى" step="1">
+      </div>
+      <div class="form-group">
+        <label>طريقة الدفع</label>
+        <input id="paymentFilter" type="text" placeholder="USDT، كاش، تحويل بنكي...">
+      </div>
+      <div class="form-group">
+        <label>بحث</label>
+        <input id="searchInput" type="text" placeholder="بحث بالاسم أو العنوان...">
+      </div>
+      <div class="sort-bar">
+        <button class="filter-chip active" data-sort="price">💰 أفضل سعر</button>
+        <button class="filter-chip" data-sort="trust">🛡️ أعلى ثقة</button>
+        <button class="filter-chip" data-sort="trades">📊 أكثر صفقات</button>
+        <button class="filter-chip" data-sort="newest">🕐 الأحدث</button>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="loadAds()">🔍 تطبيق الفلاتر</button>
     </div>
   </div>
 
-  <!-- Trust -->
-  <div class="trust-banner" style="margin-bottom:14px;font-size:12px;">
-    🛡️ جميع المعاملات محمية بالضمان · لا يتم تحرير USDT حتى تأكيد الدفع
-  </div>
-
-  <!-- Results -->
-  <div id="resultsInfo" class="muted text-sm" style="margin-bottom:10px;"></div>
+  <!-- Ads List -->
   <div id="adsList">
     <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
   </div>
-  <button id="loadMoreBtn" class="btn btn-ghost" style="display:none;margin-top:10px;" onclick="loadMore()">تحميل المزيد</button>
-
-  <!-- Create Ad -->
-  <a href="/create_ad.html" id="createBtn" class="btn btn-primary" style="display:none;margin-top:14px;">➕ إنشاء إعلان</a>
+  <div id="loadMore" style="text-align:center;display:none;">
+    <button class="btn btn-ghost btn-sm" onclick="loadMore()">تحميل المزيد</button>
+  </div>
 </div>
+
 <div class="bottom-nav">
   <a href="/"><span class="icon">🏠</span>الرئيسية</a>
   <a href="/market.html" class="active"><span class="icon">🛒</span>السوق</a>
@@ -64,64 +94,132 @@
 <div id="toast"></div>
 <script src="assets/app.js"></script>
 <script>
-highlightNav('nav-market');
-const params = new URLSearchParams(location.search);
-if (params.get('filter')) $('#fType').value = params.get('filter');
-if (getUser()) $('#createBtn').style.display = 'flex';
+var currentFilter = 'all', currentSort = 'price', currentOffset = 0, allAds = [];
 
-let currentOffset = 0;
-const PAGE_SIZE = 20;
-let allLoaded = false;
-
-async function loadAds(append) {
-  if (!append) { currentOffset = 0; allLoaded = false; }
-  const type = $('#fType').value;
-  const payment = $('#fPayment').value.trim();
-  const min = $('#fMin').value;
-  const max = $('#fMax').value;
-  const sort = $('#fSort').value;
-  let q = `/market?limit=${PAGE_SIZE}&offset=${currentOffset}&sort=${sort}`;
-  if (type) q += '&type=' + type;
-  if (payment) q += '&payment=' + encodeURIComponent(payment);
-  if (min) q += '&min_amount=' + min;
-  if (max) q += '&max_amount=' + max;
-
-  if (!append) showLoading($('#adsList'));
-  const r = await get(q);
-  if (!r?.ok) return;
-
-  const ads = r.ads || [];
-  if (ads.length < PAGE_SIZE) allLoaded = true;
-  currentOffset += ads.length;
-
-  $('#resultsInfo').textContent = `${r.total || 0} إعلان`;
-  $('#loadMoreBtn').style.display = allLoaded ? 'none' : 'flex';
-
-  if (!ads.length && !append) { showEmpty($('#adsList'), '📭', 'لا توجد إعلانات مطابقة'); return; }
-
-  const html = ads.map(a => `
-    <a href="/trade.html?ad_id=${a.id}" class="list-item" style="text-decoration:none;">
-      ${profileAvatar(a.user)}
-      <div class="list-main">
-        <div class="list-title">${escHtml(a.user)} ${verifiedBadge(a.verified)}</div>
-        <div class="list-sub">
-          ${escHtml(a.title || '')} · ${escHtml(a.payment || 'USDT')}<br>
-          ${formatNum(a.min_amount, 1)}-${formatNum(a.max_amount, 1)} USDT · ${a.trades_count || 0} صفقة
-          ${a.rating ? ' · ⭐ ' + formatNum(a.rating, 1) : ''}
-        </div>
-      </div>
-      <div class="list-right">
-        <div class="price-big">${formatNum(a.price)} ILS</div>
-        <div class="text-xs text-dim">${a.type === 'SELL' ? 'بيع' : 'شراء'}</div>
-      </div>
-    </a>
-  `).join('');
-
-  if (append) $('#adsList').insertAdjacentHTML('beforeend', html);
-  else $('#adsList').innerHTML = html;
+function toggleFilters() {
+  var el = document.getElementById('advancedFilters');
+  var arrow = document.getElementById('filterArrow');
+  if (el.style.display === 'none') { el.style.display = 'block'; arrow.textContent = '▲'; }
+  else { el.style.display = 'none'; arrow.textContent = '▼'; }
 }
 
-function loadMore() { loadAds(true); }
+// Type filter clicks
+document.querySelectorAll('#typeFilter .filter-chip').forEach(function(btn) {
+  btn.onclick = function() {
+    document.querySelectorAll('#typeFilter .filter-chip').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    currentFilter = btn.dataset.filter;
+    currentOffset = 0; allAds = [];
+    loadAds();
+  };
+});
+
+// Sort clicks
+document.querySelectorAll('.sort-bar .filter-chip').forEach(function(btn) {
+  btn.onclick = function() {
+    document.querySelectorAll('.sort-bar .filter-chip').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    currentSort = btn.dataset.sort;
+    currentOffset = 0; allAds = [];
+    loadAds();
+  };
+});
+
+// Search debounce
+var _searchTimer;
+document.getElementById('searchInput').oninput = function() {
+  clearTimeout(_searchTimer);
+  _searchTimer = setTimeout(function() { currentOffset = 0; allAds = []; loadAds(); }, 400);
+};
+
+async function loadAds() {
+  var list = document.getElementById('adsList');
+  if (currentOffset === 0) showLoading(list);
+
+  var params = new URLSearchParams();
+  if (currentFilter !== 'all') params.set('type', currentFilter);
+  params.set('sort', currentSort);
+  params.set('offset', String(currentOffset));
+  params.set('limit', '20');
+
+  var minA = document.getElementById('minAmount').value;
+  var maxA = document.getElementById('maxAmount').value;
+  var pay = document.getElementById('paymentFilter').value;
+  var q = document.getElementById('searchInput').value;
+
+  if (minA) params.set('min_amount', minA);
+  if (maxA) params.set('max_amount', maxA);
+  if (pay) params.set('payment', pay);
+  if (q) params.set('q', q);
+
+  // Use enhanced endpoint
+  var r = await get('/v2/market/enhanced?' + params.toString());
+  if (!r || !r.ok) { showEmpty(list, '❌', 'خطأ في تحميل الإعلانات'); return; }
+
+  if (currentOffset === 0) allAds = r.ads || [];
+  else allAds = allAds.concat(r.ads || []);
+
+  if (r.price) {
+    document.getElementById('priceVal').textContent = formatNum(r.price.usdt_ils) + ' ILS';
+  }
+  if (r.price_stats && r.price_stats.lowest) {
+    document.getElementById('priceStats').textContent = '▼ ' + formatNum(r.price_stats.lowest) + ' — ▲ ' + formatNum(r.price_stats.highest) + ' — avg ' + formatNum(r.price_stats.avg_price);
+  }
+
+  renderAds(allAds, r.price);
+  document.getElementById('loadMore').style.display = (r.ads && r.ads.length >= 20) ? 'block' : 'none';
+}
+
+function loadMore() { currentOffset += 20; loadAds(); }
+
+function renderAds(ads, price) {
+  var list = document.getElementById('adsList');
+  if (!ads.length) { showEmpty(list, '📭', 'لا توجد إعلانات مطابقة'); return; }
+
+  var user = getUser();
+  list.innerHTML = ads.map(function(a) {
+    var trustPct = Math.round(a.trust_score || 50);
+    var trustColor = trustPct >= 75 ? 'var(--primary)' : trustPct >= 50 ? 'var(--warning)' : 'var(--danger)';
+    var trustLabel = trustPct >= 90 ? 'ممتاز' : trustPct >= 75 ? 'جيد' : trustPct >= 50 ? 'مقبول' : 'منخفض';
+
+    var vipLabels = {diamond:'💎 موثوق', gold:'🥇 ذهبي', silver:'🥈 فضي', bronze:'🥉 برونزي'};
+    var vipLevel = 'bronze';
+    if (trustPct >= 90 && (a.trades_count||0) >= 50) vipLevel = 'diamond';
+    else if (trustPct >= 75 && (a.trades_count||0) >= 20) vipLevel = 'gold';
+    else if (trustPct >= 60 && (a.trades_count||0) >= 10) vipLevel = 'silver';
+
+    var featured = a.is_featured ? 'featured-glow' : '';
+    var featuredTag = a.is_featured ? '<span class="vip-badge" style="background:rgba(255,215,0,.15);color:gold;">⭐ مميز</span>' : '';
+
+    var typeIcon = a.type === 'SELL' ? '💰' : '🛒';
+    var typeColor = a.type === 'SELL' ? 'text-warning' : 'text-primary';
+
+    return '<a href="/trade.html?ad_id=' + a.id + '" class="list-item ' + featured + '" style="text-decoration:none;">' +
+      profileAvatar(a.user) +
+      '<div class="list-main">' +
+        '<div class="list-title">' + typeIcon + ' ' + escHtml(a.user) +
+          (a.verified ? verifiedBadge(true) : '') +
+          ' <span class="vip-badge">' + vipLabels[vipLevel] + '</span>' +
+          featuredTag +
+        '</div>' +
+        '<div class="list-sub">' + escHtml(a.payment || 'USDT') + ' · ' +
+          formatNum(a.min_amount, 1) + '-' + formatNum(a.max_amount, 1) + ' USDT' +
+        '</div>' +
+        '<div class="trust-bar">' +
+          '<span class="text-xs text-dim">' + trustLabel + '</span>' +
+          '<div class="trust-fill"><div class="trust-fill-inner" style="width:' + trustPct + '%;background:' + trustColor + ';"></div></div>' +
+          '<span class="text-xs" style="color:' + trustColor + ';">' + trustPct + '%</span>' +
+        '</div>' +
+        '<div class="muted text-xs">⭐ ' + formatNum(a.avg_rating || a.rating, 1) + ' · 📄 ' + (a.trades_count || 0) + ' · ✅ ' + formatNum(a.completion_rate || 0, 0) + '%</div>' +
+      '</div>' +
+      '<div class="list-right">' +
+        '<div class="price-big">' + formatNum(a.price) + ' ILS</div>' +
+        '<div class="text-xs ' + typeColor + '">' + (a.type === 'SELL' ? 'بيع' : 'شراء') + '</div>' +
+      '</div>' +
+    '</a>';
+  }).join('');
+}
+
 loadAds();
 </script>
 </body>

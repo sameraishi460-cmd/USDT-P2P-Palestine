@@ -22,6 +22,7 @@ import walletRoutes from "./routes/wallet";
 import adminRoutes from "./routes/admin";
 import miscRoutes from "./routes/misc";
 import uploadRoutes from "./routes/uploads";
+import v2Routes from "./routes/v2";
 import { handleTelegramUpdate } from "./telegram/webhook";
 import { runScheduledTasks } from "./cron";
 import { serveStaticFile } from "./static";
@@ -127,6 +128,7 @@ app.route("/api/wallet", walletRoutes);
 app.route("/api/admin", adminRoutes);
 app.route("/api", miscRoutes); // /api/notifications, /api/profile, /api/reviews, cash
 app.route("/api/uploads", uploadRoutes);
+app.route("/api/v2", v2Routes);
 
 // ------------------------------------------------------------
 // Telegram webhook

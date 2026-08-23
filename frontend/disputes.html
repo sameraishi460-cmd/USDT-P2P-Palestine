@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0a0e18">
+<title>مركز النزاعات — USDT P2P Palestine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<div class="navbar">
+  <a href="/" style="text-decoration:none;"><span class="logo">🇵🇸 USDT P2P</span></a>
+  <div class="actions"><a href="/profile.html">👤</a></div>
+</div>
+<div class="container" id="content"><div class="skeleton"></div></div>
+<div id="toast"></div>
+<script src="assets/app.js"></script>
+<script>
+if (!requireAuth()) throw new Error('auth required');
+(async function() {
+  // Get user's trades that are disputed
+  var trades = await get('/trades/');
+  var h = '<h2 style="font-size:20px;font-weight:800;margin-bottom:16px;">⚠️ مركز النزاعات</h2>';
+  h += '<div class="card"><div class="muted text-sm">النزاعات المفتوحة والقيد المراجعة</div></div>';
+  
+  if (!trades || !trades.ok || !trades.trades || !trades.trades.length) {
+    h += '<div class="empty"><div class="icon">📄</div><p>لا توجد صفقات حالياً</p></div>';
+    document.getElementById('content').innerHTML = h;
+    return;
+  }
+
+  var disputes = trades.trades.filter(function(t) { return t.status === 'DISPUTED' || t.dispute_status; });
+  if (!disputes.length) {
+    h += '<div class="empty"><div class="icon">✅</div><p>لا توجد نزاعات مفتوحة</p></div>';
+  } else {
+    disputes.forEach(function(t) {
+      var other = t.buyer === getUser().username ? t.seller : t.buyer;
+      h += '<a href="/trade.html?id=' + t.id + '" class="list-item" style="text-decoration:none;">';
+      h += profileAvatar(other);
+      h += '<div class="list-main">';
+      h += '<div class="list-title">⚠️ صفقة #' + t.id + '</div>';
+      h += '<div class="list-sub">' + escHtml(other) + ' · ' + formatNum(t.amount) + ' USDT</div>';
+      h += '<div class="muted text-xs">' + escHtml(t.dispute_reason || t.dispute_status || '') + '</div>';
+      h += '</div>';
+      h += '<div class="list-right">' + statusBadge(t.status) + '</div>';
+      h += '</a>';
+    });
+  }
+
+  document.getElementById('content').innerHTML = h;
+})();
+</script>
+</body>
+</html>

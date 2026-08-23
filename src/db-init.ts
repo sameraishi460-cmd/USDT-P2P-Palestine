@@ -592,6 +592,180 @@ export async function ensureTables(db: D1Database): Promise<{ migrated: boolean;
 
   console.log(`[db-init] Created ${created}/${TABLES.length} tables`);
 
+  // Also create V2 tables
+  for (const sql of V2_TABLES) {
+    try {
+      await db.prepare(sql).run();
+    } catch (e: any) {
+      if (!e?.message?.includes("already exists")) {
+        console.error("[db-init] v2 table error:", e?.message?.slice(0, 100));
+      }
+    }
+  }
+  for (const sql of V2_INDEXES) {
+    try {
+      await db.prepare(sql).run();
+    } catch (e: any) {
+      if (!e?.message?.includes("already exists")) {
+        console.error("[db-init] v2 index error:", e?.message?.slice(0, 100));
+      }
+    }
+  }
+
   const count = await db.prepare("SELECT COUNT(*) as cnt FROM sqlite_master WHERE type='table'").first<{ cnt: number }>();
   return { migrated: true, tableCount: count?.cnt ?? 0 };
 }
+
+// ============================================================
+// V2 TABLES — Trust, Verification, Fraud, Referrals, VIP, etc.
+// These are appended to the MIGRATION_SQL in ensureTables()
+// ============================================================
+const V2_TABLES: string[] = [
+  // Trust Score & Ratings (enhanced)
+  `CREATE TABLE IF NOT EXISTS user_trust (
+    username TEXT PRIMARY KEY,
+    trust_score REAL DEFAULT 50.0,
+    total_ratings INTEGER DEFAULT 0,
+    avg_rating REAL DEFAULT 0.0,
+    completed_trades INTEGER DEFAULT 0,
+    cancelled_trades INTEGER DEFAULT 0,
+    disputed_trades INTEGER DEFAULT 0,
+    completion_rate REAL DEFAULT 0.0,
+    account_age_days INTEGER DEFAULT 0,
+    last_trade_at TEXT,
+    updated_at TEXT DEFAULT (datetime('now'))
+  )`,
+
+  // Verification requests
+  `CREATE TABLE IF NOT EXISTS verification_requests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT NOT NULL,
+    status TEXT DEFAULT 'PENDING',
+    document_type TEXT DEFAULT '',
+    document_key TEXT DEFAULT '',
+    admin_note TEXT DEFAULT '',
+    reviewed_by TEXT DEFAULT '',
+    created_at TEXT DEFAULT (datetime('now')),
+    reviewed_at TEXT,
+    FOREIGN KEY (username) REFERENCES users(username)
+  )`,
+
+  // Fraud / risk log
+  `CREATE TABLE IF NOT EXISTS fraud_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT NOT NULL,
+    risk_level TEXT DEFAULT 'LOW',
+    event_type TEXT NOT NULL,
+    details TEXT DEFAULT '',
+    ip TEXT DEFAULT '',
+    created_at TEXT DEFAULT (datetime('now'))
+  )`,
+
+  // Referrals
+  `CREATE TABLE IF NOT EXISTS referrals (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    referrer TEXT NOT NULL,
+    referred TEXT NOT NULL UNIQUE,
+    referral_code TEXT NOT NULL,
+    status TEXT DEFAULT 'PENDING',
+    completed_trades INTEGER DEFAULT 0,
+    earnings REAL DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (referrer) REFERENCES users(username),
+    FOREIGN KEY (referred) REFERENCES users(username)
+  )`,
+
+  // Referral codes
+  `CREATE TABLE IF NOT EXISTS referral_codes (
+    code TEXT PRIMARY KEY,
+    username TEXT NOT NULL UNIQUE,
+    total_referred INTEGER DEFAULT 0,
+    total_earnings REAL DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`,
+
+  // Promo / coupon codes
+  `CREATE TABLE IF NOT EXISTS promo_codes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    code TEXT UNIQUE NOT NULL,
+    discount_type TEXT DEFAULT 'PERCENT',
+    discount_value REAL DEFAULT 0,
+    max_discount REAL DEFAULT 0,
+    min_trade_amount REAL DEFAULT 0,
+    max_uses INTEGER DEFAULT 0,
+    used_count INTEGER DEFAULT 0,
+    per_user_limit INTEGER DEFAULT 1,
+    expires_at TEXT,
+    active INTEGER DEFAULT 1,
+    created_by TEXT DEFAULT '',
+    created_at TEXT DEFAULT (datetime('now'))
+  )`,
+
+  // Promo code usage
+  `CREATE TABLE IF NOT EXISTS promo_usage (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    promo_id INTEGER NOT NULL,
+    username TEXT NOT NULL,
+    trade_id INTEGER DEFAULT 0,
+    discount_applied REAL DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (promo_id) REFERENCES promo_codes(id),
+    UNIQUE(promo_id, username)
+  )`,
+
+  // Featured ads
+  `CREATE TABLE IF NOT EXISTS featured_ads (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ad_id INTEGER NOT NULL UNIQUE,
+    featured_by TEXT DEFAULT '',
+    start_date TEXT DEFAULT (datetime('now')),
+    end_date TEXT,
+    active INTEGER DEFAULT 1,
+    created_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (ad_id) REFERENCES ads(id)
+  )`,
+
+  // Activity log (expanded audit trail for admin timeline)
+  `CREATE TABLE IF NOT EXISTS activity_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_type TEXT NOT NULL,
+    username TEXT DEFAULT '',
+    target_type TEXT DEFAULT '',
+    target_id TEXT DEFAULT '',
+    details TEXT DEFAULT '',
+    ip TEXT DEFAULT '',
+    created_at TEXT DEFAULT (datetime('now'))
+  )`,
+
+  // Risk scores per user
+  `CREATE TABLE IF NOT EXISTS user_risk (
+    username TEXT PRIMARY KEY,
+    risk_score INTEGER DEFAULT 0,
+    risk_level TEXT DEFAULT 'LOW',
+    failed_logins INTEGER DEFAULT 0,
+    rapid_trades INTEGER DEFAULT 0,
+    cancelled_count INTEGER DEFAULT 0,
+    dispute_count INTEGER DEFAULT 0,
+    rate_limit_hits INTEGER DEFAULT 0,
+    last_flag_at TEXT,
+    updated_at TEXT DEFAULT (datetime('now'))
+  )`,
+];
+
+const V2_INDEXES: string[] = [
+  `CREATE INDEX IF NOT EXISTS idx_trust_score ON user_trust(trust_score DESC)`,
+  `CREATE INDEX IF NOT EXISTS idx_trust_username ON user_trust(username)`,
+  `CREATE INDEX IF NOT EXISTS idx_verify_status ON verification_requests(username, status)`,
+  `CREATE INDEX IF NOT EXISTS idx_fraud_user ON fraud_log(username, created_at)`,
+  `CREATE INDEX IF NOT EXISTS idx_fraud_level ON fraud_log(risk_level)`,
+  `CREATE INDEX IF NOT EXISTS idx_referral_code ON referrals(referral_code)`,
+  `CREATE INDEX IF NOT EXISTS idx_referral_referrer ON referrals(referrer)`,
+  `CREATE INDEX IF NOT EXISTS idx_refcode_code ON referral_codes(code)`,
+  `CREATE INDEX IF NOT EXISTS idx_promo_code ON promo_codes(code)`,
+  `CREATE INDEX IF NOT EXISTS idx_promo_active ON promo_codes(active, expires_at)`,
+  `CREATE INDEX IF NOT EXISTS idx_featured_ad ON featured_ads(ad_id, active)`,
+  `CREATE INDEX IF NOT EXISTS idx_activity_type ON activity_log(event_type, created_at)`,
+  `CREATE INDEX IF NOT EXISTS idx_activity_user ON activity_log(username, created_at)`,
+  `CREATE INDEX IF NOT EXISTS idx_risk_user ON user_risk(username)`,
+  `CREATE INDEX IF NOT EXISTS idx_risk_level ON user_risk(risk_level)`,
+];
