@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0a0e18">
+<title>إعلاناتي — USDT P2P Palestine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<div class="navbar">
+  <span class="logo">📋 إعلاناتي</span>
+  <div class="actions">
+    <a href="/create_ad.html" class="btn btn-primary btn-sm" style="min-height:34px;">➕ جديد</a>
+    <a href="/market.html" style="font-size:20px;">➡️</a>
+  </div>
+</div>
+<div class="container">
+  <div id="adsList"><div class="skeleton"></div><div class="skeleton"></div></div>
+</div>
+<div id="toast"></div>
+<script src="assets/app.js"></script>
+<script>
+if (!requireAuth('/my_ads.html')) throw new Error('auth');
+(async function() {
+  const r = await get('/market/my-ads');
+  if (r?.ok && r.ads?.length) {
+    $('#adsList').innerHTML = r.ads.map(a => `
+      <div class="list-item" style="cursor:default;">
+        <div style="font-size:24px;">${a.type === 'SELL' ? '💰' : '🛒'}</div>
+        <div class="list-main">
+          <div class="list-title">${escHtml(a.title || 'إعلان USDT')} ${statusBadge(a.status)}</div>
+          <div class="list-sub">${formatNum(a.amount)} USDT · ${formatNum(a.price)} ILS · ${escHtml(a.payment || '')}</div>
+          <div class="text-xs text-dim">${formatNum(a.min_amount, 1)}-${formatNum(a.max_amount, 1)} USDT · ${formatDate(a.created)}</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-direction:column;">
+          ${a.status === 'OPEN' ? `<button onclick="disableAd(${a.id})" class="btn btn-danger btn-xs">إيقاف</button>` : ''}
+          <a href="/edit_ad.html?id=${a.id}" class="btn btn-ghost btn-xs">✏️</a>
+        </div>
+      </div>
+    `).join('');
+  } else {
+    showEmpty($('#adsList'), '📭', 'ليس لديك إعلانات بعد<br><a href="/create_ad.html" class="text-primary">أنشئ إعلانك الأول ←</a>');
+  }
+})();
+async function disableAd(id) {
+  if (!confirm('إيقاف هذا الإعلان؟')) return;
+  const r = await post('/market/ads/' + id + '/disable');
+  if (r?.ok) { toast('✅ تم الإيقاف'); location.reload(); }
+}
+</script>
+</body>
+</html>

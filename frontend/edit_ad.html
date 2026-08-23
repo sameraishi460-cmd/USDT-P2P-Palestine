@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0a0e18">
+<title>تعديل إعلان — USDT P2P Palestine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<div class="navbar">
+  <span class="logo">✏️ تعديل الإعلان</span>
+  <div class="actions"><a href="/my_ads.html" style="font-size:20px;">➡️</a></div>
+</div>
+<div class="container">
+  <div id="formArea"><div class="skeleton" style="height:200px;"></div></div>
+</div>
+<div id="toast"></div>
+<script src="assets/app.js"></script>
+<script>
+if (!requireAuth('/my_ads.html')) throw new Error('auth');
+const adId = new URLSearchParams(location.search).get('id');
+if (!adId) { location.href = '/my_ads.html'; throw new Error('no id'); }
+
+(async function() {
+  const r = await get('/market/my-ads');
+  if (!r?.ok) return;
+  const ad = (r.ads || []).find(a => String(a.id) === adId);
+  if (!ad) { showEmpty($('#formArea'), '🔍', 'الإعلان غير موجود'); return; }
+
+  $('#formArea').innerHTML = `
+    <form id="editForm" class="card">
+      <div class="form-group"><label>العنوان</label><input id="title" value="${escHtml(ad.title || '')}"></div>
+      <div class="grid-2">
+        <div class="form-group"><label>الكمية (USDT)</label><input id="amount" type="number" value="${ad.amount}"></div>
+        <div class="form-group"><label>السعر (ILS)</label><input id="price" type="number" step="0.01" value="${ad.price}"></div>
+      </div>
+      <div class="grid-2">
+        <div class="form-group"><label>الحد الأدنى</label><input id="minAmount" type="number" value="${ad.min_amount}"></div>
+        <div class="form-group"><label>الحد الأقصى</label><input id="maxAmount" type="number" value="${ad.max_amount}"></div>
+      </div>
+      <div class="form-group"><label>طريقة الدفع</label><input id="payment" value="${escHtml(ad.payment || '')}"></div>
+      <button type="submit" class="btn btn-primary">💾 حفظ التعديلات</button>
+    </form>`;
+
+  $('#editForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const r = await post('/market/ads/' + adId + '/edit', {
+      title: $('#title').value.trim(),
+      amount: Number($('#amount').value),
+      price: Number($('#price').value),
+      min_amount: Number($('#minAmount').value),
+      max_amount: Number($('#maxAmount').value),
+      payment: $('#payment').value.trim(),
+    });
+    if (r?.ok) { toast('✅ تم التعديل'); location.href = '/my_ads.html'; }
+    else toast(r?.error || 'خطأ', 4000);
+  };
+})();
+</script>
+</body>
+</html>
