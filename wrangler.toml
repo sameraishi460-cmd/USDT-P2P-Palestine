@@ -7,10 +7,9 @@
 #   wrangler secret put ADMIN_PASSWORD
 # ============================================================
 
-name = "usdt-palestine-api"
+name = "usdt-p2p-palestine"
 main = "src/index.ts"
 compatibility_date = "2024-12-01"
-account_id = ""  # Set via: wrangler login (auto-detected)
 
 # ------------------------------------------------------------
 # D1 Database
@@ -72,5 +71,5 @@ name = "usdt-palestine-api-staging"
 vars = { ENVIRONMENT = "staging", APP_URL = "https://usdt-palestine-api-staging.YOUR_SUBDOMAIN.workers.dev" }
 
 [env.production]
-name = "usdt-palestine-api"
+name = "usdt-p2p-palestine"
 vars = { ENVIRONMENT = "production", APP_URL = "https://usdt-palestine.pages.dev" }
