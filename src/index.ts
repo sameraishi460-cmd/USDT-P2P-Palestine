@@ -26,6 +26,7 @@ import { handleTelegramUpdate } from "./telegram/webhook";
 import { runScheduledTasks } from "./cron";
 import { serveStaticFile } from "./static";
 
+
 const app = new Hono<AppEnv>();
 
 // Global security headers on every response.
@@ -84,8 +85,8 @@ app.post("/telegram/webhook", (c) => handleTelegramUpdate(c));
 // ------------------------------------------------------------
 // Static frontend files (served from bundled frontend/ directory)
 // ------------------------------------------------------------
-app.get("/*", (c) => {
-  const file = serveStaticFile(new URL(c.req.url).pathname);
+app.get("/*", async (c) => {
+  const file = await serveStaticFile(c.env.ASSETS, new URL(c.req.url).pathname);
   return file ?? c.json({ error: "المسار غير موجود" }, 404);
 });
 

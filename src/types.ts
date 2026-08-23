@@ -6,6 +6,7 @@ export type Bindings = {
   DB: D1Database;
   R2: R2Bucket;
   RATE_LIMIT: KVNamespace;
+  ASSETS: Fetcher;  // Cloudflare static assets binding (frontend/)
 
   // Secrets (set via `wrangler secret put`)
   SECRET_KEY: string;

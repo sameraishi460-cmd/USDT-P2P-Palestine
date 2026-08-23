@@ -1,62 +1,26 @@
 /**
  * Static file serving for the frontend.
  *
- * Uses Vite/Cloudflare's `import.meta.glob` to bundle all frontend files
- * into the Worker at build time. The `/*` catch-all route in index.ts
- * delegates to `serveStaticFile()` to serve HTML, CSS, and JS.
+ * Uses Cloudflare Workers' native ASSETS binding (configured in wrangler.toml)
+ * to serve files from the frontend/ directory. The ASSETS binding is a
+ * Fetcher that handles static file resolution, MIME types, and caching.
  */
-
-// Eagerly import all frontend files as raw text.
-const files: Record<string, { default: string }> = import.meta.glob(
-  "/frontend/**/*",
-  { eager: true, as: "raw" },
-);
-
-// Build a lookup map: "/index.html" → content, "/assets/app.css" → content, etc.
-const fileMap: Record<string, string> = {};
-for (const [globPath, mod] of Object.entries(files)) {
-  // globPath is like "/frontend/index.html" → strip "/frontend" prefix
-  const path = globPath.replace(/^\/frontend/, "") || "/";
-  fileMap[path] = mod.default;
-}
-
-const MIME: Record<string, string> = {
-  ".html": "text/html; charset=utf-8",
-  ".css": "text/css; charset=utf-8",
-  ".js": "application/javascript; charset=utf-8",
-  ".json": "application/json; charset=utf-8",
-  ".png": "image/png",
-  ".jpg": "image/jpeg",
-  ".jpeg": "image/jpeg",
-  ".gif": "image/gif",
-  ".svg": "image/svg+xml",
-  ".ico": "image/x-icon",
-  ".woff": "font/woff",
-  ".woff2": "font/woff2",
-  ".ttf": "font/ttf",
-  ".webp": "image/webp",
-};
-
-function getMime(path: string): string {
-  const ext = path.slice(path.lastIndexOf("."));
-  return MIME[ext] || "application/octet-stream";
-}
 
 /**
- * Serve a static file by path. Returns a Response or null if not found.
- * Used by the `/*` catch-all route in index.ts.
+ * Serve a static file by delegating to the Cloudflare ASSETS binding.
+ * Returns the asset Response, or null if no matching asset exists.
  */
-export function serveStaticFile(path: string): Response | null {
-  // Normalize: "/market.html" → "/market.html", "/" → "/index.html"
-  const normalized = path === "/" ? "/index.html" : path;
-
-  const content = fileMap[normalized];
-  if (content === undefined) return null;
-
-  return new Response(content, {
-    headers: {
-      "Content-Type": getMime(normalized),
-      "Cache-Control": "public, max-age=3600",
-    },
-  });
+export async function serveStaticFile(
+  assets: Fetcher,
+  pathname: string,
+): Promise<Response | null> {
+  try {
+    const url = new URL(pathname, "https://static.local");
+    const resp = await assets.fetch(url.toString());
+    // ASSETS returns a 404 Response when no file matches — treat as miss.
+    if (resp.status === 404) return null;
+    return resp;
+  } catch {
+    return null;
+  }
 }

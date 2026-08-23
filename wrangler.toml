@@ -12,6 +12,14 @@ main = "src/index.ts"
 compatibility_date = "2024-12-01"
 
 # ------------------------------------------------------------
+# Static Assets — serves frontend/ directory (HTML, CSS, JS)
+# ASSETS binding lets the Worker fetch static files at runtime.
+# ------------------------------------------------------------
+[assets]
+binding = "ASSETS"
+directory = "frontend"
+
+# ------------------------------------------------------------
 # D1 Database
 # Create with: wrangler d1 create usdt-palestine-db
 # Then paste the returned database_id below.
