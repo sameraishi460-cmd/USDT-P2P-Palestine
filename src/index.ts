@@ -143,7 +143,10 @@ app.post("/telegram/webhook", (c) => handleTelegramUpdate(c));
 // Static frontend files (served from bundled frontend/ directory)
 // ------------------------------------------------------------
 app.get("/*", async (c) => {
-  const file = await serveStaticFile(c.env.ASSETS, new URL(c.req.url).pathname);
+  // Skip API paths — let API routes handle those
+  const pathname = new URL(c.req.url).pathname;
+  if (pathname.startsWith("/api/")) return c.json({ error: "المسار غير موجود" }, 404);
+  const file = await serveStaticFile(c.env.ASSETS, pathname);
   return file ?? c.json({ error: "المسار غير موجود" }, 404);
 });
 
