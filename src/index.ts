@@ -24,6 +24,7 @@ import miscRoutes from "./routes/misc";
 import uploadRoutes from "./routes/uploads";
 import { handleTelegramUpdate } from "./telegram/webhook";
 import { runScheduledTasks } from "./cron";
+import { serveStaticFile } from "./static";
 
 const app = new Hono<AppEnv>();
 
@@ -81,7 +82,15 @@ app.route("/api/uploads", uploadRoutes);
 app.post("/telegram/webhook", (c) => handleTelegramUpdate(c));
 
 // ------------------------------------------------------------
-// Fallbacks — never leak internal errors to clients.
+// Static frontend files (served from bundled frontend/ directory)
+// ------------------------------------------------------------
+app.get("/*", (c) => {
+  const file = serveStaticFile(new URL(c.req.url).pathname);
+  return file ?? c.json({ error: "المسار غير موجود" }, 404);
+});
+
+// ------------------------------------------------------------
+// Fallback — non-GET requests that didn't match any route.
 // ------------------------------------------------------------
 app.notFound((c) => c.json({ error: "المسار غير موجود" }, 404));
 
