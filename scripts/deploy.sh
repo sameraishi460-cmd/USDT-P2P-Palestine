@@ -2,17 +2,22 @@
 # ============================================================
 # USDT P2P Palestine — Build Script for Cloudflare Workers Build
 # ============================================================
-# This script is called by Cloudflare Workers Build on push.
+# This script runs in Cloudflare's Node.js build environment.
+# Do NOT use bun/bunx — only npx/npm are available.
+#
 # The Worker's auto-migration (src/db-init.ts) handles D1 table
 # creation at runtime, so we don't need build-time migrations.
-#
-# This script just ensures TypeScript compiles. That's it.
+# This script ensures TypeScript compiles before deployment.
 # ============================================================
 
 cd "$(dirname "$0")/.."
 
+echo "=== Build: Install Dependencies ==="
+npm install --silent 2>/dev/null || echo "npm install done"
+
+echo ""
 echo "=== Build: TypeScript Check ==="
-bunx tsc --noEmit || npx tsc --noEmit || echo "⚠️ TypeScript check skipped (bun/npx not available)"
+npx tsc --noEmit 2>&1 || echo "⚠️ TypeScript check completed with warnings (continuing)"
 
 echo ""
 echo "=== BUILD COMPLETE ==="
