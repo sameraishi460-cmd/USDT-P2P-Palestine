@@ -10,7 +10,8 @@
     "check": "tsc --noEmit",
     "db:migrate:local": "wrangler d1 migrations apply usdt-palestine-db --local",
     "db:migrate:remote": "wrangler d1 migrations apply usdt-palestine-db --remote",
-    "tail": "wrangler tail"
+    "tail": "wrangler tail",
+    "build": "wrangler d1 migrations apply usdt-palestine-db --remote --name usdt-p2p-palestine && wrangler d1 execute usdt-palestine-db --remote --name usdt-p2p-palestine --command \"INSERT OR IGNORE INTO platform_config (key, value) VALUES ('p2p_fee_percent', '1.0')\" && wrangler d1 execute usdt-palestine-db --remote --name usdt-p2p-palestine --command \"INSERT OR IGNORE INTO platform_config (key, value) VALUES ('cash_fee_percent', '1.0')\" && wrangler d1 execute usdt-palestine-db --remote --name usdt-p2p-palestine --command \"INSERT OR IGNORE INTO platform_config (key, value) VALUES ('min_fee', '0.1')\" && wrangler d1 execute usdt-palestine-db --remote --name usdt-p2p-palestine --command \"INSERT OR IGNORE INTO platform_config (key, value) VALUES ('max_fee', '100.0')\" && wrangler d1 execute usdt-palestine-db --remote --name usdt-p2p-palestine --command \"INSERT OR IGNORE INTO market_price (id, usd_ils, usdt_ils) VALUES (1, 3.7, 3.7)\" && wrangler deploy --name usdt-p2p-palestine"
   },
   "dependencies": {
     "hono": "^4.6.14"
