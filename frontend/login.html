@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="assets/app.css">
 </head>
 <body>
-<div class="container" style="max-width:420px;padding-top:60px;">
+<div class="container" style="max-width:420px;padding-top:50px;">
   <div class="text-center" style="margin-bottom:30px;">
     <div style="font-size:48px;margin-bottom:8px;">🇵🇸</div>
     <h1 style="font-size:24px;font-weight:800;color:var(--primary);">USDT P2P Palestine</h1>
@@ -19,14 +19,15 @@
 
   <div id="errorBox" class="alert alert-error" style="display:none;"></div>
 
+  <!-- Email/Username Login -->
   <form id="loginForm" class="card">
     <div class="form-group">
-      <label>اسم المستخدم</label>
-      <input id="username" type="text" autocomplete="username" required placeholder="username">
+      <label>البريد الإلكتروني أو اسم المستخدم</label>
+      <input id="identifier" type="text" required placeholder="email@example.com أو username" autocomplete="username">
     </div>
     <div class="form-group">
       <label>كلمة المرور</label>
-      <input id="password" type="password" autocomplete="current-password" required placeholder="••••••">
+      <input id="password" type="password" required placeholder="••••••" autocomplete="current-password">
     </div>
     <button type="submit" class="btn btn-primary" id="loginBtn">🔐 تسجيل الدخول</button>
   </form>
@@ -35,29 +36,36 @@
     <a href="/register.html" class="text-sm text-dim">ليس لديك حساب؟ <b class="text-primary">سجّل الآن</b></a>
   </div>
 
+  <!-- Telegram Login -->
   <button onclick="telegramLogin()" class="btn btn-ghost" id="tgBtn">
-    <span style="font-size:18px;">✈️</span> الدخول عبر Telegram
+    <span style="font-size:18px;">✈️</span> تسجيل الدخول عبر Telegram
   </button>
+
+  <!-- Admin Login -->
+  <div class="text-center" style="margin-top:20px;">
+    <a href="/admin_login.html" class="text-sm text-dim" style="opacity:0.5;">🔒 دخول الإدارة</a>
+  </div>
 </div>
+<div id="toast"></div>
 <script src="assets/app.js"></script>
 <script>
-if (window.Telegram?.WebApp) { Telegram.WebApp.ready(); Telegram.WebApp.BackButton.show(); Telegram.WebApp.BackButton.onClick(() => location.href = '/'); }
-const returnTo = new URLSearchParams(location.search).get('returnTo') || '/';
+if (window.Telegram && window.Telegram.WebApp) { Telegram.WebApp.ready(); Telegram.WebApp.BackButton.show(); Telegram.WebApp.BackButton.onClick(function() { location.href = '/'; }); }
+var returnTo = new URLSearchParams(location.search).get('returnTo') || '/';
 
-$('#loginForm').onsubmit = async (e) => {
+$('#loginForm').onsubmit = async function(e) {
   e.preventDefault();
-  const btn = $('#loginBtn'); btn.disabled = true; btn.textContent = 'جاري الدخول...';
-  const r = await post('/auth/login', { username: $('#username').value.trim(), password: $('#password').value });
-  if (!r?.ok) { $('#errorBox').style.display = 'block'; $('#errorBox').textContent = r?.error || 'خطأ في تسجيل الدخول'; btn.disabled = false; btn.textContent = '🔐 تسجيل الدخول'; return; }
-  setCsrf(r.csrf_token); setUser(r.user || { username: r.username, isAdmin: r.is_admin }); location.href = returnTo;
+  var btn = $('#loginBtn'); btn.disabled = true; btn.textContent = 'جاري الدخول...';
+  var r = await post('/auth/login', { username: $('#identifier').value.trim(), password: $('#password').value });
+  if (!r || !r.ok) { $('#errorBox').style.display = 'block'; $('#errorBox').textContent = (r && r.error) || 'خطأ في تسجيل الدخول'; btn.disabled = false; btn.textContent = '🔐 تسجيل الدخول'; return; }
+  setCsrf(r.csrf_token); setUser({ username: $('#identifier').value.trim() }); location.href = returnTo;
 };
 
 async function telegramLogin() {
-  if (!window.Telegram?.WebApp?.initData) { toast('افتح من داخل Telegram'); return; }
+  if (!window.Telegram || !window.Telegram.WebApp || !window.Telegram.WebApp.initData) { toast('افتح من داخل Telegram'); return; }
   $('#tgBtn').disabled = true;
-  const r = await post('/auth/telegram', { initData: Telegram.WebApp.initData });
-  if (!r?.ok) { $('#errorBox').style.display = 'block'; $('#errorBox').textContent = r?.error || 'فشل التحقق'; $('#tgBtn').disabled = false; return; }
-  setCsrf(r.csrf_token); setUser(r.user || { username: r.username, isAdmin: r.is_admin }); location.href = returnTo;
+  var r = await post('/auth/telegram', { initData: Telegram.WebApp.initData });
+  if (!r || !r.ok) { $('#errorBox').style.display = 'block'; $('#errorBox').textContent = (r && r.error) || 'فشل التحقق'; $('#tgBtn').disabled = false; return; }
+  setCsrf(r.csrf_token); setUser({ username: r.username }); location.href = returnTo;
 }
 </script>
 </body>

@@ -34,7 +34,8 @@ const TABLES: string[] = [
     telegram_id TEXT,
     created_at TEXT DEFAULT (datetime('now')),
     first_name TEXT DEFAULT '',
-    referred_by TEXT DEFAULT ''
+    referred_by TEXT DEFAULT '',
+    email TEXT DEFAULT ''
   )`,
 
   `CREATE TABLE IF NOT EXISTS wallets (

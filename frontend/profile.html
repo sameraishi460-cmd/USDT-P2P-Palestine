@@ -4,42 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0a0e18">
-<title>ملفي — USDT P2P Palestine</title>
+<title>حسابي — USDT P2P Palestine</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/app.css">
 </head>
 <body>
 <div class="navbar">
-  <span class="logo">👤 حسابي</span>
-  <div class="actions"><a href="/" style="font-size:20px;">🏠</a></div>
+  <a href="/" style="text-decoration:none;"><span class="logo">🇵🇸 USDT P2P</span></a>
+  <div class="actions">
+    <a href="/notifications.html" style="position:relative;">🔔<span id="notifDot" class="status-dot red" style="display:none;position:absolute;top:-2px;right:-2px;"></span></a>
+  </div>
 </div>
-<div class="container">
-  <!-- Profile Card -->
-  <div class="card" id="profileCard" style="text-align:center;">
-    <div class="skeleton" style="height:120px;"></div>
-  </div>
-
-  <!-- Edit -->
-  <div class="card">
-    <div class="card-title">📝 تعديل المعلومات</div>
-    <form id="editForm">
-      <div class="form-group"><label>الاسم الأول</label><input id="eName" type="text"></div>
-      <div class="form-group"><label>رقم الهاتف</label><input id="ePhone" type="tel"></div>
-      <div class="form-group"><label>البنك</label><input id="eBank" type="text"></div>
-      <div class="form-group"><label>IBAN</label><input id="eIban" type="text"></div>
-      <div class="form-group"><label>طريقة الدفع</label><input id="ePay" type="text" placeholder="تحويل بنكي / فودافون كاش"></div>
-      <button type="submit" class="btn btn-primary">💾 حفظ</button>
-    </form>
-  </div>
-
-  <!-- Admin Link -->
-  <div id="adminLink" style="display:none;" class="text-center">
-    <a href="/admin.html" class="btn btn-ghost" style="margin-top:10px;border-color:var(--gold);color:var(--gold);">⚙️ لوحة التحكم</a>
-  </div>
-
-  <!-- Logout -->
-  <button onclick="logout()" class="btn btn-danger" style="margin-top:10px;">🚪 تسجيل الخروج</button>
+<div class="container" id="content">
+  <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
 </div>
 <div class="bottom-nav">
   <a href="/"><span class="icon">🏠</span>الرئيسية</a>
@@ -51,35 +29,95 @@
 <div id="toast"></div>
 <script src="assets/app.js"></script>
 <script>
-if (!requireAuth('/profile.html')) throw new Error('auth');
+if (!requireAuth()) throw new Error('auth required');
 (async function() {
-  const r = await get('/profile');
-  if (!r?.ok) return;
-  const p = r.profile;
-  const s = r.stats || {};
-  $('#profileCard').innerHTML = `
-    ${profileAvatar(p.username, true)}
-    <h2 style="margin-top:10px;">${escHtml(p.username)} ${p.verified ? verifiedBadge(true) : ''}</h2>
-    ${p.first_name ? `<div class="muted">${escHtml(p.first_name)}</div>` : ''}
-    <div class="grid-3" style="margin-top:16px;">
-      <div class="kpi"><div class="kpi-label">صفقات</div><div class="kpi-value">${s.total || 0}</div></div>
-      <div class="kpi"><div class="kpi-label">مكتملة</div><div class="kpi-value text-primary">${s.completed || 0}</div></div>
-      <div class="kpi"><div class="kpi-label">نزاعات</div><div class="kpi-value text-warning">${s.disputed || 0}</div></div>
-    </div>
-    <div class="muted text-xs" style="margin-top:10px;">عضو منذ: ${formatDate(p.created_at)}</div>`;
-  $('#eName').value = p.first_name || '';
-  $('#ePhone').value = p.phone || '';
-  $('#eBank').value = p.bank || '';
-  $('#eIban').value = p.iban || '';
-  $('#ePay').value = p.payment_method || '';
-  if (getUser()?.isAdmin) $('#adminLink').style.display = 'block';
+  var me = await get('/auth/me');
+  if (!me || !me.authenticated) { location.href = '/login.html'; return; }
+  var profile = await get('/profile');
+  var wallet = await get('/wallet');
+  var p = profile ? profile.profile || {} : {};
+  var s = profile ? profile.stats || {} : {};
+  var w = wallet || {};
+  
+  var html = '<h2 style="font-size:20px;font-weight:800;margin-bottom:16px;">👤 حسابي</h2>';
+  
+  // Profile Card
+  html += '<div class="card" style="text-align:center;">';
+  html += '<div class="avatar avatar-lg" style="margin:0 auto 12px;">' + ((me.username||'?')[0]||'?').toUpperCase() + '</div>';
+  html += '<div class="text-lg font-bold">' + escHtml(me.username) + '</div>';
+  if (me.isAdmin) html += '<div style="margin-top:4px;">' + statusBadge('OPEN') + ' <span class="badge badge-admin">مدير</span></div>';
+  html += '<div class="muted text-sm" style="margin-top:4px;">' + escHtml(p.first_name || '') + '</div>';
+  if (p.email) html += '<div class="muted text-sm">' + escHtml(p.email) + '</div>';
+  if (me.telegram_id) html += '<div class="muted text-sm" style="margin-top:4px;">✈️ Telegram مرتبط</div>';
+  if (p.verified) html += '<div style="margin-top:6px;">' + verifiedBadge(true) + '</div>';
+  html += '<div class="muted text-xs" style="margin-top:8px;">عضو منذ: ' + formatDate(p.created_at) + '</div>';
+  html += '</div>';
+  
+  // Trading Stats
+  html += '<div class="card"><div class="card-title">📊 إحصائيات التداول</div>';
+  html += '<div class="grid-3">';
+  html += '<div class="kpi"><div class="kpi-label">الصفقات</div><div class="kpi-value">' + (s.total||0) + '</div></div>';
+  html += '<div class="kpi"><div class="kpi-label">المكتملة</div><div class="kpi-value text-primary">' + (s.completed||0) + '</div></div>';
+  html += '<div class="kpi"><div class="kpi-label">التقييم</div><div class="kpi-value text-gold">⭐ ' + formatNum(p.rating||5) + '</div></div>';
+  html += '</div></div>';
+  
+  // Wallet Summary
+  html += '<div class="card"><div class="card-title">💰 المحفظة</div>';
+  html += '<div class="grid-2">';
+  html += '<div class="kpi"><div class="kpi-label">المتاح</div><div class="kpi-value text-primary">' + formatNum(w.balance||0) + '</div></div>';
+  html += '<div class="kpi"><div class="kpi-label">مقفل</div><div class="kpi-value text-warning">' + formatNum(w.locked||0) + '</div></div>';
+  html += '</div>';
+  html += '<div class="grid-2" style="margin-top:12px;">';
+  html += '<a href="/wallet.html#deposit" class="btn btn-primary btn-sm">📥 إيداع</a>';
+  html += '<a href="/wallet.html#withdraw" class="btn btn-ghost btn-sm">📤 سحب</a>';
+  html += '</div></div>';
+  
+  // Notifications
+  var notifs = await get('/notifications');
+  var unread = notifs && notifs.ok ? notifs.unread || 0 : 0;
+  html += '<div class="card"><div class="flex-between"><span class="card-title" style="margin:0;">🔔 الإشعارات</span>';
+  if (unread > 0) html += '<span class="badge badge-PENDING">' + unread + ' جديدة</span>';
+  html += '</div>';
+  if (notifs && notifs.ok && notifs.notifications && notifs.notifications.length) {
+    notifs.notifications.slice(0, 5).forEach(function(n) {
+      html += '<div style="padding:8px 0;border-bottom:1px solid var(--border);">';
+      html += '<div class="font-bold text-sm">' + escHtml(n.title) + '</div>';
+      html += '<div class="muted text-xs">' + escHtml(n.message) + ' · ' + formatDate(n.created) + '</div>';
+      html += '</div>';
+    });
+  } else {
+    html += '<div class="muted text-sm text-center" style="padding:16px;">لا توجد إشعارات</div>';
+  }
+  html += '<a href="/notifications.html" class="text-sm text-primary" style="display:block;text-align:center;margin-top:8px;">عرض الكل</a></div>';
+  
+  // Security
+  html += '<div class="card"><div class="card-title">🔐 الأمان</div>';
+  html += '<div class="muted text-sm" style="margin-bottom:12px;">طريقة تسجيل الدخول: ' + (me.telegram_id ? '✈️ Telegram' : '📧 البريد الإلكتروني') + '</div>';
+  html += '<button onclick="doLogout()" class="btn btn-danger btn-sm" style="width:100%;">🚪 تسجيل الخروج</button>';
+  html += '</div>';
+  
+  // Admin link
+  if (me.isAdmin) {
+    html += '<div class="text-center" style="margin:16px 0;"><a href="/admin.html" class="btn btn-warning" style="width:100%;">🔒 لوحة الإدارة</a></div>';
+  }
+  
+  $('#content').innerHTML = html;
+  
+  // Notification badge
+  if (unread > 0) $('#notifDot').style.display = 'inline-block';
+  
+  // Check admin status
+  var u = getUser();
+  if (u && u.isAdmin) {
+    // already shown above
+  }
 })();
-$('#editForm').onsubmit = async (e) => {
-  e.preventDefault();
-  const r = await post('/profile/edit', { first_name: $('#eName').value.trim(), phone: $('#ePhone').value.trim(), bank: $('#eBank').value.trim(), iban: $('#eIban').value.trim(), payment_method: $('#ePay').value.trim() });
-  if (r?.ok) { toast('✅ تم الحفظ'); location.reload(); }
-};
-function logout() { post('/auth/logout').finally(() => { clearAuth(); location.href = '/'; }); }
+
+async function doLogout() {
+  await post('/auth/logout', {});
+  clearAuth();
+  location.href = '/';
+}
 </script>
 </body>
 </html>

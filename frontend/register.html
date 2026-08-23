@@ -10,10 +10,10 @@
 <link rel="stylesheet" href="assets/app.css">
 </head>
 <body>
-<div class="container" style="max-width:420px;padding-top:50px;">
+<div class="container" style="max-width:420px;padding-top:40px;">
   <div class="text-center" style="margin-bottom:24px;">
     <h1 style="font-size:20px;font-weight:800;color:var(--primary);">🇵🇸 إنشاء حساب جديد</h1>
-    <p class="muted text-sm" style="margin-top:4px;">اسم المستخدم يجب أن يطابق اسمك في Telegram</p>
+    <p class="muted text-sm" style="margin-top:4px;">انضم إلى منصة التداول Palestianne</p>
   </div>
   <div id="errorBox" class="alert alert-error" style="display:none;"></div>
   <form id="regForm" class="card">
@@ -22,12 +22,12 @@
       <input id="username" type="text" required placeholder="username" autocomplete="username">
     </div>
     <div class="form-group">
-      <label>الاسم الأول</label>
-      <input id="first_name" type="text" placeholder="محمد">
+      <label>البريد الإلكتروني</label>
+      <input id="email" type="email" required placeholder="email@example.com" autocomplete="email">
     </div>
     <div class="form-group">
-      <label>رقم الهاتف</label>
-      <input id="phone" type="tel" placeholder="+970 5XX XXX XXXX">
+      <label>الاسم الأول</label>
+      <input id="first_name" type="text" placeholder="محمد">
     </div>
     <div class="form-group">
       <label>كلمة المرور</label>
@@ -38,17 +38,31 @@
   <div class="text-center" style="margin:16px 0;">
     <a href="/login.html" class="text-sm text-dim">لديك حساب؟ <b class="text-primary">سجّل الدخول</b></a>
   </div>
+  <button onclick="tgRegister()" class="btn btn-ghost" id="tgBtn">
+    <span style="font-size:18px;">✈️</span> التسجيل عبر Telegram
+  </button>
 </div>
+<div id="toast"></div>
 <script src="assets/app.js"></script>
 <script>
-if (window.Telegram?.WebApp) Telegram.WebApp.ready();
-$('#regForm').onsubmit = async (e) => {
+$('#regForm').onsubmit = async function(e) {
   e.preventDefault();
-  const btn = $('#regBtn'); btn.disabled = true;
-  const r = await post('/auth/register', { username: $('#username').value.trim(), password: $('#password').value, first_name: $('#first_name').value.trim(), phone: $('#phone').value.trim() });
-  if (!r?.ok) { $('#errorBox').style.display = 'block'; $('#errorBox').textContent = r?.error || 'خطأ'; btn.disabled = false; return; }
-  setCsrf(r.csrf_token); setUser(r.user || { username: r.username, isAdmin: false }); location.href = '/';
+  var btn = $('#regBtn'); btn.disabled = true;
+  var r = await post('/auth/register', {
+    username: $('#username').value.trim(),
+    email: $('#email').value.trim(),
+    password: $('#password').value,
+    first_name: $('#first_name').value.trim()
+  });
+  if (!r || !r.ok) { $('#errorBox').style.display = 'block'; $('#errorBox').textContent = (r && r.error) || 'خطأ'; btn.disabled = false; return; }
+  setCsrf(r.csrf_token); setUser({ username: $('#username').value.trim() }); location.href = '/';
 };
+async function tgRegister() {
+  if (!window.Telegram || !window.Telegram.WebApp || !window.Telegram.WebApp.initData) { toast('افتح من داخل Telegram'); return; }
+  var r = await post('/auth/telegram', { initData: Telegram.WebApp.initData });
+  if (!r || !r.ok) { $('#errorBox').style.display = 'block'; $('#errorBox').textContent = (r && r.error) || 'فشل'; return; }
+  setCsrf(r.csrf_token); setUser({ username: r.username }); location.href = '/';
+}
 </script>
 </body>
 </html>
