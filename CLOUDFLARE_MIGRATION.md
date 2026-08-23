@@ -221,7 +221,7 @@
 - Runs as a daemon thread inside Flask/gunicorn process
 
 ### Bot Token
-- Stored as env var `TELEGRAM_BOT_TOKEN` with hardcoded fallback: `8881823408:AAFOF1wDyMjrW7hLQAy9hwY2LvzzeddxQbk`
+- Stored as env var `TELEGRAM_BOT_TOKEN` — set via `wrangler secret put`, never hardcoded
 - ⚠️ **CRITICAL**: Token is hardcoded in source code
 
 ### Admin ID
