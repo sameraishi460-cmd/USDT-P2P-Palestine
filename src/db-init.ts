@@ -616,6 +616,34 @@ export async function ensureTables(db: D1Database): Promise<{ migrated: boolean;
   return { migrated: true, tableCount: count?.cnt ?? 0 };
 }
 
+/**
+ * Ensure V2 tables exist — called separately from ensureTables
+ * to guarantee V2 features work even if V1 tables already existed.
+ */
+export async function ensureV2Tables(db: D1Database): Promise<{ created: boolean; count: number }> {
+  let created = 0;
+  for (const sql of V2_TABLES) {
+    try {
+      await db.prepare(sql).run();
+      created++;
+    } catch (e: any) {
+      if (!e?.message?.includes("already exists")) {
+        console.error("[db-init] v2 table error:", e?.message?.slice(0, 100));
+      }
+    }
+  }
+  for (const sql of V2_INDEXES) {
+    try {
+      await db.prepare(sql).run();
+    } catch (e: any) {
+      if (!e?.message?.includes("already exists")) {
+        console.error("[db-init] v2 index error:", e?.message?.slice(0, 100));
+      }
+    }
+  }
+  return { created: created > 0, count: created };
+}
+
 // ============================================================
 // V2 TABLES — Trust, Verification, Fraud, Referrals, VIP, etc.
 // These are appended to the MIGRATION_SQL in ensureTables()

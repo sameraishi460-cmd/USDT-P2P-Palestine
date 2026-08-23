@@ -26,7 +26,7 @@ import v2Routes from "./routes/v2";
 import { handleTelegramUpdate } from "./telegram/webhook";
 import { runScheduledTasks } from "./cron";
 import { serveStaticFile } from "./static";
-import { ensureTables } from "./db-init";
+import { ensureTables, ensureV2Tables } from "./db-init";
 
 
 const app = new Hono<AppEnv>();
@@ -45,8 +45,12 @@ app.use("/api/*", async (c, next) => {
         console.log(`[db-init] Auto-migrated: ${result.tableCount} tables created`);
       }
       _dbReady = true;
+      // Also ensure V2 tables exist (independent of V1 migration)
+      try { await ensureV2Tables(c.env.DB); } catch { /* best effort */ }
     } catch (e: any) {
       console.error("[db-init] Migration failed:", e?.message);
+      // Still try V2 tables even if V1 failed
+      try { await ensureV2Tables(c.env.DB); } catch { /* best effort */ }
     }
   }
   await next();
