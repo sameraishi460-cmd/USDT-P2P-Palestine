@@ -53,13 +53,13 @@ app.get("/api/health", async (c) => {
     });
     checks.bsc_rpc = r.ok ? "up" : "degraded";
   } catch { checks.bsc_rpc = "down"; }
-  // Platform config — auto-seed if missing
+  // Platform config — auto-seed if table exists but empty; skip gracefully if table missing
   try {
     const pw = await c.env.DB.prepare("SELECT value FROM platform_config WHERE key='p2p_fee_percent'").first();
     if (pw) {
       checks.config = "loaded";
     } else {
-      // Seed default config rows
+      // Table exists but empty — seed defaults
       const defaults: [string, string][] = [
         ["p2p_fee_percent", "1.0"],
         ["cash_fee_percent", "1.0"],
@@ -69,11 +69,17 @@ app.get("/api/health", async (c) => {
       for (const [k, v] of defaults) {
         await c.env.DB.prepare("INSERT OR IGNORE INTO platform_config (key, value) VALUES (?, ?)").bind(k, v).run();
       }
-      // Seed market price if missing
       await c.env.DB.prepare("INSERT OR IGNORE INTO market_price (id, usd_ils, usdt_ils) VALUES (1, 3.7, 3.7)").run();
       checks.config = "seeded";
     }
-  } catch (e: any) { checks.config = "error: " + (e?.message || "unknown"); }
+  } catch (e: any) {
+    const msg = e?.message || "unknown";
+    if (msg.includes("no such table")) {
+      checks.config = "pending_migration";
+    } else {
+      checks.config = "error: " + msg;
+    }
+  }
   const allUp = checks.database === "up";
   return c.json({
     ok: allUp,
