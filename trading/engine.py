@@ -28,6 +28,7 @@ from trading.db import (
 )
 from trading.market_data import (
     get_multi_tf_data, fetch_ticker, scan_symbol, analyze_spread,
+    data_tracker, fetch_klines,
 )
 from trading.features import calculate_all_features, analyze_timeframe_alignment
 from trading.regime import detect_regime, detect_multi_tf_regime
@@ -35,6 +36,7 @@ from trading.scoring import score_opportunity
 from trading.risk_manager import RiskEngine
 from trading.position_manager import PositionManager
 from trading.notifications import (
+
     notify_signal, notify_trade_opened, notify_trade_closed,
     notify_tp_reached, notify_sl_hit, notify_error,
     notify_emergency_stop, notify_risk_limit,
@@ -695,6 +697,9 @@ class AIEngine:
         # Phase 3: ML status
         ml_status = self._get_ml_status()
 
+        # Phase 6: Data source summary
+        data_source_info = data_tracker.get_stats()
+
         return {
             "bot": dict(bot) if bot else None,
             "config": config,
@@ -709,6 +714,7 @@ class AIEngine:
             "symbols_scanned": last_scan["symbols_scanned"] if last_scan else 0,
             "symbols_rejected": last_scan["symbols_rejected"] if last_scan else 0,
             "ml_status": ml_status,
+            "data_source_info": data_source_info,
         }
 
     def _get_ml_status(self):
@@ -721,14 +727,17 @@ class AIEngine:
             registry = ModelRegistry()
             registry_info = registry.get_registry_info()
 
+            has_model = ml_info.get("active_model") is not None
             return {
-                "available": ml_info.get("active_model") is not None,
+                "available": has_model,
                 "active_model": ml_info.get("active_model"),
-                "model_version": ml_info.get("active_model"),
+                "model_version": ml_info.get("active_model") if has_model else "none",
                 "total_models": ml_info.get("total_models", 0),
                 "predictions_made": ml_info.get("prediction_count", 0),
                 "errors": ml_info.get("error_count", 0),
                 "model_info": registry_info.get("active_info"),
+                "status": "ACTIVE" if has_model else "INACTIVE",
+                "status_label": "نشط" if has_model else "غير مُدرَّب",
             }
         except Exception as e:
             return {
@@ -740,6 +749,8 @@ class AIEngine:
                 "errors": 0,
                 "model_info": None,
                 "error": str(e),
+                "status": "ERROR",
+                "status_label": "خطأ",
             }
 
     def train_ml(self):

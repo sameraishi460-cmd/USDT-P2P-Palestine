@@ -66,6 +66,23 @@ DEFAULT_CONFIG = {
     "safe_mode_pf_floor": 0.8,
     "safe_mode_max_dd_pct": 8.0,
 
+    # === PHASE 6: REGIME-SPECIFIC THRESHOLDS ===
+    "high_vol_min_ai_score": 85,
+    "high_vol_min_rr": 2.5,
+    "high_vol_max_positions": 2,
+    "low_vol_min_ai_score": 75,
+    "sideways_min_ai_score": 75,
+
+    # === PHASE 6: SYMBOL-SPECIFIC OVERRIDES ===
+    "symbol_overrides": {
+        "ETHUSDT": {"min_ai_score": 65, "min_volume_usd": 500000},
+        "SOLUSDT": {"min_ai_score": 65, "min_volume_usd": 500000},
+    },
+
+    # === PHASE 6: DATA SOURCE ===
+    "data_source": "auto",
+    "data_is_real": False,
+
     # === MODE ===
     "trading_mode": "PAPER",  # PAPER or REAL
     "bot_status": "STOPPED",  # STOPPED, RUNNING, PAUSED, SAFE_MODE, ERROR

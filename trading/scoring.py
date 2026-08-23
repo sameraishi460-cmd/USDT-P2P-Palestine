@@ -1,21 +1,55 @@
 """
-AI Trading Engine — Opportunity Scoring Engine (Phase 2 Enhanced)
+AI Trading Engine — Opportunity Scoring Engine (Phase 6 Enhanced)
 
 Generates a composite AI score (0-100) from multiple scoring components.
 Uses ensemble of technical analysis, trend, momentum, volume, volatility,
 regime, risk/reward, multi-TF alignment, and ML scoring.
 
-Phase 2 additions:
-- Multi-timeframe alignment scoring
-- Cross-TF confirmation
-- Enhanced NO TRADE detection
-- Opportunity quality grades
+Phase 6 changes:
+- ML component = INACTIVE (score=0) when no trained model exists
+- Regime-aware scoring penalties for HIGH_VOLATILITY
+- Component breakdown shown separately
+- "NO TRADE" is a valid, healthy decision
 """
 
 import numpy as np
 import pandas as pd
-from trading.regime import detect_regime, is_regime_suitable, detect_multi_tf_regime
+from trading.regime import (
+    detect_regime, is_regime_suitable, detect_multi_tf_regime,
+    HIGH_VOL, LOW_VOL, SIDEWAYS, UNCERTAIN, BULL_TREND, BEAR_TREND,
+    BREAKOUT, BREAKDOWN,
+)
 from trading.features import analyze_timeframe_alignment
+
+
+# ============================================================
+# SCORING WEIGHTS
+# ============================================================
+
+WEIGHTS_WITH_ML = {
+    "technical": 0.12, "trend": 0.15, "momentum": 0.12,
+    "volume": 0.08, "volatility": 0.08, "regime": 0.10,
+    "risk_reward": 0.12, "ml": 0.05, "tf_alignment": 0.18,
+}
+
+# When ML is inactive, redistribute its weight proportionally
+WEIGHTS_NO_ML = {
+    "technical": 0.133, "trend": 0.167, "momentum": 0.133,
+    "volume": 0.089, "volatility": 0.089, "regime": 0.111,
+    "risk_reward": 0.133, "ml": 0.0, "tf_alignment": 0.145,
+}
+
+# Regime-specific penalty multipliers (to reduce false signals)
+REGIME_PENALTIES = {
+    HIGH_VOL: 0.4,      # Very strict — 14% win rate historically
+    UNCERTAIN: 0.3,     # Unclear conditions → reduce
+    LOW_VOL: 0.85,      # Mild penalty for low volatility
+    SIDEWAYS: 0.9,      # Mild penalty for range-bound
+    BULL_TREND: 1.0,    # No penalty
+    BEAR_TREND: 1.0,    # No penalty
+    BREAKOUT: 1.05,     # Slight bonus
+    BREAKDOWN: 1.05,    # Slight bonus
+}
 
 
 def score_opportunity(df, direction, config, multi_tf_data=None):
@@ -62,11 +96,12 @@ def score_opportunity(df, direction, config, multi_tf_data=None):
     rr_data = _estimate_rr(df, direction, config)
     scores["risk_reward"] = rr_data["score"]
 
-    # 8. ML SCORE (Phase 3: real ML prediction)
+    # 8. ML SCORE — Phase 6: INACTIVE when no model
     ml_prediction = _get_ml_prediction(row, direction)
-    scores["ml"] = ml_prediction["ml_score"]
+    ml_active = ml_prediction.get("available", False)
+    scores["ml"] = ml_prediction["ml_score"] if ml_active else 0.0
 
-    # 9. MULTI-TF ALIGNMENT SCORE (Phase 2)
+    # 9. MULTI-TF ALIGNMENT SCORE
     tf_alignment = None
     if multi_tf_data and len(multi_tf_data) >= 2:
         tf_alignment = analyze_timeframe_alignment(multi_tf_data)
@@ -75,28 +110,34 @@ def score_opportunity(df, direction, config, multi_tf_data=None):
         scores["tf_alignment"] = 30.0  # Low score when no multi-TF data
 
     # =====================
-    # ENSEMBLE WEIGHTS (Phase 2 updated)
+    # ENSEMBLE WEIGHTS
     # =====================
-    weights = {
-        "technical": 0.12,
-        "trend": 0.15,
-        "momentum": 0.12,
-        "volume": 0.08,
-        "volatility": 0.08,
-        "regime": 0.10,
-        "risk_reward": 0.12,
-        "ml": 0.05,
-        "tf_alignment": 0.18,  # Phase 2: Significant weight for multi-TF
-    }
+    weights = WEIGHTS_WITH_ML if ml_active else WEIGHTS_NO_ML
 
     # Calculate composite score
-    ai_score = sum(scores[k] * weights[k] for k in weights)
+    ai_score = sum(scores[k] * weights[k] for k in weights if weights[k] > 0)
 
-    # Penalty: if regime doesn't suit the trade
-    if not is_regime_suitable(regime, "trend_following"):
-        if direction == "LONG" and regime in ("BEAR_TREND", "BREAKDOWN"):
+    # === REGIME-AWARE ADJUSTMENTS (Phase 6) ===
+    regime_mult = REGIME_PENALTIES.get(regime, 1.0)
+    ai_score *= regime_mult
+
+    # Additional HIGH_VOL penalty: require stronger confirmation
+    if regime == HIGH_VOL:
+        # Need strong multi-TF alignment + high R:R to trade in high vol
+        if tf_alignment and tf_alignment.get("alignment_score", 0) < 70:
             ai_score *= 0.5
-        elif direction == "SHORT" and regime in ("BULL_TREND", "BREAKOUT"):
+        if rr_data["rr"] < 2.0:
+            ai_score *= 0.7
+        # Require higher ADX to confirm trend in high vol
+        adx = row.get("adx", 25)
+        if adx < 30:
+            ai_score *= 0.6
+
+    # Penalty: if regime doesn't suit the trade direction
+    if not is_regime_suitable(regime, "trend_following"):
+        if direction == "LONG" and regime in (BEAR_TREND, BREAKDOWN):
+            ai_score *= 0.5
+        elif direction == "SHORT" and regime in (BULL_TREND, BREAKOUT):
             ai_score *= 0.5
 
     # Penalty: conflicting timeframes
@@ -110,17 +151,32 @@ def score_opportunity(df, direction, config, multi_tf_data=None):
     ai_score = max(0, min(100, ai_score))
 
     # Build reasons list
-    reasons = _get_reasons(row, direction, scores, regime)
+    reasons = _get_reasons(row, direction, scores, regime, config)
     if tf_alignment:
         reasons.extend(_get_tf_reasons(tf_alignment, direction))
 
     # Quality grade
     quality = _get_quality_grade(ai_score)
 
+    # === COMPONENT BREAKDOWN (Phase 6) ===
+    component_breakdown = {
+        "technical": {"score": round(scores["technical"], 1), "weight": weights["technical"]},
+        "trend": {"score": round(scores["trend"], 1), "weight": weights["trend"]},
+        "momentum": {"score": round(scores["momentum"], 1), "weight": weights["momentum"]},
+        "volume": {"score": round(scores["volume"], 1), "weight": weights["volume"]},
+        "volatility": {"score": round(scores["volatility"], 1), "weight": weights["volatility"]},
+        "regime": {"score": round(scores["regime"], 1), "weight": weights["regime"]},
+        "risk_reward": {"score": round(scores["risk_reward"], 1), "weight": weights["risk_reward"]},
+        "ml": {"score": round(scores["ml"], 1), "weight": weights["ml"], "active": ml_active},
+        "tf_alignment": {"score": round(scores["tf_alignment"], 1), "weight": weights["tf_alignment"]},
+        "regime_adjustment": round(regime_mult, 2),
+    }
+
     return {
         "ai_score": round(ai_score, 1),
         "quality": quality,
         "scores": {k: round(v, 1) for k, v in scores.items()},
+        "component_breakdown": component_breakdown,
         "direction": direction,
         "regime": regime,
         "regime_confidence": regime_conf,
@@ -138,47 +194,59 @@ def score_opportunity(df, direction, config, multi_tf_data=None):
 
 
 # ============================================
-# PHASE 3: ML INTEGRATION
+# ML INTEGRATION (Phase 6: INACTIVE when no model)
 # ============================================
 
 _ml_predictor = None
+_ml_checked = False
 
 
 def _get_ml_prediction(row, direction):
     """
-    Get ML prediction for a feature row.
-    Falls back gracefully to neutral score on any failure.
+    Get ML prediction. Returns INACTIVE (score=0) when no model is trained.
+    NEVER returns placeholder 50.0 — that was misleading.
     """
-    global _ml_predictor
+    global _ml_predictor, _ml_checked
 
-    # Lazy-load the predictor
-    if _ml_predictor is None:
+    if not _ml_checked:
+        _ml_checked = True
         try:
             from trading.ml_engine import MLPredictor
             _ml_predictor = MLPredictor()
-        except Exception as e:
-            return {
-                "ml_score": 50.0,
-                "ml_confidence": 0.0,
-                "ml_direction": "NEUTRAL",
-                "model_version": "none",
-                "available": False,
-                "error": f"ML predictor init failed: {e}",
-            }
+        except Exception:
+            _ml_predictor = None
 
-    try:
-        result = _ml_predictor.predict(row)
-        return result
-    except Exception as e:
+    if _ml_predictor is None:
         return {
-            "ml_score": 50.0,
+            "ml_score": 0.0,
             "ml_confidence": 0.0,
             "ml_direction": "NEUTRAL",
             "model_version": "none",
             "available": False,
+            "status": "INACTIVE",
+            "error": "No ML model trained",
+        }
+
+    try:
+        result = _ml_predictor.predict(row)
+        if not result.get("available"):
+            result["ml_score"] = 0.0
+            result["status"] = "INACTIVE"
+        else:
+            result["status"] = "ACTIVE"
+        return result
+    except Exception as e:
+        return {
+            "ml_score": 0.0, "ml_confidence": 0.0,
+            "ml_direction": "NEUTRAL", "model_version": "none",
+            "available": False, "status": "ERROR",
             "error": str(e),
         }
 
+
+# ============================================
+# INDIVIDUAL SCORERS
+# ============================================
 
 def _score_tf_alignment(tf_alignment, direction):
     """Score based on multi-timeframe alignment."""
@@ -189,12 +257,10 @@ def _score_tf_alignment(tf_alignment, direction):
     tf_direction = tf_alignment.get("direction", "CONFLICTED")
 
     if tf_direction == direction:
-        # Perfect alignment
         return min(100, alignment_score)
     elif tf_direction == "CONFLICTED":
         return max(10, alignment_score * 0.3)
     else:
-        # Counter-trend — strong penalty
         return max(0, alignment_score * 0.2)
 
 
@@ -241,33 +307,21 @@ def _score_trend(row, direction):
     ma_bear = row.get("ma_bearish", 0)
     trend_str = abs(row.get("trend_strength", 0))
     adx = row.get("adx", 25)
-    plus_di = row.get("plus_di", 25)
-    minus_di = row.get("minus_di", 25)
 
     if direction == "LONG":
         if ma_bull:
             score += 20
-        if plus_di > minus_di:
-            score += 15
-        if trend_str > 1:
+        if trend_str > 0.5:
             score += 10
         if adx > 25:
-            score += 5
+            score += 10
     else:
         if ma_bear:
             score += 20
-        if minus_di > plus_di:
-            score += 15
-        if trend_str > 1:
+        if trend_str > 0.5:
             score += 10
         if adx > 25:
-            score += 5
-
-    # Penalize counter-trend
-    if direction == "LONG" and ma_bear:
-        score -= 20
-    if direction == "SHORT" and ma_bull:
-        score -= 20
+            score += 10
 
     return max(0, min(100, score))
 
@@ -278,38 +332,33 @@ def _score_momentum(row, direction):
 
     mom5 = row.get("momentum_5", 0)
     mom10 = row.get("momentum_10", 0)
-    macd_cross_up = row.get("macd_cross_up", 0)
-    macd_cross_down = row.get("macd_cross_down", 0)
-    consec_green = row.get("consecutive_green", 0)
+    macd_hist = row.get("macd_hist", 0)
+    rsi = row.get("rsi", 50)
 
     if direction == "LONG":
         if mom5 > 0:
             score += 10
         if mom10 > 0:
             score += 10
-        if macd_cross_up:
-            score += 15
-        if consec_green >= 2:
+        if macd_hist > 0:
+            score += 10
+        if 40 < rsi < 65:
             score += 5
-        if mom5 > 5:
-            score -= 10  # Chasing
     else:
         if mom5 < 0:
             score += 10
         if mom10 < 0:
             score += 10
-        if macd_cross_down:
-            score += 15
-        if consec_green == 0:
+        if macd_hist < 0:
+            score += 10
+        if 35 < rsi < 60:
             score += 5
-        if mom5 < -5:
-            score -= 10
 
     return max(0, min(100, score))
 
 
 def _score_volume(row):
-    """Score based on volume confirmation."""
+    """Score based on volume analysis."""
     score = 50
 
     rel_vol = row.get("relative_volume", 1)
@@ -317,7 +366,7 @@ def _score_volume(row):
 
     if rel_vol > 1.5:
         score += 20
-    elif rel_vol > 1.2:
+    elif rel_vol > 1.0:
         score += 10
     elif rel_vol < 0.5:
         score -= 15
@@ -331,70 +380,88 @@ def _score_volume(row):
 
 
 def _score_volatility(row, config):
-    """Score based on volatility conditions."""
+    """Score based on volatility — penalize extremes."""
     score = 50
 
     atr_pct = row.get("atr_pct", 0)
     bb_width = row.get("bb_width", 2)
+    vol_regime = row.get("volatility_regime", 1)
 
+    # Sweet spot: moderate volatility
     if 0.5 < atr_pct < 2.0:
-        score += 20
-    elif atr_pct < 0.3:
-        score -= 10
+        score += 15
     elif atr_pct > 3.0:
+        score -= 20  # Too volatile
+    elif atr_pct < 0.3:
+        score -= 10  # Too quiet
+
+    if 1.5 < bb_width < 4.0:
+        score += 10
+    elif bb_width > 6.0:
         score -= 15
 
-    if 1.5 < bb_width < 4:
+    # Volatility regime (0=low, 1=normal, 2=high, 3=extreme)
+    if vol_regime == 1:
         score += 10
+    elif vol_regime >= 3:
+        score -= 20
 
     return max(0, min(100, score))
 
 
 def _score_regime(regime, regime_conf, direction):
     """Score based on market regime."""
-    from trading.regime import (
-        BULL_TREND, BEAR_TREND, SIDEWAYS, HIGH_VOL,
-        LOW_VOL, BREAKOUT, BREAKDOWN, UNCERTAIN
-    )
+    score = 30  # Base
 
-    regime_scores = {
-        BULL_TREND: {"LONG": 85, "SHORT": 20},
-        BEAR_TREND: {"LONG": 20, "SHORT": 85},
-        SIDEWAYS: {"LONG": 40, "SHORT": 40},
-        HIGH_VOL: {"LONG": 35, "SHORT": 35},
-        LOW_VOL: {"LONG": 45, "SHORT": 45},
-        BREAKOUT: {"LONG": 75, "SHORT": 75},
-        BREAKDOWN: {"LONG": 30, "SHORT": 70},
-        UNCERTAIN: {"LONG": 15, "SHORT": 15},
-    }
+    # Strong trend = good
+    if regime in (BULL_TREND, BEAR_TREND):
+        score += 30
+        if regime_conf > 60:
+            score += 15
 
-    base = regime_scores.get(regime, {}).get(direction, 30)
-    conf_factor = min(regime_conf / 100, 1.0)
-    return base * conf_factor
+    # Breakout/breakdown can be good
+    if regime in (BREAKOUT, BREAKDOWN):
+        score += 20
+        if regime_conf > 50:
+            score += 10
+
+    # Sideways = neutral
+    if regime == SIDEWAYS:
+        score += 5
+
+    # High vol = bad for trend following
+    if regime == HIGH_VOL:
+        score -= 20
+
+    # Uncertain = bad
+    if regime == UNCERTAIN:
+        score -= 15
+
+    return max(0, min(100, score))
 
 
 def _estimate_rr(df, direction, config):
-    """Estimate entry, SL, TP and R:R ratio."""
-    row = df.iloc[-1]
-    atr = row.get("atr", 0)
-    price = row.get("close", 0)
+    """Estimate risk/reward ratio."""
+    if df is None or len(df) < 14:
+        return {"entry": 0, "sl": 0, "tp1": 0, "tp2": 0, "rr": 0, "score": 0}
 
-    if price <= 0 or atr <= 0:
-        atr = price * 0.01
-        if atr <= 0:
-            return {"entry": 0, "sl": 0, "tp1": 0, "tp2": 0, "rr": 0, "score": 0}
+    row = df.iloc[-1]
+    price = row["close"]
+    atr = row.get("atr", 0)
+    if atr <= 0:
+        atr = price * 0.01  # Fallback
 
     sl_mult = config.get("sl_atr_multiplier", 1.5)
     tp1_rr = config.get("tp1_rr", 1.5)
     tp2_rr = config.get("tp2_rr", 2.5)
 
+    entry = price
+
     if direction == "LONG":
-        entry = price
         sl = price - (atr * sl_mult)
         tp1 = price + (atr * sl_mult * tp1_rr)
         tp2 = price + (atr * sl_mult * tp2_rr)
     else:
-        entry = price
         sl = price + (atr * sl_mult)
         tp1 = price - (atr * sl_mult * tp1_rr)
         tp2 = price - (atr * sl_mult * tp2_rr)
@@ -417,12 +484,9 @@ def _estimate_rr(df, direction, config):
         rr_score = 20
 
     return {
-        "entry": round(entry, 8),
-        "sl": round(sl, 8),
-        "tp1": round(tp1, 8),
-        "tp2": round(tp2, 8),
-        "rr": round(rr, 2),
-        "score": rr_score,
+        "entry": round(entry, 8), "sl": round(sl, 8),
+        "tp1": round(tp1, 8), "tp2": round(tp2, 8),
+        "rr": round(rr, 2), "score": rr_score,
     }
 
 
@@ -442,7 +506,7 @@ def _get_quality_grade(ai_score):
         return {"grade": "F", "label": "لا يتداول", "label_en": "NO TRADE"}
 
 
-def _get_reasons(row, direction, scores, regime):
+def _get_reasons(row, direction, scores, regime, config):
     """Generate human-readable reasons for the score."""
     reasons = []
 
@@ -472,9 +536,15 @@ def _get_reasons(row, direction, scores, regime):
         reasons.append(f"✗ Unfavorable regime ({regime})")
 
     if scores["risk_reward"] > 60:
-        reasons.append(f"✓ Good risk/reward ({scores.get('rr_ratio', 0):.1f})")
+        reasons.append(f"✓ Good risk/reward")
     elif scores["risk_reward"] < 40:
         reasons.append("✗ Poor risk/reward ratio")
+
+    # Phase 6: Regime-specific warnings
+    if regime == HIGH_VOL:
+        reasons.append("⚠ HIGH VOLATILITY — extra confirmation required")
+    if regime == UNCERTAIN:
+        reasons.append("⚠ Market conditions uncertain — NO TRADE recommended")
 
     rsi = row.get("rsi", 50)
     if direction == "LONG" and rsi > 75:
@@ -506,7 +576,6 @@ def _get_tf_reasons(tf_alignment, direction):
     else:
         reasons.append(f"✗ {tf_dir} trend on higher timeframes")
 
-    # Report specific TF roles
     macro = tf_alignment.get("macro_trend", "UNKNOWN")
     primary = tf_alignment.get("primary_trend", "UNKNOWN")
     if macro != "UNKNOWN":
@@ -523,21 +592,19 @@ def _empty_score(reason):
         "ai_score": 0,
         "quality": {"grade": "F", "label": "لا يتداول", "label_en": "NO TRADE"},
         "scores": {},
+        "component_breakdown": {},
         "direction": "NONE",
         "regime": "UNCERTAIN",
         "regime_confidence": 0,
         "regime_description": reason,
-        "entry_price": 0,
-        "stop_loss": 0,
-        "take_profit1": 0,
-        "take_profit2": 0,
-        "rr_ratio": 0,
-        "atr_pct": 0,
+        "entry_price": 0, "stop_loss": 0,
+        "take_profit1": 0, "take_profit2": 0,
+        "rr_ratio": 0, "atr_pct": 0,
         "tf_alignment": None,
         "ml_prediction": {
-            "ml_score": 50.0, "ml_confidence": 0.0,
+            "ml_score": 0.0, "ml_confidence": 0.0,
             "ml_direction": "NEUTRAL", "model_version": "none",
-            "available": False, "error": reason,
+            "available": False, "status": "INACTIVE", "error": reason,
         },
         "reasons": [f"✗ {reason}"],
     }

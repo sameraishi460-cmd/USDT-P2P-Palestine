@@ -312,7 +312,7 @@ class Backtester:
         try:
             # 1. Fetch historical data
             print(f"  Backtest: Fetching {symbol} {timeframe} ({limit} candles)...")
-            df = fetch_klines(symbol, timeframe, limit=limit)
+            df, _data_source = fetch_klines(symbol, timeframe, limit=limit)
             if df is None or len(df) < 60:
                 result.status = "FAILED"
                 result.error = f"Insufficient data: {len(df) if df is not None else 0} candles"
@@ -397,7 +397,7 @@ class Backtester:
         multi_tf = {}
         for mtf in ["15m", "1h", "4h"]:
             try:
-                mtf_df = fetch_klines(symbol, mtf, 200)
+                mtf_df, _ = fetch_klines(symbol, mtf, 200)
                 if mtf_df is not None and len(mtf_df) >= 30:
                     mtf_df = calculate_all_features(mtf_df)
                     multi_tf[mtf] = mtf_df
@@ -835,7 +835,7 @@ class WalkForwardValidator:
         try:
             # Fetch full dataset
             print(f"  Walk-Forward: Fetching {symbol} {timeframe} ({limit} candles)...")
-            df = fetch_klines(symbol, timeframe, limit=limit)
+            df, _data_source = fetch_klines(symbol, timeframe, limit=limit)
             if df is None or len(df) < in_sample_bars + out_of_sample_bars + 60:
                 result["status"] = "FAILED"
                 result["error"] = "Insufficient data"
