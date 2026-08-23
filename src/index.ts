@@ -22,7 +22,7 @@ import walletRoutes from "./routes/wallet";
 import adminRoutes from "./routes/admin";
 import miscRoutes from "./routes/misc";
 import uploadRoutes from "./routes/uploads";
-import v2Routes from "./routes/v2";
+import { registerV2Routes } from "./routes/v2";
 import { handleTelegramUpdate } from "./telegram/webhook";
 import { runScheduledTasks } from "./cron";
 import { serveStaticFile } from "./static";
@@ -132,7 +132,9 @@ app.route("/api/wallet", walletRoutes);
 app.route("/api/admin", adminRoutes);
 app.route("/api", miscRoutes); // /api/notifications, /api/profile, /api/reviews, cash
 app.route("/api/uploads", uploadRoutes);
-app.route("/api/v2", v2Routes);
+// V2 Advanced Features — registered directly on main app
+registerV2Routes(app);
+console.log("[v2] V2 routes registered at /api/v2/*");
 
 // ------------------------------------------------------------
 // Telegram webhook
@@ -142,10 +144,13 @@ app.post("/telegram/webhook", (c) => handleTelegramUpdate(c));
 // ------------------------------------------------------------
 // Static frontend files (served from bundled frontend/ directory)
 // ------------------------------------------------------------
+// Static frontend — only handles non-API, non-webhook paths
 app.get("/*", async (c) => {
-  // Skip API paths — let API routes handle those
   const pathname = new URL(c.req.url).pathname;
-  if (pathname.startsWith("/api/")) return c.json({ error: "المسار غير موجود" }, 404);
+  // Skip all API and webhook paths
+  if (pathname.startsWith("/api/") || pathname.startsWith("/telegram/")) {
+    return c.json({ error: "المسار غير موجود" }, 404);
+  }
   const file = await serveStaticFile(c.env.ASSETS, pathname);
   return file ?? c.json({ error: "المسار غير موجود" }, 404);
 });
