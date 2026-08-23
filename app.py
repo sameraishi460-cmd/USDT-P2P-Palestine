@@ -26,7 +26,12 @@ import price_updater
 # FLASK CONFIG
 # ===============================
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "USDT_P2P_PALESTINE_SECRET_KEY_DEV")
+# SECURITY: No hardcoded fallback. SECRET_KEY MUST be set in the environment.
+_secret_key = os.environ.get("SECRET_KEY", "")
+if not _secret_key:
+    import secrets as _secrets
+    _secret_key = _secrets.token_hex(32)  # Ephemeral dev-only key; sessions reset on restart
+app.secret_key = _secret_key
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=30)
 app.config["UPLOAD_FOLDER"] = "uploads"
 app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024  # 5MB upload limit

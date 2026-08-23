@@ -3,9 +3,11 @@ import requests
 import time
 import traceback
 
-TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "8881823408:AAFOF1wDyMjrW7hLQAy9hwY2LvzzeddxQbk")
-WEBAPP_URL = os.environ.get("TELEGRAM_WEBAPP_URL", "https://usdt-p2p-palestine-1.onrender.com")
-ADMIN_ID = int(os.environ.get("TELEGRAM_ADMIN_ID", "5681774891"))
+# SECURITY: No hardcoded credentials. All values MUST come from environment variables.
+# Set these in Render/Cloudflare dashboard — never commit secrets to GitHub.
+TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+WEBAPP_URL = os.environ.get("TELEGRAM_WEBAPP_URL", "")
+ADMIN_ID = int(os.environ.get("TELEGRAM_ADMIN_ID", "0"))
 
 
 def send_message(chat_id, text, keyboard=None):
