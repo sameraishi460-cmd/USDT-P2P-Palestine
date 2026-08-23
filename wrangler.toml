@@ -67,6 +67,10 @@ crons = ["0 * * * *"]
 [observability]
 enabled = true
 
+[env.staging]
+name = "usdt-palestine-api-staging"
+vars = { ENVIRONMENT = "staging", APP_URL = "https://usdt-palestine-api-staging.YOUR_SUBDOMAIN.workers.dev" }
+
 [env.production]
 name = "usdt-palestine-api"
 vars = { ENVIRONMENT = "production", APP_URL = "https://usdt-palestine.pages.dev" }
