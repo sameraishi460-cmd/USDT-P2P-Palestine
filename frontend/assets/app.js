@@ -260,16 +260,16 @@ function renderNav() {
     const p = location.pathname;
     if (u) {
       bn.innerHTML = `
+        <a href="/" class="${p === '/' ? 'active' : ''}"><span class="nav-icon">🏠</span><span class="nav-label">الرئيسية</span></a>
         <a href="/market" class="${p === '/market' ? 'active' : ''}"><span class="nav-icon">🛒</span><span class="nav-label">السوق</span></a>
-        <a href="/trades" class="${p === '/trades' ? 'active' : ''}"><span class="nav-icon">📄</span><span class="nav-label">الصفقات</span></a>
-        <a href="/create_ad" class="${p === '/create_ad' ? 'active' : ''}"><span class="nav-icon">➕</span><span class="nav-label">إعلان</span></a>
-        <a href="/wallet" class="${p === '/wallet' ? 'active' : ''}"><span class="nav-icon">💰</span><span class="nav-label">المحفظة</span></a>
-        <a href="/profile" class="${p === '/profile' ? 'active' : ''}"><span class="nav-icon">👤</span><span class="nav-label">حسابي</span></a>
+        <a href="/trades" class="${p === '/trades' ? 'active' : ''}"><span class="nav-icon">📋</span><span class="nav-label">الصفقات</span></a>
+        <a href="/profile" class="${p === '/profile' ? 'active' : ''}"><span class="nav-icon">👤</span><span class="nav-label">الحساب</span></a>
       `;
       bn.style.display = '';
     } else {
       bn.innerHTML = `
         <a href="/" class="${p === '/' ? 'active' : ''}"><span class="nav-icon">🏠</span><span class="nav-label">الرئيسية</span></a>
+        <a href="/market" class="${p === '/market' ? 'active' : ''}"><span class="nav-icon">🛒</span><span class="nav-label">السوق</span></a>
         <a href="/login" class="${p === '/login' ? 'active' : ''}"><span class="nav-icon">🔑</span><span class="nav-label">دخول</span></a>
         <a href="/register" class="${p === '/register' ? 'active' : ''}"><span class="nav-icon">📝</span><span class="nav-label">حساب جديد</span></a>
       `;
