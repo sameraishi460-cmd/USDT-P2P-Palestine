@@ -243,4 +243,56 @@ misc.post("/cash/trade/:id/complete", requireUser, requireCsrf, async (c) => {
   return c.json({ ok: true });
 });
 
+// ============================================================
+// Telegram Notification Preferences
+// ============================================================
+misc.get("/telegram/prefs", requireUser, async (c) => {
+  const username = c.get("user")!.username;
+  try {
+    const prefs = await c.env.DB.prepare(
+      "SELECT * FROM telegram_prefs WHERE username = ?"
+    ).bind(username).first();
+    return c.json({
+      ok: true,
+      notify_trades: true,
+      notify_payments: true,
+      notify_disputes: true,
+      notify_system: true,
+      ...prefs,
+    });
+  } catch {
+    return c.json({ ok: true, notify_trades: true, notify_payments: true, notify_disputes: true, notify_system: true });
+  }
+});
+
+misc.post("/telegram/prefs", requireUser, requireCsrf, async (c) => {
+  const username = c.get("user")!.username;
+  const raw: Record<string, unknown> = await c.req.json().catch(() => ({})) as Record<string, unknown>;
+  const trades = typeof raw.trades === "boolean" ? raw.trades : undefined;
+  const payments = typeof raw.payments === "boolean" ? raw.payments : undefined;
+  const disputes = typeof raw.disputes === "boolean" ? raw.disputes : undefined;
+  const system = typeof raw.system === "boolean" ? raw.system : undefined;
+  try {
+    await c.env.DB.prepare(
+      `INSERT INTO telegram_prefs (username, notify_trades, notify_payments, notify_disputes, notify_system, updated_at)
+       VALUES (?, ?, ?, ?, ?, datetime('now'))
+       ON CONFLICT(username) DO UPDATE SET
+         notify_trades = COALESCE(excluded.notify_trades, telegram_prefs.notify_trades),
+         notify_payments = COALESCE(excluded.notify_payments, telegram_prefs.notify_payments),
+         notify_disputes = COALESCE(excluded.notify_disputes, telegram_prefs.notify_disputes),
+         notify_system = COALESCE(excluded.notify_system, telegram_prefs.notify_system),
+         updated_at = datetime('now')`
+    ).bind(
+      username,
+      trades !== undefined ? (trades ? 1 : 0) : 1,
+      payments !== undefined ? (payments ? 1 : 0) : 1,
+      disputes !== undefined ? (disputes ? 1 : 0) : 1,
+      system !== undefined ? (system ? 1 : 0) : 1
+    ).run();
+    return c.json({ ok: true });
+  } catch {
+    return c.json({ ok: true });
+  }
+});
+
 export default misc;

@@ -245,4 +245,87 @@ auth.get("/me", async (c) => {
   });
 });
 
+// POST /api/auth/telegram/link — generate a link code for logged-in users
+// Returns a code that the user sends to the bot via /link <code>
+auth.post("/telegram/link", rateLimit(5, 300), async (c) => {
+  const token = getCookie(c, SESSION_COOKIE);
+  if (!token) return c.json({ error: "غير مصرح" }, 401);
+  const { verifySession } = await import("../utils/crypto");
+  const session = await verifySession(token, c.env.SECRET_KEY);
+  if (!session) return c.json({ error: "جلسة منتهية" }, 401);
+
+  // Generate a 6-character alphanumeric code
+  const code = Math.random().toString(36).substring(2, 8).toUpperCase();
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 minutes
+
+  await c.env.DB.prepare(
+    "INSERT INTO telegram_auth_codes (code, telegram_user_id, action, expires_at) VALUES (?, ?, 'link', ?)"
+  ).bind(code, String(session.sub), expiresAt).run();
+
+  return c.json({ ok: true, code, message: "أرسل هذا الكود للبوت: /link " + code });
+});
+
+// POST /api/auth/telegram/link/verify — verify a link code (called by webhook when user sends /link <code>)
+auth.post("/telegram/link/verify", rateLimit(10, 60), async (c) => {
+  const body = await formBody(c);
+  const code = String(body.code ?? "").trim();
+  const telegramUserId = String(body.telegram_user_id ?? "").trim();
+  const telegramUsername = String(body.telegram_username ?? "").trim();
+
+  if (!code || !telegramUserId) {
+    return c.json({ error: "بيانات مفقودة" }, 400);
+  }
+
+  // Find the code
+  const codeRow = await c.env.DB.prepare(
+    "SELECT id, telegram_user_id, action, expires_at, used FROM telegram_auth_codes WHERE code = ?"
+  ).bind(code).first<{ id: number; telegram_user_id: string; action: string; expires_at: string; used: number }>();
+
+  if (!codeRow) return c.json({ error: "كود غير صالح" }, 404);
+  if (codeRow.used) return c.json({ error: "تم استخدام الكود بالفعل" }, 409);
+  if (new Date(codeRow.expires_at) < new Date()) return c.json({ error: "انتهت صلاحية الكود" }, 410);
+
+  if (codeRow.action === "link") {
+    const platformUserId = codeRow.telegram_user_id;
+
+    // Check if this Telegram account is already linked to another user
+    const existing = await c.env.DB.prepare(
+      "SELECT id, username FROM users WHERE telegram_id = ?"
+    ).bind(telegramUserId).first<{ id: number; username: string }>();
+    if (existing && String(existing.id) !== platformUserId) {
+      return c.json({ error: "هذا الحساب مرتبط بمستخدم آخر" }, 409);
+    }
+
+    // Link: update the platform user's telegram_id
+    await c.env.DB.prepare(
+      "UPDATE users SET telegram_id = ? WHERE id = ?"
+    ).bind(telegramUserId, Number(platformUserId)).run();
+
+    // Mark code as used
+    await c.env.DB.prepare(
+      "UPDATE telegram_auth_codes SET used = 1 WHERE id = ?"
+    ).bind(codeRow.id).run();
+
+    return c.json({ ok: true, message: "تم ربط الحساب بنجاح" });
+  }
+
+  if (codeRow.action === "login") {
+    const platformUserId = codeRow.telegram_user_id;
+    const user = await c.env.DB.prepare(
+      "SELECT id, username, status FROM users WHERE id = ?"
+    ).bind(Number(platformUserId)).first<{ id: number; username: string; status: string }>();
+
+    if (!user) return c.json({ error: "المستخدم غير موجود" }, 404);
+    if (user.status === "BANNED") return c.json({ error: "الحساب محظور" }, 403);
+
+    await c.env.DB.prepare(
+      "UPDATE telegram_auth_codes SET used = 1 WHERE id = ?"
+    ).bind(codeRow.id).run();
+
+    return c.json({ ok: true, username: user.username });
+  }
+
+  return c.json({ error: "نوع كود غير معروف" }, 400);
+});
+
 export default auth;

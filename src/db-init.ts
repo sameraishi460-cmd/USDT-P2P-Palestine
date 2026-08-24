@@ -804,6 +804,28 @@ const V2_TABLES: string[] = [
     last_flag_at TEXT,
     updated_at TEXT DEFAULT (datetime('now'))
   )`,
+
+  // Telegram auth codes — temporary tokens for website ↔ Telegram linking
+  `CREATE TABLE IF NOT EXISTS telegram_auth_codes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    code TEXT NOT NULL UNIQUE,
+    telegram_user_id TEXT NOT NULL,
+    telegram_username TEXT DEFAULT '',
+    action TEXT NOT NULL DEFAULT 'login',
+    used INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now')),
+    expires_at TEXT NOT NULL
+  )`,
+
+  // Telegram notification preferences per user
+  `CREATE TABLE IF NOT EXISTS telegram_prefs (
+    username TEXT PRIMARY KEY,
+    notify_trades INTEGER DEFAULT 1,
+    notify_payments INTEGER DEFAULT 1,
+    notify_disputes INTEGER DEFAULT 1,
+    notify_system INTEGER DEFAULT 1,
+    updated_at TEXT DEFAULT (datetime('now'))
+  )`,
 ];
 
 const V2_INDEXES: string[] = [
@@ -822,4 +844,7 @@ const V2_INDEXES: string[] = [
   `CREATE INDEX IF NOT EXISTS idx_activity_user ON activity_log(username, created_at)`,
   `CREATE INDEX IF NOT EXISTS idx_risk_user ON user_risk(username)`,
   `CREATE INDEX IF NOT EXISTS idx_risk_level ON user_risk(risk_level)`,
+  `CREATE INDEX IF NOT EXISTS idx_tg_auth_code ON telegram_auth_codes(code)`,
+  `CREATE INDEX IF NOT EXISTS idx_tg_auth_user ON telegram_auth_codes(telegram_user_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_tg_prefs_user ON telegram_prefs(username)`,
 ];
