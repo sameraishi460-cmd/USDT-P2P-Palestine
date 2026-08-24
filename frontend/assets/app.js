@@ -125,9 +125,22 @@ const STATUS_MAP = {
 };
 function statusBadge(s) { const i = STATUS_MAP[s] || { label: s, cls: '' }; return `<span class="badge ${i.cls}">${i.label}</span>`; }
 function typeBadge(t) { return t === 'BUY' ? '<span class="badge badge-buy">🛒 شراء</span>' : '<span class="badge badge-sell">💰 بيع</span>'; }
+function profileAvatar(name, extra) {
+  const c = name ? name[0].toUpperCase() : '?';
+  return `<div class="avatar" style="width:32px;height:32px;font-size:13px">${c}</div>`;
+}
+function verifiedBadge(size) {
+  return '<span class="badge badge-verified" style="font-size:10px">✓ موثق</span>';
+}
+function trustBadge(score) {
+  if (!score) return '';
+  const cls = score >= 80 ? 'trust-high' : score >= 50 ? 'trust-mid' : 'trust-low';
+  return `<span class="trust-score ${cls}">🟢 ${score}% موثوق</span>`;
+}
 function esc(s) { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; }
 function fmtNum(n, d) { return Number(n || 0).toFixed(d ?? 2); }
 function fmtDate(d) { return d ? new Date(d).toLocaleString('ar', { dateStyle: 'medium', timeStyle: 'short' }) : ''; }
+function copyText(t) { navigator.clipboard?.writeText(t); toast('تم النسخ'); }
 
 /* ── Navigation ────────────────────────────────────────────── */
 function renderNav() {

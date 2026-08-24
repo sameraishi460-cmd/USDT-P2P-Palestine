@@ -20,8 +20,8 @@ async function load() {
   const [me, prof, wallet] = await Promise.all([api('/auth/me'), api('/profile'), api('/wallet')]);
   const p = prof?.profile || {}; const w = wallet || {};
   const stats = prof?.stats || {};
-  const trust = (await api('/api/v2/trust/' + u.username)) || {};
-  const t = trust.trust || {}; const v = trust.vip || {};
+  const trustResp = (await api('/v2/trust/' + u.username)) || {};
+  const t = trustResp.trust || {}; const v = trustResp.vip || {};
   const vc = v.level === 'verified' ? '💎' : v.level === 'gold' ? '🥇' : v.level === 'silver' ? '🥈' : '🥉';
   const vl = v.label || 'برونزي';
 

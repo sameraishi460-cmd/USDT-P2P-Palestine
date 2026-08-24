@@ -33,7 +33,7 @@ function render() {
   const other = isBuyer ? t.seller : t.buyer;
   const role = isBuyer ? 'المشتري' : 'البائع';
   const canPay = isBuyer && t.status === 'PENDING';
-  const canRelease = isSeller && ['PAYMENT_SENT','PAYMENT_CONFIRMED'].includes(t.status);
+  const canRelease = isSeller && t.status === 'PAYMENT_SENT';
   const canCancel = ['PENDING','PAYMENT_SENT'].includes(t.status);
   const canDispute = ['PENDING','PAYMENT_SENT'].includes(t.status);
 
@@ -93,7 +93,7 @@ async function confirmPayment() {
 }
 async function releaseFunds() {
   if (!confirm('هل أنت متأكد من تحرير USDT؟')) return;
-  const r = await api('/trades/' + tid + '/release', { method: 'POST' });
+  const r = await api('/trades/' + tid + '/seller-confirm', { method: 'POST' });
   if (r && r.ok) { toast('✅ تم تحرير USDT'); load(); } else if (r && r.error) toast(r.error);
 }
 async function cancelTrade() {

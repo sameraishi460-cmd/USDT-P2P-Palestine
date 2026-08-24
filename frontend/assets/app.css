@@ -8,6 +8,8 @@
 
 :root {
   --bg: #0a0e18;
+  --accent: #3b82f6;
+  --error: #ef4444;
   --bg-card: #111827;
   --bg-card-hover: #1a2332;
   --bg-input: #0f1724;
@@ -422,7 +424,9 @@ td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
 .hidden { display: none !important; }
 .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-/* === Additional utility classes === */
+/* === Accent aliases === */
+.btn-accent { background: var(--primary); color: #fff; }
+.btn-accent:hover:not(:disabled) { background: var(--primary-hover); transform: translateY(-1px); }
 .btn-white { background: #fff; color: var(--primary); border: none; font-weight: 600; }
 .btn-white:hover { background: #f0f0f0; }
 .btn-white-outline { background: transparent; color: #fff; border: 1px solid rgba(255,255,255,0.5); }

@@ -10,7 +10,7 @@
 <div class="app">
 <nav class="nav" id="nav"></nav>
 <main class="main"><div class="container" style="max-width:640px" id="app">
-  <div class="card" style="text-align:center;padding:32px;margin-bottom:16px;background:var(--accent);color:#fff">
+  <div class="card" style="text-align:center;padding:32px;margin-bottom:16px;background:var(--primary);color:#fff">
     <div style="font-size:.85rem;opacity:.8">الرصيد المتاح</div>
     <div style="font-size:2.5rem;font-weight:800;margin:8px 0" id="bal">—</div>
     <div style="font-size:.85rem;opacity:.7">USDT</div>
@@ -21,7 +21,7 @@
   </div>
   <div class="card" style="padding:16px">
     <div style="display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:16px">
-      <button class="tab active" data-tab="deposit" onclick="showTab('deposit')" style="flex:1;padding:10px;border:none;background:none;cursor:pointer;font-weight:600;font-size:.9rem;border-bottom:2px solid var(--accent);margin-bottom:-2px">إيداع</button>
+      <button class="tab active" data-tab="deposit" onclick="showTab('deposit')" style="flex:1;padding:10px;border:none;background:none;cursor:pointer;font-weight:600;font-size:.9rem;border-bottom:2px solid var(--primary);margin-bottom:-2px">إيداع</button>
       <button class="tab" data-tab="withdraw" onclick="showTab('withdraw')" style="flex:1;padding:10px;border:none;background:none;cursor:pointer;font-weight:500;font-size:.9rem;color:var(--text-muted)">سحب</button>
       <button class="tab" data-tab="history" onclick="showTab('history')" style="flex:1;padding:10px;border:none;background:none;cursor:pointer;font-weight:500;font-size:.9rem;color:var(--text-muted)">السجل</button>
     </div>
@@ -67,7 +67,7 @@ async function loadHistory() {
   if (!r || !r.ok || !r.history?.length) { el.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:16px">لا توجد معاملات</div>'; return; }
   el.innerHTML = r.history.map(h => `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:.85rem">
     <div><strong>${esc(h.action)}</strong><br><span style="color:var(--text-muted);font-size:.75rem">${fmtDate(h.created)}</span></div>
-    <div style="text-align:left"><strong style="color:${h.amount>0?'var(--accent)':'var(--error)'}">${h.amount>0?'+':''}${fmtNum(h.amount)}</strong><br><span style="color:var(--text-muted);font-size:.75rem">الم公认: ${fmtNum(h.balance_after)}</span></div>
+    <div style="text-align:left"><strong style="color:${h.amount>0?'var(--accent)':'var(--error)'}">${h.amount>0?'+':''}${fmtNum(h.amount)}</strong><br><span style="color:var(--text-muted);font-size:.75rem">الرصيد: ${fmtNum(h.balance_after)}</span></div>
   </div>`).join('');
 }
 function showTab(name) {
@@ -75,7 +75,7 @@ function showTab(name) {
     const el = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
     if (el) el.style.display = t === name ? '' : 'none';
   });
-  document.querySelectorAll('.tab').forEach(b => b.style.borderBottomColor = b.dataset.tab === name ? 'var(--accent)' : 'transparent');
+  document.querySelectorAll('.tab').forEach(b => b.style.borderBottomColor = b.dataset.tab === name ? 'var(--primary)' : 'transparent');
 }
 async function submitDeposit() {
   const hash = document.getElementById('txHash').value.trim();
