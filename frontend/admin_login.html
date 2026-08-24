@@ -5,69 +5,89 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>دخول الإدارة — USDT P2P Palestine</title>
   <link rel="stylesheet" href="/assets/design-system.css">
-  <link rel="stylesheet" href="/assets/app.css">
 </head>
-<body class="auth-page">
-  <div class="auth-container">
-    <div class="auth-card">
-      <div class="auth-header">
-        <div class="auth-logo">🔐</div>
-        <h1 class="auth-title">لوحة الإدارة</h1>
-        <p class="auth-subtitle">دخول المشرفين فقط</p>
-      </div>
-
-      <form onsubmit="adminLogin(event)">
-        <div class="form-group">
-          <label class="form-label">اسم المستخدم</label>
-          <input type="text" class="form-input" id="username" placeholder="Admin" required autocomplete="username">
-        </div>
-        <div class="form-group">
-          <label class="form-label">كلمة المرور</label>
-          <input type="password" class="form-input" id="password" placeholder="••••••" required autocomplete="current-password">
-        </div>
-        <button type="submit" class="btn btn-primary btn-block" id="login-btn">دخول</button>
-        <p id="error" class="text-error" style="display:none;margin-top:.75rem"></p>
-      </form>
+<body>
+<!-- ===== Navbar ===== -->
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a href="/" class="navbar-brand">🇵🇸 <span>USDT</span> P2P</a>
+    <div class="navbar-links">
+      <a href="/login" class="btn-nav">دخول</a>
+      <a href="/register" class="btn-nav-accent btn-nav">حساب جديد</a>
     </div>
   </div>
+</nav>
 
-  <script>
-    async function adminLogin(e) {
-      e.preventDefault();
-      const btn = document.getElementById('login-btn');
-      const errEl = document.getElementById('error');
-      btn.disabled = true;
-      btn.textContent = 'جاري الدخول...';
-      errEl.style.display = 'none';
+<main>
+<div class="container container-narrow" style="padding-top:var(--sp-8);">
+  <div style="text-align:center;margin-bottom:var(--sp-6);">
+    <div style="font-size:3rem;margin-bottom:var(--sp-3);">🔐</div>
+    <h1 style="font-size:1.5rem;">لوحة الإدارة</h1>
+    <p style="color:var(--text-muted);font-size:0.85rem;margin-top:var(--sp-2);">دخول المشرفين فقط</p>
+  </div>
 
-      try {
-        const res = await fetch('/api/auth/admin/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            username: document.getElementById('username').value,
-            password: document.getElementById('password').value
-          })
-        });
-        const data = await res.json();
-        if (data.error) {
-          errEl.textContent = data.error;
-          errEl.style.display = 'block';
-          btn.disabled = false;
-          btn.textContent = 'دخول';
-          return;
-        }
-        if (data.token) {
-          localStorage.setItem('admin_token', data.token);
-          window.location.href = '/admin';
-        }
-      } catch(err) {
-        errEl.textContent = 'خطأ في الاتصال';
-        errEl.style.display = 'block';
-        btn.disabled = false;
-        btn.textContent = 'دخول';
-      }
+  <div id="errBox" class="flash flash-error" style="display:none;margin-bottom:var(--sp-4);"></div>
+
+  <form class="card" onsubmit="event.preventDefault();doAdminLogin();">
+    <div class="form-group">
+      <label class="form-label">👤 اسم المستخدم</label>
+      <input class="form-input" type="text" id="username" placeholder="Admin" required autocomplete="username" autofocus>
+    </div>
+    <div class="form-group">
+      <label class="form-label">🔒 كلمة المرور</label>
+      <input class="form-input" type="password" id="password" placeholder="••••••" required autocomplete="current-password">
+    </div>
+    <button type="submit" class="btn btn-success btn-block btn-lg" id="loginBtn">دخول الإدارة</button>
+  </form>
+</div>
+</main>
+
+<script src="/assets/app.js"></script>
+<script>
+async function doAdminLogin() {
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
+  const errBox = document.getElementById('errBox');
+  const btn = document.getElementById('loginBtn');
+
+  if (!username || !password) {
+    errBox.textContent = 'أدخل جميع البيانات';
+    errBox.style.display = 'block';
+    return;
+  }
+
+  errBox.style.display = 'none';
+  btn.disabled = true;
+  btn.textContent = 'جاري الدخول...';
+
+  try {
+    // Backend expects form body, not JSON
+    const res = await fetch('/api/auth/admin-login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({ username, password })
+    });
+    const data = await res.json();
+
+    if (data.error) {
+      errBox.textContent = data.error;
+      errBox.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'دخول الإدارة';
+      return;
     }
-  </script>
+
+    if (data.ok) {
+      // Session cookie is set by the backend — just redirect
+      window.location.href = '/admin';
+    }
+  } catch(err) {
+    errBox.textContent = 'خطأ في الاتصال';
+    errBox.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'دخول الإدارة';
+  }
+}
+</script>
 </body>
 </html>

@@ -108,6 +108,21 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="/assets/app.js"></script>
 <script>
+// Telegram WebApp auto-redirect: if inside Telegram and not authenticated, go to login (which auto-authenticates)
+(function() {
+  try {
+    const tg = window.Telegram?.WebApp;
+    if (tg && tg.initData && tg.initDataUnsafe?.user) {
+      // Check if already authenticated via cookie
+      fetch('/api/auth/me').then(r => r.json()).then(d => {
+        if (!d.authenticated) {
+          window.location.href = '/login';
+        }
+      }).catch(() => {});
+    }
+  } catch(e) {}
+})();
+
 (async function() {
   const priceResp = await api('/market/price');
   const price = priceResp?.usdt_ils || priceResp?.price || 3.7;
