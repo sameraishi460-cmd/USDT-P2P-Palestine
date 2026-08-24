@@ -181,4 +181,3 @@ export default {
     ctx.waitUntil(runScheduledTasks(env, event.cron));
   },
 };
-// v35496f6 deployed
