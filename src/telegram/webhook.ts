@@ -7,7 +7,7 @@
  * Supports:
  *   - /start, /start <code>, /help, /menu, /link <code>, /market, /account, /wallet
  *   - Callback queries (buttons)
- *   - WebApp buttons pointing at the Pages frontend
+ *   - URL buttons pointing at the Pages frontend
  *   - Telegram notifications for platform events
  *
  * SECURITY:
@@ -36,15 +36,18 @@ type TGUpdate = {
 // ============================================================
 
 async function tgCall(env: AppEnv["Bindings"], method: string, body: any): Promise<any> {
-  if (!env.TELEGRAM_BOT_TOKEN) return null;
+  if (!env.TELEGRAM_BOT_TOKEN) { console.error("[tg] tgCall: no bot token"); return null; }
   try {
     const res = await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/${method}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
-    return await res.json().catch(() => null);
-  } catch {
+    const json: any = await res.json().catch(() => ({}));
+    if (!json?.ok) console.error(`[tg] ${method} failed:`, JSON.stringify(json).slice(0, 200));
+    return json;
+  } catch (e: any) {
+    console.error(`[tg] ${method} exception:`, e?.message);
     return null;
   }
 }
@@ -67,22 +70,22 @@ async function answerCallback(env: AppEnv["Bindings"], callbackQueryId: string, 
 }
 
 // ============================================================
-// Keyboards
+// Keyboards — use url buttons (NOT web_app which requires Mini App config)
 // ============================================================
 
 function mainKeyboard(appUrl: string) {
   return {
     inline_keyboard: [
       [
-        { text: "🛒 السوق", web_app: { url: `${appUrl}/market` } },
-        { text: "💰 المحفظة", web_app: { url: `${appUrl}/wallet` } },
+        { text: "🛒 السوق", url: `${appUrl}/market` },
+        { text: "💰 المحفظة", url: `${appUrl}/wallet` },
       ],
       [
-        { text: "📄 صفقاتي", web_app: { url: `${appUrl}/trades` } },
-        { text: "👤 حسابي", web_app: { url: `${appUrl}/profile` } },
+        { text: "📄 صفقاتي", url: `${appUrl}/trades` },
+        { text: "👤 حسابي", url: `${appUrl}/profile` },
       ],
       [
-        { text: "🌐 فتح المنصة", web_app: { url: appUrl } },
+        { text: "🌐 فتح المنصة", url: appUrl },
         { text: "❓ المساعدة", callback_data: "help" },
       ],
     ],
@@ -92,7 +95,7 @@ function mainKeyboard(appUrl: string) {
 function helpKeyboard(appUrl: string) {
   return {
     inline_keyboard: [
-      [{ text: "🌐 فتح المنصة", web_app: { url: appUrl } }],
+      [{ text: "🌐 فتح المنصة", url: appUrl }],
       [{ text: "🛒 السوق", callback_data: "open_market" }],
       [{ text: "👤 حسابي", callback_data: "open_profile" }],
       [{ text: "💰 المحفظة", callback_data: "open_wallet" }],
@@ -108,24 +111,34 @@ function helpKeyboard(appUrl: string) {
 /** Handle a validated Telegram update. */
 export async function handleTelegramUpdate(c: Context<AppEnv>): Promise<Response> {
   const env = c.env;
+  console.log("[tg] webhook hit — method:", c.req.method);
 
   // Validate the secret token header
   if (!env.TELEGRAM_BOT_TOKEN) {
+    console.error("[tg] FATAL: no TELEGRAM_BOT_TOKEN configured");
     return c.json({ ok: false }, 403);
   }
   const secretHeader = c.req.header("X-Telegram-Bot-Api-Secret-Token") || "";
   if (env.TELEGRAM_WEBHOOK_SECRET && secretHeader !== env.TELEGRAM_WEBHOOK_SECRET) {
+    console.error("[tg] REJECTED: secret token mismatch");
     return c.json({ ok: false }, 403);
   }
+  console.log("[tg] secret OK, parsing update");
 
   let update: TGUpdate;
   try {
     update = await c.req.json<TGUpdate>();
-  } catch {
-    return c.json({ ok: true }); // malformed — ack anyway to stop retries
+  } catch (e: any) {
+    console.error("[tg] malformed JSON:", e?.message);
+    return c.json({ ok: true });
   }
 
   const appUrl = (env.APP_URL || "https://usdt-p2p-palestine.sameraishi460.workers.dev").replace(/\/$/, "");
+
+  // Diagnostic logging
+  const hasMsg = !!update.message;
+  const hasCb = !!update.callback_query;
+  console.log(`[tg] update parsed: message=${hasMsg} cb=${hasCb} text=${update.message?.text || "(none)"} chat=${update.message?.chat?.id || update.callback_query?.from?.id || "?"}`);
 
   // ============================================================
   // /start command (with optional deep-link parameter)
@@ -133,7 +146,8 @@ export async function handleTelegramUpdate(c: Context<AppEnv>): Promise<Response
   if (update.message?.text?.startsWith("/start")) {
     const chatId = update.message.chat.id;
     const tgUser = update.message.from;
-    if (!tgUser) return c.json({ ok: true });
+    console.log(`[tg] /start detected chatId=${chatId} tgUser=${tgUser?.id} username=${tgUser?.username}`);
+    if (!tgUser) { console.log("[tg] no tgUser, acking"); return c.json({ ok: true }); }
 
     // Parse optional parameter: /start <code>
     const parts = update.message.text.trim().split(/\s+/);
@@ -149,7 +163,6 @@ export async function handleTelegramUpdate(c: Context<AppEnv>): Promise<Response
         if (codeRow && !codeRow.used && new Date(codeRow.expires_at) > new Date()) {
           if (codeRow.action === "link") {
             const platformUserId = codeRow.telegram_user_id;
-            // Check if Telegram already linked to someone else
             const existing = await env.DB.prepare(
               "SELECT id, username FROM users WHERE telegram_id = ?"
             ).bind(String(tgUser.id)).first<{ id: number; username: string }>();
@@ -160,7 +173,6 @@ export async function handleTelegramUpdate(c: Context<AppEnv>): Promise<Response
                 .bind(String(tgUser.id), Number(platformUserId)).run();
               await env.DB.prepare("UPDATE telegram_auth_codes SET used = 1 WHERE id = ?")
                 .bind(codeRow.id).run();
-
               const user = await env.DB.prepare("SELECT username FROM users WHERE id = ?")
                 .bind(Number(platformUserId)).first<{ username: string }>();
               await sendMessage(env, chatId,
@@ -169,7 +181,6 @@ export async function handleTelegramUpdate(c: Context<AppEnv>): Promise<Response
               return c.json({ ok: true });
             }
           } else if (codeRow.action === "login") {
-            // Login code — just acknowledge and guide to open platform
             await env.DB.prepare("UPDATE telegram_auth_codes SET used = 1 WHERE id = ?")
               .bind(codeRow.id).run();
             await sendMessage(env, chatId,
@@ -206,18 +217,23 @@ export async function handleTelegramUpdate(c: Context<AppEnv>): Promise<Response
       : null);
 
     if (linked) {
-      await sendMessage(env, chatId,
+      console.log(`[tg] /start linked user: ${linked.username}, sending welcome to chat ${chatId}`);
+      const kb = mainKeyboard(appUrl);
+      const sendRes = await sendMessage(env, chatId,
         `👋 <b>أهلاً وسهلاً بك في USDT P2P Palestine</b> 🇵🇸\n\nمرحباً <b>${linked.username}</b>\n\nمنصة آمنة وسهلة لشراء وبيع USDT.\nاختر من القائمة للمتابعة:`,
-        mainKeyboard(appUrl));
+        kb);
+      console.log(`[tg] sendMessage result:`, JSON.stringify(sendRes).slice(0, 300));
     } else {
-      await sendMessage(env, chatId,
+      console.log(`[tg] /start no linked user for chat ${chatId}, sending registration prompt`);
+      const sendRes = await sendMessage(env, chatId,
         `👋 <b>أهلاً وسهلاً بك في USDT P2P Palestine</b> 🇵🇸\n\nمنصة آمنة وسهلة لشراء وبيع USDT.\n\nسجّل أولاً من خلال التطبيق ثم عد لربط حسابك.\n\n💡 اسم المستخدم في المنصة يمكن أن يطابق اسمك في تيليجرام.`,
         {
           inline_keyboard: [
-            [{ text: "🚀 فتح التطبيق", web_app: { url: `${appUrl}/register` } }],
-            [{ text: "🔗 تسجيل الدخول", web_app: { url: `${appUrl}/login` } }],
+            [{ text: "🚀 فتح التطبيق", url: `${appUrl}/register` }],
+            [{ text: "🔗 تسجيل الدخول", url: `${appUrl}/login` }],
           ],
         });
+      console.log(`[tg] sendMessage result:`, JSON.stringify(sendRes).slice(0, 300));
     }
     return c.json({ ok: true });
   }
@@ -229,13 +245,13 @@ export async function handleTelegramUpdate(c: Context<AppEnv>): Promise<Response
     const chatId = update.message.chat.id;
     await sendMessage(env, chatId,
       `❓ <b>المساعدة — USDT P2P Palestine</b>\n\n` +
-      `📱 <b>الento Commands:</b>\n` +
+      `📱 <b>الأوامر:</b>\n` +
       `/start — البداية / فتح القائمة\n` +
       `/help — المساعدة\n` +
       `/market — فتح السوق\n` +
       `/account — حسابي\n` +
       `/wallet — المحفظة\n` +
-      `/link <code> — ربط حسابك\n\n` +
+      `/link &lt;code&gt; — ربط حسابك\n\n` +
       `💡 يمكنك استخدام الأزرار أدناه للتنقل السريع.`,
       helpKeyboard(appUrl));
     return c.json({ ok: true });
@@ -259,7 +275,7 @@ export async function handleTelegramUpdate(c: Context<AppEnv>): Promise<Response
     const chatId = update.message.chat.id;
     await sendMessage(env, chatId,
       `🛒 <b>السوق</b>\n\nتصفح عروض شراء وبيع USDT:`,
-      { inline_keyboard: [[{ text: "🛒 فتح السوق", web_app: { url: `${appUrl}/market` } }]] });
+      { inline_keyboard: [[{ text: "🛒 فتح السوق", url: `${appUrl}/market` }]] });
     return c.json({ ok: true });
   }
 
@@ -278,11 +294,11 @@ export async function handleTelegramUpdate(c: Context<AppEnv>): Promise<Response
     if (user) {
       await sendMessage(env, chatId,
         `👤 <b>حسابك</b>\n\nالمستخدم: <b>${user.username}</b>`,
-        { inline_keyboard: [[{ text: "👤 فتح الملف", web_app: { url: `${appUrl}/profile` } }]] });
+        { inline_keyboard: [[{ text: "👤 فتح الملف", url: `${appUrl}/profile` }]] });
     } else {
       await sendMessage(env, chatId,
         `⚠️ حسابك غير مرتبط بالمنصة.\n\nأرسل /link <code> لربط حسابك.`,
-        { inline_keyboard: [[{ text: "🔗 تسجيل الدخول", web_app: { url: `${appUrl}/login` } }]] });
+        { inline_keyboard: [[{ text: "🔗 تسجيل الدخول", url: `${appUrl}/login` }]] });
     }
     return c.json({ ok: true });
   }
@@ -294,7 +310,7 @@ export async function handleTelegramUpdate(c: Context<AppEnv>): Promise<Response
     const chatId = update.message.chat.id;
     await sendMessage(env, chatId,
       `💰 <b>المحفظة</b>\n\nإدارة رصيدك USDT:`,
-      { inline_keyboard: [[{ text: "💰 فتح المحفظة", web_app: { url: `${appUrl}/wallet` } }]] });
+      { inline_keyboard: [[{ text: "💰 فتح المحفظة", url: `${appUrl}/wallet` }]] });
     return c.json({ ok: true });
   }
 
@@ -316,7 +332,7 @@ export async function handleTelegramUpdate(c: Context<AppEnv>): Promise<Response
         `1. افتح الموقع وسجل الدخول\n` +
         `2. اذهب إلى حسابي → ربط Telegram\n` +
         `3. انسخ الكود وأرسله هنا:\n\n` +
-        `/link <code>\n\n` +
+        `/link &lt;code&gt;\n\n` +
         `مثال: /link ABC123`);
       return c.json({ ok: true });
     }
@@ -342,8 +358,6 @@ export async function handleTelegramUpdate(c: Context<AppEnv>): Promise<Response
 
       if (codeRow.action === "link") {
         const platformUserId = codeRow.telegram_user_id;
-
-        // Check if this Telegram account is already linked to another user
         const existingTg = await env.DB.prepare(
           "SELECT id, username FROM users WHERE telegram_id = ?"
         ).bind(String(tgUser.id)).first<{ id: number; username: string }>();
@@ -354,7 +368,6 @@ export async function handleTelegramUpdate(c: Context<AppEnv>): Promise<Response
           return c.json({ ok: true });
         }
 
-        // Link
         await env.DB.prepare("UPDATE users SET telegram_id = ? WHERE id = ?")
           .bind(String(tgUser.id), Number(platformUserId)).run();
         await env.DB.prepare("UPDATE telegram_auth_codes SET used = 1 WHERE id = ?")
@@ -392,17 +405,17 @@ export async function handleTelegramUpdate(c: Context<AppEnv>): Promise<Response
         break;
       case "open_market":
         await sendMessage(env, chatId, "🛒 فتح السوق...", {
-          inline_keyboard: [[{ text: "🛒 فتح السوق", web_app: { url: `${appUrl}/market` } }]],
+          inline_keyboard: [[{ text: "🛒 فتح السوق", url: `${appUrl}/market` }]],
         });
         break;
       case "open_profile":
         await sendMessage(env, chatId, "👤 فتح الملف الشخصي...", {
-          inline_keyboard: [[{ text: "👤 فتح الملف", web_app: { url: `${appUrl}/profile` } }]],
+          inline_keyboard: [[{ text: "👤 فتح الملف", url: `${appUrl}/profile` }]],
         });
         break;
       case "open_wallet":
         await sendMessage(env, chatId, "💰 فتح المحفظة...", {
-          inline_keyboard: [[{ text: "💰 فتح المحفظة", web_app: { url: `${appUrl}/wallet` } }]],
+          inline_keyboard: [[{ text: "💰 فتح المحفظة", url: `${appUrl}/wallet` }]],
         });
         break;
       case "main_menu":
@@ -410,19 +423,19 @@ export async function handleTelegramUpdate(c: Context<AppEnv>): Promise<Response
         break;
       case "market":
         await sendMessage(env, chatId, "🛒 فتح السوق...", {
-          inline_keyboard: [[{ text: "🛒 فتح السوق", web_app: { url: `${appUrl}/market` } }]],
+          inline_keyboard: [[{ text: "🛒 فتح السوق", url: `${appUrl}/market` }]],
         });
         break;
       case "wallet":
         await sendMessage(env, chatId, "💰 فتح المحفظة...", {
-          inline_keyboard: [[{ text: "💰 فتح المحفظة", web_app: { url: `${appUrl}/wallet` } }]],
+          inline_keyboard: [[{ text: "💰 فتح المحفظة", url: `${appUrl}/wallet` }]],
         });
         break;
       default:
         if (data.startsWith("trade_")) {
           const tradeId = data.slice(6);
           await sendMessage(env, chatId, `📄 الصفقة #${tradeId}`, {
-            inline_keyboard: [[{ text: "📄 فتح الصفقة", web_app: { url: `${appUrl}/trade?id=${tradeId}` } }]],
+            inline_keyboard: [[{ text: "📄 فتح الصفقة", url: `${appUrl}/trade?id=${tradeId}` }]],
           });
         }
     }
@@ -447,7 +460,7 @@ export async function sendTradeNotification(
   if (!telegramId) return;
   const appUrl = (env.APP_URL || "").replace(/\/$/, "");
   const markup = appUrl
-    ? { inline_keyboard: [[{ text: "📄 فتح الصفقة", web_app: { url: `${appUrl}/trade?id=${tradeId}` } }]] }
+    ? { inline_keyboard: [[{ text: "📄 فتح الصفقة", url: `${appUrl}/trade?id=${tradeId}` }]] }
     : undefined;
   await sendMessage(env, telegramId, `<b>${title}</b>\n${message}`, markup);
 }
@@ -479,7 +492,7 @@ export async function hasTelegramNotificationEnabled(db: D1Database, username: s
   try {
     const prefs = await db.prepare("SELECT * FROM telegram_prefs WHERE username = ?")
       .bind(username).first<Record<string, number>>();
-    if (!prefs) return true; // Default: enabled
+    if (!prefs) return true;
     switch (type) {
       case "trades": return !!prefs.notify_trades;
       case "payments": return !!prefs.notify_payments;
