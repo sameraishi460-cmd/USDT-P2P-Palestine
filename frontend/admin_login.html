@@ -7,50 +7,30 @@
 <link rel="stylesheet" href="/assets/app.css">
 </head>
 <body>
-<div class="app">
-<main class="main">
-<div class="container">
-<div style="max-width:420px;margin:var(--space-3xl) auto">
-  <div class="text-center" style="margin-bottom:var(--space-xl)">
-    <div style="width:64px;height:64px;border-radius:var(--radius-lg);background:var(--error);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin:0 auto var(--space-sm)">🛡️</div>
-    <h1 style="font-size:1.5rem;font-weight:700;margin-bottom:4px">دخول الإدارة</h1>
-    <p class="text-muted text-sm">لوحة التحكم — للمسؤلين فقط</p>
+<main class="main"><div class="container" style="max-width:400px;margin-top:80px">
+  <div class="text-center" style="margin-bottom:24px">
+    <div style="font-size:2rem;margin-bottom:8px">🛡️</div>
+    <h1 style="font-size:1.3rem;font-weight:700">دخول الإدارة</h1>
   </div>
-
-  <div class="card">
-    <div id="errMsg" class="alert alert-error" style="display:none;margin-bottom:var(--space-md)"></div>
-    <div class="form-group">
-      <label>كلمة المرور</label>
-      <input type="password" class="form-input" id="adminPass" placeholder="أدخل كلمة مرور الإدارة" autofocus>
-    </div>
-    <button class="btn btn-primary btn-block" onclick="adminLogin()">دخول</button>
+  <div id="errBox" class="alert alert-error" style="display:none;margin-bottom:12px"></div>
+  <div class="card" style="padding:20px">
+    <div class="form-group"><label>اسم المستخدم</label><input type="text" class="form-input" id="adminUser" placeholder="admin"></div>
+    <div class="form-group"><label>كلمة مرور الإدارة</label><input type="password" class="form-input" id="adminPass" placeholder="••••••••"></div>
+    <button class="btn btn-accent btn-block" onclick="doSubmit()">دخول</button>
   </div>
-
-  <div class="text-center" style="margin-top:var(--space-lg)">
-    <a href="/login" class="text-muted text-sm" style="text-decoration:none">← العودة لتسجيل الدخول</a>
-  </div>
-</div>
-</div>
-</main>
-</div>
+  <div class="text-center" style="margin-top:12px"><a href="/login" style="color:var(--text-muted);font-size:.85rem;text-decoration:none">← العودة</a></div>
+</div></main>
 <script src="/assets/app.js"></script>
 <script>
-document.getElementById('adminPass').addEventListener('keydown',e=>{if(e.key==='Enter')adminLogin();});
-async function adminLogin(){
-  const pass=document.getElementById('adminPass').value.trim();
-  const errEl=document.getElementById('errMsg');
-  if(!pass){errEl.textContent='أدخل كلمة المرور';errEl.style.display='block';return;}
-  try{
-    const r=await API.post('/api/auth/admin/login',{password:pass});
-    if(r&&r.session_token){
-      localStorage.setItem('session_token',r.session_token);
-      location.href='/admin';
-    }else{
-      errEl.textContent=r?.error||'خطأ في تسجيل الدخول';errEl.style.display='block';
-    }
-  }catch(e){
-    errEl.textContent=e.message||'خطأ في الاتصال';errEl.style.display='block';
-  }
+document.getElementById('adminPass').addEventListener('keydown', e => { if (e.key === 'Enter') doSubmit(); });
+async function doSubmit() {
+  const u = document.getElementById('adminUser').value.trim();
+  const p = document.getElementById('adminPass').value;
+  const eb = document.getElementById('errBox');
+  if (!u || !p) { eb.textContent = 'أدخل جميع البيانات'; eb.style.display = 'block'; return; }
+  const r = await doAdminLogin(u, p);
+  if (r && r.ok) location.href = '/admin';
+  else { eb.textContent = r?.error || 'خطأ'; eb.style.display = 'block'; }
 }
 </script>
 </body>

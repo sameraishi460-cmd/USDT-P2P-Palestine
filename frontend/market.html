@@ -1,157 +1,80 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0a0e18">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>السوق — USDT P2P Palestine</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/app.css">
 </head>
 <body>
-<div class="navbar">
-  <a href="/" style="text-decoration:none;"><span class="logo">🇵🇸 USDT <span>P2P</span></span></a>
-  <div class="actions">
-    <span id="priceTag" class="price-tag" style="font-size:12px;">—</span>
+<div class="app">
+<nav class="nav" id="nav"></nav>
+<main class="main"><div class="container" style="max-width:640px">
+  <div class="page-header" style="margin-bottom:16px">
+    <h1 class="page-title">السوق</h1>
+    <div id="priceInfo" class="page-subtitle" style="font-weight:600;color:var(--accent)"></div>
   </div>
-</div>
-
-<div class="container">
-  <h2 style="margin:16px 0 12px;">🛒 السوق</h2>
-
-  <!-- Filters -->
-  <div class="filter-bar" id="filters">
-    <span class="filter-chip active" data-filter="all">الكل</span>
-    <span class="filter-chip" data-filter="BUY">شراء</span>
-    <span class="filter-chip" data-filter="SELL">بيع</span>
-    <span class="filter-chip" data-filter="CASH">نقدي</span>
-  </div>
-
-  <!-- Sort -->
-  <div class="flex-between mb-8">
-    <span class="text-xs text-muted" id="countLabel">—</span>
-    <select id="sortSelect" style="width:auto;padding:6px 30px 6px 12px;font-size:12px;">
-      <option value="price">أفضل سعر</option>
-      <option value="rating">أعلى تقييم</option>
-      <option value="trades">أكثر صفقات</option>
+  <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+    <select class="form-input" id="filterType" style="width:auto;flex:1;min-width:100px">
+      <option value="">الكل</option><option value="BUY">شراء</option><option value="SELL">بيع</option>
     </select>
+    <input type="text" class="form-input" id="filterSearch" placeholder="بحث..." style="flex:2;min-width:120px">
+    <a href="/create_ad" class="btn btn-accent btn-sm" style="white-space:nowrap">+ إعلان</a>
   </div>
-
-  <!-- Ads -->
-  <div id="adsList">
-    <div class="spinner"></div>
-  </div>
-
-  <!-- Empty state -->
-  <div id="emptyState" class="empty" style="display:none;">
-    <div class="icon">🔍</div>
-    <p>لا توجد إعلانات حالياً</p>
-    <a href="/create_ad" class="btn btn-primary btn-sm mt-12" style="width:auto;display:inline-flex;">إنشاء إعلان</a>
-  </div>
-</div>
-
+  <div id="adsList"><div class="card"><div class="spinner"></div></div></div>
+</div></main>
 <div class="bottom-nav" id="bottomNav"></div>
-<div id="toast"></div>
+</div>
 <script src="/assets/app.js"></script>
 <script>
-let currentFilter = 'all';
 let allAds = [];
-
 async function loadAds() {
-  const list = $('#adsList');
-  showLoading(list);
-
-  const sort = $('#sortSelect').value;
-  let url = '/market?sort=' + sort + '&limit=100';
-  if (currentFilter === 'BUY') url += '&type=BUY';
-  else if (currentFilter === 'SELL') url += '&type=SELL';
-
-  const r = await get(url);
-  if (!r || !r.ok) {
-    showEmpty(list, '❌', 'خطأ في تحميل الإعلانات');
-    return;
-  }
-
+  const r = await api('/market');
+  if (!r || !r.ok) { document.getElementById('adsList').innerHTML = '<div class="card text-center" style="padding:32px;color:var(--text-muted)">تعذر تحميل الإعلانات</div>'; return; }
   allAds = r.ads || [];
-  renderAds();
+  document.getElementById('priceInfo').textContent = r.price ? fmtNum(r.price.usdt_ils) + ' ₪ / USDT' : '';
+  filterAds();
 }
-
-function renderAds() {
-  const list = $('#adsList');
+function filterAds() {
+  const type = document.getElementById('filterType').value;
+  const q = document.getElementById('filterSearch').value.trim().toLowerCase();
   let filtered = allAds;
-
-  if (currentFilter === 'CASH') {
-    filtered = allAds.filter(function(a) { return (a.payment || '').toUpperCase().indexOf('CASH') >= 0; });
-  }
-
-  $('#countLabel').textContent = filtered.length + ' إعلان';
-
-  if (filtered.length === 0) {
-    list.innerHTML = '';
-    $('#emptyState').style.display = '';
-    return;
-  }
-  $('#emptyState').style.display = 'none';
-
-  let html = '';
-  filtered.forEach(function(ad) {
-    const isBuy = ad.type === 'BUY';
-    html += '<div class="ad-card">';
-    html += '<div class="ad-card-header">';
-    html += '<div>' + typeBadge(ad.type) + ' <span style="font-size:13px;color:var(--text-muted);">' + escHtml(ad.title) + '</span></div>';
-    html += '</div>';
-    html += '<div class="ad-card-price">' + formatNum(ad.price) + ' ILS</div>';
-    html += '<div class="ad-card-info"><dl>';
-    html += '<dt>المتاح</dt><dd>' + formatNum(ad.amount) + ' USDT</dd>';
-    html += '<dt>الحد الأدنى</dt><dd>' + formatNum(ad.min_amount || 0) + '</dd>';
-    html += '<dt>طريقة الدفع</dt><dd>' + escHtml(ad.payment || '—') + '</dd>';
-    html += '<dt>الحد الأقصى</dt><dd>' + formatNum(ad.max_amount || ad.amount) + '</dd>';
-    html += '</dl></div>';
-    html += '<div class="ad-card-trader">';
-    html += profileAvatar(ad.user);
-    html += '<div><div class="font-bold text-sm">' + escHtml(ad.user) + '</div>';
-    html += '<div class="text-xs text-muted">⭐ ' + formatNum(ad.rating || 5) + ' · ' + (ad.trades_count || 0) + ' صفقة</div></div>';
-    html += '<div style="margin-right:auto;">' + verifiedBadge(ad.verified) + '</div>';
-    html += '</div>';
-    html += '<div class="ad-card-actions">';
-    html += '<a href="/trade/create?ad=' + ad.id + '" class="btn ' + (isBuy ? 'btn-danger' : 'btn-success') + ' btn-sm">';
-    html += isBuy ? '💰 بيع USDT' : '🛒 شراء USDT</a>';
-    html += '</div>';
-    html += '</div>';
-  });
-
-  list.innerHTML = html;
+  if (type) filtered = filtered.filter(a => a.type === type);
+  if (q) filtered = filtered.filter(a => (a.user||'').toLowerCase().includes(q) || (a.title||'').toLowerCase().includes(q));
+  const el = document.getElementById('adsList');
+  if (!filtered.length) { el.innerHTML = '<div class="card text-center" style="padding:32px;color:var(--text-muted)">لا توجد إعلانات</div>'; return; }
+  el.innerHTML = filtered.map(a => `
+    <div class="card" style="margin-bottom:12px;padding:16px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+        <div>
+          ${typeBadge(a.type)}
+          <span style="font-size:.8rem;color:var(--text-muted);margin-right:8px">${esc(a.title||'')}</span>
+        </div>
+        <div style="text-align:left">
+          <div style="font-size:1.3rem;font-weight:800;color:var(--accent)">${fmtNum(a.price)} ₪</div>
+          <div style="font-size:.75rem;color:var(--text-muted)">لكل USDT</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;font-size:.8rem;color:var(--text-secondary);margin:8px 0;padding:8px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
+        <div><span style="color:var(--text-muted)">الكمية</span><br><strong>${fmtNum(a.amount)}</strong></div>
+        <div><span style="color:var(--text-muted)">الحد الأدنى</span><br><strong>${fmtNum(a.min_amount)}</strong></div>
+        <div><span style="color:var(--text-muted)">طريقة الدفع</span><br><strong>${esc(a.payment||'')}</strong></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="display:flex;align-items:center;gap:6px">
+          ${profileAvatar(a.user, '')}
+          <div>
+            <div style="font-size:.85rem;font-weight:600">${esc(a.user)}</div>
+            <div style="font-size:.7rem;color:var(--text-muted)">⭐ ${fmtNum(a.rating,1)} · ${a.trades_count||0} صفقة</div>
+          </div>
+          ${a.verified ? verifiedBadge(1) : ''}
+        </div>
+        <a href="/market?buy=${a.id}" class="btn btn-${a.type==='BUY'?'accent':'outline'} btn-sm">${a.type==='BUY'?'شراء':'بيع'} USDT</a>
+      </div>
+    </div>`).join('');
 }
-
-// Filter clicks
-$$('#filters .filter-chip').forEach(function(chip) {
-  chip.onclick = function() {
-    $$('#filters .filter-chip').forEach(function(c) { c.classList.remove('active'); });
-    chip.classList.add('active');
-    currentFilter = chip.dataset.filter;
-    renderAds();
-  };
-});
-
-$('#sortSelect').onchange = loadAds;
-
-// Init
-buildNav('/market');
-updateAuthUI();
-getMarketPrice().then(function(p) {
-  if (p) $('#priceTag').textContent = '1 USDT ≈ ' + formatNum(p.usdt_ils || 3.7);
-});
-
-// Check URL params for filter
-const urlFilter = new URLSearchParams(location.search).get('type');
-if (urlFilter === 'BUY' || urlFilter === 'SELL') {
-  currentFilter = urlFilter;
-  $$('#filters .filter-chip').forEach(function(c) {
-    c.classList.toggle('active', c.dataset.filter === urlFilter);
-  });
-}
-
+document.getElementById('filterType').addEventListener('change', filterAds);
+document.getElementById('filterSearch').addEventListener('input', filterAds);
 loadAds();
 </script>
 </body>

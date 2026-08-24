@@ -1,94 +1,90 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0a0e18">
-<title>USDT P2P Palestine — تداول USDT آمن بالضمان</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>USDT P2P Palestine — تداول آمن بالضمان</title>
 <link rel="stylesheet" href="/assets/app.css">
 </head>
 <body>
-<div class="navbar">
-  <span class="logo">🇵🇸 USDT <span>P2P</span></span>
-  <div class="actions">
-    <a href="/login" class="btn btn-primary btn-sm" style="width:auto;">دخول</a>
-  </div>
-</div>
+<div class="app">
+<nav class="nav" id="nav"></nav>
+<main class="main">
 
-<div class="container">
-  <!-- Hero -->
-  <div class="text-center" style="padding:40px 0 24px;">
-    <div style="font-size:56px;margin-bottom:12px;">🇵🇸</div>
-    <h1 style="margin-bottom:8px;">USDT P2P Palestine</h1>
-    <p class="text-secondary" style="font-size:15px;max-width:320px;margin:0 auto;">منصة آمنة وسهلة لشراء وبيع USDT بالضمان عبر الدفع النقدي</p>
-    <div class="price-tag" style="margin:16px auto;display:inline-flex;" id="priceDisplay">—</div>
+<!-- Hero -->
+<section class="hero">
+  <div class="container" style="max-width:640px">
+    <h1 class="hero-title">تداول <span style="color:var(--accent)">USDT</span> بسهولة وأمان</h1>
+    <p class="hero-sub">منصة فلسطينية للتداول بالضمان — اشترِ أو بِع USDT بأسعار منافسة</p>
+    <div id="priceDisplay" style="font-size:2rem;font-weight:800;color:var(--accent);margin:16px 0"></div>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+      <a href="/market" class="btn btn-accent btn-lg">🛒 فتح السوق</a>
+      <a href="/register" class="btn btn-outline btn-lg">إنشاء حساب</a>
+    </div>
   </div>
+</section>
 
-  <!-- CTA -->
-  <div class="grid-2 mb-16">
-    <a href="/market?type=BUY" class="btn btn-success">🛒 شراء USDT</a>
-    <a href="/market?type=SELL" class="btn btn-danger">💰 بيع USDT</a>
+<!-- Stats -->
+<section style="padding:40px 0;background:var(--bg-card)">
+  <div class="container" style="max-width:640px">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;text-align:center">
+      <div><div style="font-size:1.5rem;font-weight:800;color:var(--accent)" id="statAds">3</div><div style="font-size:.8rem;color:var(--text-muted)">إعلان نشط</div></div>
+      <div><div style="font-size:1.5rem;font-weight:800;color:var(--accent)">24/7</div><div style="font-size:.8rem;color:var(--text-muted)">تداول متواصل</div></div>
+      <div><div style="font-size:1.5rem;font-weight:800;color:var(--accent)">🔒</div><div style="font-size:.8rem;color:var(--text-muted)">ضمان المبلغ</div></div>
+    </div>
   </div>
-  <a href="/market" class="btn btn-ghost mb-16">فتح السوق الكامل →</a>
+</section>
 
-  <!-- How it works -->
-  <div class="card">
-    <div class="card-title">⚡ كيف تعمل المنصة</div>
-    <div style="display:flex;flex-direction:column;gap:12px;">
-      <div class="flex gap-12" style="align-items:flex-start;">
-        <div style="width:32px;height:32px;border-radius:50%;background:var(--primary-light);color:var(--primary);display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;">1</div>
-        <div><div class="font-bold text-sm">اختر العرض</div><div class="text-xs text-muted">تصفح إعلانات البائعين واختر الأنسب لك</div></div>
+<!-- How it works -->
+<section style="padding:48px 0">
+  <div class="container" style="max-width:640px">
+    <h2 style="text-align:center;font-size:1.2rem;font-weight:700;margin-bottom:32px">كيف تعمل المنصة؟</h2>
+    <div style="display:grid;gap:20px">
+      <div class="card" style="display:flex;gap:16px;align-items:flex-start">
+        <div style="width:36px;height:36px;border-radius:10px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0">1</div>
+        <div><div style="font-weight:600;margin-bottom:4px">اختر العرض</div><div style="color:var(--text-muted);font-size:.85rem">تصفح السوق واختر أفضل عرض سعر وطريقة دفع</div></div>
       </div>
-      <div class="flex gap-12" style="align-items:flex-start;">
-        <div style="width:32px;height:32px;border-radius:50%;background:var(--success-light);color:var(--success);display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;">2</div>
-        <div><div class="font-bold text-sm">افتح الصفقة</div><div class="text-xs text-muted">يتم قفل USDT في الضمان تلقائياً</div></div>
+      <div class="card" style="display:flex;gap:16px;align-items:flex-start">
+        <div style="width:36px;height:36px;border-radius:10px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0">2</div>
+        <div><div style="font-weight:600;margin-bottom:4px">افتح الصفقة</div><div style="color:var(--text-muted);font-size:.85rem">يتم حجز المبلغ في الضمان تلقائياً</div></div>
       </div>
-      <div class="flex gap-12" style="align-items:flex-start;">
-        <div style="width:32px;height:32px;border-radius:50%;background:var(--warning-light);color:var(--warning);display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;">3</div>
-        <div><div class="font-bold text-sm">ادفع</div><div class="text-xs text-muted">قم بالدفع نقدي حسب طريقة الدفع المتفق عليها</div></div>
+      <div class="card" style="display:flex;gap:16px;align-items:flex-start">
+        <div style="width:36px;height:36px;border-radius:10px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0">3</div>
+        <div><div style="font-weight:600;margin-bottom:4px">ادفع واستلم</div><div style="color:var(--text-muted);font-size:.85rem">أكد الدفع ثم استلم USDT مباشرة</div></div>
       </div>
-      <div class="flex gap-12" style="align-items:flex-start;">
-        <div style="width:32px;height:32px;border-radius:50%;background:var(--success-light);color:var(--success);display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;">4</div>
-        <div><div class="font-bold text-sm">استلم USDT</div><div class="text-xs text-muted">يحرر البائع USDT بعد تأكيد الدفع</div></div>
+      <div class="card" style="display:flex;gap:16px;align-items:flex-start">
+        <div style="width:36px;height:36px;border-radius:10px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;flex-shrink:0">4</div>
+        <div><div style="font-weight:600;margin-bottom:4px">قيّم對方</div><div style="color:var(--text-muted);font-size:.85rem">اكتب تجربتك لبناء سمعة موثوقة</div></div>
       </div>
     </div>
   </div>
+</section>
 
-  <!-- Trust -->
-  <div class="card">
-    <div class="card-title">🛡️ أمان وموثوقية</div>
-    <div class="grid-3">
-      <div class="kpi"><div class="kpi-value text-primary">🔒</div><div class="kpi-label text-xs">ضمان USDT</div></div>
-      <div class="kpi"><div class="kpi-value text-success">⚡</div><div class="kpi-label text-xs">تنفيذ فوري</div></div>
-      <div class="kpi"><div class="kpi-value text-warning">🛡️</div><div class="kpi-label text-xs">نزاعات محمية</div></div>
-    </div>
+<!-- CTA -->
+<section style="padding:48px 0;text-align:center;background:var(--bg-card)">
+  <div class="container" style="max-width:480px">
+    <h2 style="font-size:1.2rem;font-weight:700;margin-bottom:8px">ابدأ التداول الآن</h2>
+    <p style="color:var(--text-muted);margin-bottom:24px;font-size:.9rem">سجّل حساب مجاني وابدأ بيع وشراء USDT</p>
+    <a href="/register" class="btn btn-accent btn-lg">إنشاء حساب مجاني</a>
   </div>
+</section>
 
-  <!-- Register CTA -->
-  <div class="card text-center" style="background:linear-gradient(135deg, var(--bg-card), rgba(59,130,246,0.1));">
-    <h3 class="mb-8">ابدأ التداول الآن</h3>
-    <p class="text-secondary text-sm mb-12">انضم إلى منصة USDT P2P Palestine وابدأ في شراء وبيع USDT بأمان</p>
-    <a href="/register" class="btn btn-primary">إنشاء حساب مجاني</a>
-    <p class="text-xs text-muted mt-8">لديك حساب؟ <a href="/login">سجّل الدخول</a></p>
-  </div>
-
-  <!-- Footer -->
-  <div class="text-center" style="padding:24px 0;color:var(--text-muted);font-size:12px;">
-    <p>USDT P2P Palestine © 2026</p>
-    <p class="mt-8">منصة آمنة لتبادل USDT</p>
-  </div>
+<footer style="padding:24px 0;text-align:center;color:var(--text-muted);font-size:.75rem;border-top:1px solid var(--border)">
+  © 2026 USDT P2P Palestine — جميع الحقوق محفوظة
+</footer>
+</main>
+<div class="bottom-nav" id="bottomNav"></div>
 </div>
-
-<div id="bottomNav"></div>
-<div id="toast"></div>
 <script src="/assets/app.js"></script>
 <script>
-  updateAuthUI();
-  getMarketPrice().then(function(p) {
-    if (p) { $('#priceDisplay').textContent = '1 USDT ≈ ' + formatNum(p.usdt_ils || 3.7) + ' ILS'; }
-  });
+(async function() {
+  const r = await api('/market/price');
+  if (r && r.ok) {
+    document.getElementById('priceDisplay').textContent = fmtNum(r.price.usdt_ils) + ' ₪ / USDT';
+  }
+  const m = await api('/market');
+  if (m && m.ok) document.getElementById('statAds').textContent = m.ads.length;
+})();
 </script>
 </body>
 </html>

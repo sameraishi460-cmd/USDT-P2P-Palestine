@@ -9,175 +9,91 @@
 <body>
 <div class="app">
 <nav class="nav" id="nav"></nav>
-<main class="main">
-<div class="container" id="app">
-<div class="loading-skeleton">
-<div class="sk sk-card"></div>
-<div class="sk sk-card"></div>
-</div>
-</div>
-</main>
+<main class="main"><div class="container" style="max-width:640px" id="app">
+  <div class="card" style="text-align:center;padding:32px;margin-bottom:16px;background:var(--accent);color:#fff">
+    <div style="font-size:.85rem;opacity:.8">الرصيد المتاح</div>
+    <div style="font-size:2.5rem;font-weight:800;margin:8px 0" id="bal">—</div>
+    <div style="font-size:.85rem;opacity:.7">USDT</div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+    <button class="btn btn-accent btn-block" onclick="showTab('deposit')">💰 إيداع</button>
+    <button class="btn btn-outline btn-block" onclick="showTab('withdraw')">📤 سحب</button>
+  </div>
+  <div class="card" style="padding:16px">
+    <div style="display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:16px">
+      <button class="tab active" data-tab="deposit" onclick="showTab('deposit')" style="flex:1;padding:10px;border:none;background:none;cursor:pointer;font-weight:600;font-size:.9rem;border-bottom:2px solid var(--accent);margin-bottom:-2px">إيداع</button>
+      <button class="tab" data-tab="withdraw" onclick="showTab('withdraw')" style="flex:1;padding:10px;border:none;background:none;cursor:pointer;font-weight:500;font-size:.9rem;color:var(--text-muted)">سحب</button>
+      <button class="tab" data-tab="history" onclick="showTab('history')" style="flex:1;padding:10px;border:none;background:none;cursor:pointer;font-weight:500;font-size:.9rem;color:var(--text-muted)">السجل</button>
+    </div>
+    <div id="tabDeposit">
+      <p style="font-size:.85rem;color:var(--text-muted);margin-bottom:12px">أرسل USDT إلى العنوان التالي عبر <strong>BSC (BEP-20)</strong></p>
+      <div style="display:flex;gap:8px;margin-bottom:16px">
+        <input type="text" class="form-input" id="depAddr" readonly style="font-size:.8rem;direction:ltr;text-align:left">
+        <button class="btn btn-outline btn-sm" onclick="copyText(document.getElementById('depAddr').value)">نسخ</button>
+      </div>
+      <div class="divider"></div>
+      <h4 style="margin-bottom:12px;font-size:.9rem">تأكيد الإيداع</h4>
+      <div class="form-group"><label>Transaction Hash</label><input type="text" class="form-input" id="txHash" placeholder="0x..."></div>
+      <div class="form-group"><label>المبلغ (USDT)</label><input type="number" class="form-input" id="depAmount" step="0.01" min="1"></div>
+      <button class="btn btn-accent btn-block" onclick="submitDeposit()">تأكيد الإيداع</button>
+    </div>
+    <div id="tabWithdraw" style="display:none">
+      <div class="form-group"><label>عنوان المحفظة (BEP-20)</label><input type="text" class="form-input" id="wdAddr" placeholder="0x..." style="direction:ltr;text-align:left"></div>
+      <div class="form-group"><label>المبلغ (USDT)</label><input type="number" class="form-input" id="wdAmount" step="0.01" min="1"></div>
+      <button class="btn btn-accent btn-block" onclick="submitWithdraw()">طلب سحب</button>
+    </div>
+    <div id="tabHistory" style="display:none">
+      <div id="historyList"><div class="spinner"></div></div>
+    </div>
+  </div>
+</div></main>
 <div class="bottom-nav" id="bottomNav"></div>
 </div>
 <script src="/assets/app.js"></script>
 <script>
-(function(){
-  const app=document.getElementById('app');
-  async function load(){
-    if(!Auth.isLoggedIn()){location.href='/login';return;}
-    const user=Auth.user();
-    let wallet=null,deposits=[],withdrawals=[];
-    try{wallet=await API.get('/api/wallet');}catch(e){}
-    try{deposits=(await API.get('/api/wallet/deposits')).deposits||[];}catch(e){}
-    try{withdrawals=(await API.get('/api/wallet/withdrawals')).withdrawals||[];}catch(e){}
-
-    const bal=wallet?.balance||0;
-    const pending=wallet?.pending_balance||0;
-    const addr=wallet?.deposit_address||'—';
-
-    app.innerHTML=`
-      <div class="page-header">
-        <h1 class="page-title">المحفظة</h1>
-        <div class="page-subtitle">إدارة أموالك الرقمية</div>
-      </div>
-
-      <div class="card" style="background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;margin-bottom:var(--space-lg)">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div>
-            <div style="font-size:.875rem;opacity:.8;margin-bottom:4px">الرصيد المتاح</div>
-            <div class="stat-value" style="font-size:2rem;color:#fff">${fmtNum(bal)} <span style="font-size:1rem">USDT</span></div>
-            ${pending>0?`<div style="font-size:.75rem;opacity:.7;margin-top:4px">معلق: ${fmtNum(pending)} USDT</div>`:''}
-          </div>
-          <div style="font-size:3rem;opacity:.3">💰</div>
-        </div>
-        <div style="margin-top:var(--space-md);display:flex;gap:var(--space-sm);flex-wrap:wrap">
-          <button class="btn btn-white" onclick="showTab('deposit')">إيداع</button>
-          <button class="btn btn-white-outline" onclick="showTab('withdraw')">سحب</button>
-        </div>
-      </div>
-
-      <div class="tabs" id="walletTabs">
-        <button class="tab active" data-tab="deposit" onclick="showTab('deposit')">إيداع</button>
-        <button class="tab" data-tab="withdraw" onclick="showTab('withdraw')">سحب</button>
-        <button class="tab" data-tab="history" onclick="showTab('history')">السجل</button>
-      </div>
-
-      <div id="tabDeposit" class="tab-content active">
-        <div class="card">
-          <h3 style="margin-bottom:var(--space-sm)">إيداع USDT</h3>
-          <p class="text-muted" style="margin-bottom:var(--space-md)">أرسل USDT إلى العنوان التالي عبر شبكة BSC (BEP-20)</p>
-          <div class="form-group">
-            <label>عنوان الإيداع</label>
-            <div style="display:flex;gap:var(--space-sm)">
-              <input type="text" class="form-input" value="${addr}" readonly id="depositAddr">
-              <button class="btn btn-primary" onclick="navigator.clipboard.writeText('${addr}');toast.show('تم النسخ','success')">نسخ</button>
-            </div>
-          </div>
-          <div class="alert alert-info" style="margin-top:var(--space-md)">
-            <strong>مهم:</strong> أرسل فقط USDT عبر شبكة BSC (BEP-20). الإيداع عبر أي شبكة أخرى قد يؤدي لفقدان الأموال.
-          </div>
-          <div class="divider"></div>
-          <h4 style="margin-bottom:var(--space-sm)">تأكيد الإيداع</h4>
-          <div class="form-group">
-            <label>رابط المعاملة (TX Hash)</label>
-            <input type="text" class="form-input" placeholder="0x..." id="txHash">
-          </div>
-          <div class="form-group">
-            <label>المبلغ (USDT)</label>
-            <input type="number" class="form-input" placeholder="0.00" id="depositAmount" step="0.01" min="1">
-          </div>
-          <button class="btn btn-primary btn-block" onclick="submitDeposit()">تأكيد الإيداع</button>
-        </div>
-      </div>
-
-      <div id="tabWithdraw" class="tab-content">
-        <div class="card">
-          <h3 style="margin-bottom:var(--space-sm)">سحب USDT</h3>
-          <p class="text-muted" style="margin-bottom:var(--space-md)">الرصيد المتاح: <strong>${fmtNum(bal)} USDT</strong></p>
-          <div class="form-group">
-            <label>عنوان المحفظة (BSC BEP-20)</label>
-            <input type="text" class="form-input" placeholder="0x..." id="withdrawAddr">
-          </div>
-          <div class="form-group">
-            <label>المبلغ (USDT)</label>
-            <input type="number" class="form-input" placeholder="0.00" id="withdrawAmount" step="0.01" min="1" max="${bal}">
-          </div>
-          <div class="form-group">
-            <label>شبكة السحب</label>
-            <div class="badge badge-success">BSC (BEP-20)</div>
-          </div>
-          <button class="btn btn-primary btn-block" onclick="submitWithdraw()">طلب سحب</button>
-        </div>
-      </div>
-
-      <div id="tabHistory" class="tab-content">
-        <div class="card">
-          <h3 style="margin-bottom:var(--space-md)">سجل المعاملات</h3>
-          ${deposits.length===0&&withdrawals.length===0?`
-            <div class="empty-state">
-              <div class="empty-icon">📋</div>
-              <div class="empty-title">لا توجد معاملات</div>
-              <div class="empty-desc">ستظهر هنا جميع إيداعاتك وسحوباتك</div>
-            </div>
-          `:`
-            <div class="table-responsive">
-              <table class="table">
-                <thead><tr><th>التاريخ</th><th>النوع</th><th>المبلغ</th><th>الحالة</th></tr></thead>
-                <tbody>
-                  ${deposits.map(d=>`<tr>
-                    <td>${fmtDate(d.created_at)}</td>
-                    <td><span class="badge badge-success">إيداع</span></td>
-                    <td>+${fmtNum(d.amount)} USDT</td>
-                    <td>${statusBadge(d.status)}</td>
-                  </tr>`).join('')}
-                  ${withdrawals.map(w=>`<tr>
-                    <td>${fmtDate(w.created_at)}</td>
-                    <td><span class="badge badge-warning">سحب</span></td>
-                    <td>-${fmtNum(w.amount)} USDT</td>
-                    <td>${statusBadge(w.status)}</td>
-                  </tr>`).join('')}
-                </tbody>
-              </table>
-            </div>
-          `}
-        </div>
-      </div>
-    `;
-  }
-
-  window.showTab=function(name){
-    document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
-    document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
-    const el=document.getElementById('tab'+name.charAt(0).toUpperCase()+name.slice(1));
-    if(el)el.classList.add('active');
-  };
-
-  window.submitDeposit=async function(){
-    const hash=document.getElementById('txHash').value.trim();
-    const amount=parseFloat(document.getElementById('depositAmount').value);
-    if(!hash){toast.show('أدخل رابط المعاملة','error');return;}
-    if(!amount||amount<1){toast.show('أدخل مبلغ صحيح','error');return;}
-    try{
-      const r=await API.post('/api/wallet/deposit',{tx_hash:hash,amount});
-      toast.show('تم إيداع المبلغ بنجاح','success');
-      load();
-    }catch(e){toast.show(e.message||'خطأ في الإيداع','error');}
-  };
-
-  window.submitWithdraw=async function(){
-    const addr=document.getElementById('withdrawAddr').value.trim();
-    const amount=parseFloat(document.getElementById('withdrawAmount').value);
-    if(!addr){toast.show('أدخل عنوان المحفظة','error');return;}
-    if(!amount||amount<1){toast.show('أدخل مبلغ صحيح','error');return;}
-    try{
-      const r=await API.post('/api/wallet/withdraw',{address:addr,amount});
-      toast.show('تم إرسال طلب السحب','success');
-      load();
-    }catch(e){toast.show(e.message||'خطأ في السحب','error');}
-  };
-
-  load();
-})();
+let walletData = null;
+async function load() {
+  if (!requireAuth()) return;
+  const r = await api('/wallet');
+  if (!r || !r.ok) { toast('خطأ في تحميل المحفظة'); return; }
+  walletData = r;
+  document.getElementById('bal').textContent = fmtNum(r.balance);
+  document.getElementById('depAddr').value = r.deposit_address || '';
+  loadHistory();
+}
+async function loadHistory() {
+  const r = await api('/wallet/history');
+  const el = document.getElementById('historyList');
+  if (!r || !r.ok || !r.history?.length) { el.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:16px">لا توجد معاملات</div>'; return; }
+  el.innerHTML = r.history.map(h => `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:.85rem">
+    <div><strong>${esc(h.action)}</strong><br><span style="color:var(--text-muted);font-size:.75rem">${fmtDate(h.created)}</span></div>
+    <div style="text-align:left"><strong style="color:${h.amount>0?'var(--accent)':'var(--error)'}">${h.amount>0?'+':''}${fmtNum(h.amount)}</strong><br><span style="color:var(--text-muted);font-size:.75rem">الم公认: ${fmtNum(h.balance_after)}</span></div>
+  </div>`).join('');
+}
+function showTab(name) {
+  ['deposit','withdraw','history'].forEach(t => {
+    const el = document.getElementById('tab' + t.charAt(0).toUpperCase() + t.slice(1));
+    if (el) el.style.display = t === name ? '' : 'none';
+  });
+  document.querySelectorAll('.tab').forEach(b => b.style.borderBottomColor = b.dataset.tab === name ? 'var(--accent)' : 'transparent');
+}
+async function submitDeposit() {
+  const hash = document.getElementById('txHash').value.trim();
+  const amt = parseFloat(document.getElementById('depAmount').value);
+  if (!hash || !amt) { toast('أدخل جميع البيانات'); return; }
+  const r = await api('/wallet/deposit', { method: 'POST', body: { tx_hash: hash, amount: amt } });
+  if (r && r.ok) { toast('✅ تم تأكيد الإيداع: ' + fmtNum(r.credited) + ' USDT'); load(); }
+  else if (r && r.error) toast(r.error);
+}
+async function submitWithdraw() {
+  const addr = document.getElementById('wdAddr').value.trim();
+  const amt = parseFloat(document.getElementById('wdAmount').value);
+  if (!addr || !amt) { toast('أدخل جميع البيانات'); return; }
+  const r = await api('/wallet/withdraw', { method: 'POST', body: { wallet: addr, amount: amt } });
+  if (r && r.ok) { toast('✅ تم إرسال طلب السحب'); load(); }
+  else if (r && r.error) toast(r.error);
+}
+load();
 </script>
 </body>
 </html>

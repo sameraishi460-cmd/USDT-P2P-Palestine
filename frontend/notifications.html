@@ -9,68 +9,36 @@
 <body>
 <div class="app">
 <nav class="nav" id="nav"></nav>
-<main class="main">
-<div class="container" id="app">
-<div class="loading-skeleton">
-<div class="sk sk-card"></div>
-</div>
-</div>
-</main>
+<main class="main"><div class="container" style="max-width:640px">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <h1 style="font-size:1.3rem;font-weight:700">الإشعارات</h1>
+    <button class="btn btn-outline btn-sm" id="markAll" onclick="markRead()" style="display:none">تحديد الكل كمقروء</button>
+  </div>
+  <div id="list"><div class="card"><div class="spinner"></div></div></div>
+</div></main>
 <div class="bottom-nav" id="bottomNav"></div>
 </div>
 <script src="/assets/app.js"></script>
 <script>
-(function(){
-  const app=document.getElementById('app');
-  async function load(){
-    if(!Auth.isLoggedIn()){location.href='/login';return;}
-    let notifications=[];
-    try{const r=await API.get('/api/notifications');notifications=r.notifications||r||[];}catch(e){}
-
-    app.innerHTML=`
-      <div class="page-header">
-        <div class="flex-between">
-          <div>
-            <h1 class="page-title">الإشعارات</h1>
-            <div class="page-subtitle">${notifications.length} إشعار</div>
-          </div>
-          ${notifications.length>0?`<button class="btn btn-outline btn-sm" onclick="markAllRead()">تحديد الكل كمقروء</button>`:''}
-        </div>
-      </div>
-
-      ${notifications.length===0?`
-        <div class="card">
-          <div class="empty-state">
-            <div class="empty-icon">🔔</div>
-            <div class="empty-title">لا توجد إشعارات</div>
-            <div class="empty-desc">ستظهر هنا إشعاراتك الجديدة</div>
-          </div>
-        </div>
-      `:notifications.map(n=>`
-        <div class="card ${n.is_read?'':'notification-unread'}" style="margin-bottom:var(--space-sm);cursor:pointer" onclick="markRead(${n.id})">
-          <div class="flex-between">
-            <div style="flex:1">
-              <div style="font-weight:${n.is_read?'400':'600'}">${escapeHtml(n.title||n.message||'')}</div>
-              ${n.message&&n.message!==n.title?`<div class="text-muted text-sm" style="margin-top:4px">${escapeHtml(n.message)}</div>`:''}
-              <div class="text-muted text-sm" style="margin-top:4px">${fmtDate(n.created_at)}</div>
-            </div>
-            ${!n.is_read?'<div style="width:8px;height:8px;border-radius:50%;background:var(--primary);flex-shrink:0;margin-right:var(--space-sm)"></div>':''}
-          </div>
-        </div>
-      `).join('')}
-    `;
-  }
-
-  window.markRead=async function(id){
-    try{await API.put('/api/notifications/'+id+'/read');load();}catch(e){}
-  };
-
-  window.markAllRead=async function(){
-    try{await API.put('/api/notifications/read-all');toast.show('تم تحديد الكل كمقروء','success');load();}catch(e){toast.show('خطأ','error');}
-  };
-
+async function load() {
+  if (!requireAuth()) return;
+  const r = await api('/notifications');
+  const el = document.getElementById('list');
+  if (!r || !r.ok) { el.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:32px">خطأ</div>'; return; }
+  const n = r.notifications || [];
+  if (r.unread > 0) document.getElementById('markAll').style.display = '';
+  if (!n.length) { el.innerHTML = '<div class="card text-center" style="padding:32px"><div style="font-size:2rem">🔔</div><div style="color:var(--text-muted);margin-top:8px">لا توجد إشعارات</div></div>'; return; }
+  el.innerHTML = n.map(x => `<div class="card" style="padding:12px;margin-bottom:8px;${x.seen===0?'border-right:3px solid var(--accent)':''}">
+    <div style="font-weight:${x.seen===0?'600':'400'};font-size:.9rem">${esc(x.title)}</div>
+    <div style="font-size:.8rem;color:var(--text-muted);margin-top:4px">${esc(x.message)}</div>
+    <div style="font-size:.7rem;color:var(--text-muted);margin-top:4px">${fmtDate(x.created)}</div>
+  </div>`).join('');
+}
+async function markRead() {
+  await api('/notifications/mark-read', { method: 'POST' });
   load();
-})();
+}
+load();
 </script>
 </body>
 </html>

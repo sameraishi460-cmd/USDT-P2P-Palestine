@@ -9,113 +9,66 @@
 <body>
 <div class="app">
 <nav class="nav" id="nav"></nav>
-<main class="main">
-<div class="container" id="app">
-<div class="loading-skeleton">
-<div class="sk sk-card"></div>
-</div>
-</div>
-</main>
+<main class="main"><div class="container" style="max-width:640px" id="app"><div class="card"><div class="spinner"></div></div></div></main>
 <div class="bottom-nav" id="bottomNav"></div>
 </div>
 <script src="/assets/app.js"></script>
 <script>
-(function(){
-  const app=document.getElementById('app');
-  async function load(){
-    if(!Auth.isLoggedIn()){location.href='/login';return;}
-    const user=Auth.user();
-    let trust=null,wallet=null;
-    try{trust=await API.get('/api/v2/trust/'+user.username);}catch(e){}
-    try{wallet=await API.get('/api/wallet');}catch(e){}
+async function load() {
+  if (!requireAuth()) return;
+  const u = currentUser();
+  const [me, prof, wallet] = await Promise.all([api('/auth/me'), api('/profile'), api('/wallet')]);
+  const p = prof?.profile || {}; const w = wallet || {};
+  const stats = prof?.stats || {};
+  const trust = (await api('/api/v2/trust/' + u.username)) || {};
+  const t = trust.trust || {}; const v = trust.vip || {};
+  const vc = v.level === 'verified' ? '💎' : v.level === 'gold' ? '🥇' : v.level === 'silver' ? '🥈' : '🥉';
+  const vl = v.label || 'برونزي';
 
-    const vipBadge=trust?.vip_level==='verified'?'💎':trust?.vip_level==='gold'?'🥇':trust?.vip_level==='silver'?'🥈':'🥉';
-    const vipLabel=trust?.vip_level==='verified'?'متداول موثق':trust?.vip_level==='gold'?'ذهبي':trust?.vip_level==='silver'?'فضي':'برونزي';
-
-    app.innerHTML=`
-      <div class="page-header" style="text-align:center;padding-top:var(--space-xl)">
-        <div style="width:80px;height:80px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:2rem;margin:0 auto var(--space-sm);font-weight:700">${(user.username||'U')[0].toUpperCase()}</div>
-        <h1 class="page-title" style="margin-bottom:4px">${user.username||'مستخدم'}</h1>
-        ${user.email?`<div class="text-muted text-sm">${user.email}</div>`:''}
-        <div style="display:flex;justify-content:center;gap:var(--space-sm);margin-top:var(--space-sm);flex-wrap:wrap">
-          ${trust?`<span class="badge badge-success"> Trust Score: ${trust.trust_score}%</span>`:''}
-          <span class="badge badge-info">${vipBadge} ${vipLabel}</span>
-          ${trust?.avg_rating?`<span class="badge badge-info">⭐ ${Number(trust.avg_rating).toFixed(1)}</span>`:''}
-        </div>
+  document.getElementById('app').innerHTML = `
+    <div style="text-align:center;padding:24px 0">
+      <div style="width:64px;height:64px;border-radius:50%;background:var(--accent);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:700">${(u.username||'?')[0].toUpperCase()}</div>
+      <h1 style="font-size:1.2rem;font-weight:700;margin:8px 0 4px">${esc(u.username)}</h1>
+      <div style="display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+        ${u.verified ? '<span class="badge badge-success">✓ موثق</span>' : ''}
+        <span class="badge badge-info">${vc} ${vl}</span>
+        ${t.trust_score ? `<span class="badge badge-success">Trust ${t.trust_score}%</span>` : ''}
+        ${t.avg_rating ? `<span class="badge badge-info">⭐ ${fmtNum(t.avg_rating,1)}</span>` : ''}
       </div>
-
-      <div class="grid grid-2" style="margin-bottom:var(--space-lg)">
-        <div class="card text-center">
-          <div class="stat-value">${trust?.completed_trades||0}</div>
-          <div class="stat-label">صفقة مكتملة</div>
-        </div>
-        <div class="card text-center">
-          <div class="stat-value">${trust?.completion_rate!=null?Number(trust.completion_rate).toFixed(0)+'%':'—'}</div>
-          <div class="stat-label">نسبة الإتمام</div>
-        </div>
+      <div style="font-size:.8rem;color:var(--text-muted)">${p.email || ''} · منذ ${fmtDate(u.created_at).split(',')[0]}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+      <div class="card" style="text-align:center;padding:14px"><div style="font-size:1.3rem;font-weight:800;color:var(--accent)">${stats.total||0}</div><div style="font-size:.75rem;color:var(--text-muted)">صفقة</div></div>
+      <div class="card" style="text-align:center;padding:14px"><div style="font-size:1.3rem;font-weight:800;color:var(--accent)">${stats.completed||0}</div><div style="font-size:.75rem;color:var(--text-muted)">مكتملة</div></div>
+    </div>
+    <div class="card" style="padding:16px;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><div style="font-weight:600">💰 المحفظة</div><div style="font-size:.8rem;color:var(--text-muted)">${fmtNum(w.balance)} USDT</div></div>
+        <a href="/wallet" class="btn btn-outline btn-sm">فتح</a>
       </div>
-
-      <div class="card" style="margin-bottom:var(--space-md)">
-        <h3 style="margin-bottom:var(--space-md)">المحفظة</h3>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-md)">
-          <div>
-            <div class="text-muted text-sm">الرصيد المتاح</div>
-            <div class="stat-value" style="font-size:1.5rem">${fmtNum(wallet?.balance||0)} USDT</div>
-          </div>
-          <div style="display:flex;gap:var(--space-sm)">
-            <a href="/wallet" class="btn btn-primary btn-sm">إيداع</a>
-            <a href="/wallet" class="btn btn-outline btn-sm">سحب</a>
-          </div>
-        </div>
+    </div>
+    <div class="card" style="padding:16px;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><div style="font-weight:600">📄 الصفقات</div><div style="font-size:.8rem;color:var(--text-muted)">${stats.total||0} صفقة نشطة</div></div>
+        <a href="/trades" class="btn btn-outline btn-sm">فتح</a>
       </div>
-
-      <div class="card" style="margin-bottom:var(--space-md)">
-        <h3 style="margin-bottom:var(--space-md)">الإحالات</h3>
-        <p class="text-muted text-sm" style="margin-bottom:var(--space-sm)">ادعُ أصدقاءك واحصل على مكافآت</p>
-        <div class="form-group" style="margin-bottom:var(--space-sm)">
-          <input type="text" class="form-input" value="${user.referral_code||'REF-'+(user.username||'YOU').toUpperCase()}" readonly id="refCode">
-        </div>
-        <button class="btn btn-outline btn-block btn-sm" onclick="navigator.clipboard.writeText(document.getElementById('refCode').value);toast.show('تم النسخ','success')">نسخ رابط الإحالة</button>
+    </div>
+    <div class="card" style="padding:16px;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><div style="font-weight:600">🔔 الإشعارات</div><div style="font-size:.8rem;color:var(--text-muted)">إدارة الإشعارات</div></div>
+        <a href="/notifications" class="btn btn-outline btn-sm">فتح</a>
       </div>
-
-      <div class="card" style="margin-bottom:var(--space-md)">
-        <h3 style="margin-bottom:var(--space-md)">الأمان</h3>
-        <div class="flex-col gap-sm">
-          <div class="flex-between" style="padding:var(--space-sm) 0;border-bottom:1px solid var(--border)">
-            <div>
-              <div style="font-weight:500">Telegram</div>
-              <div class="text-muted text-sm">${user.telegram_id?'متصل ✓':'غير متصل'}</div>
-            </div>
-            ${user.telegram_id?'<span class="badge badge-success">متصل</span>':'<button class="btn btn-outline btn-sm" onclick="loginWithTelegram()">ربط</button>'}
-          </div>
-          <div class="flex-between" style="padding:var(--space-sm) 0;border-bottom:1px solid var(--border)">
-            <div>
-              <div style="font-weight:500">البريد الإلكتروني</div>
-              <div class="text-muted text-sm">${user.email||'لم يُحدد'}</div>
-            </div>
-            <span class="badge badge-info">${user.email?'مفعل':'غير مفعل'}</span>
-          </div>
-          <div class="flex-between" style="padding:var(--space-sm) 0">
-            <div>
-              <div style="font-weight:500">تاريخ الإنشاء</div>
-              <div class="text-muted text-sm">${fmtDate(user.created_at)}</div>
-            </div>
-          </div>
-        </div>
+    </div>
+    <div class="card" style="padding:16px;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><div style="font-weight:600">🔗 ربط Telegram</div><div style="font-size:.8rem;color:var(--text-muted)">${u.telegram_id ? 'متصل ✓' : 'غير متصل'}</div></div>
+        ${u.telegram_id ? '<span class="badge badge-success">متصل</span>' : '<button class="btn btn-outline btn-sm" onclick="linkTelegram()">ربط</button>'}
       </div>
-
-      <button class="btn btn-error btn-block" onclick="Auth.logout();location.href='/'" style="margin-bottom:var(--space-xl)">تسجيل الخروج</button>
-    `;
-  }
-
-  window.loginWithTelegram=function(){
-    const botUsername=window.TELEGRAM_BOT_USERNAME||'USDT_P2P_Palestine_Bot';
-    const payload=JSON.stringify({platform:'usdt-p2p',ts:Date.now()});
-    location.href='https://oauth.telegram.org/auth?bot_id='+botUsername+'&origin='+encodeURIComponent(location.origin)+'&embed=1&request_access=write';
-  };
-
-  load();
-})();
+    </div>
+    <button class="btn btn-block" style="margin-top:8px;border:1px solid var(--error);color:var(--error);background:transparent" onclick="doLogout()">تسجيل الخروج</button>`;
+}
+function linkTelegram() { toast('افتح البوت من تطبيق Telegram واضغط Start أولاً'); }
+load();
 </script>
 </body>
 </html>

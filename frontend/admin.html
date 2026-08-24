@@ -9,154 +9,37 @@
 <body>
 <div class="app">
 <nav class="nav" id="nav"></nav>
-<main class="main">
-<div class="container" id="app">
-<div class="loading-skeleton">
-<div class="sk sk-card"></div>
-<div class="sk sk-card"></div>
-</div>
-</div>
-</main>
+<main class="main"><div class="container" style="max-width:800px" id="app"><div class="card"><div class="spinner"></div></div></div></main>
 </div>
 <script src="/assets/app.js"></script>
 <script>
-(function(){
-  const app=document.getElementById('app');
-
-  async function load(){
-    if(!Auth.isLoggedIn()){location.href='/login';return;}
-
-    let analytics=null,timeline=[],users=[],trades=[],deposits=[],withdrawals=[],disputes=[],adminLogs=[];
-    try{analytics=await API.get('/api/v2/admin/analytics');}catch(e){}
-    try{timeline=(await API.get('/api/v2/admin/timeline')).timeline||[];}catch(e){}
-    try{users=(await API.get('/api/admin/users')).users||[];}catch(e){}
-    try{trades=(await API.get('/api/admin/trades')).trades||[];}catch(e){}
-    try{deposits=(await API.get('/api/admin/deposits')).deposits||[];}catch(e){}
-    try{withdrawals=(await API.get('/api/admin/withdrawals')).withdrawals||[];}catch(e){}
-    try{disputes=(await API.get('/api/admin/disputes')).disputes||[];}catch(e){}
-    try{adminLogs=(await API.get('/api/v2/admin/fraud')).fraud||[];}catch(e){}
-
-    const a=analytics||{};
-
-    app.innerHTML=`
-      <div class="page-header">
-        <h1 class="page-title">لوحة الإدارة</h1>
-        <div class="page-subtitle">مرحباً بك في لوحة التحكم</div>
-      </div>
-
-      <div class="grid grid-2" style="margin-bottom:var(--space-lg)">
-        <div class="card stat-card">
-          <div class="stat-value">${a.total_users||users.length||0}</div>
-          <div class="stat-label">إجمالي المستخدمين</div>
-        </div>
-        <div class="card stat-card">
-          <div class="stat-value">${a.total_trades||trades.length||0}</div>
-          <div class="stat-label">إجمالي الصفقات</div>
-        </div>
-        <div class="card stat-card">
-          <div class="stat-value">${fmtNum(a.total_volume||0)} ₪</div>
-          <div class="stat-label">حجم التداول</div>
-        </div>
-        <div class="card stat-card">
-          <div class="stat-value">${a.completed_trades||0}</div>
-          <div class="stat-label">صفقات مكتملة</div>
-        </div>
-        <div class="card stat-card">
-          <div class="stat-value">${a.disputes||disputes.length||0}</div>
-          <div class="stat-label">نزاعات</div>
-        </div>
-        <div class="card stat-card">
-          <div class="stat-value">${a.deposits||deposits.length||0}</div>
-          <div class="stat-label">إيداعات</div>
-        </div>
-      </div>
-
-      <div class="tabs" id="adminTabs">
-        <button class="tab active" data-tab="timeline" onclick="showAdminTab('timeline')">التطورات</button>
-        <button class="tab" data-tab="users" onclick="showAdminTab('users')">المستخدمون</button>
-        <button class="tab" data-tab="trades" onclick="showAdminTab('trades')">الصفقات</button>
-        <button class="tab" data-tab="deposits" onclick="showAdminTab('deposits')">الإيداعات</button>
-        <button class="tab" data-tab="withdrawals" onclick="showAdminTab('withdrawals')">السحوبات</button>
-        <button class="tab" data-tab="disputes" onclick="showAdminTab('disputes')">النزاعات</button>
-      </div>
-
-      <div id="tabTimeline" class="tab-content active">
-        <div class="card">
-          <h3 style="margin-bottom:var(--space-md)">تطورات لوحة التحكم</h3>
-          ${timeline.length===0?'<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">لا توجد أحداث</div></div>':
-          `<div class="timeline">${timeline.map(e=>`
-            <div class="timeline-item">
-              <div class="timeline-dot ${e.type==='trade_completed'||e.type==='deposit_completed'?'bg-success':e.type==='dispute_opened'?'bg-error':e.type==='user_registered'?'bg-primary':'bg-info'}"></div>
-              <div class="timeline-content">
-                <div style="font-weight:500">${escapeHtml(e.description||e.type||'حدث')}</div>
-                <div class="text-muted text-sm">${e.username?e.username+' — ':''}${fmtDate(e.created_at)}</div>
-              </div>
-            </div>
-          `).join('')}</div>`}
-        </div>
-      </div>
-
-      <div id="tabUsers" class="tab-content">
-        <div class="card">
-          <h3 style="margin-bottom:var(--space-md)">المستخدمون (${users.length})</h3>
-          ${users.length===0?'<div class="empty-state"><div class="empty-icon">👥</div><div class="empty-title">لا يوجد مستخدمون</div></div>':
-          `<div class="table-responsive"><table class="table"><thead><tr><th>المستخدم</th><th>البريد</th><th>تاريخ الإنشاء</th></tr></thead><tbody>
-            ${users.map(u=>`<tr><td>${escapeHtml(u.username||'')}</td><td class="text-muted">${u.email||'—'}</td><td class="text-muted text-sm">${fmtDate(u.created_at)}</td></tr>`).join('')}
-          </tbody></table></div>`}
-        </div>
-      </div>
-
-      <div id="tabTrades" class="tab-content">
-        <div class="card">
-          <h3 style="margin-bottom:var(--space-md)">الصفقات (${trades.length})</h3>
-          ${trades.length===0?'<div class="empty-state"><div class="empty-icon">🤝</div><div class="empty-title">لا توجد صفقات</div></div>':
-          `<div class="table-responsive"><table class="table"><thead><tr><th>#</th><th>المبلغ</th><th>الحالة</th><th>التاريخ</th></tr></thead><tbody>
-            ${trades.map(t=>`<tr><td>#${String(t.id).slice(-8)}</td><td>${fmtNum(t.usdt_amount)} USDT</td><td>${statusBadge(t.status)}</td><td class="text-muted text-sm">${fmtDate(t.created_at)}</td></tr>`).join('')}
-          </tbody></table></div>`}
-        </div>
-      </div>
-
-      <div id="tabDeposits" class="tab-content">
-        <div class="card">
-          <h3 style="margin-bottom:var(--space-md)">الإيداعات (${deposits.length})</h3>
-          ${deposits.length===0?'<div class="empty-state"><div class="empty-icon">💰</div><div class="empty-title">لا توجد إيداعات</div></div>':
-          `<div class="table-responsive"><table class="table"><thead><tr><th>المستخدم</th><th>المبلغ</th><th>الحالة</th><th>التاريخ</th></tr></thead><tbody>
-            ${deposits.map(d=>`<tr><td>${d.username||d.user_id||'—'}</td><td>${fmtNum(d.amount)} USDT</td><td>${statusBadge(d.status)}</td><td class="text-muted text-sm">${fmtDate(d.created_at)}</td></tr>`).join('')}
-          </tbody></table></div>`}
-        </div>
-      </div>
-
-      <div id="tabWithdrawals" class="tab-content">
-        <div class="card">
-          <h3 style="margin-bottom:var(--space-md)">السحوبات (${withdrawals.length})</h3>
-          ${withdrawals.length===0?'<div class="empty-state"><div class="empty-icon">📤</div><div class="empty-title">لا توجد سحوبات</div></div>':
-          `<div class="table-responsive"><table class="table"><thead><tr><th>المستخدم</th><th>المبلغ</th><th>الحالة</th><th>التاريخ</th></tr></thead><tbody>
-            ${withdrawals.map(w=>`<tr><td>${w.username||w.user_id||'—'}</td><td>${fmtNum(w.amount)} USDT</td><td>${statusBadge(w.status)}</td><td class="text-muted text-sm">${fmtDate(w.created_at)}</td></tr>`).join('')}
-          </tbody></table></div>`}
-        </div>
-      </div>
-
-      <div id="tabDisputes" class="tab-content">
-        <div class="card">
-          <h3 style="margin-bottom:var(--space-md)">النزاعات (${disputes.length})</h3>
-          ${disputes.length===0?'<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">لا توجد نزاعات</div></div>':
-          `<div class="table-responsive"><table class="table"><thead><tr><th>#</th><th>السبب</th><th>الحالة</th><th>التاريخ</th></tr></thead><tbody>
-            ${disputes.map(d=>`<tr><td>#${String(d.id).slice(-8)}</td><td>${escapeHtml(d.reason||'')}</td><td>${statusBadge(d.status)}</td><td class="text-muted text-sm">${fmtDate(d.created_at)}</td></tr>`).join('')}
-          </tbody></table></div>`}
-        </div>
-      </div>
-    `;
-  }
-
-  window.showAdminTab=function(name){
-    document.querySelectorAll('#adminTabs .tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
-    document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
-    const el=document.getElementById('tab'+name.charAt(0).toUpperCase()+name.slice(1));
-    if(el)el.classList.add('active');
-  };
-
-  load();
-})();
-</script>
-</body>
-</html>
+async function load() {
+  if (!requireAuth()) return;
+  const u = currentUser(); if (!u || !u.isAdmin) { document.getElementById('app').innerHTML = '<div class="card" style="padding:32px;text-align:center;color:var(--error)">غير مصرح</div>'; return; }
+  const [analytics, timeline, users, trades, deposits, withdrawals, disputes] = await Promise.all([
+    api('/v2/admin/analytics').catch(()=>({})),
+    api('/v2/admin/timeline').catch(()=>({timeline:[]})),
+    api('/admin/users').catch(()=>({users:[]})),
+    api('/admin/trades').catch(()=>({trades:[]})),
+    api('/admin/deposits').catch(()=>({deposits:[]})),
+    api('/admin/withdrawals').catch(()=>({withdrawals:[]})),
+    api('/admin/disputes').catch(()=>({disputes:[]})),
+  ]);
+  const a = analytics || {};
+  document.getElementById('app').innerHTML = `
+    <h1 style="font-size:1.3rem;font-weight:700;margin-bottom:16px">لوحة الإدارة</h1>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px">
+      <div class="card" style="text-align:center;padding:14px"><div style="font-size:1.3rem;font-weight:800;color:var(--accent)">${a.total_users||users.users?.length||0}</div><div style="font-size:.75rem;color:var(--text-muted)">مستخدمون</div></div>
+      <div class="card" style="text-align:center;padding:14px"><div style="font-size:1.3rem;font-weight:800;color:var(--accent)">${a.total_trades||trades.trades?.length||0}</div><div style="font-size:.75rem;color:var(--text-muted)">صفقات</div></div>
+      <div class="card" style="text-align:center;padding:14px"><div style="font-size:1.3rem;font-weight:800;color:var(--accent)">${fmtNum(a.total_volume||0)} ₪</div><div style="font-size:.75rem;color:var(--text-muted)">حجم التداول</div></div>
+    </div>
+    <h3 style="margin-bottom:12px;font-size:1rem">تطورات لوحة التحكم</h3>
+    <div class="card" style="padding:16px">
+      ${(timeline.timeline||[]).length ? timeline.timeline.slice(0,20).map(e => `<div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:.85rem">
+        <div style="width:8px;height:8px;border-radius:50%;background:var(--accent);margin-top:6px;flex-shrink:0"></div>
+        <div><div>${esc(e.description||e.type)}</div><div style="color:var(--text-muted);font-size:.75rem">${esc(e.username||'')} · ${fmtDate(e.created_at)}</div></div>
+      </div>`).join('') : '<div style="text-align:center;color:var(--text-muted);padding:16px">لا توجد أحداث</div>'}
+    </div>
+  </div></main></div>
+<script src="/assets/app.js"></script>
+</body></html>

@@ -1,217 +1,113 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0a0e18">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>الصفقة — USDT P2P Palestine</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/app.css">
+<link rel="stylesheet" href="/assets/app.css">
 </head>
 <body>
-<div class="navbar">
-  <span class="logo" id="tradeTitle">📄 صفقة</span>
-  <div class="actions"><a href="/trades.html" style="font-size:20px;">➡️</a></div>
+<div class="app">
+<nav class="nav" id="nav"></nav>
+<main class="main"><div class="container" style="max-width:640px" id="app"><div class="card" style="padding:32px;text-align:center"><div class="spinner"></div></div></div></main>
+<div class="bottom-nav" id="bottomNav"></div>
 </div>
-<div class="container">
-  <!-- 5-Step Progress -->
-  <div class="card" id="stepsCard" style="display:none;">
-    <div class="steps" id="steps"></div>
-  </div>
-
-  <!-- Trade Info -->
-  <div class="card" id="infoCard"><div class="skeleton" style="height:120px;"></div></div>
-
-  <!-- Actions -->
-  <div id="actionsPanel" style="display:none;"></div>
-
-  <!-- Chat -->
-  <div class="card" id="chatCard" style="display:none;">
-    <div class="card-title">💬 المحادثة</div>
-    <div class="chat-box" id="chatBox"></div>
-    <div class="flex-row" style="margin-top:10px;gap:8px;">
-      <input id="chatInput" type="text" placeholder="اكتب رسالة..." style="flex:1;" onkeydown="if(event.key==='Enter')sendMsg()">
-      <button onclick="sendMsg()" class="btn btn-primary btn-sm" style="min-width:60px;">إرسال</button>
-    </div>
-  </div>
-
-  <!-- Dispute Panel -->
-  <div id="disputePanel" style="display:none;" class="card">
-    <div class="card-title">⚠️ فتح نزاع</div>
-    <div class="form-group">
-      <label>سبب النزاع</label>
-      <select id="disputeReason">
-        <option value="not_paid">المشتري لم يدفع</option>
-        <option value="wrong_amount">المبلغ غير صحيح</option>
-        <option value="no_response">عدم الاستجابة</option>
-        <option value="other">أخرى</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label>تفاصيل</label>
-      <textarea id="disputeDetails" placeholder="اشرح المشكلة..."></textarea>
-    </div>
-    <button onclick="openDispute()" class="btn btn-danger">⚠️ فتح نزاع</button>
-  </div>
-</div>
-<div id="toast"></div>
-<script src="assets/app.js"></script>
+<script src="/assets/app.js"></script>
 <script>
-if (!requireAuth('/')) throw new Error('auth');
-const tradeId = new URLSearchParams(location.search).get('id');
-const adId = new URLSearchParams(location.search).get('ad_id');
-const me = getUser()?.username;
-let trade = null;
+const tid = new URLSearchParams(location.search).get('id');
+let trade = null, msgs = [], me = null;
 
-const STEPS = ['PENDING','PAYMENT_SENT','CONFIRMING','COMPLETED','CANCELLED'];
-const STEP_LABELS = ['إنشاء الصفقة','إرسال الدفع','تأكيد الدفع','تحرير USDT','ملغي'];
-const STEP_ICONS = ['📝','💳','✅','🔓','❌'];
+async function load() {
+  if (!requireAuth()) return;
+  me = currentUser();
+  const r = await api('/trades/' + tid);
+  if (!r || !r.ok) { document.getElementById('app').innerHTML = '<div class="card" style="padding:32px;text-align:center;color:var(--text-muted)">الصفقة غير موجودة</div>'; return; }
+  trade = r.trade; msgs = r.messages || [];
+  render();
+}
 
-(async function() {
-  if (adId && !tradeId) {
-    const amt = prompt('أدخل كمية USDT:');
-    if (!amt || Number(amt) <= 0) { location.href = '/market.html'; return; }
-    const r = await post('/market/trades/buy/' + adId, { amount: Number(amt) });
-    if (r?.ok) { toast('✅ تم إنشاء الصفقة #' + r.trade_id); location.href = '/trade.html?id=' + r.trade_id; return; }
-    else { toast(r?.error || 'فشل'); return; }
-  }
-  if (!tradeId) { location.href = '/trades.html'; return; }
+function render() {
+  const t = trade; if (!t) return;
+  const isBuyer = t.buyer === me.username;
+  const isSeller = t.seller === me.username;
+  const other = isBuyer ? t.seller : t.buyer;
+  const role = isBuyer ? 'المشتري' : 'البائع';
+  const canPay = isBuyer && t.status === 'PENDING';
+  const canRelease = isSeller && ['PAYMENT_SENT','PAYMENT_CONFIRMED'].includes(t.status);
+  const canCancel = ['PENDING','PAYMENT_SENT'].includes(t.status);
+  const canDispute = ['PENDING','PAYMENT_SENT'].includes(t.status);
 
-  const r = await get('/trades/' + tradeId);
-  if (!r?.ok) { showEmpty($('#infoCard'), '🔍', 'الصفقة غير موجودة'); return; }
-  trade = r.trade;
-  const msgs = r.messages || [];
-
-  $('#tradeTitle').textContent = `📄 صفقة #${trade.id}`;
-
-  // 5-step progress
-  const statusMap = { PENDING: 0, PAYMENT_SENT: 1, CONFIRMING: 2, COMPLETED: 3, CANCELLED: 4 };
-  const currentIdx = statusMap[trade.status] ?? 0;
-  $('#stepsCard').style.display = 'block';
-  $('#steps').innerHTML = [0,1,2,3].map(i => {
-    const state = i < currentIdx ? 'done' : i === currentIdx ? 'active' : '';
-    return `<div class="step ${state}">
-      <div class="dot">${i < currentIdx ? '✓' : STEP_ICONS[i]}</div>
-      <div class="step-label">${STEP_LABELS[i]}</div>
-    </div>`;
-  }).join('');
-
-  // Trade info
-  const other = trade.buyer === me ? trade.seller : trade.buyer;
-  const iAmBuyer = trade.buyer === me;
-  const total = trade.price ? Number(trade.amount) * Number(trade.price) : 0;
-  const fee = total * 0.01; // 1% fee display
-
-  $('#infoCard').innerHTML = `
-    <div class="grid-2" style="margin-bottom:14px;">
-      <div class="kpi"><div class="kpi-label">المبلغ</div><div class="kpi-value text-primary">${formatNum(trade.amount)} USDT</div></div>
-      <div class="kpi"><div class="kpi-label">السعر</div><div class="kpi-value">${trade.price ? formatNum(trade.price) + ' ILS' : '—'}</div></div>
+  document.getElementById('app').innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h1 style="font-size:1.1rem;font-weight:700">الصفقة #${t.id}</h1>
+      ${statusBadge(t.status)}
     </div>
-    ${total ? `<div class="grid-2" style="margin-bottom:14px;">
-      <div class="kpi"><div class="kpi-label">الإجمالي</div><div class="kpi-value">${formatNum(total)} ILS</div></div>
-      <div class="kpi"><div class="kpi-label">العمولة</div><div class="kpi-value text-gold">${formatNum(fee)} ILS</div></div>
+    <div class="card" style="padding:16px;margin-bottom:12px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:.85rem">
+        <div><span style="color:var(--text-muted)">المبلغ</span><br><strong>${fmtNum(t.amount)} USDT</strong></div>
+        <div><span style="color:var(--text-muted)">السعر</span><br><strong>${fmtNum(t.price)} ₪</strong></div>
+        <div><span style="color:var(--text-muted)">الإجمالي</span><br><strong>${fmtNum(t.amount * t.price)} ₪</strong></div>
+        <div><span style="color:var(--text-muted)">الطرف الآخر</span><br><strong>${esc(other)} (${isBuyer?'بائع':'مشتري'})</strong></div>
+      </div>
+    </div>
+    ${t.status === 'COMPLETED' ? `<div class="card" style="padding:16px;margin-bottom:12px;background:rgba(34,197,94,.1)">
+      <div style="text-align:center;font-weight:600;color:var(--accent)">✅ الصفقة مكتملة</div>
+      <div style="text-align:center;margin-top:8px"><a href="/reviews.html?trade=${t.id}" class="btn btn-accent btn-sm">تقييم الطرف الآخر</a></div>
     </div>` : ''}
-    <div class="card" style="background:var(--bg-surface);padding:12px;">
-      <div class="flex-between" style="margin-bottom:6px;">
-        <span class="text-sm">${iAmBuyer ? 'البائع' : 'المشتري'}</span>
-        <span class="font-bold">${escHtml(other)}</span>
+    <div class="card" style="padding:0;margin-bottom:12px;overflow:hidden">
+      <div style="padding:12px 16px;background:var(--bg-elevated);font-weight:600;font-size:.9rem;border-bottom:1px solid var(--border)">💬 المحادثة</div>
+      <div id="chatBox" style="max-height:300px;overflow-y:auto;padding:12px">
+        ${msgs.length ? msgs.map(m => `<div style="margin-bottom:8px;max-width:80%;${m.sender===me.username?'margin-right:auto;text-align:right':'margin-left:auto'}">
+          <div style="font-size:.7rem;color:var(--text-muted)">${esc(m.sender)} · ${fmtDate(m.created)}</div>
+          <div style="padding:8px 12px;border-radius:12px;font-size:.85rem;background:${m.sender===me.username?'var(--accent);color:#fff':'var(--bg-elevated)'}">${esc(m.text)}</div>
+        </div>`).join('') : '<div style="text-align:center;color:var(--text-muted);padding:16px">لا توجد رسائل بعد</div>'}
       </div>
-      <div class="flex-between" style="margin-bottom:6px;">
-        <span class="text-sm">طريقة الدفع</span>
-        <span>${escHtml(trade.payment_method || 'USDT')}</span>
-      </div>
-      <div class="flex-between" style="margin-bottom:6px;">
-        <span class="text-sm">الحالة</span>
-        ${statusBadge(trade.status)}
-      </div>
-      <div class="flex-between">
-        <span class="text-sm">أنشئت</span>
-        <span class="text-xs text-dim">${formatDate(trade.created)}</span>
+      <div style="padding:8px 12px;border-top:1px solid var(--border);display:flex;gap:8px">
+        <input type="text" class="form-input" id="msgInput" placeholder="اكتب رسالة..." style="flex:1">
+        <button class="btn btn-accent btn-sm" onclick="sendMsg()">إرسال</button>
       </div>
     </div>
-    <div class="trust-banner" style="margin-top:12px;">🛡️ محمية بالضمان — لن يتم تحرير USDT حتى تأكيد الدفع</div>`;
-
-  // Actions
-  let actions = '';
-  if (trade.status === 'PENDING' && iAmBuyer) {
-    actions += `<button onclick="confirmPayment()" class="btn btn-primary">💳 لقد قمت بالدفع</button>`;
-  }
-  if (trade.status === 'PAYMENT_SENT' && !iAmBuyer) {
-    actions += `<button onclick="confirmRelease()" class="btn btn-primary">🔓 تحرير USDT للمشتري</button>`;
-  }
-  if (['PENDING','PAYMENT_SENT'].includes(trade.status)) {
-    actions += `<button onclick="cancelTrade()" class="btn btn-danger" style="margin-top:8px;">❌ إلغاء الصفقة</button>`;
-    actions += `<button onclick="$('#disputePanel').style.display='block'" class="btn btn-ghost" style="margin-top:8px;border-color:var(--danger);color:var(--danger);">⚠️ فتح نزاع</button>`;
-  }
-  if (trade.status === 'COMPLETED') {
-    actions += `<div style="margin-top:10px;"><label>تقييمك للبائع</label><div class="flex-row gap-8"><input id="reviewStars" type="number" min="1" max="5" value="5" style="width:70px;"><button onclick="submitReview()" class="btn btn-primary btn-sm">⭐ تقييم</button></div></div>`;
-  }
-  if (actions) { $('#actionsPanel').style.display = 'block'; $('#actionsPanel').innerHTML = `<div class="card">${actions}</div>`; }
-
-  // Chat
-  $('#chatCard').style.display = 'block';
-  renderChat(msgs);
-  setInterval(async () => {
-    const r2 = await get('/trades/' + tradeId);
-    if (r2?.ok) renderChat(r2.messages || []);
-  }, 8000);
-})();
-
-function renderChat(msgs) {
-  $('#chatBox').innerHTML = msgs.map(m => `
-    <div class="msg ${m.sender === me ? 'me' : 'them'}">
-      ${m.sender !== me ? `<div class="msg-sender">${escHtml(m.sender)}</div>` : ''}
-      ${escHtml(m.text)}
-      <span class="msg-time">${formatDate(m.created)}</span>
-    </div>
-  `).join('') || '<div class="empty" style="padding:20px;"><p class="text-dim">لا رسائل بعد</p></div>';
-  $('#chatBox').scrollTop = $('#chatBox').scrollHeight;
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      ${canPay ? '<button class="btn btn-accent" onclick="confirmPayment()">💳 تم الدفع</button>' : ''}
+      ${canRelease ? '<button class="btn btn-accent" onclick="releaseFunds()">🔓 تحرير USDT</button>' : ''}
+      ${canDispute ? '<button class="btn btn-outline" style="color:var(--error);border-color:var(--error)" onclick="openDispute()">⚠️ فتح نزاع</button>' : ''}
+      ${canCancel ? '<button class="btn btn-outline" style="color:var(--text-muted)" onclick="cancelTrade()">إلغاء</button>' : ''}
+    </div>`;
+  document.getElementById('chatBox').scrollTop = 9999;
 }
 
 async function sendMsg() {
-  const text = $('#chatInput').value.trim();
-  if (!text) return;
-  $('#chatInput').value = '';
-  await post('/trades/' + tradeId + '/message', { text });
-  const r = await get('/trades/' + tradeId);
-  if (r?.ok) renderChat(r.messages || []);
+  const inp = document.getElementById('msgInput');
+  const text = inp.value.trim(); if (!text) return;
+  inp.value = '';
+  const r = await api('/trades/' + tid + '/message', { method: 'POST', body: { text } });
+  if (r && r.ok) { msgs.push({ sender: me.username, text, created: new Date().toISOString() }); render(); }
+  else if (r && r.error) toast(r.error);
 }
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && document.activeElement?.id === 'msgInput') sendMsg(); });
 
 async function confirmPayment() {
-  if (!confirm('هل أنت متأكد أنك قمت بالدفع للمبيع؟')) return;
-  const proof = prompt('رقم التحويل / TX Hash (اختياري):') || '';
-  const r = await post('/trades/' + tradeId + '/confirm-payment', { proof_key: proof });
-  if (r?.ok) { toast('✅ تم تأكيد الدفع'); location.reload(); }
+  if (!confirm('هل أنت متأكد من تأكيد الدفع؟')) return;
+  const r = await api('/trades/' + tid + '/confirm-payment', { method: 'POST' });
+  if (r && r.ok) { toast('✅ تم تأكيد الدفع'); load(); } else if (r && r.error) toast(r.error);
 }
-
-async function confirmRelease() {
-  if (!confirm('هل تأكدت من استلام الدفع وترغب في تحرير USDT؟')) return;
-  const r = await post('/trades/' + tradeId + '/seller-confirm', {});
-  if (r?.ok) { toast('✅ تم تحرير USDT'); location.reload(); }
+async function releaseFunds() {
+  if (!confirm('هل أنت متأكد من تحرير USDT؟')) return;
+  const r = await api('/trades/' + tid + '/release', { method: 'POST' });
+  if (r && r.ok) { toast('✅ تم تحرير USDT'); load(); } else if (r && r.error) toast(r.error);
 }
-
 async function cancelTrade() {
-  if (!confirm('هل أنت متأكد من إلغاء الصفقة؟')) return;
-  const r = await post('/trades/' + tradeId + '/cancel', {});
-  if (r?.ok) { toast('❌ تم إلغاء الصفقة'); location.href = '/trades.html'; }
+  if (!confirm('هل تريد إلغاء الصفقة؟')) return;
+  const r = await api('/trades/' + tid + '/cancel', { method: 'POST' });
+  if (r && r.ok) { toast('تم إلغاء الصفقة'); load(); } else if (r && r.error) toast(r.error);
 }
-
-async function submitReview() {
-  const stars = Number($('#reviewStars').value);
-  const other = trade.buyer === me ? trade.seller : trade.buyer;
-  const r = await post('/reviews/' + tradeId, { to_user: other, rating: stars, comment: '' });
-  if (r?.ok) toast('⭐ شكراً لتقييمك');
-}
-
 async function openDispute() {
-  if (!confirm('هل أنت متأكد من فتح نزاع؟')) return;
-  const r = await post('/trades/' + tradeId + '/dispute', {
-    reason: $('#disputeReason').value,
-    details: $('#disputeDetails').value.trim(),
-  });
-  if (r?.ok) { toast('⚠️ تم فتح النزاع'); location.reload(); }
+  const reason = prompt('سبب النزاع (10 أحرف على الأقل):');
+  if (!reason || reason.length < 10) { toast('سبب النزاع مطلوب'); return; }
+  const r = await api('/trades/' + tid + '/dispute', { method: 'POST', body: { reason } });
+  if (r && r.ok) { toast('⚠️ تم فتح النزاع'); load(); } else if (r && r.error) toast(r.error);
 }
+load();
 </script>
 </body>
 </html>

@@ -9,94 +9,42 @@
 <body>
 <div class="app">
 <nav class="nav" id="nav"></nav>
-<main class="main">
-<div class="container" id="app">
-<div class="loading-skeleton">
-<div class="sk sk-card"></div>
-<div class="sk sk-card"></div>
-</div>
-</div>
-</main>
+<main class="main"><div class="container" style="max-width:640px">
+  <h1 style="font-size:1.3rem;font-weight:700;margin-bottom:16px">الصفقات</h1>
+  <div id="tradesList"><div class="card"><div class="spinner"></div></div></div>
+</div></main>
 <div class="bottom-nav" id="bottomNav"></div>
 </div>
 <script src="/assets/app.js"></script>
 <script>
-(function(){
-  const app=document.getElementById('app');
-  async function load(){
-    if(!Auth.isLoggedIn()){location.href='/login';return;}
-    let trades=[];
-    try{const r=await API.get('/api/trades');trades=r.trades||r||[];}catch(e){}
-
-    app.innerHTML=`
-      <div class="page-header">
-        <h1 class="page-title">الصفقات</h1>
-        <div class="page-subtitle">${trades.length} صفقة</div>
-      </div>
-
-      ${trades.length===0?`
-        <div class="card">
-          <div class="empty-state">
-            <div class="empty-icon">🤝</div>
-            <div class="empty-title">لا توجد صفقات</div>
-            <div class="empty-desc">ابدأ بالبحث في السوق لإنشاء صفقة جديدة</div>
-            <a href="/market" class="btn btn-primary" style="margin-top:var(--space-md)">فتح السوق</a>
-          </div>
-        </div>
-      `:trades.map(t=>tradeCard(t)).join('')}
-    `;
-  }
-
-  function tradeCard(t){
-    const statusMap={
-      'OPEN':{text:'مفتوحة',cls:'badge-info'},
-      'PAYMENT_PENDING':{text:'بانتظار الدفع',cls:'badge-warning'},
-      'PAYMENT_SENT':{text:'تم الدفع',cls:'badge-info'},
-      'PAYMENT_CONFIRMED':{text:'تم التأكيد',cls:'badge-success'},
-      'ESCROW_LOCKED':{text:'في الضمان',cls:'badge-warning'},
-      'RELEASED':{text:'تم التحرير',cls:'badge-success'},
-      'COMPLETED':{text:'مكتملة',cls:'badge-success'},
-      'CANCELLED':{text:'ملغاة',cls:'badge-error'},
-      'DISPUTED':{text:'نزاع',cls:'badge-error'},
-      'EXPIRED':{text:'منتهية',cls:'badge-error'}
-    };
-    const s=statusMap[t.status]||{text:t.status,cls:'badge-info'};
-    const user=Auth.user();
-    const isBuyer=t.buyer_id===user?.id;
-    const role=isBuyer?'مشتري':'بائع';
-    const counterparty=isBuyer?(t.seller_name||'البائع'):(t.buyer_name||'المشتري');
-
-    return `
-      <div class="card trade-card" onclick="location.href='/trades/${t.id}'" style="cursor:pointer">
-        <div class="trade-header">
+async function load() {
+  if (!requireAuth()) return;
+  const r = await api('/trades');
+  const el = document.getElementById('tradesList');
+  if (!r || !r.ok) { el.innerHTML = '<div class="card text-center" style="padding:32px;color:var(--text-muted)">خطأ في تحميل الصفقات</div>'; return; }
+  const trades = r.trades || [];
+  if (!trades.length) { el.innerHTML = '<div class="card text-center" style="padding:32px"><div style="font-size:2rem;margin-bottom:8px">🤝</div><div style="font-weight:600;margin-bottom:4px">لا توجد صفقات</div><div style="color:var(--text-muted);font-size:.85rem"><a href="/market" style="color:var(--accent)">تصفح السوق</a></div></div>'; return; }
+  const u = currentUser();
+  el.innerHTML = trades.map(t => {
+    const isBuyer = t.buyer === u.username;
+    const role = isBuyer ? 'مشتري' : 'بائع';
+    const other = isBuyer ? t.seller : t.buyer;
+    return `<a href="/trade.html?id=${t.id}" style="text-decoration:none;color:inherit;display:block;margin-bottom:10px">
+      <div class="card" style="padding:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
           <div>
-            <div style="font-weight:600">#${String(t.id).slice(-8)}</div>
-            <div class="text-muted text-sm">${role} ↔ ${counterparty}</div>
+            <div style="font-weight:600;font-size:.9rem">#${t.id} · ${role}</div>
+            <div style="font-size:.8rem;color:var(--text-muted)">${esc(other)}</div>
           </div>
-          <span class="badge ${s.cls}">${s.text}</span>
+          ${statusBadge(t.status)}
         </div>
-        <div class="trade-body">
-          <div class="trade-info">
-            <div class="trade-info-item">
-              <div class="trade-info-label">المبلغ</div>
-              <div class="trade-info-value">${fmtNum(t.usdt_amount)} USDT</div>
-            </div>
-            <div class="trade-info-item">
-              <div class="trade-info-label">السعر</div>
-              <div class="trade-info-value">${fmtNum(t.price_per_usdt)} ₪</div>
-            </div>
-            <div class="trade-info-item">
-              <div class="trade-info-label">الإجمالي</div>
-              <div class="trade-info-value">${fmtNum(t.total_amount)} ₪</div>
-            </div>
-          </div>
+        <div style="display:flex;gap:16px;margin-top:8px;font-size:.8rem;color:var(--text-secondary)">
+          <span>${fmtNum(t.amount)} USDT</span><span>${fmtNum(t.price)} ₪</span><span>${fmtDate(t.created)}</span>
         </div>
-      </div>
-    `;
-  }
-
-  load();
-})();
+      </div></a>`;
+  }).join('');
+}
+load();
 </script>
 </body>
 </html>

@@ -1,126 +1,64 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0a0e18">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>تسجيل الدخول — USDT P2P Palestine</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/app.css">
 </head>
 <body>
-<div class="navbar">
-  <a href="/" style="text-decoration:none;"><span class="logo">🇵🇸 USDT <span>P2P</span></span></a>
-</div>
-
-<div class="container" style="padding-top:32px;">
-  <div class="text-center" style="margin-bottom:28px;">
-    <div style="font-size:40px;margin-bottom:8px;">🇵🇸</div>
-    <h1 style="font-size:22px;font-weight:800;">تسجيل الدخول</h1>
-    <p class="text-secondary text-sm">ادخل إلى حسابك في USDT P2P Palestine</p>
+<div class="app">
+<nav class="nav" id="nav"></nav>
+<main class="main"><div class="container" style="max-width:420px;margin-top:48px">
+  <div class="text-center" style="margin-bottom:32px">
+    <div style="width:56px;height:56px;border-radius:14px;background:var(--accent);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:12px">🔗</div>
+    <h1 style="font-size:1.4rem;font-weight:700">تسجيل الدخول</h1>
+    <p style="color:var(--text-muted);font-size:.85rem;margin-top:4px">أدخل بيانات حسابك للمتابعة</p>
   </div>
-
-  <div id="errorBox" class="alert alert-error" style="display:none;"></div>
-
-  <!-- Email/Username Login -->
-  <form id="loginForm" class="card">
+  <div id="errBox" class="alert alert-error" style="display:none;margin-bottom:16px"></div>
+  <div class="card" style="padding:24px">
     <div class="form-group">
-      <label>البريد الإلكتروني أو اسم المستخدم</label>
-      <input id="identifier" type="text" required placeholder="email@example.com" autocomplete="username">
+      <label>اسم المستخدم أو البريد الإلكتروني</label>
+      <input type="text" class="form-input" id="identifier" placeholder="username أو email" autocomplete="username">
     </div>
     <div class="form-group">
       <label>كلمة المرور</label>
-      <input id="password" type="password" required placeholder="••••••" autocomplete="current-password">
+      <input type="password" class="form-input" id="password" placeholder="••••••••" autocomplete="current-password">
     </div>
-    <button type="submit" class="btn btn-primary" id="loginBtn">🔐 تسجيل الدخول</button>
-  </form>
-
-  <div class="text-center mt-12 mb-12">
-    <a href="/register" class="text-sm text-secondary">ليس لديك حساب؟ <b class="text-primary">سجّل الآن</b></a>
+    <button class="btn btn-primary btn-block" id="loginBtn" style="margin-top:8px">تسجيل الدخول</button>
   </div>
-
-  <!-- Telegram Login -->
-  <button onclick="telegramLogin()" class="btn btn-ghost mb-12" id="tgBtn">
-    <span style="font-size:18px;">✈️</span> تسجيل الدخول عبر Telegram
-  </button>
-
-  <!-- Admin Login -->
-  <div class="text-center" style="margin-top:24px;">
-    <a href="/admin_login" class="text-xs text-muted">🔒 دخول الإدارة</a>
+  <div class="text-center" style="margin-top:16px;font-size:.85rem">
+    <span style="color:var(--text-muted)">ليس لديك حساب؟</span> <a href="/register" style="color:var(--accent);font-weight:600;text-decoration:none">إنشاء حساب</a>
   </div>
+  <div class="text-center" style="margin-top:8px;font-size:.85rem">
+    <a href="/admin_login" style="color:var(--text-muted);text-decoration:none">🛡️ دخول الإدارة</a>
+  </div>
+</div></main>
 </div>
-
-<div id="bottomNav"></div>
-<div id="toast"></div>
 <script src="/assets/app.js"></script>
 <script>
-if (window.Telegram && window.Telegram.WebApp) {
-  Telegram.WebApp.ready();
-  if (Telegram.WebApp.BackButton) {
-    Telegram.WebApp.BackButton.show();
-    Telegram.WebApp.BackButton.onClick(function() { location.href = '/'; });
-  }
-}
+document.getElementById('identifier').addEventListener('keydown', e => { if (e.key === 'Enter') doSubmit(); });
+document.getElementById('password').addEventListener('keydown', e => { if (e.key === 'Enter') doSubmit(); });
+document.getElementById('loginBtn').addEventListener('click', doSubmit);
 
-var returnTo = new URLSearchParams(location.search).get('returnTo') || '/';
-// If already logged in, redirect
-if (getUser()) { location.href = returnTo; }
-
-$('#loginForm').onsubmit = async function(e) {
-  e.preventDefault();
-  var btn = $('#loginBtn');
-  btn.disabled = true;
-  btn.textContent = 'جاري الدخول...';
-  $('#errorBox').style.display = 'none';
-
-  var r = await post('/auth/login', {
-    username: $('#identifier').value.trim(),
-    password: $('#password').value
-  });
-
-  if (!r || !r.ok) {
-    $('#errorBox').style.display = 'block';
-    $('#errorBox').textContent = (r && r.error) || 'خطأ في تسجيل الدخول';
-    btn.disabled = false;
-    btn.textContent = '🔐 تسجيل الدخول';
-    return;
-  }
-
-  setCsrf(r.csrf_token);
-  // Fetch user info for sidebar
-  var me = await get('/auth/me');
-  if (me && me.authenticated) {
-    setUser({ username: me.username, isAdmin: me.isAdmin });
+async function doSubmit() {
+  const id = document.getElementById('identifier').value.trim();
+  const pw = document.getElementById('password').value;
+  const errBox = document.getElementById('errBox');
+  const btn = document.getElementById('loginBtn');
+  if (!id || !pw) { errBox.textContent = 'أدخل جميع البيانات'; errBox.style.display = 'block'; return; }
+  errBox.style.display = 'none';
+  btn.disabled = true; btn.textContent = 'جاري الدخول...';
+  const r = await doLogin(id, pw);
+  btn.disabled = false; btn.textContent = 'تسجيل الدخول';
+  if (r && r.ok) {
+    const params = new URLSearchParams(location.search);
+    location.href = params.get('returnTo') || '/market';
+  } else if (r && r.error) {
+    errBox.textContent = r.error; errBox.style.display = 'block';
   } else {
-    setUser({ username: $('#identifier').value.trim() });
+    errBox.textContent = 'خطأ في الاتصال'; errBox.style.display = 'block';
   }
-  location.href = returnTo;
-};
-
-async function telegramLogin() {
-  // Check if we're inside Telegram
-  if (!window.Telegram || !window.Telegram.WebApp || !window.Telegram.WebApp.initData) {
-    toast('افتح من داخل Telegram لتسجيل الدخول عبر Telegram', 4000);
-    return;
-  }
-  $('#tgBtn').disabled = true;
-  $('#tgBtn').textContent = '⏳ جاري التحقق...';
-  $('#errorBox').style.display = 'none';
-
-  var r = await post('/auth/telegram', { initData: Telegram.WebApp.initData });
-
-  if (!r || !r.ok) {
-    $('#errorBox').style.display = 'block';
-    $('#errorBox').textContent = (r && r.error) || 'فشل التحقق من Telegram';
-    $('#tgBtn').disabled = false;
-    $('#tgBtn').textContent = '✈️ تسجيل الدخول عبر Telegram';
-    return;
-  }
-
-  setCsrf(r.csrf_token);
-  setUser({ username: r.username || 'telegram_user' });
-  location.href = returnTo;
 }
 </script>
 </body>
