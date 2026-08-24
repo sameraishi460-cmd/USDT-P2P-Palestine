@@ -216,12 +216,17 @@ h4 { font-size: 1rem; }
   left: 0;
   right: 0;
   z-index: 100;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: space-around;
+  align-items: center;
   background: rgba(10,14,26,0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-top: 1px solid var(--border);
   padding-bottom: env(safe-area-inset-bottom, 0);
-  height: auto;
+  padding: 6px 0 env(safe-area-inset-bottom, 0);
 }
 
 .bottom-nav-inner {
@@ -236,16 +241,20 @@ h4 { font-size: 1rem; }
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  font-size: 0.65rem;
+  justify-content: center;
+  gap: 1px;
+  font-size: 0.6rem;
   font-weight: 500;
   color: var(--text-muted);
-  padding: 6px 4px 4px;
+  padding: 4px 2px 2px;
   border-radius: var(--radius-sm);
   transition: all var(--transition-fast);
   text-decoration: none;
-  flex: 1;
+  flex: 1 1 0;
+  min-width: 0;
   text-align: center;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .bottom-nav a.active {
@@ -257,7 +266,8 @@ h4 { font-size: 1rem; }
   color: var(--text-primary);
 }
 
-.nav-icon { font-size: 1.25rem; }
+.nav-icon { font-size: 1.25rem; line-height: 1; }
+.nav-label { line-height: 1.2; white-space: nowrap; }
 
 /* ===== Cards ===== */
 .card {
@@ -819,6 +829,8 @@ textarea.form-input { resize: vertical; min-height: 80px; }
   .navbar-links { gap: 2px; }
   .navbar-links a { font-size: 0.7rem; padding: 4px 6px; white-space: nowrap; }
   .btn-lg { padding: var(--sp-3) var(--sp-4); font-size: 0.9rem; }
+  .bottom-nav a { font-size: 0.55rem; padding: 3px 1px 1px; }
+  .bottom-nav .nav-icon { font-size: 1rem; }
 }
 @media (max-width: 430px) {
   .container { padding-bottom: calc(70px + env(safe-area-inset-bottom, 0px)); }
