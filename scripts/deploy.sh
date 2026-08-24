@@ -22,3 +22,4 @@ npx tsc --noEmit 2>&1 || echo "⚠️ TypeScript check completed with warnings (
 echo ""
 echo "=== BUILD COMPLETE ==="
 echo "Worker auto-migration (src/db-init.ts) will create D1 tables on first request."
+
