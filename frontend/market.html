@@ -1,44 +1,36 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>السوق — USDT P2P Palestine</title>
-<link rel="stylesheet" href="/assets/app.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0e1a">
+  <title>سوق USDT — USDT P2P Palestine</title>
+  <link rel="stylesheet" href="/assets/design-system.css">
 </head>
 <body>
-<div class="app">
-<nav class="nav" id="nav"></nav>
-<main class="main"><div class="container" style="max-width:960px" id="app">
-  <div style="margin-bottom:16px">
-    <h1 style="font-size:1.4rem;font-weight:800;margin-bottom:4px">السوق</h1>
-    <p style="color:var(--text-muted);font-size:.85rem">ابحث عن أفضل عروض USDT</p>
+<nav class="navbar" id="nav"><div class="navbar-inner"><a href="/" class="navbar-brand">🇵🇸 <span>USDT</span> P2P</a><div class="navbar-links"></div></div></nav>
+<main><div class="container">
+  <div class="page-header">
+    <h2>💰 سوق USDT</h2>
+    <p style="color:var(--text-muted);font-size:0.85rem;">السعر الحالي: <span style="color:var(--accent-light);font-weight:700;" id="livePrice">— ₪</span></p>
   </div>
-  <div id="priceBar" class="card" style="padding:12px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
-    <span style="font-size:.85rem;color:var(--text-muted)">سعر USDT</span>
-    <span id="priceVal" style="font-size:1.1rem;font-weight:800;color:var(--primary)">—</span>
+  <div class="card" style="padding:var(--sp-3);margin-bottom:var(--sp-3);">
+    <div style="display:flex;gap:var(--sp-2);flex-wrap:wrap;">
+      <input type="text" id="searchInput" placeholder="🔍 بحث..." class="form-input" style="flex:2;min-width:150px;" oninput="filterAds()">
+      <select id="typeFilter" class="form-input" style="flex:1;min-width:100px;" onchange="filterAds()">
+        <option value="">الكل</option><option value="BUY">شراء</option><option value="SELL">بيع</option>
+      </select>
+      <select id="sortFilter" class="form-input" style="flex:1;min-width:100px;" onchange="filterAds()">
+        <option value="newest">الأحدث</option><option value="price_low">أقل سعر</option><option value="price_high">أعلى سعر</option>
+      </select>
+    </div>
   </div>
-  <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
-    <input type="text" id="searchInput" placeholder="🔍 بحث..." style="flex:1;min-width:200px;padding:10px 14px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:14px" oninput="filterAds()">
-    <select id="typeFilter" style="padding:10px 14px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:14px" onchange="filterAds()">
-      <option value="">الكل</option>
-      <option value="BUY">شراء USDT</option>
-      <option value="SELL">بيع USDT</option>
-    </select>
-    <select id="sortFilter" style="padding:10px 14px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:14px" onchange="filterAds()">
-      <option value="newest">الأحدث</option>
-      <option value="price_low">أقل سعر</option>
-      <option value="price_high">أعلى سعر</option>
-      <option value="amount_high">أكبر كمية</option>
-    </select>
-  </div>
-  <div id="adsList"><div class="spinner"></div></div>
-  <div id="createAdBtn" style="display:none;margin-top:16px;text-align:center">
-    <a href="/create_ad" class="btn btn-primary" style="width:auto;display:inline-flex">+ إنشاء إعلان</a>
+  <div id="adsList"><div class="skeleton" style="height:120px;"></div></div>
+  <div id="createAdBtn" style="display:none;margin-top:var(--sp-4);text-align:center;">
+    <a href="/create_ad" class="btn btn-accent btn-block">+ إنشاء إعلان</a>
   </div>
 </div></main>
 <div class="bottom-nav" id="bottomNav"></div>
-</div>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="/assets/app.js"></script>
 <script>
@@ -47,11 +39,10 @@ async function load() {
   const [market, priceResp] = await Promise.all([api('/market'), api('/market/price')]);
   allAds = (market?.ads || []).filter(a => a.status === 'OPEN');
   const price = priceResp?.usdt_ils || priceResp?.price || 3.7;
-  document.getElementById('priceVal').textContent = fmtNum(price, 2) + ' ₪';
+  document.getElementById('livePrice').textContent = fmtNum(price, 2) + ' ₪';
   if (isLoggedIn()) document.getElementById('createAdBtn').style.display = 'block';
   filterAds();
 }
-
 function filterAds() {
   const q = document.getElementById('searchInput').value.trim().toLowerCase();
   const type = document.getElementById('typeFilter').value;
@@ -61,28 +52,23 @@ function filterAds() {
   if (type) filtered = filtered.filter(a => a.type === type);
   if (sort === 'price_low') filtered.sort((a,b) => a.price - b.price);
   else if (sort === 'price_high') filtered.sort((a,b) => b.price - a.price);
-  else if (sort === 'amount_high') filtered.sort((a,b) => b.amount - a.amount);
   else filtered.sort((a,b) => (b.id||0) - (a.id||0));
-
   const list = document.getElementById('adsList');
-  if (!filtered.length) { list.innerHTML = '<div class="card"><div class="empty"><div class="empty-icon">📭</div><div class="empty-title">لا توجد إعلانات</div><div class="empty-desc">جرّب تغيير معايير البحث</div></div></div>'; return; }
+  if (!filtered.length) { list.innerHTML = '<div class="card" style="text-align:center;padding:var(--sp-8);"><div style="font-size:2rem;margin-bottom:var(--sp-2);">📭</div><div style="color:var(--text-muted);">لا توجد إعلانات</div></div>'; return; }
   list.innerHTML = filtered.map(a => `
-    <div class="ad-card" style="cursor:pointer" onclick="location.href='/trade?ad=${a.id}'">
-      <div class="ad-card-header">
-        <div>
-          <span class="${a.type==='BUY'?'badge badge-buy':'badge badge-sell'}" style="font-size:11px">${a.type==='BUY'?'شراء':'بيع'}</span>
-          <div class="ad-card-price" style="margin-top:4px">${fmtNum(a.price)} ₪</div>
-        </div>
-        <div style="text-align:left">
-          <div style="font-size:.8rem;color:var(--text-muted)">الكمية</div>
-          <div style="font-weight:700">${fmtNum(a.amount)} USDT</div>
-        </div>
+    <div class="ad-card" style="cursor:pointer;" onclick="location.href='/trade?ad=${a.id}'">
+      <div class="ad-card-seller">
+        <div class="avatar avatar-sm">${(a.user||'?')[0].toUpperCase()}</div>
+        <div style="flex:1;"><div style="font-weight:700;font-size:0.9rem;">${esc(a.user)}</div><div style="font-size:0.7rem;color:var(--text-muted);">${esc(a.payment || '')}</div></div>
+        <span class="badge ${a.type==='BUY'?'badge-success':'badge-primary'}">${a.type==='BUY'?'شراء':'بيع'}</span>
       </div>
-      <div class="ad-card-info">
-        <dt>الحد الأدنى</dt><dd>${fmtNum(a.min_amount || 0)}</dd>
-        <dt>الحد الأقصى</dt><dd>${fmtNum(a.max_amount || a.amount)}</dd>
-        <dt>طريقة الدفع</dt><dd>${esc(a.payment || '—')}</dd>
-        <dt>المعلن</dt><dd><a href="/trader?u=${esc(a.user)}" onclick="event.stopPropagation()" style="font-weight:600">${esc(a.user)}</a></dd>
+      <div style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:var(--sp-3);">📝 ${esc(a.title || a.type + ' USDT')}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3);margin-bottom:var(--sp-3);">
+        <div style="background:var(--bg-input);border-radius:var(--radius-sm);padding:var(--sp-3);text-align:center;"><div style="font-size:0.7rem;color:var(--text-muted);">💰 الكمية</div><div style="font-weight:700;color:var(--accent-light);">${fmtNum(a.amount)} USDT</div></div>
+        <div style="background:var(--bg-input);border-radius:var(--radius-sm);padding:var(--sp-3);text-align:center;"><div style="font-size:0.7rem;color:var(--text-muted);">💲 السعر</div><div style="font-weight:700;color:var(--text-primary);font-size:1.1rem;">${fmtNum(a.price)} ₪</div></div>
+      </div>
+      <div style="display:flex;gap:var(--sp-2);">
+        <a href="/trade?ad=${a.id}" class="btn ${a.type==='BUY'?'btn-success':'btn-primary'} btn-block" onclick="event.stopPropagation();haptic('success')">${a.type==='BUY'?'🛒 شراء':'💰 بيع'} ${fmtNum(a.amount)} USDT</a>
       </div>
     </div>`).join('');
 }

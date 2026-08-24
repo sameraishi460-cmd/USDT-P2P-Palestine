@@ -1,46 +1,160 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>لوحة الإدارة — USDT P2P Palestine</title>
-<link rel="stylesheet" href="/assets/app.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>لوحة الإدارة — USDT P2P Palestine</title>
+  <link rel="stylesheet" href="/assets/design-system.css">
+  <link rel="stylesheet" href="/assets/app.css">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
-<div class="app">
-<nav class="nav" id="nav"></nav>
-<main class="main"><div class="container" style="max-width:800px" id="app"><div class="card"><div class="spinner"></div></div></div></main>
-</div>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script src="/assets/app.js"></script>
-<script>
-async function load() {
-  if (!requireAuth()) return;
-  const u = currentUser(); if (!u || !u.isAdmin) { document.getElementById('app').innerHTML = '<div class="card" style="padding:32px;text-align:center;color:var(--error)">غير مصرح</div>'; return; }
-  const [analytics, timeline, users, trades, deposits, withdrawals, disputes] = await Promise.all([
-    api('/v2/admin/analytics').catch(()=>({})),
-    api('/v2/admin/timeline').catch(()=>({timeline:[]})),
-    api('/admin/users').catch(()=>({users:[]})),
-    api('/admin/trades').catch(()=>({trades:[]})),
-    api('/admin/deposits').catch(()=>({deposits:[]})),
-    api('/admin/withdrawals').catch(()=>({withdrawals:[]})),
-    api('/admin/disputes').catch(()=>({disputes:[]})),
-  ]);
-  const a = analytics || {};
-  document.getElementById('app').innerHTML = `
-    <h1 style="font-size:1.3rem;font-weight:700;margin-bottom:16px">لوحة الإدارة</h1>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px">
-      <div class="card" style="text-align:center;padding:14px"><div style="font-size:1.3rem;font-weight:800;color:var(--accent)">${a.total_users||users.users?.length||0}</div><div style="font-size:.75rem;color:var(--text-muted)">مستخدمون</div></div>
-      <div class="card" style="text-align:center;padding:14px"><div style="font-size:1.3rem;font-weight:800;color:var(--accent)">${a.total_trades||trades.trades?.length||0}</div><div style="font-size:.75rem;color:var(--text-muted)">صفقات</div></div>
-      <div class="card" style="text-align:center;padding:14px"><div style="font-size:1.3rem;font-weight:800;color:var(--accent)">${fmtNum(a.total_volume||0)} ₪</div><div style="font-size:.75rem;color:var(--text-muted)">حجم التداول</div></div>
+  <div id="nav"></div>
+  <div id="bottom-nav"></div>
+
+  <main class="main-content">
+    <div id="loading" class="loading-spinner">
+      <div class="spinner"></div>
+      <p>جاري تحميل لوحة الإدارة...</p>
     </div>
-    <h3 style="margin-bottom:12px;font-size:1rem">تطورات لوحة التحكم</h3>
-    <div class="card" style="padding:16px">
-      ${(timeline.timeline||[]).length ? timeline.timeline.slice(0,20).map(e => `<div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:.85rem">
-        <div style="width:8px;height:8px;border-radius:50%;background:var(--accent);margin-top:6px;flex-shrink:0"></div>
-        <div><div>${esc(e.description||e.type)}</div><div style="color:var(--text-muted);font-size:.75rem">${esc(e.username||'')} · ${fmtDate(e.created_at)}</div></div>
-      </div>`).join('') : '<div style="text-align:center;color:var(--text-muted);padding:16px">لا توجد أحداث</div>'}
+    <div id="admin-content" style="display:none">
+      <div class="page-header">
+        <h1 class="page-title">⚙️ لوحة الإدارة</h1>
+      </div>
+
+      <div id="kpi-grid" class="kpi-grid"></div>
+
+      <div class="admin-tabs">
+        <button class="tab-btn active" onclick="showTab('timeline',this)">النشاط</button>
+        <button class="tab-btn" onclick="showTab('users',this)">المستخدمون</button>
+        <button class="tab-btn" onclick="showTab('trades',this)">الصفقات</button>
+        <button class="tab-btn" onclick="showTab('deposits',this)">الإيداعات</button>
+        <button class="tab-btn" onclick="showTab('withdrawals',this)">السحوبات</button>
+        <button class="tab-btn" onclick="showTab('disputes',this)">النزاعات</button>
+      </div>
+
+      <div id="tab-timeline" class="admin-tab"></div>
+      <div id="tab-users" class="admin-tab" style="display:none"></div>
+      <div id="tab-trades" class="admin-tab" style="display:none"></div>
+      <div id="tab-deposits" class="admin-tab" style="display:none"></div>
+      <div id="tab-withdrawals" class="admin-tab" style="display:none"></div>
+      <div id="tab-disputes" class="admin-tab" style="display:none"></div>
     </div>
-  </div></main></div>
-<script src="/assets/app.js"></script>
-</body></html>
+  </main>
+
+  <script src="/assets/app.js"></script>
+  <script>
+    (async function() {
+      const user = await requireAuth();
+      if (!user) return;
+      if (user.role !== 'admin') {
+        document.getElementById('loading').innerHTML = '<p class="text-error">❌ غير مصرح — هذه الصفحة للمشرفين فقط</p>';
+        return;
+      }
+
+      const [analytics, timeline, users, trades, deposits, withdrawals, disputes] = await Promise.all([
+        api('/v2/admin/analytics').catch(() => ({})),
+        api('/v2/admin/timeline').catch(() => ({ timeline: [] })),
+        api('/admin/users').catch(() => ({ users: [] })),
+        api('/admin/trades').catch(() => ({ trades: [] })),
+        api('/admin/deposits').catch(() => ({ deposits: [] })),
+        api('/admin/withdrawals').catch(() => ({ withdrawals: [] })),
+        api('/admin/disputes').catch(() => ({ disputes: [] })),
+      ]);
+
+      const a = analytics || {};
+      const totalUsers = a.total_users || users.users?.length || 0;
+      const totalTrades = a.total_trades || trades.trades?.length || 0;
+      const totalVolume = a.total_volume || 0;
+      const activeDisputes = disputes.disputes?.filter(d => d.status === 'OPEN').length || 0;
+
+      document.getElementById('kpi-grid').innerHTML = `
+        <div class="kpi-card"><div class="kpi-value">${totalUsers}</div><div class="kpi-label">المستخدمون</div></div>
+        <div class="kpi-card"><div class="kpi-value">${totalTrades}</div><div class="kpi-label">الصفقات</div></div>
+        <div class="kpi-card"><div class="kpi-value">${fmtNum(totalVolume)} ₪</div><div class="kpi-label">حجم التداول</div></div>
+        <div class="kpi-card"><div class="kpi-value">${activeDisputes}</div><div class="kpi-label">نزاعات نشطة</div></div>
+      `;
+
+      // Timeline
+      const timelineItems = timeline.timeline || [];
+      document.getElementById('tab-timeline').innerHTML = timelineItems.length ? 
+        `<div class="card">${timelineItems.slice(0,30).map(e => `
+          <div class="timeline-item">
+            <div class="timeline-dot"></div>
+            <div class="timeline-body">
+              <div class="timeline-text">${esc(e.description || e.type)}</div>
+              <div class="timeline-meta">${esc(e.username || 'نظام')} · ${fmtDate(e.created_at)}</div>
+            </div>
+          </div>
+        `).join('')}</div>` : '<div class="empty-state"><p>لا توجد أحداث</p></div>';
+
+      // Users
+      const usersList = users.users || [];
+      document.getElementById('tab-users').innerHTML = usersList.length ?
+        `<div class="card"><table class="table"><thead><tr><th>المستخدم</th><th>البريد</th><th>الثقة</th><th>الدور</th></tr></thead><tbody>${usersList.map(u => `
+          <tr><td>${esc(u.username)}</td><td>${esc(u.email || '—')}</td><td>${u.trust_score || 0}</td><td><span class="badge ${u.role === 'admin' ? 'badge-warning' : 'badge-neutral'}">${u.role || 'user'}</span></td></tr>
+        `).join('')}</tbody></table></div>` : '<div class="empty-state"><p>لا يوجد مستخدمون</p></div>';
+
+      // Trades
+      const tradesList = trades.trades || [];
+      document.getElementById('tab-trades').innerHTML = tradesList.length ?
+        `<div class="card"><table class="table"><thead><tr><th>#</th><th>المشتري</th><th>البائع</th><th>المبلغ</th><th>الحالة</th></tr></thead><tbody>${tradesList.map(t => `
+          <tr><td>${t.id}</td><td>${esc(t.buyer)}</td><td>${esc(t.seller)}</td><td>${t.amount} USDT</td><td><span class="badge badge-${t.status === 'COMPLETED' ? 'success' : t.status === 'CANCELLED' ? 'error' : 'warning'}">${t.status}</span></td></tr>
+        `).join('')}</tbody></table></div>` : '<div class="empty-state"><p>لا توجد صفقات</p></div>';
+
+      // Deposits
+      const depList = deposits.deposits || [];
+      document.getElementById('tab-deposits').innerHTML = depList.length ?
+        `<div class="card"><table class="table"><thead><tr><th>المستخدم</th><th>المبلغ</th><th>الحالة</th><th>التاريخ</th></tr></thead><tbody>${depList.map(d => `
+          <tr><td>${esc(d.username)}</td><td>${d.amount} USDT</td><td><span class="badge badge-${d.status === 'CONFIRMED' ? 'success' : 'warning'}">${d.status}</span></td><td>${fmtDate(d.created_at)}</td></tr>
+        `).join('')}</tbody></table></div>` : '<div class="empty-state"><p>لا توجد إيداعات</p></div>';
+
+      // Withdrawals
+      const wdList = withdrawals.withdrawals || [];
+      document.getElementById('tab-withdrawals').innerHTML = wdList.length ?
+        `<div class="card"><table class="table"><thead><tr><th>المستخدم</th><th>المبلغ</th><th>العنوان</th><th>الحالة</th></tr></thead><tbody>${wdList.map(w => `
+          <tr><td>${esc(w.username)}</td><td>${w.amount} USDT</td><td class="mono">${esc((w.address||'').substring(0,12))}...</td><td><span class="badge badge-${w.status === 'COMPLETED' ? 'success' : w.status === 'REJECTED' ? 'error' : 'warning'}">${w.status}</span></td></tr>
+        `).join('')}</tbody></table></div>` : '<div class="empty-state"><p>لا توجد سحوبات</p></div>';
+
+      // Disputes
+      const disList = disputes.disputes || [];
+      document.getElementById('tab-disputes').innerHTML = disList.length ?
+        `<div class="card"><table class="table"><thead><tr><th>#</th><th>الصفقة</th><th>المبلغ</th><th>السبب</th><th>الحالة</th></tr></thead><tbody>${disList.map(d => `
+          <tr><td>${d.id}</td><td>#${d.trade_id}</td><td>${d.amount || '—'}</td><td>${esc((d.reason || '').substring(0,30))}</td><td><span class="badge badge-${d.status === 'RESOLVED' ? 'success' : d.status === 'OPEN' ? 'error' : 'warning'}">${d.status}</span></td></tr>
+        `).join('')}</tbody></table></div>` : '<div class="empty-state"><p>لا توجد نزاعات</p></div>';
+
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('admin-content').style.display = 'block';
+    })();
+
+    window.showTab = function(name, btn) {
+      document.querySelectorAll('.admin-tab').forEach(el => el.style.display = 'none');
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById('tab-' + name).style.display = 'block';
+      btn.classList.add('active');
+    };
+
+    function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
+    function fmtNum(n) { return Number(n).toLocaleString('ar'); }
+    function fmtDate(d) { if (!d) return '—'; return new Date(d).toLocaleDateString('ar', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); }
+  </script>
+  <style>
+    .kpi-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:.75rem; margin-bottom:1.5rem; }
+    .kpi-card { text-align:center; padding:1rem; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-sm); }
+    .kpi-value { font-size:1.5rem; font-weight:800; color:var(--primary); }
+    .kpi-label { font-size:.7rem; color:var(--text-muted); margin-top:.25rem; }
+    .admin-tabs { display:flex; gap:.25rem; overflow-x:auto; margin-bottom:1rem; padding-bottom:.5rem; }
+    .tab-btn { padding:.5rem 1rem; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg-card); color:var(--text-muted); font-size:.8rem; font-weight:600; cursor:pointer; white-space:nowrap; transition:all .15s; }
+    .tab-btn.active { background:var(--primary); color:#fff; border-color:var(--primary); }
+    .table { width:100%; font-size:.8rem; }
+    .table th { text-align:right; padding:.6rem; color:var(--text-muted); font-weight:600; border-bottom:2px solid var(--border); }
+    .table td { padding:.6rem; border-bottom:1px solid var(--border); }
+    .timeline-item { display:flex; gap:.75rem; padding:.75rem 1rem; border-bottom:1px solid var(--border); }
+    .timeline-dot { width:8px; height:8px; border-radius:50%; background:var(--primary); margin-top:6px; flex-shrink:0; }
+    .timeline-body { flex:1; }
+    .timeline-text { font-size:.85rem; }
+    .timeline-meta { font-size:.7rem; color:var(--text-muted); margin-top:.15rem; }
+    @media (min-width:640px) { .kpi-grid { grid-template-columns:repeat(4,1fr); } }
+  </style>
+</body>
+</html>

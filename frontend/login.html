@@ -1,62 +1,81 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>تسجيل الدخول — USDT P2P Palestine</title>
-<link rel="stylesheet" href="/assets/app.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0e1a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>دخول — USDT P2P Palestine</title>
+  <link rel="stylesheet" href="/assets/design-system.css">
 </head>
 <body>
-<div class="app">
-<nav class="nav" id="nav"></nav>
-<main class="main"><div class="container" style="max-width:420px;margin-top:48px">
-  <div class="text-center" style="margin-bottom:24px">
-    <div style="width:56px;height:56px;border-radius:14px;background:var(--primary);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:12px">🔗</div>
-    <h1 style="font-size:1.4rem;font-weight:700">تسجيل الدخول</h1>
-    <p style="color:var(--text-muted);font-size:.85rem;margin-top:4px">أدخل بيانات حسابك للمتابعة</p>
+
+<!-- ===== Navbar ===== -->
+<nav class="navbar" id="nav">
+  <div class="navbar-inner">
+    <a href="/" class="navbar-brand">🇵🇸 <span>USDT</span> P2P</a>
+    <div class="navbar-links">
+      <a href="/login" class="btn-nav">دخول</a>
+      <a href="/register" class="btn-nav-accent btn-nav">حساب جديد</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ===== Content ===== -->
+<main>
+<div class="container container-narrow" style="padding-top:var(--sp-8);">
+
+  <div style="text-align:center;margin-bottom:var(--sp-8);">
+    <div style="font-size:3rem;margin-bottom:var(--sp-3);">🇵🇸</div>
+    <h1 style="font-size:1.8rem;">مرحباً بك</h1>
+    <p style="color:var(--text-muted);font-size:0.9rem;margin-top:var(--sp-2);">ادخل إلى حسابك في USDT P2P Palestine</p>
   </div>
 
   <!-- Telegram Login -->
-  <div style="margin-bottom:20px">
-    <button class="btn btn-block" id="tgLoginBtn" style="background:#0088cc;color:#fff;display:flex;align-items:center;justify-content:center;gap:10px;padding:14px 24px;border-radius:var(--radius-sm);font-size:15px;font-weight:600;cursor:pointer;border:none;width:100%">
+  <div style="margin-bottom:var(--sp-4);">
+    <button class="btn btn-block" id="tgLoginBtn" style="background:#0088cc;color:#fff;display:flex;align-items:center;justify-content:center;gap:var(--sp-2);padding:var(--sp-3) var(--sp-4);border-radius:var(--radius-md);font-size:0.95rem;font-weight:600;cursor:pointer;border:none;width:100%;">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12s5.37 12 12 12 12-5.37 12-12S18.63 0 12 0zm5.95 7.47l-1.97 9.28c-.15.67-.54.83-1.09.52l-3.02-2.22-1.46 1.4c-.16.16-.3.3-.61.3l.22-3.06 5.56-5.02c.24-.22-.05-.33-.37-.14L8.85 13.3l-2.96-.93c-.64-.2-.66-.64.13-.95l11.55-4.46c.54-.2 1.01.13.83.95l-.42.06z"/></svg>
-      تسجيل الدخول عبر Telegram
+      دخول عبر Telegram
     </button>
-    <div id="tgLoginMsg" style="display:none;margin-top:10px;padding:12px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);text-align:center">
-      <div id="tgLoginCode" style="font-size:1.5rem;font-weight:800;letter-spacing:4px;color:var(--primary);margin:8px 0"></div>
-      <p style="font-size:.8rem;color:var(--text-muted);margin-bottom:8px">أرسل هذا الكود للبوت:</p>
-      <p style="font-size:.85rem;color:var(--text)" id="tgLoginCmd"></p>
-      <button class="btn btn-sm btn-ghost" style="margin-top:8px" onclick="copyTgCode()">نسخ الكود</button>
+    <div id="tgLoginMsg" style="display:none;margin-top:var(--sp-3);padding:var(--sp-3);background:var(--bg-surface);border:1px solid var(--border);border-radius:var(--radius-md);text-align:center;">
+      <div id="tgLoginCode" style="font-size:1.5rem;font-weight:800;letter-spacing:4px;color:var(--accent);margin:var(--sp-2) 0;"></div>
+      <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:var(--sp-2);">أرسل هذا الكود للبوت:</p>
+      <p style="font-size:0.85rem;color:var(--text-primary);" id="tgLoginCmd"></p>
+      <button class="btn btn-ghost btn-sm" style="margin-top:var(--sp-2);" onclick="copyTgCode()">📋 نسخ الكود</button>
     </div>
   </div>
 
-  <div style="text-align:center;margin-bottom:16px;color:var(--text-muted);font-size:.85rem">— أو سجّل بالبريد الإلكتروني —</div>
+  <div style="text-align:center;margin-bottom:var(--sp-4);color:var(--text-muted);font-size:0.85rem;">— أو سجّل بالبريد الإلكتروني —</div>
 
-  <div id="errBox" class="alert alert-error" style="display:none;margin-bottom:16px"></div>
-  <div class="card" style="padding:24px">
+  <div id="errBox" class="flash flash-error" style="display:none;margin-bottom:var(--sp-4);"></div>
+
+  <form class="card" onsubmit="event.preventDefault();doSubmit();">
     <div class="form-group">
-      <label>اسم المستخدم أو البريد الإلكتروني</label>
-      <input type="text" class="form-input" id="identifier" placeholder="username أو email" autocomplete="username">
+      <label class="form-label">👤 اسم المستخدم أو البريد</label>
+      <input class="form-input" type="text" id="identifier" placeholder="أدخل اسم المستخدم أو البريد" required autocomplete="username" autofocus>
     </div>
     <div class="form-group">
-      <label>كلمة المرور</label>
-      <input type="password" class="form-input" id="password" placeholder="••••••••" autocomplete="current-password">
+      <label class="form-label">🔒 كلمة المرور</label>
+      <input class="form-input" type="password" id="password" placeholder="أدخل كلمة المرور" required autocomplete="current-password">
     </div>
-    <button class="btn btn-primary btn-block" id="loginBtn" style="margin-top:8px">تسجيل الدخول</button>
+    <button type="submit" class="btn btn-success btn-block btn-lg" id="loginBtn">🚀 دخول</button>
+  </form>
+
+  <div style="text-align:center;margin-top:var(--sp-6);">
+    <p style="color:var(--text-muted);font-size:0.85rem;">
+      ليس لديك حساب؟ <a href="/register" style="color:var(--accent-light);font-weight:600;">سجل الآن</a>
+    </p>
   </div>
-  <div class="text-center" style="margin-top:16px;font-size:.85rem">
-    <span style="color:var(--text-muted)">ليس لديك حساب؟</span> <a href="/register" style="color:var(--primary);font-weight:600;text-decoration:none">إنشاء حساب</a>
-  </div>
-</div></main>
+
 </div>
+</main>
+
+<div class="bottom-nav" id="bottomNav"></div>
+
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="/assets/app.js"></script>
 <script>
-document.getElementById('identifier').addEventListener('keydown', e => { if (e.key === 'Enter') doSubmit(); });
-document.getElementById('password').addEventListener('keydown', e => { if (e.key === 'Enter') doSubmit(); });
-document.getElementById('loginBtn').addEventListener('click', doSubmit);
-document.getElementById('tgLoginBtn').addEventListener('click', startTelegramLogin);
-
 let tgCode = '';
 
 async function startTelegramLogin() {
@@ -64,17 +83,17 @@ async function startTelegramLogin() {
   btn.disabled = true; btn.textContent = 'جاري التجهيز...';
   const r = await api('/auth/telegram/link', { method: 'POST' });
   btn.disabled = false;
-  btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12s5.37 12 12 12 12-5.37 12-12S18.63 0 12 0zm5.95 7.47l-1.97 9.28c-.15.67-.54.83-1.09.52l-3.02-2.22-1.46 1.4c-.16.16-.3.3-.61.3l.22-3.06 5.56-5.02c.24-.22-.05-.33-.37-.14L8.85 13.3l-2.96-.93c-.64-.2-.66-.64.13-.95l11.55-4.46c.54-.2 1.01.13.83.95l-.42.06z"/></svg> تسجيل الدخول عبر Telegram';
+  btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12s5.37 12 12 12 12-5.37 12-12S18.63 0 12 0zm5.95 7.47l-1.97 9.28c-.15.67-.54.83-1.09.52l-3.02-2.22-1.46 1.4c-.16.16-.3.3-.61.3l.22-3.06 5.56-5.02c.24-.22-.05-.33-.37-.14L8.85 13.3l-2.96-.93c-.64-.2-.66-.64.13-.95l11.55-4.46c.54-.2 1.01.13.83.95l-.42.06z"/></svg> دخول عبر Telegram';
   if (r && r.ok && r.code) {
     tgCode = r.code;
     document.getElementById('tgLoginCode').textContent = r.code;
     document.getElementById('tgLoginCmd').textContent = '/link ' + r.code;
     document.getElementById('tgLoginMsg').style.display = 'block';
-    toast('تم إنشاء الكود — أرسله للبوت');
-  } else { toast(r?.error || 'خطأ', 4000); }
+    showToast('تم إنشاء الكود — أرسله للبوت');
+  } else { showToast(r?.error || 'خطأ', 4000); }
 }
-
-function copyTgCode() { navigator.clipboard?.writeText('/link ' + tgCode); toast('تم نسخ الأمر'); }
+function copyTgCode() { navigator.clipboard?.writeText('/link ' + tgCode); showToast('تم نسخ الأمر'); }
+document.getElementById('tgLoginBtn').addEventListener('click', startTelegramLogin);
 
 async function doSubmit() {
   const id = document.getElementById('identifier').value.trim();
@@ -84,7 +103,7 @@ async function doSubmit() {
   if (!id || !pw) { errBox.textContent = 'أدخل جميع البيانات'; errBox.style.display = 'block'; return; }
   errBox.style.display = 'none'; btn.disabled = true; btn.textContent = 'جاري الدخول...';
   const r = await doLogin(id, pw);
-  btn.disabled = false; btn.textContent = 'تسجيل الدخول';
+  btn.disabled = false; btn.textContent = '🚀 دخول';
   if (r && r.ok) { location.href = new URLSearchParams(location.search).get('returnTo') || '/market'; }
   else if (r && r.error) { errBox.textContent = r.error; errBox.style.display = 'block'; }
   else { errBox.textContent = 'خطأ في الاتصال'; errBox.style.display = 'block'; }

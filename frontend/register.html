@@ -1,45 +1,33 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>إنشاء حساب — USDT P2P Palestine</title>
-<link rel="stylesheet" href="/assets/app.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0e1a">
+  <title>حساب جديد — USDT P2P Palestine</title>
+  <link rel="stylesheet" href="/assets/design-system.css">
 </head>
 <body>
-<div class="app">
-<nav class="nav" id="nav"></nav>
-<main class="main"><div class="container" style="max-width:420px;margin-top:48px">
-  <div class="text-center" style="margin-bottom:24px">
-    <div style="width:56px;height:56px;border-radius:14px;background:var(--success);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:12px">🚀</div>
-    <h1 style="font-size:1.4rem;font-weight:700">إنشاء حساب جديد</h1>
-    <p style="color:var(--text-muted);font-size:.85rem;margin-top:4px">انضم إلى منصة USDT P2P Palestine</p>
+<nav class="navbar" id="nav"><div class="navbar-inner"><a href="/" class="navbar-brand">🇵🇸 <span>USDT</span> P2P</a><div class="navbar-links"><a href="/login" class="btn-nav">دخول</a><a href="/register" class="btn-nav-accent btn-nav">حساب جديد</a></div></div></nav>
+<main><div class="container container-narrow" style="padding-top:var(--sp-8);">
+  <div style="text-align:center;margin-bottom:var(--sp-8);">
+    <div style="font-size:3rem;margin-bottom:var(--sp-3);">🚀</div>
+    <h1 style="font-size:1.8rem;">حساب جديد</h1>
+    <p style="color:var(--text-muted);font-size:0.9rem;margin-top:var(--sp-2);">انضم إلى منصة USDT P2P Palestine</p>
   </div>
-  <div id="errBox" class="alert alert-error" style="display:none;margin-bottom:16px"></div>
-  <div class="card" style="padding:24px">
-    <div class="form-group">
-      <label>اسم المستخدم</label>
-      <input type="text" class="form-input" id="username" placeholder="username" autocomplete="username">
-    </div>
-    <div class="form-group">
-      <label>البريد الإلكتروني</label>
-      <input type="email" class="form-input" id="email" placeholder="email@example.com" autocomplete="email">
-    </div>
-    <div class="form-group">
-      <label>كلمة المرور</label>
-      <input type="password" class="form-input" id="password" placeholder="6 أحرف على الأقل" autocomplete="new-password">
-    </div>
-    <button class="btn btn-primary btn-block" id="regBtn" style="margin-top:8px">إنشاء حساب</button>
-  </div>
-  <div class="text-center" style="margin-top:16px;font-size:.85rem">
-    <span style="color:var(--text-muted)">لديك حساب بالفعل؟</span> <a href="/login" style="color:var(--primary);font-weight:600;text-decoration:none">تسجيل الدخول</a>
-  </div>
+  <div id="errBox" class="flash flash-error" style="display:none;margin-bottom:var(--sp-4);"></div>
+  <form class="card" onsubmit="event.preventDefault();doSubmit();">
+    <div class="form-group"><label class="form-label">👤 اسم المستخدم</label><input class="form-input" type="text" id="username" placeholder="أدخل اسم المستخدم" required autocomplete="username"></div>
+    <div class="form-group"><label class="form-label">📧 البريد الإلكتروني</label><input class="form-input" type="email" id="email" placeholder="email@example.com" required autocomplete="email"></div>
+    <div class="form-group"><label class="form-label">🔒 كلمة المرور</label><input class="form-input" type="password" id="password" placeholder="6 أحرف على الأقل" required autocomplete="new-password"></div>
+    <button type="submit" class="btn btn-success btn-block btn-lg" id="regBtn">🚀 إنشاء حساب</button>
+  </form>
+  <div style="text-align:center;margin-top:var(--sp-6);"><p style="color:var(--text-muted);font-size:0.85rem;">لديك حساب بالفعل؟ <a href="/login" style="color:var(--accent-light);font-weight:600;">سجّل دخولك</a></p></div>
 </div></main>
-</div>
+<div class="bottom-nav" id="bottomNav"></div>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="/assets/app.js"></script>
 <script>
-document.getElementById('regBtn').addEventListener('click', doSubmit);
 async function doSubmit() {
   const username = document.getElementById('username').value.trim();
   const email = document.getElementById('email').value.trim();
@@ -50,7 +38,7 @@ async function doSubmit() {
   if (password.length < 6) { errBox.textContent = 'كلمة المرور يجب أن تكون 6 أحرف على الأقل'; errBox.style.display = 'block'; return; }
   errBox.style.display = 'none'; btn.disabled = true; btn.textContent = 'جاري الإنشاء...';
   const r = await doRegister(username, email, password);
-  btn.disabled = false; btn.textContent = 'إنشاء حساب';
+  btn.disabled = false; btn.textContent = '🚀 إنشاء حساب';
   if (r && r.ok) { location.href = '/market'; }
   else if (r && r.error) { errBox.textContent = r.error; errBox.style.display = 'block'; }
   else { errBox.textContent = 'خطأ في الاتصال'; errBox.style.display = 'block'; }

@@ -226,20 +226,19 @@ function renderNav() {
   const nav = document.getElementById('nav');
   if (!nav) return;
   const u = currentUser();
-  nav.innerHTML = `<div class="nav-inner container">
-    <a href="/" class="nav-logo">USDT<span style="color:var(--accent)">P2P</span></a>
-    <div class="nav-links">
-      <a href="/market">السوق</a>
-      ${u ? `<a href="/trades">الصفقات</a><a href="/wallet">المحفظة</a><a href="/notifications">الإشعارات</a><a href="/profile">حسابي</a>${u.isAdmin ? '<a href="/admin">الإدارة</a>' : ''}` : `<a href="/login">تسجيل الدخول</a>`}
+  nav.innerHTML = `<div class="navbar-inner">
+    <a href="/" class="navbar-brand">🇵🇸 <span>USDT</span> P2P</a>
+    <div class="navbar-links">
+      ${u ? `<a href="/market">السوق</a><a href="/trades">الصفقات</a><a href="/wallet">المحفظة</a><a href="/notifications">الإشعارات</a><a href="/profile">حسابي</a>${u.isAdmin ? '<a href="/admin">الإدارة</a>' : ''}` : `<a href="/login" class="btn-nav">دخول</a><a href="/register" class="btn-nav-accent btn-nav">حساب جديد</a>`}
       <button onclick="toggleTheme()" style="background:none;border:none;cursor:pointer;font-size:1.1rem;padding:4px 8px" title="تبديل المظهر">${themeIcon()}</button>
     </div></div>`;
   const bn = document.getElementById('bottomNav');
   if (bn && u) {
     const p = location.pathname;
-    bn.innerHTML = `<a href="/market" class="${p==='/market'?'active':''}"><span class="icon">🛒</span>السوق</a>
-      <a href="/trades" class="${p==='/trades'?'active':''}"><span class="icon">📄</span>الصفقات</a>
-      <a href="/wallet" class="${p==='/wallet'?'active':''}"><span class="icon">💰</span>المحفظة</a>
-      <a href="/profile" class="${p==='/profile'?'active':''}"><span class="icon">👤</span>حسابي</a>`;
+    bn.innerHTML = `<a href="/market" class="${p==='/market'?'active':''}"><span class="nav-icon">🛒</span><span class="nav-label">السوق</span></a>
+      <a href="/trades" class="${p==='/trades'?'active':''}"><span class="nav-icon">📄</span><span class="nav-label">الصفقات</span></a>
+      <a href="/wallet" class="${p==='/wallet'?'active':''}"><span class="nav-icon">💰</span><span class="nav-label">المحفظة</span></a>
+      <a href="/profile" class="${p==='/profile'?'active':''}"><span class="nav-icon">👤</span><span class="nav-label">حسابي</span></a>`;
   }
 }
 

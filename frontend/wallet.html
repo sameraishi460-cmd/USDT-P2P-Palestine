@@ -1,109 +1,47 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>المحفظة — USDT P2P Palestine</title>
-<link rel="stylesheet" href="/assets/app.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0e1a">
+  <title>المحفظة — USDT P2P Palestine</title>
+  <link rel="stylesheet" href="/assets/design-system.css">
 </head>
 <body>
-<div class="app">
-<nav class="nav" id="nav"></nav>
-<main class="main"><div class="container" style="max-width:640px" id="app"><div class="card"><div class="spinner"></div></div></div></main>
+<nav class="navbar" id="nav"><div class="navbar-inner"><a href="/" class="navbar-brand">🇵🇸 <span>USDT</span> P2P</a><div class="navbar-links"></div></div></nav>
+<main><div class="container">
+  <div class="page-header"><h2>💰 المحفظة</h2></div>
+  <div id="app"><div class="skeleton" style="height:120px;"></div></div>
+</div></main>
 <div class="bottom-nav" id="bottomNav"></div>
-</div>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="/assets/app.js"></script>
 <script>
-let _tab = 'overview';
 async function load() {
   if (!requireAuth()) return;
   const w = await api('/wallet');
   const hist = await api('/wallet/history');
   const txns = hist?.transactions || hist?.history || [];
   document.getElementById('app').innerHTML = `
-    <h1 style="font-size:1.3rem;font-weight:800;margin-bottom:16px">💰 المحفظة</h1>
-    <div class="card" style="padding:20px;text-align:center;background:linear-gradient(135deg,var(--bg-card),var(--bg-card-hover))">
-      <div style="font-size:.85rem;color:var(--text-muted);margin-bottom:4px">الرصيد المتاح</div>
-      <div style="font-size:2rem;font-weight:900;color:var(--primary)">${fmtNum(w?.balance)} USDT</div>
-      ${w?.locked > 0 ? `<div style="font-size:.8rem;color:var(--warning);margin-top:4px">🔒 ${fmtNum(w.locked)} USDT مقفلة</div>` : ''}
+    <div class="card" style="text-align:center;padding:var(--sp-6);background:var(--bg-card);margin-bottom:var(--sp-4);">
+      <div style="font-size:0.85rem;color:var(--text-muted);margin-bottom:var(--sp-2);">الرصيد المتاح</div>
+      <div style="font-size:2rem;font-weight:900;color:var(--accent);">${fmtNum(w?.balance)} USDT</div>
+      ${w?.locked > 0 ? `<div style="font-size:0.8rem;color:var(--warning);margin-top:var(--sp-2);">🔒 ${fmtNum(w.locked)} USDT مقفلة</div>` : ''}
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0">
-      <button class="btn btn-primary" onclick="showDeposit()">📥 إيداع</button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3);margin-bottom:var(--sp-4);">
+      <button class="btn btn-success" onclick="showDeposit()">📥 إيداع</button>
       <button class="btn btn-ghost" onclick="showWithdraw()">📤 سحب</button>
     </div>
-    <div class="card" style="padding:16px">
-      <div class="card-title">📊 سجل المعاملات</div>
-      ${txns.length ? txns.map(t => `
-        <div style="padding:10px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
-          <div>
-            <div style="font-weight:600;font-size:.85rem">${esc(t.action || t.type || 'معاملة')}</div>
-            <div style="font-size:.75rem;color:var(--text-muted)">${fmtDate(t.created || t.date)}</div>
-          </div>
-          <div style="text-align:left">
-            <div style="font-weight:700;color:${(t.amount||0)>=0?'var(--success)':'var(--danger)'}">${(t.amount||0)>=0?'+':''} ${fmtNum(t.amount)} USDT</div>
-            <div style="font-size:.7rem;color:var(--text-muted)">${t.status || ''}</div>
-          </div>
-        </div>`).join('') : '<div style="text-align:center;color:var(--text-muted);padding:16px">لا توجد معاملات بعد</div>'}
-    </div>
-  `;
+    <div class="section-title">📊 سجل المعاملات</div>
+    ${txns.length ? txns.map(t => `<div class="card" style="padding:var(--sp-3);display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--sp-2);">
+      <div><div style="font-weight:600;font-size:0.85rem;">${esc(t.action || t.type || 'معاملة')}</div><div style="font-size:0.7rem;color:var(--text-muted);">${fmtDate(t.created || t.date)}</div></div>
+      <div style="text-align:left;"><div style="font-weight:700;color:${(t.amount||0)>=0?'var(--accent)':'var(--danger)'};">${(t.amount||0)>=0?'+':''} ${fmtNum(t.amount)} USDT</div></div>
+    </div>`).join('') : '<div class="card" style="text-align:center;padding:var(--sp-6);color:var(--text-muted);">لا توجد معاملات بعد</div>'}`;
 }
-
-function showDeposit() {
-  const app = document.getElementById('app');
-  app.innerHTML = `
-    <h1 style="font-size:1.3rem;font-weight:800;margin-bottom:16px">📥 إيداع USDT</h1>
-    <div class="card" style="padding:16px">
-      <div style="font-weight:600;margin-bottom:8px">الشبكة: BSC (BEP-20)</div>
-      <div style="font-size:.85rem;color:var(--text-muted);margin-bottom:12px">أرسل USDT إلى العنوان التالي:</div>
-      <div style="background:var(--bg-input);padding:12px;border-radius:8px;text-align:center;margin-bottom:12px">
-        <div style="font-size:.85rem;font-weight:700;word-break:break-all;color:var(--primary)">0x659dd7cba24363c903abe3fddfc89eb30ffbf58a</div>
-      </div>
-      <button class="btn btn-sm btn-ghost" onclick="navigator.clipboard?.writeText('0x659dd7cba24363c903abe3fddfc89eb30ffbf58a');toast('تم النسخ')">📋 نسخ العنوان</button>
-      <div class="form-group" style="margin-top:16px">
-        <label>رقم المعاملة (TX Hash)</label>
-        <input type="text" id="txHash" placeholder="0x..." style="font-size:13px">
-      </div>
-      <button class="btn btn-primary btn-block" onclick="submitDeposit()">إرسال</button>
-      <button class="btn btn-ghost btn-block" style="margin-top:8px" onclick="load()">العودة</button>
-    </div>
-  `;
-}
-
-async function submitDeposit() {
-  const tx = document.getElementById('txHash').value.trim();
-  if (!tx) { toast('أدخل رقم المعاملة'); return; }
-  const r = await api('/wallet/deposit', { method: 'POST', body: { tx_hash: tx } });
-  if (r?.ok) { toast('✅ تم إرسال طلب الإيداع'); load(); } else { toast(r?.error || 'خطأ', 4000); }
-}
-
-function showWithdraw() {
-  const app = document.getElementById('app');
-  app.innerHTML = `
-    <h1 style="font-size:1.3rem;font-weight:800;margin-bottom:16px">📤 سحب USDT</h1>
-    <div class="card" style="padding:16px">
-      <div class="form-group">
-        <label>عنوان المحفظة (BSC)</label>
-        <input type="text" id="withdrawAddr" placeholder="0x...">
-      </div>
-      <div class="form-group">
-        <label>المبلغ (USDT)</label>
-        <input type="number" id="withdrawAmount" placeholder="0.00" step="0.01" min="0">
-      </div>
-      <button class="btn btn-primary btn-block" onclick="submitWithdraw()">إرسال طلب السحب</button>
-      <button class="btn btn-ghost btn-block" style="margin-top:8px" onclick="load()">العودة</button>
-    </div>
-  `;
-}
-
-async function submitWithdraw() {
-  const addr = document.getElementById('withdrawAddr').value.trim();
-  const amount = parseFloat(document.getElementById('withdrawAmount').value);
-  if (!addr || !amount || amount <= 0) { toast('أدخل البيانات بشكل صحيح'); return; }
-  const r = await api('/wallet/withdraw', { method: 'POST', body: { wallet: addr, amount } });
-  if (r?.ok) { toast('✅ تم إرسال طلب السحب'); load(); } else { toast(r?.error || 'خطأ', 4000); }
-}
-
+function showDeposit() { document.getElementById('app').innerHTML = `<div class="card" style="padding:var(--sp-4);"><h3 style="margin-bottom:var(--sp-3);">📥 إيداع USDT</h3><div style="font-size:0.85rem;color:var(--text-muted);margin-bottom:var(--sp-3);">الشبكة: BSC (BEP-20)</div><div style="background:var(--bg-input);padding:var(--sp-3);border-radius:var(--radius-sm);text-align:center;margin-bottom:var(--sp-3);word-break:break-all;font-size:0.85rem;font-weight:700;color:var(--accent);">0x659dd7cba24363c903abe3fddfc89eb30ffbf58a</div><button class="btn btn-ghost btn-block btn-sm" onclick="navigator.clipboard?.writeText('0x659dd7cba24363c903abe3fddfc89eb30ffbf58a');showToast('تم النسخ')">📋 نسخ</button><div class="form-group" style="margin-top:var(--sp-4);"><label class="form-label">رقم المعاملة</label><input class="form-input" id="txHash" placeholder="0x..."></div><button class="btn btn-success btn-block" onclick="submitDeposit()">إرسال</button><button class="btn btn-ghost btn-block" style="margin-top:var(--sp-2);" onclick="load()">رجوع</button></div>`; }
+async function submitDeposit() { const tx = document.getElementById('txHash').value.trim(); if (!tx) { showToast('أدخل رقم المعاملة'); return; } const r = await api('/wallet/deposit', { method: 'POST', body: { tx_hash: tx } }); if (r?.ok) { showToast('✅ تم إرسال طلب الإيداع'); load(); } else { showToast(r?.error || 'خطأ', 4000); } }
+function showWithdraw() { document.getElementById('app').innerHTML = `<div class="card" style="padding:var(--sp-4);"><h3 style="margin-bottom:var(--sp-3);">📤 سحب USDT</h3><div class="form-group"><label class="form-label">عنوان المحفظة (BSC)</label><input class="form-input" id="withdrawAddr" placeholder="0x..."></div><div class="form-group"><label class="form-label">المبلغ (USDT)</label><input class="form-input" type="number" id="withdrawAmount" placeholder="0.00" step="0.01" min="0"></div><button class="btn btn-success btn-block" onclick="submitWithdraw()">إرسال طلب السحب</button><button class="btn btn-ghost btn-block" style="margin-top:var(--sp-2);" onclick="load()">رجوع</button></div>`; }
+async function submitWithdraw() { const addr = document.getElementById('withdrawAddr').value.trim(); const amount = parseFloat(document.getElementById('withdrawAmount').value); if (!addr || !amount || amount <= 0) { showToast('أدخل البيانات بشكل صحيح'); return; } const r = await api('/wallet/withdraw', { method: 'POST', body: { wallet: addr, amount } }); if (r?.ok) { showToast('✅ تم إرسال طلب السحب'); load(); } else { showToast(r?.error || 'خطأ', 4000); } }
 load();
 </script>
 </body>

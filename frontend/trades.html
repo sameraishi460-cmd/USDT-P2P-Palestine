@@ -1,48 +1,36 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>الصفقات — USDT P2P Palestine</title>
-<link rel="stylesheet" href="/assets/app.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0a0e1a">
+  <title>الصفقات — USDT P2P Palestine</title>
+  <link rel="stylesheet" href="/assets/design-system.css">
 </head>
 <body>
-<div class="app">
-<nav class="nav" id="nav"></nav>
-<main class="main"><div class="container" style="max-width:640px">
-  <h1 style="font-size:1.3rem;font-weight:700;margin-bottom:16px">الصفقات</h1>
-  <div id="tradesList"><div class="card"><div class="spinner"></div></div></div>
+<nav class="navbar" id="nav"><div class="navbar-inner"><a href="/" class="navbar-brand">🇵🇸 <span>USDT</span> P2P</a><div class="navbar-links"></div></div></nav>
+<main><div class="container">
+  <div class="page-header"><h2>📄 صفقاتي</h2></div>
+  <div id="app"><div class="skeleton" style="height:80px;"></div></div>
 </div></main>
 <div class="bottom-nav" id="bottomNav"></div>
-</div>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="/assets/app.js"></script>
 <script>
 async function load() {
   if (!requireAuth()) return;
-  const r = await api('/trades');
-  const el = document.getElementById('tradesList');
-  if (!r || !r.ok) { el.innerHTML = '<div class="card text-center" style="padding:32px;color:var(--text-muted)">خطأ في تحميل الصفقات</div>'; return; }
-  const trades = r.trades || [];
-  if (!trades.length) { el.innerHTML = '<div class="card text-center" style="padding:32px"><div style="font-size:2rem;margin-bottom:8px">🤝</div><div style="font-weight:600;margin-bottom:4px">لا توجد صفقات</div><div style="color:var(--text-muted);font-size:.85rem"><a href="/market" style="color:var(--accent)">تصفح السوق</a></div></div>'; return; }
-  const u = currentUser();
-  el.innerHTML = trades.map(t => {
-    const isBuyer = t.buyer === u.username;
-    const role = isBuyer ? 'مشتري' : 'بائع';
-    const other = isBuyer ? t.seller : t.buyer;
-    return `<a href="/trade.html?id=${t.id}" style="text-decoration:none;color:inherit;display:block;margin-bottom:10px">
-      <div class="card" style="padding:14px">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div>
-            <div style="font-weight:600;font-size:.9rem">#${t.id} · ${role}</div>
-            <div style="font-size:.8rem;color:var(--text-muted)">${esc(other)}</div>
-          </div>
-          ${statusBadge(t.status)}
-        </div>
-        <div style="display:flex;gap:16px;margin-top:8px;font-size:.8rem;color:var(--text-secondary)">
-          <span>${fmtNum(t.amount)} USDT</span><span>${fmtNum(t.price)} ₪</span><span>${fmtDate(t.created)}</span>
-        </div>
-      </div></a>`;
+  const resp = await api('/trades');
+  const trades = resp?.trades || [];
+  const list = document.getElementById('app');
+  if (!trades.length) { list.innerHTML = '<div class="card" style="text-align:center;padding:var(--sp-8);"><div style="font-size:2rem;margin-bottom:var(--sp-2);">📄</div><div style="color:var(--text-muted);">لا توجد صفقات بعد</div><a href="/market" class="btn btn-success btn-sm" style="margin-top:var(--sp-3);">تصفح السوق</a></div>'; return; }
+  list.innerHTML = trades.map(t => {
+    const u = currentUser();
+    const other = t.buyer === u.username ? t.seller : t.buyer;
+    return `<a href="/trade?id=${t.id}" class="trade-card" style="display:block;text-decoration:none;">
+      <div class="trade-card-header"><span style="font-weight:700;">الصفقة #${t.id}</span>${statusBadge(t.status)}</div>
+      <div class="trade-card-body"><span>المتداول: ${esc(other)}</span><span>${fmtNum(t.amount)} USDT</span></div>
+      <div class="trade-card-footer"><span>${fmtDate(t.created)}</span><span style="font-weight:700;color:var(--accent);">${fmtNum(t.price)} ₪</span></div>
+    </a>`;
   }).join('');
 }
 load();

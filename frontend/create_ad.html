@@ -1,61 +1,124 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>إنشاء إعلان — USDT P2P Palestine</title>
-<link rel="stylesheet" href="/assets/app.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>إنشاء إعلان — USDT P2P Palestine</title>
+  <link rel="stylesheet" href="/assets/design-system.css">
+  <link rel="stylesheet" href="/assets/app.css">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
-<div class="app">
-<nav class="nav" id="nav"></nav>
-<main class="main"><div class="container" style="max-width:480px">
-  <h1 style="font-size:1.3rem;font-weight:700;margin-bottom:16px">إنشاء إعلان</h1>
-  <div class="card" style="padding:20px">
-    <div class="form-group">
-      <label>نوع الإعلان</label>
-      <div style="display:flex;gap:8px">
-        <button class="btn btn-accent" id="typeBuy" onclick="setType('BUY')" style="flex:1">🛒 شراء</button>
-        <button class="btn btn-outline" id="typeSell" onclick="setType('SELL')" style="flex:1">💰 بيع</button>
+  <div id="nav"></div>
+  <div id="bottom-nav"></div>
+
+  <main class="main-content">
+    <div class="page-header">
+      <h1 class="page-title">إنشاء إعلان جديد</h1>
+    </div>
+
+    <form id="ad-form" class="card" onsubmit="submitAd(event)">
+      <div class="card-body">
+        <div class="form-group">
+          <label class="form-label">نوع الإعلان</label>
+          <div class="type-toggle">
+            <button type="button" class="type-btn active" data-type="SELL" onclick="setType(this)">بيع USDT</button>
+            <button type="button" class="type-btn" data-type="BUY" onclick="setType(this)">شراء USDT</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">السعر (₪ لكل USDT)</label>
+          <input type="number" step="0.01" min="0" class="form-input" id="price" placeholder="3.50" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">المبلغ (USDT)</label>
+          <input type="number" step="0.01" min="1" class="form-input" id="amount" placeholder="1000" required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group" style="flex:1">
+            <label class="form-label">الحد الأدنى</label>
+            <input type="number" step="0.01" min="1" class="form-input" id="min_amount" placeholder="50" required>
+          </div>
+          <div class="form-group" style="flex:1">
+            <label class="form-label">الحد الأقصى</label>
+            <input type="number" step="0.01" min="1" class="form-input" id="max_amount" placeholder="500" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">طريقة الدفع</label>
+          <select class="form-input" id="payment">
+            <option value="bank_transfer">تحويل بنكي</option>
+            <option value="paypal">PayPal</option>
+            <option value="wise">Wise</option>
+            <option value="cash">نقدي</option>
+            <option value="crypto">عملات رقمية</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">التعليمات (اختياري)</label>
+          <textarea class="form-input" id="instructions" rows="3" placeholder="تعليمات الدفع أو ملاحظات إضافية..."></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block" id="submit-btn">نشر الإعلان</button>
       </div>
-      <input type="hidden" id="adType" value="BUY">
-    </div>
-    <div class="form-group"><label>العنوان</label><input type="text" class="form-input" id="adTitle" placeholder="مثال: شراء USDT بكاش"></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-      <div class="form-group"><label>السعر (₪)</label><input type="number" class="form-input" id="adPrice" step="0.01" min="0.01"></div>
-      <div class="form-group"><label>الكمية (USDT)</label><input type="number" class="form-input" id="adAmount" step="0.01" min="1"></div>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-      <div class="form-group"><label>الحد الأدنى</label><input type="number" class="form-input" id="adMin" step="0.01" min="1"></div>
-      <div class="form-group"><label>الحد الأقصى</label><input type="number" class="form-input" id="adMax" step="0.01"></div>
-    </div>
-    <div class="form-group">
-      <label>طريقة الدفع</label>
-      <select class="form-input" id="adPayment"><option value="cash">نقدي</option><option value="bank_transfer">تحويل بنكي</option><option value="wallet">محفظة</option></select>
-    </div>
-    <button class="btn btn-accent btn-block" onclick="submitAd()">نشر الإعلان</button>
-  </div>
-</div></main>
-<div class="bottom-nav" id="bottomNav"></div>
-</div>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script src="/assets/app.js"></script>
-<script>
-function setType(t) { document.getElementById('adType').value = t; document.getElementById('typeBuy').className = t==='BUY'?'btn btn-accent':'btn btn-outline'; document.getElementById('typeSell').className = t==='SELL'?'btn btn-accent':'btn btn-outline'; }
-async function submitAd() {
-  if (!requireAuth()) return;
-  const title = document.getElementById('adTitle').value.trim();
-  const price = parseFloat(document.getElementById('adPrice').value);
-  const amount = parseFloat(document.getElementById('adAmount').value);
-  const min = parseFloat(document.getElementById('adMin').value);
-  const max = parseFloat(document.getElementById('adMax').value) || null;
-  const payment = document.getElementById('adPayment').value;
-  const type = document.getElementById('adType').value;
-  if (!title || !price || !amount || !min) { toast('أدخل جميع البيانات المطلوبة'); return; }
-  const r = await api('/market/ads/create', { method: 'POST', body: { title, type, price: price, amount: amount, min_amount: min, max_amount: max, payment: payment } });
-  if (r && r.ok) { toast('✅ تم نشر الإعلان'); location.href = '/market'; }
-  else if (r && r.error) toast(r.error);
-}
-</script>
+    </form>
+  </main>
+
+  <script src="/assets/app.js"></script>
+  <script>
+    let adType = 'SELL';
+    
+    function setType(btn) {
+      document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      adType = btn.dataset.type;
+    }
+
+    async function submitAd(e) {
+      e.preventDefault();
+      const btn = document.getElementById('submit-btn');
+      btn.disabled = true;
+      btn.textContent = 'جاري النشر...';
+
+      try {
+        const res = await api('/ads', 'POST', {
+          type: adType,
+          price: parseFloat(document.getElementById('price').value),
+          amount: parseFloat(document.getElementById('amount').value),
+          min_amount: parseFloat(document.getElementById('min_amount').value),
+          max_amount: parseFloat(document.getElementById('max_amount').value),
+          payment: document.getElementById('payment').value,
+          instructions: document.getElementById('instructions').value
+        });
+        
+        if (res.error) {
+          alert(res.error);
+          btn.disabled = false;
+          btn.textContent = 'نشر الإعلان';
+          return;
+        }
+        
+        alert('تم نشر الإعلان بنجاح!');
+        window.location.href = '/market';
+      } catch(err) {
+        alert('خطأ في نشر الإعلان');
+        btn.disabled = false;
+        btn.textContent = 'نشر الإعلان';
+      }
+    }
+  </script>
+  <style>
+    .type-toggle { display:flex; gap:.5rem; }
+    .type-btn { flex:1; padding:.75rem; border:2px solid var(--border); border-radius:var(--radius-sm); background:var(--bg-card); color:var(--text); font-size:.9rem; font-weight:600; cursor:pointer; transition:all .15s; }
+    .type-btn.active { border-color:var(--primary); background:color-mix(in srgb, var(--primary) 10%, transparent); color:var(--primary); }
+    .type-btn[data-type="SELL"].active { border-color:var(--error); background:color-mix(in srgb, var(--error) 10%, transparent); color:var(--error); }
+    .form-group { margin-bottom:1rem; }
+    .form-row { display:flex; gap:1rem; }
+  </style>
 </body>
 </html>

@@ -1,73 +1,149 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ملف المتداول — USDT P2P Palestine</title>
-<link rel="stylesheet" href="/assets/app.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ملف المتداول — USDT P2P Palestine</title>
+  <link rel="stylesheet" href="/assets/design-system.css">
+  <link rel="stylesheet" href="/assets/app.css">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
-<div class="app">
-<nav class="nav" id="nav"></nav>
-<main class="main"><div class="container" style="max-width:640px" id="app"><div class="card"><div class="spinner"></div></div></div></main>
-<div class="bottom-nav" id="bottomNav"></div>
-</div>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script src="/assets/app.js"></script>
-<script>
-async function load() {
-  const params = new URLSearchParams(location.search);
-  const username = params.get('u') || location.pathname.split('/trader/')[1];
-  if (!username) { document.getElementById('app').innerHTML = '<div class="card"><div class="empty"><div class="empty-icon">👤</div><div class="empty-title">متداول غير موجود</div></div></div>'; return; }
+  <div id="nav"></div>
+  <div id="bottom-nav"></div>
 
-  const [prof, trustResp, adsResp, reviewsResp] = await Promise.all([
-    api('/v2/trust/' + username).catch(() => ({})),
-    api('/v2/trust/' + username).catch(() => ({})),
-    api('/market').catch(() => ({ ads: [] })),
-    api('/v2/reviews/' + username).catch(() => ({ reviews: [] })),
-  ]);
-
-  const t = (trustResp?.trust) || {};
-  const v = (trustResp?.vip) || {};
-  const vc = v.level === 'verified' ? '💎' : v.level === 'gold' ? '🥇' : v.level === 'silver' ? '🥈' : '🥉';
-  const vl = v.label || 'برونزي';
-  const ads = (adsResp?.ads || []).filter(a => a.user === username).slice(0, 5);
-  const reviews = (reviewsResp?.reviews || []).slice(0, 10);
-
-  document.getElementById('app').innerHTML = `
-    <div class="card" style="text-align:center;padding:24px">
-      <div class="avatar avatar-xl" style="margin:0 auto 12px">${username[0].toUpperCase()}</div>
-      <h1 style="font-size:1.3rem;font-weight:700;margin:0 0 4px">${esc(username)}</h1>
-      <div style="display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin-bottom:8px">
-        <span class="badge badge-vip">${vc} ${vl}</span>
-        ${t.trust_score >= 80 ? '<span class="trust-score trust-high">🛡️ موثوق</span>' : ''}
-        ${t.avg_rating ? `<span class="badge badge-info">⭐ ${fmtNum(t.avg_rating,1)}</span>` : ''}
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px">
-        <div><div style="font-size:1.2rem;font-weight:800;color:var(--primary)">${t.completed_trades || 0}</div><div style="font-size:.75rem;color:var(--text-muted)">صفقة</div></div>
-        <div><div style="font-size:1.2rem;font-weight:800;color:var(--success)">${t.completion_rate || 0}%</div><div style="font-size:.75rem;color:var(--text-muted)">نسبة الإتمام</div></div>
-        <div><div style="font-size:1.2rem;font-weight:800;color:var(--warning)">${fmtNum(t.trust_score,0)}%</div><div style="font-size:.75rem;color:var(--text-muted)">Trust Score</div></div>
-      </div>
+  <main class="main-content">
+    <div id="loading" class="loading-spinner">
+      <div class="spinner"></div>
+      <p>جاري تحميل ملف المتداول...</p>
     </div>
+    <div id="trader-content" style="display:none"></div>
+  </main>
 
-    ${ads.length ? `<div class="card" style="padding:16px"><div class="card-title">📢 الإعلانات النشطة</div>${ads.map(a => `
-      <div style="padding:10px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
-        <div><span class="${a.type==='BUY'?'badge badge-buy':'badge badge-sell'}">${a.type==='BUY'?'شراء':'بيع'}</span> ${fmtNum(a.amount)} USDT</div>
-        <div style="font-weight:700;color:var(--primary)">${fmtNum(a.price)} ₪</div>
-      </div>`).join('')}</div>` : ''}
+  <script src="/assets/app.js"></script>
+  <script>
+    (async function() {
+      const params = new URLSearchParams(window.location.search);
+      const username = params.get('u');
+      if (!username) { window.location.href = '/market'; return; }
 
-    ${reviews.length ? `<div class="card" style="padding:16px"><div class="card-title">⭐ التقييمات</div>${reviews.map(r => `
-      <div style="padding:10px 0;border-bottom:1px solid var(--border)">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <span style="font-weight:600">${esc(r.from_user)}</span>
-          <span style="color:var(--warning)">${'⭐'.repeat(r.rating)}</span>
-        </div>
-        ${r.comment ? `<p style="font-size:.85rem;color:var(--text-secondary);margin-top:4px">${esc(r.comment)}</p>` : ''}
-        <div style="font-size:.75rem;color:var(--text-muted);margin-top:2px">${fmtDate(r.created)}</div>
-      </div>`).join('')}</div>` : '<div class="card"><div class="empty"><p>لا توجد تقييمات بعد</p></div></div>'}
-  `;
-}
-load();
-</script>
+      try {
+        const trustRes = await api('/v2/trust/' + username);
+        const t = trustRes.trust || {};
+        const adsRes = await api('/ads?seller=' + username).catch(() => ({ ads: [] }));
+        const ads = adsRes.ads || [];
+
+        document.getElementById('trader-content').innerHTML = `
+          <div class="page-header">
+            <a href="/market" class="btn btn-sm">→ العودة للسوق</a>
+          </div>
+
+          <div class="card profile-card">
+            <div class="profile-header">
+              <div class="avatar-lg">${username[0].toUpperCase()}</div>
+              <div class="profile-info">
+                <h2 class="profile-name">
+                  ${escH(username)}
+                  ${t.is_verified ? ' <span class="badge badge-success">✓ موثق</span>' : ''}
+                </h2>
+                <p class="profile-meta">عضو منذ ${t.account_age || '—'}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="stats-grid">
+              <div class="stat-item"><span class="stat-value">${t.completed_trades || 0}</span><span class="stat-label">صفقات مكتملة</span></div>
+              <div class="stat-item"><span class="stat-value">${t.rating ? Number(t.rating).toFixed(1) : '—'}</span><span class="stat-label">التقييم</span></div>
+              <div class="stat-item"><span class="stat-value">${t.success_rate || 0}%</span><span class="stat-label">نسبة النجاح</span></div>
+              <div class="stat-item"><span class="stat-value">${t.trust_score || 0}</span><span class="stat-label">نقطة ثقة</span></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><h3>📢 إعلانات نشطة (${ads.length})</h3></div>
+            <div id="trader-ads">
+              ${ads.length ? ads.map(a => `
+                <div class="ad-card">
+                  <div class="ad-header">
+                    <span class="ad-type ${a.type === 'SELL' ? 'type-sell' : 'type-buy'}">${a.type === 'SELL' ? 'بيع' : 'شراء'}</span>
+                    <span class="ad-price">${a.price} ₪</span>
+                  </div>
+                  <div class="ad-details">
+                    <span>المبلغ: ${a.amount} USDT</span>
+                    <span>الحد الأدنى: ${a.min_amount} USDT</span>
+                  </div>
+                  <div class="ad-footer">
+                    <span class="badge badge-neutral">${escH(a.payment_method || '—')}</span>
+                    <a href="/market" class="btn btn-sm btn-primary">${a.type === 'SELL' ? 'شراء' : 'بيع'}</a>
+                  </div>
+                </div>
+              `).join('') : '<p class="text-muted" style="padding:1rem;text-align:center">لا توجد إعلانات نشطة</p>'}
+            </div>
+          </div>
+
+          <div id="reviews-section" class="card">
+            <div class="card-header"><h3>⭐ التقييمات</h3></div>
+            <div id="reviews-list" class="text-muted" style="padding:1rem;text-align:center">جاري التحميل...</div>
+          </div>
+        `;
+
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('trader-content').style.display = 'block';
+
+        // Load reviews
+        try {
+          const revRes = await api('/v2/trust/' + username + '/reviews');
+          const reviews = revRes.reviews || [];
+          document.getElementById('reviews-list').innerHTML = reviews.length ?
+            reviews.map(r => `
+              <div class="review-item">
+                <div class="review-header">
+                  <span class="review-user">${escH(r.reviewer)}</span>
+                  <span class="review-stars">${'⭐'.repeat(r.rating || 0)}</span>
+                </div>
+                ${r.comment ? `<p class="review-comment">${escH(r.comment)}</p>` : ''}
+                <div class="review-time">${fmtDate(r.created_at)}</div>
+              </div>
+            `).join('') : '<p class="text-muted" style="padding:1rem;text-align:center">لا توجد تقييمات بعد</p>';
+        } catch(e) {
+          document.getElementById('reviews-list').innerHTML = '<p class="text-muted" style="padding:1rem;text-align:center">لا توجد تقييمات</p>';
+        }
+
+      } catch(e) {
+        document.getElementById('loading').innerHTML = '<p class="text-error">خطأ في تحميل ملف المتداول</p>';
+      }
+    })();
+
+    function escH(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+    function fmtDate(d) { if (!d) return ''; return new Date(d).toLocaleDateString('ar'); }
+  </script>
+  <style>
+    .profile-card { padding: 1.5rem; }
+    .profile-header { display:flex; align-items:center; gap:1rem; }
+    .avatar-lg { width:56px; height:56px; border-radius:50%; background:var(--primary); color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.5rem; font-weight:700; flex-shrink:0; }
+    .profile-info { flex:1; }
+    .profile-name { font-size:1.1rem; font-weight:700; margin:0; }
+    .profile-meta { font-size:.75rem; color:var(--text-muted); margin:0; }
+    .stats-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:1rem; padding:1rem; }
+    .stat-item { text-align:center; padding:.75rem; background:var(--bg-secondary); border-radius:var(--radius-sm); }
+    .stat-value { display:block; font-size:1.2rem; font-weight:700; color:var(--text); }
+    .stat-label { display:block; font-size:.7rem; color:var(--text-muted); margin-top:.2rem; }
+    .ad-card { padding:1rem; border-bottom:1px solid var(--border); }
+    .ad-card:last-child { border-bottom:none; }
+    .ad-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:.5rem; }
+    .ad-type { padding:.25rem .5rem; border-radius:4px; font-size:.7rem; font-weight:600; }
+    .type-sell { background:color-mix(in srgb, var(--error) 15%, transparent); color:var(--error); }
+    .type-buy { background:color-mix(in srgb, var(--success) 15%, transparent); color:var(--success); }
+    .ad-price { font-size:1.1rem; font-weight:700; }
+    .ad-details { font-size:.8rem; color:var(--text-muted); display:flex; gap:1rem; margin-bottom:.5rem; }
+    .ad-footer { display:flex; justify-content:space-between; align-items:center; }
+    .review-item { padding:1rem; border-bottom:1px solid var(--border); }
+    .review-header { display:flex; justify-content:space-between; align-items:center; }
+    .review-user { font-weight:600; font-size:.85rem; }
+    .review-stars { font-size:.8rem; }
+    .review-comment { font-size:.8rem; color:var(--text-muted); margin:.5rem 0; }
+    .review-time { font-size:.7rem; color:var(--text-muted); }
+  </style>
 </body>
 </html>

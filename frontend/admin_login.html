@@ -1,38 +1,73 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>دخول الإدارة — USDT P2P Palestine</title>
-<link rel="stylesheet" href="/assets/app.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>دخول الإدارة — USDT P2P Palestine</title>
+  <link rel="stylesheet" href="/assets/design-system.css">
+  <link rel="stylesheet" href="/assets/app.css">
 </head>
-<body>
-<main class="main"><div class="container" style="max-width:400px;margin-top:80px">
-  <div class="text-center" style="margin-bottom:24px">
-    <div style="font-size:2rem;margin-bottom:8px">🛡️</div>
-    <h1 style="font-size:1.3rem;font-weight:700">دخول الإدارة</h1>
+<body class="auth-page">
+  <div class="auth-container">
+    <div class="auth-card">
+      <div class="auth-header">
+        <div class="auth-logo">🔐</div>
+        <h1 class="auth-title">لوحة الإدارة</h1>
+        <p class="auth-subtitle">دخول المشرفين فقط</p>
+      </div>
+
+      <form onsubmit="adminLogin(event)">
+        <div class="form-group">
+          <label class="form-label">اسم المستخدم</label>
+          <input type="text" class="form-input" id="username" placeholder="Admin" required autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label class="form-label">كلمة المرور</label>
+          <input type="password" class="form-input" id="password" placeholder="••••••" required autocomplete="current-password">
+        </div>
+        <button type="submit" class="btn btn-primary btn-block" id="login-btn">دخول</button>
+        <p id="error" class="text-error" style="display:none;margin-top:.75rem"></p>
+      </form>
+    </div>
   </div>
-  <div id="errBox" class="alert alert-error" style="display:none;margin-bottom:12px"></div>
-  <div class="card" style="padding:20px">
-    <div class="form-group"><label>اسم المستخدم</label><input type="text" class="form-input" id="adminUser" placeholder="admin"></div>
-    <div class="form-group"><label>كلمة مرور الإدارة</label><input type="password" class="form-input" id="adminPass" placeholder="••••••••"></div>
-    <button class="btn btn-accent btn-block" onclick="doSubmit()">دخول</button>
-  </div>
-  <div class="text-center" style="margin-top:12px"><a href="/login" style="color:var(--text-muted);font-size:.85rem;text-decoration:none">← العودة</a></div>
-</div></main>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script src="/assets/app.js"></script>
-<script>
-document.getElementById('adminPass').addEventListener('keydown', e => { if (e.key === 'Enter') doSubmit(); });
-async function doSubmit() {
-  const u = document.getElementById('adminUser').value.trim();
-  const p = document.getElementById('adminPass').value;
-  const eb = document.getElementById('errBox');
-  if (!u || !p) { eb.textContent = 'أدخل جميع البيانات'; eb.style.display = 'block'; return; }
-  const r = await doAdminLogin(u, p);
-  if (r && r.ok) location.href = '/admin';
-  else { eb.textContent = r?.error || 'خطأ'; eb.style.display = 'block'; }
-}
-</script>
+
+  <script>
+    async function adminLogin(e) {
+      e.preventDefault();
+      const btn = document.getElementById('login-btn');
+      const errEl = document.getElementById('error');
+      btn.disabled = true;
+      btn.textContent = 'جاري الدخول...';
+      errEl.style.display = 'none';
+
+      try {
+        const res = await fetch('/api/auth/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: document.getElementById('username').value,
+            password: document.getElementById('password').value
+          })
+        });
+        const data = await res.json();
+        if (data.error) {
+          errEl.textContent = data.error;
+          errEl.style.display = 'block';
+          btn.disabled = false;
+          btn.textContent = 'دخول';
+          return;
+        }
+        if (data.token) {
+          localStorage.setItem('admin_token', data.token);
+          window.location.href = '/admin';
+        }
+      } catch(err) {
+        errEl.textContent = 'خطأ في الاتصال';
+        errEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'دخول';
+      }
+    }
+  </script>
 </body>
 </html>

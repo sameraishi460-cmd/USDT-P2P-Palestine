@@ -1,152 +1,209 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>حسابي — USDT P2P Palestine</title>
-<link rel="stylesheet" href="/assets/app.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>حسابي — USDT P2P Palestine</title>
+  <link rel="stylesheet" href="/assets/design-system.css">
+  <link rel="stylesheet" href="/assets/app.css">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
-<div class="app">
-<nav class="nav" id="nav"></nav>
-<main class="main"><div class="container" style="max-width:640px" id="app"><div class="card"><div class="spinner"></div></div></div></main>
-<div class="bottom-nav" id="bottomNav"></div>
-</div>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script src="/assets/app.js"></script>
-<script>
-let _tgLinkCode = '';
+  <div id="nav"></div>
+  <div id="bottom-nav"></div>
 
-async function load() {
-  if (!requireAuth()) return;
-  const u = currentUser();
-  const [me, prof, wallet] = await Promise.all([api('/auth/me'), api('/profile'), api('/wallet')]);
-  const p = prof?.profile || {}; const w = wallet || {};
-  const stats = prof?.stats || {};
-  let trustResp = {};
-  try { trustResp = (await api('/v2/trust/' + u.username)) || {}; } catch { trustResp = {}; }
-  const t = trustResp.trust || {}; const v = trustResp.vip || {};
-  const vc = v.level === 'verified' ? '💎' : v.level === 'gold' ? '🥇' : v.level === 'silver' ? '🥈' : '🥉';
-  const vl = v.label || 'برونزي';
-  const tg = u.telegram_id ? '🟢 مرتبط' : '⚪ غير مرتبط';
-  const emailStatus = u.email_verified ? '🟢 موثق' : (u.email ? '🟡 غير موثق' : '🔴 بدون بريد');
-  const themeLabel = getTheme() === 'dark' ? '🌙 الليلي' : getTheme() === 'light' ? '☀️ الفاتح' : '⚙️ تلقائي';
-
-  document.getElementById('app').innerHTML = `
-    <div style="text-align:center;padding:24px 0">
-      <div class="avatar avatar-xl" style="margin:0 auto 12px">${(u.username||'?')[0].toUpperCase()}</div>
-      <h1 style="font-size:1.3rem;font-weight:700;margin:0 0 4px">${esc(u.username)}</h1>
-      <div style="display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin-bottom:8px">
-        ${u.verified ? '<span class="badge badge-verified">✓ موثق</span>' : '<span class="badge" style="background:rgba(245,158,11,0.15);color:#f59e0b">غير موثق</span>'}
-        <span class="badge badge-vip">${vc} ${vl}</span>
-        ${t.trust_score ? `<span class="trust-score trust-high">🟢 ${fmtNum(t.trust_score,0)}% موثوق</span>` : ''}
-        ${t.avg_rating ? `<span class="badge badge-info">⭐ ${fmtNum(t.avg_rating,1)}</span>` : ''}
-      </div>
-      <div style="font-size:.8rem;color:var(--text-muted)">${p.email || 'لا يوجد بريد'} · منذ ${fmtDate(u.created_at).split(',')[0]}</div>
+  <main class="main-content">
+    <div id="loading" class="loading-spinner">
+      <div class="spinner"></div>
+      <p>جاري التحميل...</p>
     </div>
+    <div id="profile-content" style="display:none"></div>
+  </main>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
-      <div class="card" style="text-align:center;padding:14px"><div style="font-size:1.3rem;font-weight:800;color:var(--primary)">${stats.total||0}</div><div style="font-size:.75rem;color:var(--text-muted)">صفقة</div></div>
-      <div class="card" style="text-align:center;padding:14px"><div style="font-size:1.3rem;font-weight:800;color:var(--success)">${stats.completed||0}</div><div style="font-size:.75rem;color:var(--text-muted)">مكتملة</div></div>
-    </div>
+  <script src="/assets/app.js"></script>
+  <script>
+    (async function() {
+      const user = await requireAuth();
+      if (!user) return;
 
-    <!-- Quick Actions -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
-      <a href="/wallet" class="card" style="padding:14px;text-align:center;text-decoration:none"><div style="font-size:1.5rem">💰</div><div style="font-size:.85rem;font-weight:600;margin-top:4px">المحفظة</div><div style="font-size:.75rem;color:var(--text-muted)">${fmtNum(w.balance)} USDT</div></a>
-      <a href="/trades" class="card" style="padding:14px;text-align:center;text-decoration:none"><div style="font-size:1.5rem">📄</div><div style="font-size:.85rem;font-weight:600;margin-top:4px">الصفقات</div><div style="font-size:.75rem;color:var(--text-muted)">${stats.total||0} صفقة</div></a>
-      <a href="/notifications" class="card" style="padding:14px;text-align:center;text-decoration:none"><div style="font-size:1.5rem">🔔</div><div style="font-size:.85rem;font-weight:600;margin-top:4px">الإشعارات</div></a>
-      <a href="/create_ad" class="card" style="padding:14px;text-align:center;text-decoration:none"><div style="font-size:1.5rem">➕</div><div style="font-size:.85rem;font-weight:600;margin-top:4px">إعلان جديد</div></a>
-    </div>
+      const trustRes = await api('/v2/trust/' + user.username).catch(() => ({}));
+      const trust = trustRes.trust || {};
 
-    <!-- Telegram -->
-    <div class="card" style="padding:16px;margin-bottom:10px" id="tgSection">
-      <div class="flex-between">
-        <div class="flex" style="gap:12px;align-items:center">
-          <span style="font-size:1.3rem">📱</span>
-          <div><div style="font-weight:600">Telegram</div><div style="font-size:.8rem;color:var(--text-muted)" id="tgStatus">${tg}</div></div>
+      document.getElementById('profile-content').innerHTML = `
+        <div class="page-header">
+          <h1 class="page-title">حسابي</h1>
         </div>
-        ${u.telegram_id
-          ? '<span class="badge badge-verified">متصل ✓</span>'
-          : '<button class="btn btn-ghost btn-sm" onclick="startTelegramLink()">ربط</button>'}
-      </div>
-      <div id="tgLinkBox" style="display:none;margin-top:12px;padding:12px;background:var(--bg-input);border-radius:var(--radius-sm)">
-        <p style="font-size:.85rem;color:var(--text);margin-bottom:8px">1. افتح البوت في Telegram</p>
-        <p style="font-size:.85rem;color:var(--text);margin-bottom:8px">2. أرسل الأمر التالي:</p>
-        <div style="background:var(--bg);padding:10px;border-radius:8px;text-align:center;margin-bottom:8px">
-          <span style="font-size:1.1rem;font-weight:800;letter-spacing:2px;color:var(--primary)" id="tgLinkCode">---</span>
+
+        <div class="card profile-card">
+          <div class="profile-header">
+            <div class="avatar-lg">${(user.username||'?')[0].toUpperCase()}</div>
+            <div class="profile-info">
+              <h2 class="profile-name">${escH(user.username)}</h2>
+              <p class="profile-email">${escH(user.email || '—')}</p>
+              <div class="profile-badges">
+                ${trust.is_verified ? '<span class="badge badge-success">✓ موثق</span>' : '<span class="badge badge-neutral">غير موثق</span>'}
+                <span class="badge badge-info">⭐ ${trust.trust_score || 0}</span>
+                ${user.role === 'admin' ? '<span class="badge badge-warning">👑 Admin</span>' : ''}
+              </div>
+            </div>
+          </div>
         </div>
-        <button class="btn btn-sm btn-ghost" onclick="copyLinkCode()" style="margin-bottom:4px">📋 نسخ الأمر</button>
-        <p style="font-size:.75rem;color:var(--text-muted)">⏰ صالح لمدة 10 دقائق</p>
-        <a href="https://t.me/usdtp2ppalestine" target="_blank" class="btn btn-sm" style="background:#0088cc;color:#fff;margin-top:8px">📱 فتح البوت</a>
-      </div>
-    </div>
 
-    <!-- Appearance -->
-    <div class="card" style="padding:16px;margin-bottom:10px">
-      <div style="font-weight:600;margin-bottom:12px">🎨 المظهر</div>
-      <div style="display:flex;gap:8px">
-        <button class="btn btn-sm ${getTheme()==='dark'?'btn-primary':'btn-ghost'}" onclick="setTheme('dark');load()">🌙 الليلي</button>
-        <button class="btn btn-sm ${getTheme()==='light'?'btn-primary':'btn-ghost'}" onclick="setTheme('light');load()">☀️ الفاتح</button>
-        <button class="btn btn-sm ${getTheme()==='auto'?'btn-primary':'btn-ghost'}" onclick="setTheme('auto');load()">⚙️ تلقائي</button>
-      </div>
-    </div>
-
-    <!-- Notification Preferences -->
-    <div class="card" style="padding:16px;margin-bottom:10px">
-      <div style="font-weight:600;margin-bottom:12px">🔔 إعدادات الإشعارات</div>
-      <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:.85rem;cursor:pointer">
-        <input type="checkbox" checked onchange="savePref('trades', this.checked)"> إشعارات الصفقات
-      </label>
-      <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:.85rem;cursor:pointer">
-        <input type="checkbox" checked onchange="savePref('payments', this.checked)"> إشعارات الدفع
-      </label>
-      <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:.85rem;cursor:pointer">
-        <input type="checkbox" checked onchange="savePref('disputes', this.checked)"> إشعارات النزاعات
-      </label>
-    </div>
-
-    <!-- Security -->
-    <div class="card" style="padding:16px;margin-bottom:10px">
-      <div style="font-weight:600;margin-bottom:12px">🔒 الأمان</div>
-      <div style="font-size:.85rem;color:var(--text-secondary);margin-bottom:12px">
-        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
-          <span>البريد الإلكتروني</span><span>${emailStatus}</span>
+        <div class="card">
+          <div class="card-header"><h3>📊 الإحصائيات</h3></div>
+          <div class="stats-grid">
+            <div class="stat-item"><span class="stat-value">${trust.completed_trades || 0}</span><span class="stat-label">صفقات مكتملة</span></div>
+            <div class="stat-item"><span class="stat-value">${trust.rating ? Number(trust.rating).toFixed(1) : '—'}</span><span class="stat-label">التقييم</span></div>
+            <div class="stat-item"><span class="stat-value">${trust.success_rate || 0}%</span><span class="stat-label">نسبة النجاح</span></div>
+            <div class="stat-item"><span class="stat-value">${trust.trust_score || 0}</span><span class="stat-label">نقطة ثقة</span></div>
+          </div>
         </div>
-        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
-          <span>Telegram</span><span>${tg}</span>
+
+        <div class="card">
+          <div class="card-header"><h3>🔗 ربط Telegram</h3></div>
+          <div class="card-body">
+            <p id="tg-status">جاري التحقق...</p>
+            <div id="tg-link-section" style="display:none">
+              <button class="btn btn-primary btn-block" onclick="linkTelegram()">🔗 ربط حساب Telegram</button>
+              <p class="text-muted text-sm" style="margin-top:.5rem">سيتم إرسال كود للبوت. أرسله عبر /link لربط الحساب.</p>
+            </div>
+          </div>
         </div>
-        <div style="display:flex;justify-content:space-between;padding:6px 0">
-          <span>التحقق من الهوية</span><span>${u.verified ? '🟢 موثق' : '🔴 غير موثق'}</span>
+
+        <div class="card">
+          <div class="card-header"><h3>⚙️ المظهر</h3></div>
+          <div class="card-body">
+            <div class="setting-row" onclick="setTheme('light')">
+              <span>☀️ الوضع الفاتح</span>
+              <span class="setting-check" id="theme-light">✓</span>
+            </div>
+            <div class="setting-row" onclick="setTheme('dark')">
+              <span>🌙 الوضع الليلي</span>
+              <span class="setting-check" id="theme-dark">✓</span>
+            </div>
+            <div class="setting-row" onclick="setTheme('auto')">
+              <span>⚙️ تلقائي حسب الجهاز</span>
+              <span class="setting-check" id="theme-auto">✓</span>
+            </div>
+          </div>
         </div>
-      </div>
-      <button class="btn btn-ghost btn-sm btn-block" onclick="toast('قريباً — تغيير كلمة المرور')">🔑 تغيير كلمة المرور</button>
-    </div>
 
-    <button class="btn btn-ghost btn-block" style="margin-top:8px;border-color:var(--danger);color:var(--danger)" onclick="doLogout()">تسجيل الخروج</button>`;
-}
+        <div class="card">
+          <div class="card-header"><h3>🔔 إعدادات الإشعارات</h3></div>
+          <div class="card-body">
+            <label class="setting-toggle"><input type="checkbox" id="pref-trades" onchange="savePrefs()"> إشعارات الصفقات</label>
+            <label class="setting-toggle"><input type="checkbox" id="pref-payments" onchange="savePrefs()"> إشعارات الدفع</label>
+            <label class="setting-toggle"><input type="checkbox" id="pref-disputes" onchange="savePrefs()"> إشعارات النزاعات</label>
+          </div>
+        </div>
 
-async function startTelegramLink() {
-  const r = await api('/auth/telegram/link', { method: 'POST' });
-  if (r && r.ok && r.code) {
-    _tgLinkCode = r.code;
-    document.getElementById('tgLinkCode').textContent = '/link ' + r.code;
-    document.getElementById('tgLinkBox').style.display = 'block';
-    toast('تم إنشاء الكود — أرسله للبوت');
-  } else {
-    toast(r?.error || 'خطأ في إنشاء الكود', 4000);
-  }
-}
+        <div class="card">
+          <div class="card-header"><h3>💳 المحافظة</h3></div>
+          <div class="card-body">
+            <button class="btn btn-primary btn-block" onclick="window.location.href='/wallet'">فتح المحفظة</button>
+          </div>
+        </div>
 
-function copyLinkCode() {
-  navigator.clipboard?.writeText('/link ' + _tgLinkCode);
-  toast('تم نسخ الأمر');
-}
+        <div class="card">
+          <div class="card-header"><h3>🔗 الإحالات</h3></div>
+          <div class="card-body">
+            <p class="text-muted" style="margin-bottom:.5rem">شارك كود الإحالة الخاص بك:</p>
+            <div class="referral-box">
+              <code id="ref-code">${user.referral_code || '—'}</code>
+              <button class="btn btn-sm" onclick="copyReferral()">📋 نسخ</button>
+            </div>
+          </div>
+        </div>
 
-async function savePref(type, enabled) {
-  await api('/telegram/prefs', { method: 'POST', body: { [type]: enabled } });
-}
+        <button class="btn btn-error btn-block" style="margin:1rem 0" onclick="doLogout()">🚪 تسجيل الخروج</button>
+      `;
 
-load();
-</script>
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('profile-content').style.display = 'block';
+
+      // Check Telegram
+      try {
+        const tgRes = await api('/telegram/prefs');
+        document.getElementById('tg-status').innerHTML = '🟢 Telegram مرتبط';
+      } catch(e) {
+        document.getElementById('tg-status').innerHTML = '⚪ Telegram غير مرتبط';
+        document.getElementById('tg-link-section').style.display = 'block';
+      }
+
+      // Theme
+      const savedTheme = localStorage.getItem(THEME_KEY) || 'auto';
+      ['light','dark','auto'].forEach(t => {
+        const el = document.getElementById('theme-' + t);
+        if (el) el.style.display = t === savedTheme ? 'inline' : 'none';
+      });
+
+      // Prefs
+      try {
+        const prefsRes = await api('/telegram/prefs');
+        const prefs = prefsRes.prefs || {};
+        document.getElementById('pref-trades').checked = prefs.trades !== false;
+        document.getElementById('pref-payments').checked = prefs.payments !== false;
+        document.getElementById('pref-disputes').checked = prefs.disputes !== false;
+      } catch(e) {}
+    })();
+
+    window.linkTelegram = async function() {
+      try {
+        const res = await api('/auth/telegram/link', 'POST');
+        const code = res.code;
+        if (code) {
+          alert('أرسل هذا البوت مع الكود:\n\n/link ' + code + '\n\nأو اضغط الزر أدناه.');
+          window.open('https://t.me/usdt_p2p_palestine_bot?start=link_' + code, '_blank');
+        }
+      } catch(e) {
+        alert('خطأ في إنشاء كود الربط');
+      }
+    };
+
+    window.copyReferral = function() {
+      const code = document.getElementById('ref-code').textContent;
+      if (code && code !== '—') {
+        navigator.clipboard.writeText(window.location.origin + '/register?ref=' + code);
+        alert('تم نسخ رابط الإحالة!');
+      }
+    };
+
+    window.doLogout = function() {
+      if (confirm('هل تريد تسجيل الخروج؟')) {
+        localStorage.removeItem(AUTH_KEY);
+        window.location.href = '/login';
+      }
+    };
+
+    window.savePrefs = async function() {
+      await api('/telegram/prefs', 'POST', {
+        trades: document.getElementById('pref-trades').checked,
+        payments: document.getElementById('pref-payments').checked,
+        disputes: document.getElementById('pref-disputes').checked
+      });
+    };
+
+    function escH(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+  </script>
+  <style>
+    .profile-card { padding: 1.5rem; }
+    .profile-header { display:flex; align-items:center; gap:1rem; margin-bottom:1rem; }
+    .avatar-lg { width:56px; height:56px; border-radius:50%; background:var(--primary); color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.5rem; font-weight:700; flex-shrink:0; }
+    .profile-info { flex:1; }
+    .profile-name { font-size:1.1rem; font-weight:700; margin:0; }
+    .profile-email { font-size:.8rem; color:var(--text-muted); margin:0; }
+    .profile-badges { display:flex; gap:.5rem; margin-top:.5rem; flex-wrap:wrap; }
+    .stats-grid { display:grid; grid-template-columns:1fr 1fr; gap:1rem; padding:1rem; }
+    .stat-item { text-align:center; padding:.75rem; background:var(--bg-secondary); border-radius:var(--radius-sm); }
+    .stat-value { display:block; font-size:1.2rem; font-weight:700; color:var(--text); }
+    .stat-label { display:block; font-size:.7rem; color:var(--text-muted); margin-top:.2rem; }
+    .setting-row { display:flex; justify-content:space-between; align-items:center; padding:.75rem 0; border-bottom:1px solid var(--border); cursor:pointer; }
+    .setting-row:last-child { border-bottom:none; }
+    .setting-check { color:var(--primary); font-weight:700; }
+    .setting-toggle { display:flex; align-items:center; justify-content:space-between; padding:.6rem 0; border-bottom:1px solid var(--border); cursor:pointer; }
+    .setting-toggle:last-child { border-bottom:none; }
+    .referral-box { display:flex; align-items:center; gap:.5rem; background:var(--bg-secondary); padding:.75rem; border-radius:var(--radius-sm); }
+    .referral-box code { flex:1; font-size:.85rem; direction:ltr; text-align:left; }
+  </style>
 </body>
 </html>

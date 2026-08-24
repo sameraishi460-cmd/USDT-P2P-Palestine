@@ -1,47 +1,111 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>الإشعارات — USDT P2P Palestine</title>
-<link rel="stylesheet" href="/assets/app.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>الإشعارات — USDT P2P Palestine</title>
+  <link rel="stylesheet" href="/assets/design-system.css">
+  <link rel="stylesheet" href="/assets/app.css">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
-<div class="app">
-<nav class="nav" id="nav"></nav>
-<main class="main"><div class="container" style="max-width:640px" id="app">
-  <div class="flex-between" style="margin-bottom:16px">
-    <h1 style="font-size:1.3rem;font-weight:800">🔔 الإشعارات</h1>
-    <button class="btn btn-ghost btn-sm" id="markAllBtn" onclick="markAllRead()" style="display:none">تحديد الكل كمقروء</button>
-  </div>
-  <div id="notifList"><div class="spinner"></div></div>
-</div></main>
-<div class="bottom-nav" id="bottomNav"></div>
-</div>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script src="/assets/app.js"></script>
-<script>
-async function load() {
-  if (!requireAuth()) return;
-  const resp = await api('/notifications');
-  const notifs = resp?.notifications || [];
-  const unread = resp?.unread || 0;
-  if (unread > 0) document.getElementById('markAllBtn').style.display = 'block';
-  const list = document.getElementById('notifList');
-  if (!notifs.length) { list.innerHTML = '<div class="card"><div class="empty"><div class="empty-icon">🔔</div><div class="empty-title">لا توجد إشعارات</div></div></div>'; return; }
-  list.innerHTML = notifs.map(n => `
-    <div class="notif-item ${n.seen ? '' : 'unread'}" style="padding:12px 0;border-bottom:1px solid var(--border)">
-      <div style="font-weight:600;font-size:.9rem;margin-bottom:2px">${esc(n.title)}</div>
-      <div style="font-size:.8rem;color:var(--text-secondary)">${esc(n.message)}</div>
-      <div style="font-size:.7rem;color:var(--text-muted);margin-top:4px">${fmtDate(n.created)}</div>
-    </div>`).join('');
-}
-async function markAllRead() {
-  await api('/notifications/mark-read', { method: 'POST' });
-  toast('تم تحديد الكل كمقروء');
-  load();
-}
-load();
-</script>
+  <div id="nav"></div>
+  <div id="bottom-nav"></div>
+
+  <main class="main-content">
+    <div class="page-header">
+      <h1 class="page-title">الإشعارات</h1>
+      <button class="btn btn-sm" id="mark-all-btn" onclick="markAllRead()" style="display:none">تحديد الكل كمقروء</button>
+    </div>
+
+    <div id="loading" class="loading-spinner">
+      <div class="spinner"></div>
+    </div>
+
+    <div id="notifications-list"></div>
+    <div id="empty-state" style="display:none" class="empty-state">
+      <div class="empty-icon">🔔</div>
+      <p>لا توجد إشعارات جديدة</p>
+    </div>
+  </main>
+
+  <script src="/assets/app.js"></script>
+  <script>
+    (async function() {
+      const user = await requireAuth();
+      if (!user) return;
+
+      try {
+        const res = await api('/notifications');
+        const notifs = res.notifications || [];
+        const unread = notifs.filter(n => !n.is_read);
+        
+        if (notifs.length === 0) {
+          document.getElementById('loading').style.display = 'none';
+          document.getElementById('empty-state').style.display = 'block';
+          return;
+        }
+
+        if (unread.length > 0) {
+          document.getElementById('mark-all-btn').style.display = 'inline-flex';
+        }
+
+        const typeIcons = {
+          'trade': '📋', 'payment': '💰', 'dispute': '⚠️', 'system': '📢',
+          'deposit': '💵', 'withdrawal': '🏦', 'review': '⭐', 'message': '💬'
+        };
+
+        document.getElementById('notifications-list').innerHTML = notifs.map(n => `
+          <div class="notif-item ${n.is_read ? '' : 'unread'}" onclick="markRead(${n.id})">
+            <div class="notif-icon">${typeIcons[n.type] || '📢'}</div>
+            <div class="notif-body">
+              <div class="notif-title">${escH(n.title)}</div>
+              <div class="notif-text">${escH(n.message)}</div>
+              <div class="notif-time">${timeAgo(n.created_at)}</div>
+            </div>
+          </div>
+        `).join('');
+
+        document.getElementById('loading').style.display = 'none';
+      } catch(e) {
+        document.getElementById('loading').innerHTML = '<p class="text-error">خطأ في تحميل الإشعارات</p>';
+      }
+    })();
+
+    window.markAllRead = async function() {
+      await api('/notifications/read-all', 'POST');
+      document.querySelectorAll('.notif-item.unread').forEach(el => el.classList.remove('unread'));
+      document.getElementById('mark-all-btn').style.display = 'none';
+    };
+
+    window.markRead = async function(id) {
+      await api('/notifications/' + id + '/read', 'POST').catch(() => {});
+    };
+
+    function timeAgo(dateStr) {
+      const diff = Date.now() - new Date(dateStr).getTime();
+      const mins = Math.floor(diff / 60000);
+      if (mins < 1) return 'الآن';
+      if (mins < 60) return 'منذ ' + mins + ' دقيقة';
+      const hrs = Math.floor(mins / 60);
+      if (hrs < 24) return 'منذ ' + hrs + ' ساعة';
+      const days = Math.floor(hrs / 24);
+      return 'منذ ' + days + ' يوم';
+    }
+
+    function escH(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+  </script>
+  <style>
+    .notif-item { display:flex; gap:.75rem; padding:1rem; border-bottom:1px solid var(--border); cursor:pointer; transition:background .15s; }
+    .notif-item:hover { background:var(--bg-secondary); }
+    .notif-item.unread { background:color-mix(in srgb, var(--primary) 5%, transparent); }
+    .notif-icon { font-size:1.25rem; flex-shrink:0; margin-top:.1rem; }
+    .notif-body { flex:1; min-width:0; }
+    .notif-title { font-weight:600; font-size:.85rem; margin-bottom:.15rem; }
+    .notif-text { font-size:.8rem; color:var(--text-muted); line-height:1.4; }
+    .notif-time { font-size:.7rem; color:var(--text-muted); margin-top:.3rem; }
+    .empty-state { text-align:center; padding:3rem 1rem; color:var(--text-muted); }
+    .empty-icon { font-size:2.5rem; margin-bottom:1rem; }
+  </style>
 </body>
 </html>
