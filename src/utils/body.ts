@@ -4,7 +4,7 @@
  */
 import type { Context } from "hono";
 
-/** Parse a form/JSON body and keep only string fields. Never throws. */
+/** Parse a form/JSON body and keep only string fields only. Never throws. */
 export async function formBody(c: Context<any>): Promise<Record<string, string>> {
   try {
     const ct = c.req.header("Content-Type") || "";
