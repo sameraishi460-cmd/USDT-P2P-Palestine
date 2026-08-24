@@ -8,9 +8,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>دخول — USDT P2P Palestine</title>
   <link rel="stylesheet" href="/assets/design-system.css">
-<link rel="manifest" href="/manifest.json">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="manifest" href="/manifest.json">
 </head>
 <body>
 
@@ -18,10 +16,7 @@
 <nav class="navbar" id="nav">
   <div class="navbar-inner">
     <a href="/" class="navbar-brand">🇵🇸 <span>USDT</span> P2P</a>
-    <div class="navbar-links">
-      <a href="/login" class="btn-nav">دخول</a>
-      <a href="/register" class="btn-nav-accent btn-nav">حساب جديد</a>
-    </div>
+    <div class="navbar-links" id="nav-links"></div>
   </div>
 </nav>
 
@@ -88,50 +83,77 @@
 <script src="/assets/app.js"></script>
 <script>
 // ============================================================
-// TELEGRAM WEBAPP AUTO-LOGIN
-// If opened inside Telegram WebApp, auto-authenticate via initData
+// STEP 1: Check if already logged in (skip login page)
 // ============================================================
 (function() {
-  try {
-    const tg = window.Telegram?.WebApp;
-    if (!tg || !tg.initData || !tg.initDataUnsafe?.user) return;
+  const u = currentUser();
+  if (u) {
+    // Already authenticated — redirect to returnTo or market
+    const returnTo = new URLSearchParams(location.search).get('returnTo') || '/market';
+    window.location.href = returnTo;
+    return;
+  }
+})();
 
-    // User is inside Telegram WebApp — auto-login
+// ============================================================
+// STEP 2: Telegram WebApp Auto-Login
+// ============================================================
+(async function() {
+  try {
+    // If user just logged out, don't auto-login via Telegram
+    if (wasLoggedOut()) {
+      localStorage.removeItem('usp_logged_out');
+      return;
+    }
+    const tgApp = window.Telegram?.WebApp;
+    if (!tgApp || !tgApp.initData || !tgApp.initDataUnsafe?.user) {
+      // Not in Telegram — show regular login form (already visible)
+      return;
+    }
+
+    // User IS inside Telegram WebApp — auto-login
     document.getElementById('tgAutoLogin').style.display = 'block';
     document.getElementById('loginForm').style.display = 'none';
 
-    // Send initData to backend for server-side verification
-    fetch('/api/auth/telegram', {
+    // Send initData to backend for server-side HMAC verification
+    const res = await fetch('/api/auth/telegram', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ initData: tg.initData })
-    })
-    .then(r => r.json())
-    .then(data => {
-      if (data.ok) {
-        // Successfully authenticated — redirect to market or returnTo
+      body: new URLSearchParams({ initData: tgApp.initData })
+    });
+    const data = await res.json();
+
+    if (data.ok) {
+      // Successfully authenticated — get session info
+      const meRes = await fetch('/api/auth/me', { credentials: 'same-origin' });
+      const me = await meRes.json();
+      if (me && me.authenticated) {
+        saveUser(me, data.csrf_token);
         const returnTo = new URLSearchParams(location.search).get('returnTo') || '/market';
         window.location.href = returnTo;
-      } else {
-        // Auth failed — show login form with error
-        document.getElementById('tgAutoLogin').style.display = 'none';
-        document.getElementById('loginForm').style.display = 'block';
-        const errBox = document.getElementById('errBox');
-        errBox.textContent = data.error || 'فشل تسجيل الدخول عبر Telegram';
-        errBox.style.display = 'block';
+        return;
       }
-    })
-    .catch(err => {
-      document.getElementById('tgAutoLogin').style.display = 'none';
-      document.getElementById('loginForm').style.display = 'block';
-      const errBox = document.getElementById('errBox');
-      errBox.textContent = 'خطأ في الاتصال بـ Telegram';
-      errBox.style.display = 'block';
-    });
-  } catch(e) {
-    // Not in Telegram WebApp — show regular login form
+    }
+
+    // Auth failed — show login form with clear error
+    document.getElementById('tgAutoLogin').style.display = 'none';
+    document.getElementById('loginForm').style.display = 'block';
+    showErr(data.error || 'فشل تسجيل الدخول عبر Telegram. يمكنك استخدام البريد الإلكتروني.');
+  } catch(err) {
+    document.getElementById('tgAutoLogin').style.display = 'none';
+    document.getElementById('loginForm').style.display = 'block';
+    showErr('خطأ في الاتصال. يمكنك تسجيل الدخول بالبريد الإلكتروني.');
   }
 })();
+
+// ============================================================
+// HELPER: Show error
+// ============================================================
+function showErr(msg) {
+  const errBox = document.getElementById('errBox');
+  errBox.textContent = msg;
+  errBox.style.display = 'block';
+}
 
 // ============================================================
 // TELEGRAM MANUAL LINK CODE (for non-WebApp users)
@@ -177,11 +199,7 @@ async function doSubmit() {
   const pw = document.getElementById('password').value;
   const errBox = document.getElementById('errBox');
   const btn = document.getElementById('loginBtn');
-  if (!id || !pw) {
-    errBox.textContent = 'أدخل جميع البيانات';
-    errBox.style.display = 'block';
-    return;
-  }
+  if (!id || !pw) { showErr('أدخل جميع البيانات'); return; }
   errBox.style.display = 'none';
   btn.disabled = true;
   btn.textContent = 'جاري الدخول...';
@@ -191,11 +209,9 @@ async function doSubmit() {
   if (r && r.ok) {
     location.href = new URLSearchParams(location.search).get('returnTo') || '/market';
   } else if (r && r.error) {
-    errBox.textContent = r.error;
-    errBox.style.display = 'block';
+    showErr(r.error);
   } else {
-    errBox.textContent = 'خطأ في الاتصال';
-    errBox.style.display = 'block';
+    showErr('خطأ في الاتصال');
   }
 }
 </script>

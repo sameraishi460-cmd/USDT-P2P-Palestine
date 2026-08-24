@@ -111,12 +111,13 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="/assets/app.js"></script>
 <script>
-// Telegram WebApp auto-redirect: if inside Telegram and not authenticated, go to login (which auto-authenticates)
+// Telegram WebApp auto-redirect: if inside Telegram and not authenticated, go to login
 (function() {
   try {
+    // Don't redirect if user just logged out
+    if (localStorage.getItem('usp_logged_out') === '1') return;
     const tg = window.Telegram?.WebApp;
     if (tg && tg.initData && tg.initDataUnsafe?.user) {
-      // Check if already authenticated via cookie
       fetch('/api/auth/me').then(r => r.json()).then(d => {
         if (!d.authenticated) {
           window.location.href = '/login';

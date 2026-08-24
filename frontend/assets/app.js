@@ -1,5 +1,5 @@
 /* ============================================================
-   USDT P2P Palestine — Shared JavaScript (v4)
+   USDT P2P Palestine — Shared JavaScript (v5)
    Auth: cookie-based sessions + localStorage user cache + CSRF
    Telegram WebApp Integration
    ============================================================ */
@@ -11,11 +11,8 @@ let _isTelegram = !!tg;
 
 function initTelegram() {
   if (!tg) return;
-  // Expand to full height
   tg.expand();
-  // Close confirmation
   tg.ready();
-  // Apply Telegram theme colors
   if (tg.themeParams) {
     document.documentElement.style.setProperty('--tg-bg', tg.themeParams.bg_color || '');
     document.documentElement.style.setProperty('--tg-text', tg.themeParams.text_color || '');
@@ -25,7 +22,6 @@ function initTelegram() {
     document.documentElement.style.setProperty('--tg-button-text', tg.themeParams.button_text_color || '');
     document.documentElement.style.setProperty('--tg-secondary-bg', tg.themeParams.secondary_bg_color || '');
   }
-  // Listen for theme changes
   tg.onEvent('themeChanged', () => {
     if (tg.themeParams) {
       document.documentElement.style.setProperty('--tg-bg', tg.themeParams.bg_color || '');
@@ -35,14 +31,11 @@ function initTelegram() {
       document.documentElement.style.setProperty('--tg-secondary-bg', tg.themeParams.secondary_bg_color || '');
     }
   });
-  // Main button (hidden by default, can be shown per page)
   tg.MainButton.hide();
-  // BackButton handling
   tg.BackButton.onClick(() => {
     if (window.history.length > 1) window.history.back();
     else tg.close();
   });
-  // Set header color
   tg.setHeaderColor('#0a0e18');
   tg.setBackgroundColor('#0a0e18');
 }
@@ -51,7 +44,6 @@ function isTelegram() { return _isTelegram; }
 function tgUser() { return tg?.initDataUnsafe?.user || null; }
 function tgInitData() { return tg?.initData || ''; }
 
-// Haptic feedback helpers
 function hapticFeedback(type) {
   if (!tg) return;
   if (type === 'success') tg.HapticFeedback.impactOccurred('medium');
@@ -59,8 +51,10 @@ function hapticFeedback(type) {
   else if (type === 'tap') tg.HapticFeedback.impactOccurred('light');
   else tg.HapticFeedback.impactOccurred('medium');
 }
+
 const USER_KEY = 'usp_user';
 const CSRF_KEY = 'usp_csrf';
+const LOGOUT_KEY = 'usp_logged_out';
 
 let _user = null;
 let _csrf = '';
@@ -76,8 +70,15 @@ function saveUser(u, csrf) {
   if (u) localStorage.setItem(USER_KEY, JSON.stringify(u));
   else localStorage.removeItem(USER_KEY);
   if (csrf) localStorage.setItem(CSRF_KEY, csrf);
+  // Clear logout flag on successful login
+  localStorage.removeItem(LOGOUT_KEY);
 }
-function clearUser() { _user = null; _csrf = ''; localStorage.removeItem(USER_KEY); localStorage.removeItem(CSRF_KEY); }
+
+function clearUser() {
+  _user = null; _csrf = '';
+  localStorage.removeItem(USER_KEY);
+  localStorage.removeItem(CSRF_KEY);
+}
 
 function isLoggedIn() { return !!_user; }
 function currentUser() { return _user; }
@@ -123,7 +124,6 @@ async function api(path, opts) {
     headers['Content-Type'] = 'application/json';
     opts.body = JSON.stringify(opts.body);
   }
-  // CSRF on mutations
   if (['POST', 'PUT', 'DELETE'].includes(opts.method || 'GET') && _csrf) {
     headers['X-CSRF-Token'] = _csrf;
   }
@@ -172,9 +172,15 @@ async function doAdminLogin(username, password) {
 }
 
 async function doLogout() {
+  // Mark as logged out to prevent Telegram auto-re-login
+  localStorage.setItem(LOGOUT_KEY, '1');
   await api('/auth/logout', { method: 'POST' });
   clearUser();
-  location.href = '/login';
+  window.location.href = '/login';
+}
+
+function wasLoggedOut() {
+  return localStorage.getItem(LOGOUT_KEY) === '1';
 }
 
 function requireAuth() {
@@ -223,22 +229,52 @@ function copyText(t) { navigator.clipboard?.writeText(t); toast('تم النسخ
 function themeIcon() { const t = getTheme(); return t === 'dark' ? '🌙' : t === 'light' ? '☀️' : '⚙️'; }
 
 function renderNav() {
+  // Top navigation
   const nav = document.getElementById('nav');
-  if (!nav) return;
-  const u = currentUser();
-  nav.innerHTML = `<div class="navbar-inner">
-    <a href="/" class="navbar-brand">🇵🇸 <span>USDT</span> P2P</a>
-    <div class="navbar-links">
-      ${u ? `<a href="/market">السوق</a><a href="/trades">الصفقات</a><a href="/wallet">المحفظة</a><a href="/notifications">الإشعارات</a><a href="/profile">حسابي</a>${u.isAdmin ? '<a href="/admin">الإدارة</a>' : ''}` : `<a href="/login" class="btn-nav">دخول</a><a href="/register" class="btn-nav-accent btn-nav">حساب جديد</a>`}
-      <button onclick="toggleTheme()" style="background:none;border:none;cursor:pointer;font-size:1.1rem;padding:4px 8px" title="تبديل المظهر">${themeIcon()}</button>
-    </div></div>`;
+  if (nav) {
+    const u = currentUser();
+    nav.innerHTML = `<div class="navbar-inner">
+      <a href="/" class="navbar-brand">🇵🇸 <span>USDT</span> P2P</a>
+      <div class="navbar-links">
+        ${u ? `
+          <a href="/market">السوق</a>
+          <a href="/trades">الصفقات</a>
+          <a href="/wallet">المحفظة</a>
+          <a href="/create_ad">إنشاء إعلان</a>
+          <a href="/notifications">الإشعارات</a>
+          <a href="/profile">حسابي</a>
+          ${u.isAdmin ? '<a href="/admin">⚙️ الإدارة</a>' : ''}
+        ` : `
+          <a href="/login" class="btn-nav">دخول</a>
+          <a href="/register" class="btn-nav-accent btn-nav">حساب جديد</a>
+        `}
+        <button onclick="toggleTheme()" style="background:none;border:none;cursor:pointer;font-size:1.1rem;padding:4px 8px" title="تبديل المظهر">${themeIcon()}</button>
+      </div>
+    </div>`;
+  }
+
+  // Bottom navigation (mobile)
   const bn = document.getElementById('bottomNav');
-  if (bn && u) {
+  if (bn) {
+    const u = currentUser();
     const p = location.pathname;
-    bn.innerHTML = `<a href="/market" class="${p==='/market'?'active':''}"><span class="nav-icon">🛒</span><span class="nav-label">السوق</span></a>
-      <a href="/trades" class="${p==='/trades'?'active':''}"><span class="nav-icon">📄</span><span class="nav-label">الصفقات</span></a>
-      <a href="/wallet" class="${p==='/wallet'?'active':''}"><span class="nav-icon">💰</span><span class="nav-label">المحفظة</span></a>
-      <a href="/profile" class="${p==='/profile'?'active':''}"><span class="nav-icon">👤</span><span class="nav-label">حسابي</span></a>`;
+    if (u) {
+      bn.innerHTML = `
+        <a href="/market" class="${p === '/market' ? 'active' : ''}"><span class="nav-icon">🛒</span><span class="nav-label">السوق</span></a>
+        <a href="/trades" class="${p === '/trades' ? 'active' : ''}"><span class="nav-icon">📄</span><span class="nav-label">الصفقات</span></a>
+        <a href="/create_ad" class="${p === '/create_ad' ? 'active' : ''}"><span class="nav-icon">➕</span><span class="nav-label">إعلان</span></a>
+        <a href="/wallet" class="${p === '/wallet' ? 'active' : ''}"><span class="nav-icon">💰</span><span class="nav-label">المحفظة</span></a>
+        <a href="/profile" class="${p === '/profile' ? 'active' : ''}"><span class="nav-icon">👤</span><span class="nav-label">حسابي</span></a>
+      `;
+      bn.style.display = '';
+    } else {
+      bn.innerHTML = `
+        <a href="/" class="${p === '/' ? 'active' : ''}"><span class="nav-icon">🏠</span><span class="nav-label">الرئيسية</span></a>
+        <a href="/login" class="${p === '/login' ? 'active' : ''}"><span class="nav-icon">🔑</span><span class="nav-label">دخول</span></a>
+        <a href="/register" class="${p === '/register' ? 'active' : ''}"><span class="nav-icon">📝</span><span class="nav-label">حساب جديد</span></a>
+      `;
+      bn.style.display = '';
+    }
   }
 }
 
@@ -246,7 +282,7 @@ function renderNav() {
 document.addEventListener('DOMContentLoaded', () => {
   initTelegram();
   renderNav();
-  // Hide desktop nav when in Telegram (use bottom nav only)
+  // In Telegram: hide desktop nav, show bottom nav only
   if (_isTelegram) {
     const nav = document.getElementById('nav');
     if (nav) nav.style.display = 'none';
