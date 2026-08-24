@@ -35,13 +35,35 @@ auth.post("/register", rateLimit(5, 300), async (c) => {
   const existing = await c.env.DB.prepare("SELECT id FROM users WHERE username = ?").bind(username).first();
   if (existing) return c.json({ error: "اسم المستخدم موجود بالفعل" }, 409);
 
-  const existingEmail = await c.env.DB.prepare("SELECT id FROM users WHERE email = ?").bind(email).first();
+  // Check email uniqueness — handle missing email column gracefully
+  let existingEmail;
+  try {
+    existingEmail = await c.env.DB.prepare("SELECT id FROM users WHERE email = ?").bind(email).first();
+  } catch {
+    // email column might not exist yet — skip uniqueness check
+    existingEmail = null;
+  }
   if (existingEmail) return c.json({ error: "البريد الإلكتروني مسجل بالفعل" }, 409);
 
   const hash = await hashPassword(password);
-  const result = await c.env.DB.prepare(
-    "INSERT INTO users (username, password, email) VALUES (?, ?, ?)"
-  ).bind(username, hash, email).run();
+  let result;
+  try {
+    result = await c.env.DB.prepare(
+      "INSERT INTO users (username, password, email) VALUES (?, ?, ?)"
+    ).bind(username, hash, email).run();
+  } catch (insertErr: any) {
+    // If the email column is missing, add it and retry
+    if (insertErr?.message?.includes("no such column") && insertErr?.message?.includes("email")) {
+      try {
+        await c.env.DB.prepare("ALTER TABLE users ADD COLUMN email TEXT DEFAULT ''").run();
+      } catch { /* column may already exist */ }
+      result = await c.env.DB.prepare(
+        "INSERT INTO users (username, password, email) VALUES (?, ?, ?)"
+      ).bind(username, hash, email).run();
+    } else {
+      throw insertErr;
+    }
+  }
 
   await ensureWallet(c.env, username);
 
@@ -71,10 +93,14 @@ auth.post("/login", rateLimit(10, 300), async (c) => {
   ).bind(identifier).first<{ id: number; username: string; password: string; status: string }>();
 
   if (!user) {
-    const byEmail = await c.env.DB.prepare(
-      "SELECT id, username, password, status FROM users WHERE email = ?"
-    ).bind(identifier.toLowerCase()).first<{ id: number; username: string; password: string; status: string }>();
-    if (byEmail) user = byEmail;
+    try {
+      const byEmail = await c.env.DB.prepare(
+        "SELECT id, username, password, status FROM users WHERE email = ?"
+      ).bind(identifier.toLowerCase()).first<{ id: number; username: string; password: string; status: string }>();
+      if (byEmail) user = byEmail;
+    } catch {
+      // email column may not exist yet
+    }
   }
 
   if (!user || !(await verifyPassword(password, user.password))) {
@@ -187,9 +213,18 @@ auth.get("/me", async (c) => {
   const session = await verifySession(token, c.env.SECRET_KEY);
   if (!session) return c.json({ authenticated: false });
 
-  const user = await c.env.DB.prepare(
-    "SELECT username, email, verified, rating, trades_count, status, first_name, telegram_id, created_at FROM users WHERE id = ?"
-  ).bind(session.sub).first<any>();
+  let user;
+  try {
+    user = await c.env.DB.prepare(
+      "SELECT username, email, verified, rating, trades_count, status, first_name, telegram_id, created_at FROM users WHERE id = ?"
+    ).bind(session.sub).first<any>();
+  } catch {
+    // Fallback: query without email column
+    user = await c.env.DB.prepare(
+      "SELECT username, verified, rating, trades_count, status, first_name, telegram_id, created_at FROM users WHERE id = ?"
+    ).bind(session.sub).first<any>();
+    if (user) user.email = '';
+  }
   if (!user) return c.json({ authenticated: false });
 
   return c.json({
