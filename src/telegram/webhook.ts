@@ -72,8 +72,12 @@ export async function handleTelegramUpdate(c: Context<AppEnv>): Promise<Response
   const env = c.env;
 
   // Validate the secret token header set when registering the webhook.
+  // Skip validation if no webhook secret is configured (allows webhook to work without secret).
+  if (!env.TELEGRAM_BOT_TOKEN) {
+    return c.json({ ok: false }, 403);
+  }
   const secretHeader = c.req.header("X-Telegram-Bot-Api-Secret-Token") || "";
-  if (!env.TELEGRAM_BOT_TOKEN || !secretHeader || secretHeader !== env.TELEGRAM_WEBHOOK_SECRET) {
+  if (env.TELEGRAM_WEBHOOK_SECRET && secretHeader !== env.TELEGRAM_WEBHOOK_SECRET) {
     return c.json({ ok: false }, 403);
   }
 

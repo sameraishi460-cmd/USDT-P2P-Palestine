@@ -544,10 +544,33 @@ const SEEDS: string[] = [
 ];
 
 /**
+ * ALTER TABLE migrations for existing databases.
+ * These handle columns that were added after the initial migration.
+ * Safe to call multiple times (IF NOT EXISTS equivalent via try/catch).
+ */
+async function runAlterMigrations(db: D1Database): Promise<void> {
+  const ALTERS = [
+    "ALTER TABLE users ADD COLUMN email TEXT DEFAULT ''",
+    "ALTER TABLE users ADD COLUMN first_name TEXT DEFAULT ''",
+    "ALTER TABLE users ADD COLUMN referred_by TEXT DEFAULT ''",
+  ];
+  for (const sql of ALTERS) {
+    try {
+      await db.prepare(sql).run();
+    } catch {
+      // Column already exists — expected
+    }
+  }
+}
+
+/**
  * Check if tables exist and auto-create if missing.
  * Idempotent — safe to call on every request.
  */
 export async function ensureTables(db: D1Database): Promise<{ migrated: boolean; tableCount: number }> {
+  // Always run ALTER TABLE migrations for existing databases
+  await runAlterMigrations(db);
+
   // Quick check: does platform_config exist?
   try {
     const row = await db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='platform_config'").first();
@@ -591,6 +614,9 @@ export async function ensureTables(db: D1Database): Promise<{ migrated: boolean;
   }
 
   console.log(`[db-init] Created ${created}/${TABLES.length} tables`);
+
+  // Run ALTER TABLE migrations again for safety
+  await runAlterMigrations(db);
 
   // Also create V2 tables
   for (const sql of V2_TABLES) {
