@@ -23,3 +23,5 @@ echo ""
 echo "=== BUILD COMPLETE ==="
 echo "Worker auto-migration (src/db-init.ts) will create D1 tables on first request."
 
+
+echo "Build at 1787565396"
