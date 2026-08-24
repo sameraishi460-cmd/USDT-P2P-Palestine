@@ -51,7 +51,7 @@ async function submitAd() {
   const payment = document.getElementById('adPayment').value;
   const type = document.getElementById('adType').value;
   if (!title || !price || !amount || !min) { toast('أدخل جميع البيانات المطلوبة'); return; }
-  const r = await api('/market/ads/create', { method: 'POST', body: { title, type, price_per_usdt: price, usdt_amount: amount, min_order: min, max_order: max, payment_method: payment } });
+  const r = await api('/market/ads/create', { method: 'POST', body: { title, type, price: price, amount: amount, min_amount: min, max_amount: max, payment_method: payment } });
   if (r && r.ok) { toast('✅ تم نشر الإعلان'); location.href = '/market'; }
   else if (r && r.error) toast(r.error);
 }
