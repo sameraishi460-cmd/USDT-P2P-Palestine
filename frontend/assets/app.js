@@ -1,8 +1,64 @@
 /* ============================================================
-   USDT P2P Palestine — Shared JavaScript (v3)
+   USDT P2P Palestine — Shared JavaScript (v4)
    Auth: cookie-based sessions + localStorage user cache + CSRF
+   Telegram WebApp Integration
    ============================================================ */
 const API_BASE = location.origin + '/api';
+
+/* ── Telegram WebApp SDK ──────────────────────────────── */
+const tg = window.Telegram?.WebApp || null;
+let _isTelegram = !!tg;
+
+function initTelegram() {
+  if (!tg) return;
+  // Expand to full height
+  tg.expand();
+  // Close confirmation
+  tg.ready();
+  // Apply Telegram theme colors
+  if (tg.themeParams) {
+    document.documentElement.style.setProperty('--tg-bg', tg.themeParams.bg_color || '');
+    document.documentElement.style.setProperty('--tg-text', tg.themeParams.text_color || '');
+    document.documentElement.style.setProperty('--tg-hint', tg.themeParams.hint_color || '');
+    document.documentElement.style.setProperty('--tg-link', tg.themeParams.link_color || '');
+    document.documentElement.style.setProperty('--tg-button', tg.themeParams.button_color || '');
+    document.documentElement.style.setProperty('--tg-button-text', tg.themeParams.button_text_color || '');
+    document.documentElement.style.setProperty('--tg-secondary-bg', tg.themeParams.secondary_bg_color || '');
+  }
+  // Listen for theme changes
+  tg.onEvent('themeChanged', () => {
+    if (tg.themeParams) {
+      document.documentElement.style.setProperty('--tg-bg', tg.themeParams.bg_color || '');
+      document.documentElement.style.setProperty('--tg-text', tg.themeParams.text_color || '');
+      document.documentElement.style.setProperty('--tg-button', tg.themeParams.button_color || '');
+      document.documentElement.style.setProperty('--tg-button-text', tg.themeParams.button_text_color || '');
+      document.documentElement.style.setProperty('--tg-secondary-bg', tg.themeParams.secondary_bg_color || '');
+    }
+  });
+  // Main button (hidden by default, can be shown per page)
+  tg.MainButton.hide();
+  // BackButton handling
+  tg.BackButton.onClick(() => {
+    if (window.history.length > 1) window.history.back();
+    else tg.close();
+  });
+  // Set header color
+  tg.setHeaderColor('#0a0e18');
+  tg.setBackgroundColor('#0a0e18');
+}
+
+function isTelegram() { return _isTelegram; }
+function tgUser() { return tg?.initDataUnsafe?.user || null; }
+function tgInitData() { return tg?.initData || ''; }
+
+// Haptic feedback helpers
+function hapticFeedback(type) {
+  if (!tg) return;
+  if (type === 'success') tg.HapticFeedback.impactOccurred('medium');
+  else if (type === 'error') tg.HapticFeedback.notificationOccurred('error');
+  else if (type === 'tap') tg.HapticFeedback.impactOccurred('light');
+  else tg.HapticFeedback.impactOccurred('medium');
+}
 const USER_KEY = 'usp_user';
 const CSRF_KEY = 'usp_csrf';
 
@@ -188,4 +244,13 @@ function renderNav() {
 }
 
 /* ── Init on load ──────────────────────────────────────────── */
-document.addEventListener('DOMContentLoaded', renderNav);
+document.addEventListener('DOMContentLoaded', () => {
+  initTelegram();
+  renderNav();
+  // Hide desktop nav when in Telegram (use bottom nav only)
+  if (_isTelegram) {
+    const nav = document.getElementById('nav');
+    if (nav) nav.style.display = 'none';
+    document.body.classList.add('tg-webapp');
+  }
+});
