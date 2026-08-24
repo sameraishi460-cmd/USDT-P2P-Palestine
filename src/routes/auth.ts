@@ -52,14 +52,23 @@ auth.post("/register", rateLimit(5, 300), async (c) => {
       "INSERT INTO users (username, password, email) VALUES (?, ?, ?)"
     ).bind(username, hash, email).run();
   } catch (insertErr: any) {
-    // If the email column is missing, add it and retry
-    if (insertErr?.message?.includes("no such column") && insertErr?.message?.includes("email")) {
+    if (insertErr?.message?.includes("no such column") || insertErr?.message?.includes("SQLITE_ERROR")) {
+      // email column missing — try without it, then add column
+      try {
+        result = await c.env.DB.prepare(
+          "INSERT INTO users (username, password) VALUES (?, ?)"
+        ).bind(username, hash).run();
+      } catch {
+        throw insertErr; // both failed, surface original error
+      }
+      // Now add the email column and set it
       try {
         await c.env.DB.prepare("ALTER TABLE users ADD COLUMN email TEXT DEFAULT ''").run();
-      } catch { /* column may already exist */ }
-      result = await c.env.DB.prepare(
-        "INSERT INTO users (username, password, email) VALUES (?, ?, ?)"
-      ).bind(username, hash, email).run();
+      } catch { /* already exists */ }
+      if (result?.meta?.last_row_id) {
+        await c.env.DB.prepare("UPDATE users SET email = ? WHERE id = ?")
+          .bind(email, Number(result.meta.last_row_id)).run();
+      }
     } else {
       throw insertErr;
     }
