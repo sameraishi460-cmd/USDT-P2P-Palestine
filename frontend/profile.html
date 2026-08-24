@@ -9,6 +9,7 @@
   <title>حسابي — USDT P2P Palestine</title>
   <link rel="stylesheet" href="/assets/design-system.css">
   <link rel="manifest" href="/manifest.json">
+<script>(function(){var t=localStorage.getItem("usp_theme")||"dark";if(t==="auto")t=window.matchMedia("(prefers-color-scheme:light)").matches?"light":"dark";document.documentElement.setAttribute("data-theme",t);})();</script>
 </head>
 <body>
 
@@ -39,22 +40,24 @@
 
   // Fetch trust score
   let trust = {};
-  try {
-    const tRes = await api('/v2/trust/' + user.username);
-    trust = tRes.trust || {};
-  } catch {}
+  try { const tRes = await api('/v2/trust/' + user.username); trust = tRes.trust || {}; } catch {}
 
-  // Fetch wallet balance
+  // Fetch wallet
   let wallet = {};
-  try {
-    const wRes = await api('/wallet');
-    wallet = wRes || {};
-  } catch {}
+  try { const wRes = await api('/wallet'); wallet = wRes || {}; } catch {}
 
-  const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
-  const tgName = tgUser ? [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') : '';
-  const tgUsername = tgUser?.username ? '@' + tgUser.username : '';
+  // Fetch verification status
+  let verifyStatus = null;
+  try { const vRes = await api('/v2/verify/status'); verifyStatus = vRes; } catch {}
+
+  const tgData = window.Telegram?.WebApp?.initDataUnsafe?.user;
+  const tgName = tgData ? [tgData.first_name, tgData.last_name].filter(Boolean).join(' ') : '';
+  const tgUsername = tgData?.username ? '@' + tgData.username : '';
   const isLinked = !!user.telegram_id;
+
+  const kycStatus = verifyStatus?.status || 'NONE';
+  const kycLabels = { 'NONE': '🔴 غير موثق', 'PENDING': '🟡 قيد المراجعة', 'APPROVED': '🟢 موثق', 'REJECTED': '🔴 مرفوض' };
+  const kycLabel = kycLabels[kycStatus] || '🔴 غير موثق';
 
   document.getElementById('profile-content').innerHTML = `
     <!-- Profile Header -->
@@ -63,10 +66,12 @@
         <div class="avatar" style="width:64px;height:64px;font-size:1.5rem;margin:0 auto var(--sp-3);background:var(--accent);">${(user.username||'?')[0].toUpperCase()}</div>
         <h2 style="font-size:1.2rem;font-weight:800;margin-bottom:var(--sp-1);">${esc(user.username)}</h2>
         ${tgName ? `<p style="color:var(--text-muted);font-size:0.8rem;margin-bottom:var(--sp-1);">${esc(tgName)} ${tgUsername ? '(' + esc(tgUsername) + ')' : ''}</p>` : ''}
+        ${user.email ? `<p style="color:var(--text-muted);font-size:0.75rem;">📧 ${esc(user.email)}</p>` : ''}
         <div style="display:flex;justify-content:center;gap:var(--sp-2);margin-top:var(--sp-2);flex-wrap:wrap;">
-          ${isLinked ? '<span class="badge badge-success">🔗 Telegram مرتبط</span>' : '<span class="badge badge-neutral">Telegram غير مرتبط</span>'}
+          ${isLinked ? '<span class="badge badge-success">🔗 Telegram</span>' : '<span class="badge badge-neutral">Telegram غير مرتبط</span>'}
           ${user.isAdmin ? '<span class="badge badge-warning">👑 Admin</span>' : ''}
-          ${trust.is_verified ? '<span class="badge badge-success">✓ موثق</span>' : '<span class="badge badge-neutral">غير موثق</span>'}
+          ${trust.is_verified ? '<span class="badge badge-success">✓ موثق</span>' : ''}
+          <span class="badge badge-neutral">${kycLabel}</span>
         </div>
       </div>
     </div>
@@ -116,30 +121,35 @@
     <div class="card" style="margin-bottom:var(--sp-3);">
       <div style="padding:var(--sp-3);font-weight:700;font-size:0.9rem;border-bottom:1px solid var(--border);">📌 الوصول السريع</div>
       <a href="/market" style="display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3);border-bottom:1px solid var(--border);text-decoration:none;color:var(--text-primary);">
-        <span style="font-size:1.2rem;">🛒</span>
-        <span style="flex:1;font-weight:600;">السوق</span>
-        <span style="color:var(--text-muted);">→</span>
+        <span style="font-size:1.2rem;">🛒</span><span style="flex:1;font-weight:600;">السوق</span><span style="color:var(--text-muted);">→</span>
       </a>
       <a href="/trades" style="display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3);border-bottom:1px solid var(--border);text-decoration:none;color:var(--text-primary);">
-        <span style="font-size:1.2rem;">📋</span>
-        <span style="flex:1;font-weight:600;">الصفقات</span>
-        <span style="color:var(--text-muted);">→</span>
+        <span style="font-size:1.2rem;">📋</span><span style="flex:1;font-weight:600;">الصفقات</span><span style="color:var(--text-muted);">→</span>
       </a>
       <a href="/create_ad" style="display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3);border-bottom:1px solid var(--border);text-decoration:none;color:var(--text-primary);">
-        <span style="font-size:1.2rem;">➕</span>
-        <span style="flex:1;font-weight:600;">إنشاء إعلان</span>
-        <span style="color:var(--text-muted);">→</span>
+        <span style="font-size:1.2rem;">➕</span><span style="flex:1;font-weight:600;">إنشاء إعلان</span><span style="color:var(--text-muted);">→</span>
       </a>
       <a href="/notifications" style="display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3);border-bottom:1px solid var(--border);text-decoration:none;color:var(--text-primary);">
-        <span style="font-size:1.2rem;">🔔</span>
-        <span style="flex:1;font-weight:600;">الإشعارات</span>
-        <span style="color:var(--text-muted);">→</span>
+        <span style="font-size:1.2rem;">🔔</span><span style="flex:1;font-weight:600;">الإشعارات</span><span style="color:var(--text-muted);">→</span>
       </a>
       <a href="/trader?u=${esc(user.username)}" style="display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3);text-decoration:none;color:var(--text-primary);">
-        <span style="font-size:1.2rem;">👤</span>
-        <span style="flex:1;font-weight:600;">ملفي العام</span>
-        <span style="color:var(--text-muted);">→</span>
+        <span style="font-size:1.2rem;">👤</span><span style="flex:1;font-weight:600;">ملفي العام</span><span style="color:var(--text-muted);">→</span>
       </a>
+    </div>
+
+    <!-- KYC Verification -->
+    <div class="card" style="margin-bottom:var(--sp-3);">
+      <div style="padding:var(--sp-3);font-weight:700;font-size:0.9rem;border-bottom:1px solid var(--border);">🪪 توثيق الحساب</div>
+      <div style="padding:var(--sp-3);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--sp-3);">
+          <span style="font-size:0.85rem;">حالة التوثيق:</span>
+          <span style="font-weight:600;">${kycLabel}</span>
+        </div>
+        ${kycStatus === 'NONE' ? '<button onclick="startKYC()" class="btn btn-success btn-block btn-sm">طلب توثيق الحساب</button>' : ''}
+        ${kycStatus === 'REJECTED' ? '<button onclick="startKYC()" class="btn btn-success btn-block btn-sm">إعادة تقديم طلب</button>' : ''}
+        ${kycStatus === 'PENDING' ? '<p style="color:var(--text-muted);font-size:0.8rem;text-align:center;">جاري مراجعة طلبك...</p>' : ''}
+        ${kycStatus === 'APPROVED' ? '<p style="color:var(--success);font-size:0.8rem;text-align:center;">✓ حسابك موثق</p>' : ''}
+      </div>
     </div>
 
     <!-- Settings -->
@@ -191,20 +201,48 @@
           <button onclick="copyText(location.origin + '/register?ref=' + '${esc(user.referral_code || '')}')" class="btn btn-ghost btn-sm">📋 نسخ</button>
         </div>
       </div>
+    </div>
 
-      <!-- Security Info -->
-      <div style="padding:var(--sp-3);border-bottom:1px solid var(--border);">
-        <div style="font-weight:600;font-size:0.85rem;margin-bottom:var(--sp-2);">🔒 الأمان</div>
-        <div style="font-size:0.8rem;color:var(--text-muted);">
-          <div style="display:flex;justify-content:space-between;padding:var(--sp-1) 0;"><span>البريد الإلكتروني</span><span>${user.email ? '✅ مسجل' : '❌ غير مسجل'}</span></div>
-          <div style="display:flex;justify-content:space-between;padding:var(--sp-1) 0;"><span>Telegram</span><span>${isLinked ? '✅ مرتبط' : '❌ غير مرتبط'}</span></div>
+    <!-- Security Center -->
+    <div class="card" style="margin-bottom:var(--sp-3);">
+      <div style="padding:var(--sp-3);font-weight:700;font-size:0.9rem;border-bottom:1px solid var(--border);">🔒 الأمان</div>
+      <div style="padding:var(--sp-3);">
+        <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:var(--sp-3);">
+          <div style="display:flex;justify-content:space-between;padding:var(--sp-1) 0;border-bottom:1px solid var(--border);"><span>البريد الإلكتروني</span><span>${user.email ? '✅ مسجل' : '❌ غير مسجل'}</span></div>
+          <div style="display:flex;justify-content:space-between;padding:var(--sp-1) 0;border-bottom:1px solid var(--border);"><span>Telegram</span><span>${isLinked ? '✅ مرتبط' : '❌ غير مرتبط'}</span></div>
+          <div style="display:flex;justify-content:space-between;padding:var(--sp-1) 0;border-bottom:1px solid var(--border);"><span>التوثيق</span><span>${kycLabel}</span></div>
           <div style="display:flex;justify-content:space-between;padding:var(--sp-1) 0;"><span>الحالة</span><span>${user.status === 'ADMIN' ? '👑 Admin' : '✅ نشط'}</span></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:var(--sp-2);">
+          <button onclick="showChangePassword()" class="btn btn-ghost btn-sm btn-block">🔑 تغيير كلمة المرور</button>
+          <button onclick="showResetPassword()" class="btn btn-ghost btn-sm btn-block">📧 إعادة تعيين كلمة المرور</button>
         </div>
       </div>
     </div>
 
+    <!-- Change Password Form (hidden by default) -->
+    <div id="changePasswordForm" class="card" style="display:none;margin-bottom:var(--sp-3);">
+      <div style="padding:var(--sp-3);font-weight:700;font-size:0.9rem;border-bottom:1px solid var(--border);">🔑 تغيير كلمة المرور</div>
+      <div style="padding:var(--sp-3);">
+        <div class="form-group">
+          <label class="form-label">كلمة المرور الحالية</label>
+          <input class="form-input" type="password" id="current-pw" placeholder="أدخل كلمة المرور الحالية">
+        </div>
+        <div class="form-group">
+          <label class="form-label">كلمة المرور الجديدة</label>
+          <input class="form-input" type="password" id="new-pw" placeholder="أدخل كلمة المرور الجديدة">
+        </div>
+        <div class="form-group">
+          <label class="form-label">تأكيد كلمة المرور</label>
+          <input class="form-input" type="password" id="confirm-pw" placeholder="أعد إدخال كلمة المرور الجديدة">
+        </div>
+        <div id="pw-err" style="color:var(--danger);font-size:0.8rem;margin-bottom:var(--sp-2);display:none;"></div>
+        <button onclick="changePassword()" class="btn btn-success btn-block btn-sm">💾 حفظ</button>
+      </div>
+    </div>
+
     <!-- Logout -->
-    <button onclick="doLogout()" class="btn btn-block" style="background:var(--error);color:#fff;padding:var(--sp-3);border-radius:var(--radius-md);font-weight:700;width:100%;border:none;cursor:pointer;font-size:0.95rem;">
+    <button onclick="doLogout()" class="btn btn-block" style="background:var(--danger);color:#fff;padding:var(--sp-3);border-radius:var(--radius-md);font-weight:700;width:100%;border:none;cursor:pointer;font-size:0.95rem;">
       🚪 تسجيل الخروج
     </button>
   `;
@@ -229,9 +267,7 @@ window.linkTelegram = async function() {
       alert('أرسل هذا الكود للبوت:\n\n/link ' + res.code + '\n\nأو اضغط الزر أدناه.');
       window.open('https://t.me/usdt_p2p_palestine_bot?start=link_' + res.code, '_blank');
     }
-  } catch(e) {
-    showToast('خطأ في إنشاء كود الربط');
-  }
+  } catch(e) { showToast('خطأ في إنشاء كود الربط'); }
 };
 
 window.savePrefs = async function() {
@@ -243,6 +279,64 @@ window.savePrefs = async function() {
     });
     showToast('تم حفظ الإعدادات');
   } catch {}
+};
+
+window.showChangePassword = function() {
+  const f = document.getElementById('changePasswordForm');
+  f.style.display = f.style.display === 'none' ? 'block' : 'none';
+};
+
+window.showResetPassword = function() {
+  const email = prompt('أدخل بريدك الإلكتروني لإعادة تعيين كلمة المرور:');
+  if (email) {
+    api('/auth/password-reset', { method: 'POST', body: { email } })
+      .then(r => showToast(r?.ok ? 'تم إرسال رابط إعادة التعيين' : (r?.error || 'خطأ')))
+      .catch(() => showToast('خطأ في الاتصال'));
+  }
+};
+
+window.changePassword = async function() {
+  const current = document.getElementById('current-pw').value;
+  const newPw = document.getElementById('new-pw').value;
+  const confirm = document.getElementById('confirm-pw').value;
+  const errEl = document.getElementById('pw-err');
+
+  if (!current || !newPw || !confirm) {
+    errEl.textContent = 'أدخل جميع البيانات';
+    errEl.style.display = 'block';
+    return;
+  }
+  if (newPw !== confirm) {
+    errEl.textContent = 'كلمتا المرور غير متطابقتين';
+    errEl.style.display = 'block';
+    return;
+  }
+  if (newPw.length < 6) {
+    errEl.textContent = 'كلمة المرور يجب أن تكون 6 أحرف على الأقل';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  errEl.style.display = 'none';
+  const r = await api('/auth/change-password', { method: 'POST', body: { current_password: current, new_password: newPw } });
+  if (r && r.ok) {
+    showToast('تم تغيير كلمة المرور بنجاح');
+    document.getElementById('changePasswordForm').style.display = 'none';
+  } else {
+    errEl.textContent = r?.error || 'خطأ في تغيير كلمة المرور';
+    errEl.style.display = 'block';
+  }
+};
+
+window.startKYC = function() {
+  const docType = prompt('نوع الوثيقة:\n1. جواز سفر\n2. رخصة قيادة\n3. بطاقة هوية\n\nأدخل الرقم:');
+  const types = { '1': 'passport', '2': 'driving_license', '3': 'national_id' };
+  const type = types[docType];
+  if (!type) { showToast('نوع غير صالح'); return; }
+
+  api('/v2/verify/request', { method: 'POST', body: { document_type: type } })
+    .then(r => showToast(r?.ok ? 'تم إرسال طلب التوثيق' : (r?.error || 'خطأ')))
+    .catch(() => showToast('خطأ في الاتصال'));
 };
 </script>
 </body>
