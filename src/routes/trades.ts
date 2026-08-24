@@ -131,7 +131,7 @@ trades.post("/:id/upload-proof", requireUser, requireCsrf, async (c) => {
 });
 
 // ============================================================
-// POST /api/trades/:id/seller-confirm — seller releases escrow
+// POST /api/trades/:id/seller-confirm — seller releases / completes trade
 // ============================================================
 trades.post("/:id/seller-confirm", requireUser, requireCsrf, async (c) => {
   const id = Number(c.req.param("id"));
@@ -146,12 +146,15 @@ trades.post("/:id/seller-confirm", requireUser, requireCsrf, async (c) => {
     return c.json({ error: `يجب أن يأكد المشتري الدفع أولاً (الحالة: ${trade.status})` }, 400);
   }
 
-  // Atomic double-release-protected escrow release
-  const release = await escrowReleaseToBuyer(c.env, trade.seller, trade.buyer, trade.amount, id);
-  if (!release.ok) return c.json({ error: release.reason }, 400);
+  // BUY ads: no escrow locked (escrow_status = WAITING). Just complete.
+  // SELL ads: escrow locked (escrow_status = LOCKED). Release to buyer.
+  if (trade.escrow_status === "LOCKED") {
+    const release = await escrowReleaseToBuyer(c.env, trade.seller, trade.buyer, trade.amount, id);
+    if (!release.ok) return c.json({ error: release.reason }, 400);
+  }
 
   await c.env.DB.prepare(
-    `UPDATE trades SET status = 'COMPLETED', escrow_status = 'RELEASED', completed_at = datetime('now')
+    `UPDATE trades SET status = 'COMPLETED', escrow_status = CASE WHEN escrow_status = 'LOCKED' THEN 'RELEASED' ELSE 'COMPLETED' END, completed_at = datetime('now')
      WHERE id = ? AND status != 'COMPLETED'`
   ).bind(id).run();
 
