@@ -149,12 +149,13 @@ h4 { font-size: 1rem; }
 }
 
 .navbar-inner {
-  max-width: 480px;
+  max-width: 960px;
   margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
   height: 100%;
+  gap: var(--sp-2);
 }
 
 .navbar-brand {
@@ -171,7 +172,13 @@ h4 { font-size: 1rem; }
   display: flex;
   align-items: center;
   gap: var(--sp-2);
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  min-width: 0;
 }
+.navbar-links::-webkit-scrollbar { display: none; }
 
 .navbar-links a {
   color: var(--text-secondary);
@@ -180,6 +187,8 @@ h4 { font-size: 1rem; }
   padding: var(--sp-1) var(--sp-2);
   border-radius: var(--radius-sm);
   transition: all var(--transition-fast);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .navbar-links a:hover { color: var(--text-primary); background: rgba(255,255,255,0.05); }
 
@@ -207,15 +216,16 @@ h4 { font-size: 1rem; }
   left: 0;
   right: 0;
   z-index: 100;
-  background: rgba(10,14,26,0.92);
+  background: rgba(10,14,26,0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-top: 1px solid var(--border);
   padding-bottom: env(safe-area-inset-bottom, 0);
+  max-height: 60px;
 }
 
 .bottom-nav-inner {
-  max-width: 480px;
+  max-width: 960px;
   margin: 0 auto;
   display: flex;
   justify-content: space-around;
@@ -235,6 +245,7 @@ h4 { font-size: 1rem; }
   transition: all var(--transition-fast);
   text-decoration: none;
   min-width: 48px;
+  flex: 1;
 }
 
 .bottom-nav a.active {
@@ -803,15 +814,20 @@ textarea.form-input { resize: vertical; min-height: 80px; }
 /* ===== Responsive ===== */
 @media (max-width: 380px) {
   html { font-size: 14px; }
-  .container { padding: var(--sp-3); }
-  .navbar-links { gap: var(--sp-1); }
-  .navbar-links a { font-size: 0.7rem; padding: var(--sp-1); }
+  .container { padding: var(--sp-3); padding-bottom: 80px; }
+  .navbar-links { gap: 2px; }
+  .navbar-links a { font-size: 0.7rem; padding: 4px 6px; white-space: nowrap; }
   .btn-lg { padding: var(--sp-3) var(--sp-4); font-size: 0.9rem; }
 }
-
+@media (max-width: 430px) {
+  .container { padding-bottom: 80px; }
+  .navbar-inner { max-width: 100%; }
+}
 @media (min-width: 768px) {
-  .container { max-width: 520px; }
+  .container { max-width: 520px; padding-bottom: var(--sp-4); }
   .grid-2 { grid-template-columns: 1fr 1fr; }
+  .bottom-nav { display: none; }
+  body { padding-bottom: 0; }
 }
 
 /* ===== Ad Card ===== */
