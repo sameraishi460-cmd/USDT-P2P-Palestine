@@ -1,47 +1,57 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0a0e18">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>دخول الإدارة — USDT P2P Palestine</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/app.css">
+<link rel="stylesheet" href="/assets/app.css">
 </head>
 <body>
-<div class="container" style="max-width:420px;padding-top:60px;">
-  <div class="text-center" style="margin-bottom:30px;">
-    <div style="font-size:48px;margin-bottom:8px;">🔒</div>
-    <h1 style="font-size:20px;font-weight:800;color:var(--gold);">دخول الإدارة</h1>
-    <p class="muted" style="margin-top:4px;">لوحة إدارة USDT P2P Palestine</p>
+<div class="app">
+<main class="main">
+<div class="container">
+<div style="max-width:420px;margin:var(--space-3xl) auto">
+  <div class="text-center" style="margin-bottom:var(--space-xl)">
+    <div style="width:64px;height:64px;border-radius:var(--radius-lg);background:var(--error);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin:0 auto var(--space-sm)">🛡️</div>
+    <h1 style="font-size:1.5rem;font-weight:700;margin-bottom:4px">دخول الإدارة</h1>
+    <p class="text-muted text-sm">لوحة التحكم — للمسؤلين فقط</p>
   </div>
-  <div id="errorBox" class="alert alert-error" style="display:none;"></div>
-  <form id="adminForm" class="card" style="border-color:rgba(255,215,0,.15);">
-    <div class="form-group">
-      <label>اسم المستخدم</label>
-      <input id="username" type="text" required placeholder="admin">
-    </div>
+
+  <div class="card">
+    <div id="errMsg" class="alert alert-error" style="display:none;margin-bottom:var(--space-md)"></div>
     <div class="form-group">
       <label>كلمة المرور</label>
-      <input id="password" type="password" required placeholder="••••••">
+      <input type="password" class="form-input" id="adminPass" placeholder="أدخل كلمة مرور الإدارة" autofocus>
     </div>
-    <button type="submit" class="btn btn-warning" id="adminBtn">🔑 دخول الإدارة</button>
-  </form>
-  <div class="text-center" style="margin-top:16px;">
-    <a href="/login.html" class="text-sm text-dim">← العودة لتسجيل الدخول</a>
+    <button class="btn btn-primary btn-block" onclick="adminLogin()">دخول</button>
+  </div>
+
+  <div class="text-center" style="margin-top:var(--space-lg)">
+    <a href="/login" class="text-muted text-sm" style="text-decoration:none">← العودة لتسجيل الدخول</a>
   </div>
 </div>
-<div id="toast"></div>
-<script src="assets/app.js"></script>
+</div>
+</main>
+</div>
+<script src="/assets/app.js"></script>
 <script>
-$('#adminForm').onsubmit = async function(e) {
-  e.preventDefault();
-  var btn = $('#adminBtn'); btn.disabled = true; btn.textContent = 'جاري الدخول...';
-  var r = await post('/auth/admin-login', { username: $('#username').value.trim(), password: $('#password').value });
-  if (!r || !r.ok) { $('#errorBox').style.display = 'block'; $('#errorBox').textContent = (r && r.error) || 'بيانات غير صحيحة'; btn.disabled = false; btn.textContent = '🔑 دخول الإدارة'; return; }
-  setCsrf(r.csrf_token); setUser({ username: $('#username').value.trim(), isAdmin: true }); location.href = '/admin.html';
-};
+document.getElementById('adminPass').addEventListener('keydown',e=>{if(e.key==='Enter')adminLogin();});
+async function adminLogin(){
+  const pass=document.getElementById('adminPass').value.trim();
+  const errEl=document.getElementById('errMsg');
+  if(!pass){errEl.textContent='أدخل كلمة المرور';errEl.style.display='block';return;}
+  try{
+    const r=await API.post('/api/auth/admin/login',{password:pass});
+    if(r&&r.session_token){
+      localStorage.setItem('session_token',r.session_token);
+      location.href='/admin';
+    }else{
+      errEl.textContent=r?.error||'خطأ في تسجيل الدخول';errEl.style.display='block';
+    }
+  }catch(e){
+    errEl.textContent=e.message||'خطأ في الاتصال';errEl.style.display='block';
+  }
+}
 </script>
 </body>
 </html>

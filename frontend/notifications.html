@@ -1,47 +1,76 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0a0e18">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>الإشعارات — USDT P2P Palestine</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/app.css">
+<link rel="stylesheet" href="/assets/app.css">
 </head>
 <body>
-<div class="navbar">
-  <span class="logo">🔔 الإشعارات</span>
-  <div class="actions">
-    <button onclick="markAllRead()" class="btn btn-ghost btn-sm" style="min-height:32px;">✓ قراءة الكل</button>
-    <a href="/" style="font-size:20px;">🏠</a>
-  </div>
+<div class="app">
+<nav class="nav" id="nav"></nav>
+<main class="main">
+<div class="container" id="app">
+<div class="loading-skeleton">
+<div class="sk sk-card"></div>
 </div>
-<div class="container">
-  <div id="notifList"><div class="skeleton"></div><div class="skeleton"></div></div>
 </div>
-<div id="toast"></div>
-<script src="assets/app.js"></script>
+</main>
+<div class="bottom-nav" id="bottomNav"></div>
+</div>
+<script src="/assets/app.js"></script>
 <script>
-if (!requireAuth('/notifications.html')) throw new Error('auth');
-(async function() {
-  const r = await get('/notifications');
-  if (r?.ok && r.notifications?.length) {
-    $('#notifList').innerHTML = r.notifications.map(n => `
-      <div class="list-item" style="opacity:${n.seen ? '.6' : '1'};cursor:default;">
-        <div style="font-size:22px;">${n.seen ? '📩' : '🔔'}</div>
-        <div class="list-main">
-          <div class="list-title">${escHtml(n.title)}</div>
-          <div class="list-sub">${escHtml(n.message)}</div>
-          <div class="text-xs text-dim" style="margin-top:4px;">${formatDate(n.created)}</div>
+(function(){
+  const app=document.getElementById('app');
+  async function load(){
+    if(!Auth.isLoggedIn()){location.href='/login';return;}
+    let notifications=[];
+    try{const r=await API.get('/api/notifications');notifications=r.notifications||r||[];}catch(e){}
+
+    app.innerHTML=`
+      <div class="page-header">
+        <div class="flex-between">
+          <div>
+            <h1 class="page-title">الإشعارات</h1>
+            <div class="page-subtitle">${notifications.length} إشعار</div>
+          </div>
+          ${notifications.length>0?`<button class="btn btn-outline btn-sm" onclick="markAllRead()">تحديد الكل كمقروء</button>`:''}
         </div>
       </div>
-    `).join('');
-  } else {
-    showEmpty($('#notifList'), '🔔', 'لا إشعارات جديدة');
+
+      ${notifications.length===0?`
+        <div class="card">
+          <div class="empty-state">
+            <div class="empty-icon">🔔</div>
+            <div class="empty-title">لا توجد إشعارات</div>
+            <div class="empty-desc">ستظهر هنا إشعاراتك الجديدة</div>
+          </div>
+        </div>
+      `:notifications.map(n=>`
+        <div class="card ${n.is_read?'':'notification-unread'}" style="margin-bottom:var(--space-sm);cursor:pointer" onclick="markRead(${n.id})">
+          <div class="flex-between">
+            <div style="flex:1">
+              <div style="font-weight:${n.is_read?'400':'600'}">${escapeHtml(n.title||n.message||'')}</div>
+              ${n.message&&n.message!==n.title?`<div class="text-muted text-sm" style="margin-top:4px">${escapeHtml(n.message)}</div>`:''}
+              <div class="text-muted text-sm" style="margin-top:4px">${fmtDate(n.created_at)}</div>
+            </div>
+            ${!n.is_read?'<div style="width:8px;height:8px;border-radius:50%;background:var(--primary);flex-shrink:0;margin-right:var(--space-sm)"></div>':''}
+          </div>
+        </div>
+      `).join('')}
+    `;
   }
+
+  window.markRead=async function(id){
+    try{await API.put('/api/notifications/'+id+'/read');load();}catch(e){}
+  };
+
+  window.markAllRead=async function(){
+    try{await API.put('/api/notifications/read-all');toast.show('تم تحديد الكل كمقروء','success');load();}catch(e){toast.show('خطأ','error');}
+  };
+
+  load();
 })();
-async function markAllRead() { await post('/notifications/mark-read'); toast('✅'); location.reload(); }
 </script>
 </body>
 </html>

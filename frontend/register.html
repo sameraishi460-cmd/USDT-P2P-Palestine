@@ -6,62 +6,114 @@
 <meta name="theme-color" content="#0a0e18">
 <title>إنشاء حساب — USDT P2P Palestine</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/app.css">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/app.css">
 </head>
 <body>
-<div class="container" style="max-width:420px;padding-top:40px;">
-  <div class="text-center" style="margin-bottom:24px;">
-    <h1 style="font-size:20px;font-weight:800;color:var(--primary);">🇵🇸 إنشاء حساب جديد</h1>
-    <p class="muted text-sm" style="margin-top:4px;">انضم إلى منصة التداول Palestianne</p>
+<div class="navbar">
+  <a href="/" style="text-decoration:none;"><span class="logo">🇵🇸 USDT <span>P2P</span></span></a>
+</div>
+
+<div class="container" style="padding-top:32px;">
+  <div class="text-center" style="margin-bottom:28px;">
+    <div style="font-size:40px;margin-bottom:8px;">🇵🇸</div>
+    <h1 style="font-size:22px;font-weight:800;">إنشاء حساب جديد</h1>
+    <p class="text-secondary text-sm">انضم إلى منصة USDT P2P Palestine</p>
   </div>
+
   <div id="errorBox" class="alert alert-error" style="display:none;"></div>
+
   <form id="regForm" class="card">
     <div class="form-group">
       <label>اسم المستخدم</label>
-      <input id="username" type="text" required placeholder="username" autocomplete="username">
+      <input id="username" type="text" required placeholder="3-20 حرف أو رقم" autocomplete="username" pattern="[a-zA-Z0-9_]{3,20}">
     </div>
     <div class="form-group">
       <label>البريد الإلكتروني</label>
       <input id="email" type="email" required placeholder="email@example.com" autocomplete="email">
     </div>
     <div class="form-group">
-      <label>الاسم الأول</label>
-      <input id="first_name" type="text" placeholder="محمد">
+      <label>كلمة المرور</label>
+      <input id="password" type="password" required placeholder="6 أحرف على الأقل" minlength="6" autocomplete="new-password">
     </div>
     <div class="form-group">
-      <label>كلمة المرور</label>
-      <input id="password" type="password" required minlength="6" placeholder="٦ أحرف على الأقل" autocomplete="new-password">
+      <label>تأكيد كلمة المرور</label>
+      <input id="password2" type="password" required placeholder="أعد إدخال كلمة المرور" autocomplete="new-password">
     </div>
-    <button type="submit" class="btn btn-primary" id="regBtn">🚀 إنشاء الحساب</button>
+    <button type="submit" class="btn btn-primary" id="regBtn">📝 إنشاء الحساب</button>
   </form>
-  <div class="text-center" style="margin:16px 0;">
-    <a href="/login.html" class="text-sm text-dim">لديك حساب؟ <b class="text-primary">سجّل الدخول</b></a>
+
+  <div class="text-center mt-12 mb-12">
+    <a href="/login" class="text-sm text-secondary">لديك حساب؟ <b class="text-primary">سجّل الدخول</b></a>
   </div>
-  <button onclick="tgRegister()" class="btn btn-ghost" id="tgBtn">
+
+  <!-- Telegram Login -->
+  <button onclick="telegramLogin()" class="btn btn-ghost mb-12" id="tgBtn">
     <span style="font-size:18px;">✈️</span> التسجيل عبر Telegram
   </button>
+
+  <!-- Admin Login -->
+  <div class="text-center" style="margin-top:24px;">
+    <a href="/admin_login" class="text-xs text-muted">🔒 دخول الإدارة</a>
+  </div>
 </div>
+
+<div id="bottomNav"></div>
 <div id="toast"></div>
-<script src="assets/app.js"></script>
+<script src="/assets/app.js"></script>
 <script>
+if (window.Telegram && window.Telegram.WebApp) {
+  Telegram.WebApp.ready();
+}
+
 $('#regForm').onsubmit = async function(e) {
   e.preventDefault();
-  var btn = $('#regBtn'); btn.disabled = true;
+  var btn = $('#regBtn');
+  btn.disabled = true;
+  btn.textContent = 'جاري الإنشاء...';
+  $('#errorBox').style.display = 'none';
+
+  if ($('#password').value !== $('#password2').value) {
+    $('#errorBox').style.display = 'block';
+    $('#errorBox').textContent = 'كلمتا المرور غير متطابقتين';
+    btn.disabled = false;
+    btn.textContent = '📝 إنشاء الحساب';
+    return;
+  }
+
   var r = await post('/auth/register', {
     username: $('#username').value.trim(),
     email: $('#email').value.trim(),
-    password: $('#password').value,
-    first_name: $('#first_name').value.trim()
+    password: $('#password').value
   });
-  if (!r || !r.ok) { $('#errorBox').style.display = 'block'; $('#errorBox').textContent = (r && r.error) || 'خطأ'; btn.disabled = false; return; }
-  setCsrf(r.csrf_token); setUser({ username: $('#username').value.trim() }); location.href = '/';
+
+  if (!r || !r.ok) {
+    $('#errorBox').style.display = 'block';
+    $('#errorBox').textContent = (r && r.error) || 'خطأ في إنشاء الحساب';
+    btn.disabled = false;
+    btn.textContent = '📝 إنشاء الحساب';
+    return;
+  }
+
+  setCsrf(r.csrf_token);
+  setUser({ username: $('#username').value.trim() });
+  toast('✅ تم إنشاء الحساب بنجاح');
+  location.href = '/market';
 };
-async function tgRegister() {
-  if (!window.Telegram || !window.Telegram.WebApp || !window.Telegram.WebApp.initData) { toast('افتح من داخل Telegram'); return; }
+
+async function telegramLogin() {
+  if (!window.Telegram || !window.Telegram.WebApp || !window.Telegram.WebApp.initData) {
+    toast('افتح من داخل Telegram', 4000);
+    return;
+  }
   var r = await post('/auth/telegram', { initData: Telegram.WebApp.initData });
-  if (!r || !r.ok) { $('#errorBox').style.display = 'block'; $('#errorBox').textContent = (r && r.error) || 'فشل'; return; }
-  setCsrf(r.csrf_token); setUser({ username: r.username }); location.href = '/';
+  if (!r || !r.ok) {
+    toast((r && r.error) || 'فشل التحقق', 4000);
+    return;
+  }
+  setCsrf(r.csrf_token);
+  setUser({ username: r.username || 'tg_user' });
+  location.href = '/market';
 }
 </script>
 </body>

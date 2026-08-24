@@ -1,147 +1,126 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0a0e18">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>إنشاء إعلان — USDT P2P Palestine</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/app.css">
+<link rel="stylesheet" href="/assets/app.css">
 </head>
 <body>
-<div class="navbar">
-  <span class="logo">➕ إعلان جديد</span>
-  <div class="actions"><a href="/market.html" style="font-size:20px;">➡️</a></div>
+<div class="app">
+<nav class="nav" id="nav"></nav>
+<main class="main">
+<div class="container" id="app">
+<div class="loading-skeleton">
+<div class="sk sk-card"></div>
 </div>
-<div class="container">
-  <div id="errorBox" class="alert alert-error" style="display:none;"></div>
-
-  <!-- Balance Warning -->
-  <div id="balWarning" class="alert alert-warning" style="display:none;">
-    رصيدك غير كافٍ. <a href="/wallet.html#deposit" class="text-primary">إيداع USDT ←</a>
-  </div>
-
-  <form id="adForm" class="card">
-    <div class="card-title">📝 تفاصيل الإعلان</div>
-
-    <!-- Ad Type -->
-    <div class="form-group">
-      <label>نوع الإعلان</label>
-      <div class="grid-2" style="gap:8px;">
-        <button type="button" class="btn btn-primary btn-sm" id="typeSell" onclick="setType('SELL')" style="min-height:44px;">💰 بيع USDT</button>
-        <button type="button" class="btn btn-ghost btn-sm" id="typeBuy" onclick="setType('BUY')" style="min-height:44px;">🛒 شراء USDT</button>
-      </div>
-      <input type="hidden" id="adType" value="SELL">
-    </div>
-
-    <div class="form-group">
-      <label>العنوان</label>
-      <input id="title" type="text" placeholder="بيع USDT بسعر ممتاز" required>
-    </div>
-
-    <div class="grid-2">
-      <div class="form-group">
-        <label>الكمية (USDT)</label>
-        <input id="amount" type="number" min="1" step="0.01" placeholder="100" required>
-      </div>
-      <div class="form-group">
-        <label>السعر (ILS)</label>
-        <input id="price" type="number" min="0.01" step="0.01" placeholder="3.75" required>
-      </div>
-    </div>
-
-    <div class="grid-2">
-      <div class="form-group">
-        <label>الحد الأدنى</label>
-        <input id="minAmount" type="number" min="1" step="0.01" placeholder="10">
-      </div>
-      <div class="form-group">
-        <label>الحد الأقصى</label>
-        <input id="maxAmount" type="number" min="1" step="0.01" placeholder="100">
-      </div>
-    </div>
-
-    <div class="form-group">
-      <label>طريقة الدفع</label>
-      <input id="payment" type="text" placeholder="تحويل بنكي / فودافون كاش /叮叮" required>
-    </div>
-
-    <!-- Preview -->
-    <div id="preview" class="card" style="background:var(--bg-surface);display:none;">
-      <div class="text-sm text-dim" style="margin-bottom:8px;">معاينة الإعلان:</div>
-      <div class="flex-between">
-        <span id="previewType" class="badge badge-SELL">بيع</span>
-        <span id="previewPrice" class="text-primary font-bold">—</span>
-      </div>
-      <div class="text-xs text-dim" style="margin-top:6px;">
-        <span id="previewAmount">—</span> USDT · <span id="previewLimits">—</span> · <span id="previewPayment">—</span>
-      </div>
-    </div>
-
-    <button type="submit" class="btn btn-primary" id="submitBtn" style="margin-top:12px;">✅ نشر الإعلان</button>
-  </form>
 </div>
-<div id="toast"></div>
-<script src="assets/app.js"></script>
+</main>
+<div class="bottom-nav" id="bottomNav"></div>
+</div>
+<script src="/assets/app.js"></script>
 <script>
-if (!requireAuth('/create_ad.html')) throw new Error('auth');
+(function(){
+  const app=document.getElementById('app');
+  let price=null;
+  async function load(){
+    if(!Auth.isLoggedIn()){location.href='/login';return;}
+    try{price=await API.get('/api/market/price');}catch(e){}
 
-function setType(t) {
-  $('#adType').value = t;
-  $('#typeSell').className = t === 'SELL' ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm';
-  $('#typeBuy').className = t === 'BUY' ? 'btn btn-primary btn-sm' : 'btn btn-ghost btn-sm';
-  updatePreview();
-}
+    app.innerHTML=`
+      <div class="page-header">
+        <h1 class="page-title">إنشاء إعلان جديد</h1>
+        <div class="page-subtitle">أضف عرضك في السوق</div>
+      </div>
 
-function updatePreview() {
-  const t = $('#adType').value;
-  const p = Number($('#price').value) || 0;
-  const a = Number($('#amount').value) || 0;
-  const mn = Number($('#minAmount').value) || 0;
-  const mx = Number($('#maxAmount').value) || 0;
-  const pay = $('#payment').value;
-  if (p > 0 && a > 0) {
-    $('#preview').style.display = 'block';
-    $('#previewType').textContent = t === 'SELL' ? '💰 بيع' : '🛒 شراء';
-    $('#previewType').className = 'badge badge-' + t;
-    $('#previewPrice').textContent = formatNum(p) + ' ILS';
-    $('#previewAmount').textContent = formatNum(a);
-    $('#previewLimits').textContent = mn && mx ? formatNum(mn) + '-' + formatNum(mx) + ' USDT' : formatNum(a) + ' USDT';
-    $('#previewPayment').textContent = pay || '—';
-  } else {
-    $('#preview').style.display = 'none';
+      <div class="card" style="margin-bottom:var(--space-md)">
+        <div class="text-center" style="padding:var(--space-sm)">
+          <div class="text-muted text-sm">سعر السوق الحالي</div>
+          <div class="stat-value" style="font-size:1.5rem">${price?.price?fmtNum(price.price)+' ₪':'—'}</div>
+        </div>
+      </div>
+
+      <form id="adForm" class="card" onsubmit="return false">
+        <h3 style="margin-bottom:var(--space-md)">تفاصيل الإعلان</h3>
+
+        <div class="form-group">
+          <label>نوع الإعلان</label>
+          <div class="segmented-control" id="adTypeCtrl">
+            <button type="button" class="seg-btn active" data-val="BUY" onclick="setAdType('BUY')">شراء USDT</button>
+            <button type="button" class="seg-btn" data-val="SELL" onclick="setAdType('SELL')">بيع USDT</button>
+          </div>
+          <input type="hidden" id="adType" value="BUY">
+        </div>
+
+        <div class="form-group">
+          <label>السعر (₪ لكل USDT)</label>
+          <input type="number" class="form-input" id="adPrice" step="0.01" min="0.01" placeholder="${price?.price||''}" required>
+        </div>
+
+        <div class="grid grid-2">
+          <div class="form-group">
+            <label>الكمية (USDT)</label>
+            <input type="number" class="form-input" id="adAmount" step="0.01" min="1" placeholder="100" required>
+          </div>
+          <div class="form-group">
+            <label>الحد الأدنى (USDT)</label>
+            <input type="number" class="form-input" id="adMin" step="0.01" min="1" placeholder="10" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>الحد الأقصى (USDT)</label>
+          <input type="number" class="form-input" id="adMax" step="0.01" min="1" placeholder="1000">
+        </div>
+
+        <div class="form-group">
+          <label>طريقة الدفع</label>
+          <select class="form-input form-select" id="adPayment">
+            <option value="bank_transfer">تحويل بنكي</option>
+            <option value="cash">نقدي</option>
+            <option value="wallet">محفظة إلكترونية</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>البنك (اختياري)</label>
+          <input type="text" class="form-input" id="adBank" placeholder="مثال: بنك فلسطين">
+        </div>
+
+        <button type="button" class="btn btn-primary btn-block" onclick="submitAd()">نشر الإعلان</button>
+      </form>
+    `;
   }
-}
-['price','amount','minAmount','maxAmount','payment'].forEach(id => {
-  const el = document.getElementById(id);
-  if (el) el.addEventListener('input', updatePreview);
-});
 
-// Check balance for SELL ads
-(async function() {
-  const w = await get('/wallet');
-  if (w?.ok && w.balance < 10) {
-    $('#balWarning').style.display = 'block';
-  }
+  window.setAdType=function(type){
+    document.getElementById('adType').value=type;
+    document.querySelectorAll('#adTypeCtrl .seg-btn').forEach(b=>b.classList.toggle('active',b.dataset.val===type));
+  };
+
+  window.submitAd=async function(){
+    const type=document.getElementById('adType').value;
+    const price=parseFloat(document.getElementById('adPrice').value);
+    const amount=parseFloat(document.getElementById('adAmount').value);
+    const minAmount=parseFloat(document.getElementById('adMin').value);
+    const maxAmount=parseFloat(document.getElementById('adMax').value)||null;
+    const paymentMethod=document.getElementById('adPayment').value;
+    const bank=document.getElementById('adBank').value.trim()||null;
+
+    if(!price||price<=0){toast.show('أدخل السعر','error');return;}
+    if(!amount||amount<=0){toast.show('أدخل الكمية','error');return;}
+    if(!minAmount||minAmount<=0){toast.show('أدخل الحد الأدنى','error');return;}
+
+    try{
+      await API.post('/api/market/ads/create',{
+        type,price_per_usdt:price,usdt_amount:amount,min_order:minAmount,max_order:maxAmount,payment_method:paymentMethod,bank
+      });
+      toast.show('تم نشر الإعلان بنجاح','success');
+      setTimeout(()=>location.href='/market',1000);
+    }catch(e){toast.show(e.message||'خطأ في نشر الإعلان','error');}
+  };
+
+  load();
 })();
-
-$('#adForm').onsubmit = async (e) => {
-  e.preventDefault();
-  const btn = $('#submitBtn'); btn.disabled = true;
-  const r = await post('/market/ads/create', {
-    title: $('#title').value.trim(),
-    amount: Number($('#amount').value),
-    price: Number($('#price').value),
-    min_amount: Number($('#minAmount').value) || Number($('#amount').value),
-    max_amount: Number($('#maxAmount').value) || Number($('#amount').value),
-    payment: $('#payment').value.trim(),
-    type: $('#adType').value,
-  });
-  btn.disabled = false;
-  if (r?.ok) { toast('✅ تم نشر الإعلان'); location.href = '/market.html'; }
-  else { $('#errorBox').style.display = 'block'; $('#errorBox').textContent = r?.error || 'خطأ في إنشاء الإعلان'; }
-};
 </script>
 </body>
 </html>

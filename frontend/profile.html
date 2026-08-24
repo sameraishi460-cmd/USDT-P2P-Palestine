@@ -1,123 +1,121 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0a0e18">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>حسابي — USDT P2P Palestine</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/app.css">
+<link rel="stylesheet" href="/assets/app.css">
 </head>
 <body>
-<div class="navbar">
-  <a href="/" style="text-decoration:none;"><span class="logo">🇵🇸 USDT P2P</span></a>
-  <div class="actions">
-    <a href="/notifications.html" style="position:relative;">🔔<span id="notifDot" class="status-dot red" style="display:none;position:absolute;top:-2px;right:-2px;"></span></a>
-  </div>
+<div class="app">
+<nav class="nav" id="nav"></nav>
+<main class="main">
+<div class="container" id="app">
+<div class="loading-skeleton">
+<div class="sk sk-card"></div>
 </div>
-<div class="container" id="content">
-  <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
 </div>
-<div class="bottom-nav">
-  <a href="/"><span class="icon">🏠</span>الرئيسية</a>
-  <a href="/market.html"><span class="icon">🛒</span>السوق</a>
-  <a href="/trades.html"><span class="icon">📄</span>الصفقات</a>
-  <a href="/wallet.html"><span class="icon">💰</span>المحفظة</a>
-  <a href="/profile.html" class="active"><span class="icon">👤</span>حسابي</a>
+</main>
+<div class="bottom-nav" id="bottomNav"></div>
 </div>
-<div id="toast"></div>
-<script src="assets/app.js"></script>
+<script src="/assets/app.js"></script>
 <script>
-if (!requireAuth()) throw new Error('auth required');
-(async function() {
-  var me = await get('/auth/me');
-  if (!me || !me.authenticated) { location.href = '/login.html'; return; }
-  var profile = await get('/profile');
-  var wallet = await get('/wallet');
-  var p = profile ? profile.profile || {} : {};
-  var s = profile ? profile.stats || {} : {};
-  var w = wallet || {};
-  
-  var html = '<h2 style="font-size:20px;font-weight:800;margin-bottom:16px;">👤 حسابي</h2>';
-  
-  // Profile Card
-  html += '<div class="card" style="text-align:center;">';
-  html += '<div class="avatar avatar-lg" style="margin:0 auto 12px;">' + ((me.username||'?')[0]||'?').toUpperCase() + '</div>';
-  html += '<div class="text-lg font-bold">' + escHtml(me.username) + '</div>';
-  if (me.isAdmin) html += '<div style="margin-top:4px;">' + statusBadge('OPEN') + ' <span class="badge badge-admin">مدير</span></div>';
-  html += '<div class="muted text-sm" style="margin-top:4px;">' + escHtml(p.first_name || '') + '</div>';
-  if (p.email) html += '<div class="muted text-sm">' + escHtml(p.email) + '</div>';
-  if (me.telegram_id) html += '<div class="muted text-sm" style="margin-top:4px;">✈️ Telegram مرتبط</div>';
-  if (p.verified) html += '<div style="margin-top:6px;">' + verifiedBadge(true) + '</div>';
-  html += '<div class="muted text-xs" style="margin-top:8px;">عضو منذ: ' + formatDate(p.created_at) + '</div>';
-  html += '</div>';
-  
-  // Trading Stats
-  html += '<div class="card"><div class="card-title">📊 إحصائيات التداول</div>';
-  html += '<div class="grid-3">';
-  html += '<div class="kpi"><div class="kpi-label">الصفقات</div><div class="kpi-value">' + (s.total||0) + '</div></div>';
-  html += '<div class="kpi"><div class="kpi-label">المكتملة</div><div class="kpi-value text-primary">' + (s.completed||0) + '</div></div>';
-  html += '<div class="kpi"><div class="kpi-label">التقييم</div><div class="kpi-value text-gold">⭐ ' + formatNum(p.rating||5) + '</div></div>';
-  html += '</div></div>';
-  
-  // Wallet Summary
-  html += '<div class="card"><div class="card-title">💰 المحفظة</div>';
-  html += '<div class="grid-2">';
-  html += '<div class="kpi"><div class="kpi-label">المتاح</div><div class="kpi-value text-primary">' + formatNum(w.balance||0) + '</div></div>';
-  html += '<div class="kpi"><div class="kpi-label">مقفل</div><div class="kpi-value text-warning">' + formatNum(w.locked||0) + '</div></div>';
-  html += '</div>';
-  html += '<div class="grid-2" style="margin-top:12px;">';
-  html += '<a href="/wallet.html#deposit" class="btn btn-primary btn-sm">📥 إيداع</a>';
-  html += '<a href="/wallet.html#withdraw" class="btn btn-ghost btn-sm">📤 سحب</a>';
-  html += '</div></div>';
-  
-  // Notifications
-  var notifs = await get('/notifications');
-  var unread = notifs && notifs.ok ? notifs.unread || 0 : 0;
-  html += '<div class="card"><div class="flex-between"><span class="card-title" style="margin:0;">🔔 الإشعارات</span>';
-  if (unread > 0) html += '<span class="badge badge-PENDING">' + unread + ' جديدة</span>';
-  html += '</div>';
-  if (notifs && notifs.ok && notifs.notifications && notifs.notifications.length) {
-    notifs.notifications.slice(0, 5).forEach(function(n) {
-      html += '<div style="padding:8px 0;border-bottom:1px solid var(--border);">';
-      html += '<div class="font-bold text-sm">' + escHtml(n.title) + '</div>';
-      html += '<div class="muted text-xs">' + escHtml(n.message) + ' · ' + formatDate(n.created) + '</div>';
-      html += '</div>';
-    });
-  } else {
-    html += '<div class="muted text-sm text-center" style="padding:16px;">لا توجد إشعارات</div>';
-  }
-  html += '<a href="/notifications.html" class="text-sm text-primary" style="display:block;text-align:center;margin-top:8px;">عرض الكل</a></div>';
-  
-  // Security
-  html += '<div class="card"><div class="card-title">🔐 الأمان</div>';
-  html += '<div class="muted text-sm" style="margin-bottom:12px;">طريقة تسجيل الدخول: ' + (me.telegram_id ? '✈️ Telegram' : '📧 البريد الإلكتروني') + '</div>';
-  html += '<button onclick="doLogout()" class="btn btn-danger btn-sm" style="width:100%;">🚪 تسجيل الخروج</button>';
-  html += '</div>';
-  
-  // Admin link
-  if (me.isAdmin) {
-    html += '<div class="text-center" style="margin:16px 0;"><a href="/admin.html" class="btn btn-warning" style="width:100%;">🔒 لوحة الإدارة</a></div>';
-  }
-  
-  $('#content').innerHTML = html;
-  
-  // Notification badge
-  if (unread > 0) $('#notifDot').style.display = 'inline-block';
-  
-  // Check admin status
-  var u = getUser();
-  if (u && u.isAdmin) {
-    // already shown above
-  }
-})();
+(function(){
+  const app=document.getElementById('app');
+  async function load(){
+    if(!Auth.isLoggedIn()){location.href='/login';return;}
+    const user=Auth.user();
+    let trust=null,wallet=null;
+    try{trust=await API.get('/api/v2/trust/'+user.username);}catch(e){}
+    try{wallet=await API.get('/api/wallet');}catch(e){}
 
-async function doLogout() {
-  await post('/auth/logout', {});
-  clearAuth();
-  location.href = '/';
-}
+    const vipBadge=trust?.vip_level==='verified'?'💎':trust?.vip_level==='gold'?'🥇':trust?.vip_level==='silver'?'🥈':'🥉';
+    const vipLabel=trust?.vip_level==='verified'?'متداول موثق':trust?.vip_level==='gold'?'ذهبي':trust?.vip_level==='silver'?'فضي':'برونزي';
+
+    app.innerHTML=`
+      <div class="page-header" style="text-align:center;padding-top:var(--space-xl)">
+        <div style="width:80px;height:80px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:2rem;margin:0 auto var(--space-sm);font-weight:700">${(user.username||'U')[0].toUpperCase()}</div>
+        <h1 class="page-title" style="margin-bottom:4px">${user.username||'مستخدم'}</h1>
+        ${user.email?`<div class="text-muted text-sm">${user.email}</div>`:''}
+        <div style="display:flex;justify-content:center;gap:var(--space-sm);margin-top:var(--space-sm);flex-wrap:wrap">
+          ${trust?`<span class="badge badge-success"> Trust Score: ${trust.trust_score}%</span>`:''}
+          <span class="badge badge-info">${vipBadge} ${vipLabel}</span>
+          ${trust?.avg_rating?`<span class="badge badge-info">⭐ ${Number(trust.avg_rating).toFixed(1)}</span>`:''}
+        </div>
+      </div>
+
+      <div class="grid grid-2" style="margin-bottom:var(--space-lg)">
+        <div class="card text-center">
+          <div class="stat-value">${trust?.completed_trades||0}</div>
+          <div class="stat-label">صفقة مكتملة</div>
+        </div>
+        <div class="card text-center">
+          <div class="stat-value">${trust?.completion_rate!=null?Number(trust.completion_rate).toFixed(0)+'%':'—'}</div>
+          <div class="stat-label">نسبة الإتمام</div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:var(--space-md)">
+        <h3 style="margin-bottom:var(--space-md)">المحفظة</h3>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-md)">
+          <div>
+            <div class="text-muted text-sm">الرصيد المتاح</div>
+            <div class="stat-value" style="font-size:1.5rem">${fmtNum(wallet?.balance||0)} USDT</div>
+          </div>
+          <div style="display:flex;gap:var(--space-sm)">
+            <a href="/wallet" class="btn btn-primary btn-sm">إيداع</a>
+            <a href="/wallet" class="btn btn-outline btn-sm">سحب</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:var(--space-md)">
+        <h3 style="margin-bottom:var(--space-md)">الإحالات</h3>
+        <p class="text-muted text-sm" style="margin-bottom:var(--space-sm)">ادعُ أصدقاءك واحصل على مكافآت</p>
+        <div class="form-group" style="margin-bottom:var(--space-sm)">
+          <input type="text" class="form-input" value="${user.referral_code||'REF-'+(user.username||'YOU').toUpperCase()}" readonly id="refCode">
+        </div>
+        <button class="btn btn-outline btn-block btn-sm" onclick="navigator.clipboard.writeText(document.getElementById('refCode').value);toast.show('تم النسخ','success')">نسخ رابط الإحالة</button>
+      </div>
+
+      <div class="card" style="margin-bottom:var(--space-md)">
+        <h3 style="margin-bottom:var(--space-md)">الأمان</h3>
+        <div class="flex-col gap-sm">
+          <div class="flex-between" style="padding:var(--space-sm) 0;border-bottom:1px solid var(--border)">
+            <div>
+              <div style="font-weight:500">Telegram</div>
+              <div class="text-muted text-sm">${user.telegram_id?'متصل ✓':'غير متصل'}</div>
+            </div>
+            ${user.telegram_id?'<span class="badge badge-success">متصل</span>':'<button class="btn btn-outline btn-sm" onclick="loginWithTelegram()">ربط</button>'}
+          </div>
+          <div class="flex-between" style="padding:var(--space-sm) 0;border-bottom:1px solid var(--border)">
+            <div>
+              <div style="font-weight:500">البريد الإلكتروني</div>
+              <div class="text-muted text-sm">${user.email||'لم يُحدد'}</div>
+            </div>
+            <span class="badge badge-info">${user.email?'مفعل':'غير مفعل'}</span>
+          </div>
+          <div class="flex-between" style="padding:var(--space-sm) 0">
+            <div>
+              <div style="font-weight:500">تاريخ الإنشاء</div>
+              <div class="text-muted text-sm">${fmtDate(user.created_at)}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn btn-error btn-block" onclick="Auth.logout();location.href='/'" style="margin-bottom:var(--space-xl)">تسجيل الخروج</button>
+    `;
+  }
+
+  window.loginWithTelegram=function(){
+    const botUsername=window.TELEGRAM_BOT_USERNAME||'USDT_P2P_Palestine_Bot';
+    const payload=JSON.stringify({platform:'usdt-p2p',ts:Date.now()});
+    location.href='https://oauth.telegram.org/auth?bot_id='+botUsername+'&origin='+encodeURIComponent(location.origin)+'&embed=1&request_access=write';
+  };
+
+  load();
+})();
 </script>
 </body>
 </html>

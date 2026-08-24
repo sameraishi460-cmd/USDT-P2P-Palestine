@@ -1,210 +1,162 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0a0e18">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>لوحة الإدارة — USDT P2P Palestine</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/app.css">
+<link rel="stylesheet" href="/assets/app.css">
 </head>
 <body>
-<div class="navbar">
-  <a href="/" style="text-decoration:none;"><span class="logo">🔒 الإدارة</span></a>
-  <div class="actions">
-    <a href="/profile.html">👤 العودة</a>
-  </div>
+<div class="app">
+<nav class="nav" id="nav"></nav>
+<main class="main">
+<div class="container" id="app">
+<div class="loading-skeleton">
+<div class="sk sk-card"></div>
+<div class="sk sk-card"></div>
 </div>
-<div class="container" id="content">
-  <div class="skeleton"></div><div class="skeleton"></div>
 </div>
-<div id="toast"></div>
-<script src="assets/app.js"></script>
+</main>
+</div>
+<script src="/assets/app.js"></script>
 <script>
-if (!requireAuth('/admin_login.html')) throw new Error('auth required');
-var user = getUser();
-if (!user || !user.isAdmin) { location.href = '/admin_login.html'; throw new Error('admin only'); }
+(function(){
+  const app=document.getElementById('app');
 
-var activeTab = 'dashboard';
-var tabData = {};
+  async function load(){
+    if(!Auth.isLoggedIn()){location.href='/login';return;}
 
-async function loadDashboard() {
-  var kpis = await get('/admin');
-  var h = '';
-  h += '<h2 style="font-size:20px;font-weight:800;margin-bottom:16px;">🔒 لوحة الإدارة</h2>';
-  
-  // System Status
-  var health = await get('/health');
-  var hc = health ? health.checks || {} : {};
-  h += '<div class="card"><div class="card-title">📊 حالة النظام</div><div class="grid-2">';
-  var statusItems = [
-    ['Database', hc.database], ['Telegram', hc.telegram],
-    ['BSC RPC', hc.bsc_rpc], ['Config', hc.config],
-    ['Secret Key', hc.secret_key], ['Admin Password', hc.admin_password]
-  ];
-  statusItems.forEach(function(item) {
-    var dot = item[1] === 'up' || item[1] === 'configured' || item[1] === 'loaded' || item[1] === 'seeded' ? 'green' : 'red';
-    h += '<div class="flex-between" style="padding:4px 0;"><span class="text-sm">' + item[0] + '</span><span class="status-dot ' + dot + '"></span></div>';
-  });
-  h += '</div></div>';
-  
-  if (kpis && kpis.ok) {
-    var k = kpis.kpis;
-    h += '<div class="card"><div class="card-title">📈 الإحصائيات</div><div class="grid-3">';
-    h += '<div class="kpi"><div class="kpi-label">المستخدمون</div><div class="kpi-value">' + (k.total_users||0) + '</div></div>';
-    h += '<div class="kpi"><div class="kpi-label">الصفقات</div><div class="kpi-value">' + (k.total_trades||0) + '</div></div>';
-    h += '<div class="kpi"><div class="kpi-label">المكتملة</div><div class="kpi-value text-primary">' + (k.completed_trades||0) + '</div></div>';
-    h += '</div><div class="grid-3" style="margin-top:8px;">';
-    h += '<div class="kpi"><div class="kpi-label">حجم التداول</div><div class="kpi-value text-primary">' + formatNum(k.total_volume) + '</div></div>';
-    h += '<div class="kpi"><div class="kpi-label">رسوم المنصة</div><div class="kpi-value text-gold">' + formatNum(k.platform_fees) + '</div></div>';
-    h += '<div class="kpi"><div class="kpi-label">النازاعات</div><div class="kpi-value text-danger">' + (k.open_disputes||0) + '</div></div>';
-    h += '</div><div class="grid-2" style="margin-top:8px;">';
-    h += '<div class="kpi"><div class="kpi-label">إيداعات معلقة</div><div class="kpi-value text-warning">' + (k.pending_deposits||0) + '</div></div>';
-    h += '<div class="kpi"><div class="kpi-label">سحوبات معلقة</div><div class="kpi-value text-warning">' + (k.pending_withdrawals||0) + '</div></div>';
-    h += '</div></div>';
+    let analytics=null,timeline=[],users=[],trades=[],deposits=[],withdrawals=[],disputes=[],adminLogs=[];
+    try{analytics=await API.get('/api/v2/admin/analytics');}catch(e){}
+    try{timeline=(await API.get('/api/v2/admin/timeline')).timeline||[];}catch(e){}
+    try{users=(await API.get('/api/admin/users')).users||[];}catch(e){}
+    try{trades=(await API.get('/api/admin/trades')).trades||[];}catch(e){}
+    try{deposits=(await API.get('/api/admin/deposits')).deposits||[];}catch(e){}
+    try{withdrawals=(await API.get('/api/admin/withdrawals')).withdrawals||[];}catch(e){}
+    try{disputes=(await API.get('/api/admin/disputes')).disputes||[];}catch(e){}
+    try{adminLogs=(await API.get('/api/v2/admin/fraud')).fraud||[];}catch(e){}
+
+    const a=analytics||{};
+
+    app.innerHTML=`
+      <div class="page-header">
+        <h1 class="page-title">لوحة الإدارة</h1>
+        <div class="page-subtitle">مرحباً بك في لوحة التحكم</div>
+      </div>
+
+      <div class="grid grid-2" style="margin-bottom:var(--space-lg)">
+        <div class="card stat-card">
+          <div class="stat-value">${a.total_users||users.length||0}</div>
+          <div class="stat-label">إجمالي المستخدمين</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-value">${a.total_trades||trades.length||0}</div>
+          <div class="stat-label">إجمالي الصفقات</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-value">${fmtNum(a.total_volume||0)} ₪</div>
+          <div class="stat-label">حجم التداول</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-value">${a.completed_trades||0}</div>
+          <div class="stat-label">صفقات مكتملة</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-value">${a.disputes||disputes.length||0}</div>
+          <div class="stat-label">نزاعات</div>
+        </div>
+        <div class="card stat-card">
+          <div class="stat-value">${a.deposits||deposits.length||0}</div>
+          <div class="stat-label">إيداعات</div>
+        </div>
+      </div>
+
+      <div class="tabs" id="adminTabs">
+        <button class="tab active" data-tab="timeline" onclick="showAdminTab('timeline')">التطورات</button>
+        <button class="tab" data-tab="users" onclick="showAdminTab('users')">المستخدمون</button>
+        <button class="tab" data-tab="trades" onclick="showAdminTab('trades')">الصفقات</button>
+        <button class="tab" data-tab="deposits" onclick="showAdminTab('deposits')">الإيداعات</button>
+        <button class="tab" data-tab="withdrawals" onclick="showAdminTab('withdrawals')">السحوبات</button>
+        <button class="tab" data-tab="disputes" onclick="showAdminTab('disputes')">النزاعات</button>
+      </div>
+
+      <div id="tabTimeline" class="tab-content active">
+        <div class="card">
+          <h3 style="margin-bottom:var(--space-md)">تطورات لوحة التحكم</h3>
+          ${timeline.length===0?'<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">لا توجد أحداث</div></div>':
+          `<div class="timeline">${timeline.map(e=>`
+            <div class="timeline-item">
+              <div class="timeline-dot ${e.type==='trade_completed'||e.type==='deposit_completed'?'bg-success':e.type==='dispute_opened'?'bg-error':e.type==='user_registered'?'bg-primary':'bg-info'}"></div>
+              <div class="timeline-content">
+                <div style="font-weight:500">${escapeHtml(e.description||e.type||'حدث')}</div>
+                <div class="text-muted text-sm">${e.username?e.username+' — ':''}${fmtDate(e.created_at)}</div>
+              </div>
+            </div>
+          `).join('')}</div>`}
+        </div>
+      </div>
+
+      <div id="tabUsers" class="tab-content">
+        <div class="card">
+          <h3 style="margin-bottom:var(--space-md)">المستخدمون (${users.length})</h3>
+          ${users.length===0?'<div class="empty-state"><div class="empty-icon">👥</div><div class="empty-title">لا يوجد مستخدمون</div></div>':
+          `<div class="table-responsive"><table class="table"><thead><tr><th>المستخدم</th><th>البريد</th><th>تاريخ الإنشاء</th></tr></thead><tbody>
+            ${users.map(u=>`<tr><td>${escapeHtml(u.username||'')}</td><td class="text-muted">${u.email||'—'}</td><td class="text-muted text-sm">${fmtDate(u.created_at)}</td></tr>`).join('')}
+          </tbody></table></div>`}
+        </div>
+      </div>
+
+      <div id="tabTrades" class="tab-content">
+        <div class="card">
+          <h3 style="margin-bottom:var(--space-md)">الصفقات (${trades.length})</h3>
+          ${trades.length===0?'<div class="empty-state"><div class="empty-icon">🤝</div><div class="empty-title">لا توجد صفقات</div></div>':
+          `<div class="table-responsive"><table class="table"><thead><tr><th>#</th><th>المبلغ</th><th>الحالة</th><th>التاريخ</th></tr></thead><tbody>
+            ${trades.map(t=>`<tr><td>#${String(t.id).slice(-8)}</td><td>${fmtNum(t.usdt_amount)} USDT</td><td>${statusBadge(t.status)}</td><td class="text-muted text-sm">${fmtDate(t.created_at)}</td></tr>`).join('')}
+          </tbody></table></div>`}
+        </div>
+      </div>
+
+      <div id="tabDeposits" class="tab-content">
+        <div class="card">
+          <h3 style="margin-bottom:var(--space-md)">الإيداعات (${deposits.length})</h3>
+          ${deposits.length===0?'<div class="empty-state"><div class="empty-icon">💰</div><div class="empty-title">لا توجد إيداعات</div></div>':
+          `<div class="table-responsive"><table class="table"><thead><tr><th>المستخدم</th><th>المبلغ</th><th>الحالة</th><th>التاريخ</th></tr></thead><tbody>
+            ${deposits.map(d=>`<tr><td>${d.username||d.user_id||'—'}</td><td>${fmtNum(d.amount)} USDT</td><td>${statusBadge(d.status)}</td><td class="text-muted text-sm">${fmtDate(d.created_at)}</td></tr>`).join('')}
+          </tbody></table></div>`}
+        </div>
+      </div>
+
+      <div id="tabWithdrawals" class="tab-content">
+        <div class="card">
+          <h3 style="margin-bottom:var(--space-md)">السحوبات (${withdrawals.length})</h3>
+          ${withdrawals.length===0?'<div class="empty-state"><div class="empty-icon">📤</div><div class="empty-title">لا توجد سحوبات</div></div>':
+          `<div class="table-responsive"><table class="table"><thead><tr><th>المستخدم</th><th>المبلغ</th><th>الحالة</th><th>التاريخ</th></tr></thead><tbody>
+            ${withdrawals.map(w=>`<tr><td>${w.username||w.user_id||'—'}</td><td>${fmtNum(w.amount)} USDT</td><td>${statusBadge(w.status)}</td><td class="text-muted text-sm">${fmtDate(w.created_at)}</td></tr>`).join('')}
+          </tbody></table></div>`}
+        </div>
+      </div>
+
+      <div id="tabDisputes" class="tab-content">
+        <div class="card">
+          <h3 style="margin-bottom:var(--space-md)">النزاعات (${disputes.length})</h3>
+          ${disputes.length===0?'<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">لا توجد نزاعات</div></div>':
+          `<div class="table-responsive"><table class="table"><thead><tr><th>#</th><th>السبب</th><th>الحالة</th><th>التاريخ</th></tr></thead><tbody>
+            ${disputes.map(d=>`<tr><td>#${String(d.id).slice(-8)}</td><td>${escapeHtml(d.reason||'')}</td><td>${statusBadge(d.status)}</td><td class="text-muted text-sm">${fmtDate(d.created_at)}</td></tr>`).join('')}
+          </tbody></table></div>`}
+        </div>
+      </div>
+    `;
   }
-  
-  // Tab Navigation
-  h += '<div class="tabs">';
-  ['dashboard','users','trades','deposits','withdrawals','disputes','audit','settings'].forEach(function(t) {
-    var labels = {dashboard:'📊',users:'👥',trades:'📄',deposits:'📥',withdrawals:'📤',disputes:'⚠️',audit:'📋',settings:'⚙️'};
-    h += '<button class="tab-btn ' + (activeTab === t ? 'active' : '') + '" onclick="switchTab(\'' + t + '\')">' + labels[t] + '</button>';
-  });
-  h += '</div>';
-  h += '<div id="tabContent"><div class="skeleton"></div></div>';
-  
-  $('#content').innerHTML = h;
-  if (activeTab === 'dashboard') loadAuditTab();
-}
 
-async function switchTab(t) {
-  activeTab = t;
-  loadDashboard();
-}
+  window.showAdminTab=function(name){
+    document.querySelectorAll('#adminTabs .tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
+    document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+    const el=document.getElementById('tab'+name.charAt(0).toUpperCase()+name.slice(1));
+    if(el)el.classList.add('active');
+  };
 
-async function loadAuditTab() {
-  var tc = $('#tabContent');
-  if (!tc) return;
-  
-  if (activeTab === 'users') {
-    var r = await get('/admin/users');
-    var h = '';
-    if (r && r.ok && r.users) {
-      r.users.forEach(function(u) {
-        h += '<div class="list-item" style="cursor:default;">';
-        h += profileAvatar(u.username);
-        h += '<div class="list-main">';
-        h += '<div class="list-title">' + escHtml(u.username) + ' ' + (u.verified ? verifiedBadge(true) : '') + ' ' + (u.status === 'ADMIN' ? '<span class="badge badge-admin">مدير</span>' : '') + '</div>';
-        h += '<div class="list-sub">💰 ' + formatNum(u.balance||0) + ' · 🔒 ' + formatNum(u.locked||0) + ' · 📄 ' + (u.trades_count||0) + '</div>';
-        h += '</div>';
-        h += '<div class="list-right">';
-        if (u.status === 'BANNED') h += '<button class="btn btn-xs btn-ghost" onclick="adminAction(\'unban\',\'' + u.username + '\')">إلغاء الحظر</button>';
-        else h += '<button class="btn btn-xs btn-danger" onclick="adminAction(\'ban\',\'' + u.username + '\')">حظر</button>';
-        h += '</div></div>';
-      });
-    }
-    tc.innerHTML = h || '<div class="empty"><p>لا يوجد مستخدمون</p></div>';
-  } else if (activeTab === 'trades') {
-    // trades from admin overview
-    tc.innerHTML = '<div class="muted text-sm" style="padding:16px;">عرض إدارة الصفقات متاح عبر API</div>';
-  } else if (activeTab === 'audit') {
-    var r = await get('/admin/audit-log');
-    var h = '';
-    if (r && r.ok && r.logs) {
-      r.logs.slice(0, 50).forEach(function(l) {
-        var icon = {REGISTER:'👤',LOGIN:'🔑',AD_CREATE:'📝',TRADE_CREATE:'📄',ESCROW_RELEASE:'🔓',DEPOSIT_CONFIRMED:'📥',WITHDRAW_REQUEST:'📤',DISPUTE_OPEN:'⚠️',ADMIN_LOGIN:'🔒',BAN_USER:'🚫',CREDIT_USER:'💰',PRICE_UPDATE:'💲'}[l.action] || '📋';
-        h += '<div style="padding:10px 0;border-bottom:1px solid var(--border);">';
-        h += '<div class="flex-between"><span class="text-sm font-bold">' + icon + ' ' + escHtml(l.action) + '</span><span class="muted text-xs">' + formatDate(l.created) + '</span></div>';
-        h += '<div class="muted text-xs">' + escHtml(l.actor) + ' → ' + escHtml(l.target||'') + '</div>';
-        h += '</div>';
-      });
-    }
-    tc.innerHTML = h || '<div class="empty"><p>لا توجد سجلات</p></div>';
-  } else if (activeTab === 'deposits') {
-    var r = await get('/admin/deposits');
-    var h = '';
-    if (r && r.ok && r.deposits) {
-      r.deposits.forEach(function(d) {
-        h += '<div class="list-item" style="cursor:default;">';
-        h += '<div class="list-main"><div class="list-title">' + escHtml(d.username) + ' · ' + formatNum(d.amount) + ' USDT</div>';
-        h += '<div class="list-sub">TX: ' + escHtml((d.tx_hash||'').slice(0,16)) + '… · ' + formatDate(d.created) + '</div></div>';
-        h += '<div class="list-right">' + statusBadge(d.status) + '</div></div>';
-      });
-    }
-    tc.innerHTML = h || '<div class="empty"><p>لا توجد إيداعات</p></div>';
-  } else if (activeTab === 'withdrawals') {
-    var r = await get('/admin/withdrawals');
-    var h = '';
-    if (r && r.ok && r.withdrawals) {
-      r.withdrawals.forEach(function(w) {
-        h += '<div class="list-item" style="cursor:default;">';
-        h += '<div class="list-main"><div class="list-title">' + escHtml(w.username) + ' · ' + formatNum(w.amount) + ' USDT</div>';
-        h += '<div class="list-sub">إلى: ' + escHtml((w.wallet||'').slice(0,16)) + '… · ' + formatDate(w.created) + '</div></div>';
-        h += '<div class="list-right">' + statusBadge(w.status) + '</div></div>';
-      });
-    }
-    tc.innerHTML = h || '<div class="empty"><p>لا توجد سحوبات</p></div>';
-  } else if (activeTab === 'disputes') {
-    var r = await get('/admin/disputes');
-    var h = '';
-    if (r && r.ok && r.disputes) {
-      r.disputes.forEach(function(d) {
-        h += '<div class="list-item" style="cursor:default;">';
-        h += '<div class="list-main"><div class="list-title">⚠️ صفقة #' + d.trade_id + '</div>';
-        h += '<div class="list-sub">فتح: ' + escHtml(d.opened_by) + ' · ' + escHtml(d.reason) + '</div></div>';
-        h += '<div class="list-right">' + statusBadge(d.status) + '</div></div>';
-      });
-    }
-    tc.innerHTML = h || '<div class="empty"><p>لا توجد نزاعات مفتوحة</p></div>';
-  } else if (activeTab === 'settings') {
-    var h = '<div class="card"><div class="card-title">💲 إدارة الأسعار</div>';
-    h += '<div id="priceMsg" class="alert" style="display:none;"></div>';
-    h += '<form onsubmit="return updatePrice(event)">';
-    h += '<div class="grid-2"><div class="form-group"><label>USD/ILS</label><input id="usdPrice" type="number" step="0.01"></div>';
-    h += '<div class="form-group"><label>USDT/ILS</label><input id="usdtPrice" type="number" step="0.01"></div></div>';
-    h += '<button type="submit" class="btn btn-primary btn-sm">تحديث الأسعار</button></form></div>';
-    
-    h += '<div class="card"><div class="card-title">💰 كرديت للمستخدم</div>';
-    h += '<form onsubmit="return creditUser(event)">';
-    h += '<div class="form-group"><label>اسم المستخدم</label><input id="creditUser" type="text" required></div>';
-    h += '<div class="form-group"><label>المبلغ</label><input id="creditAmount" type="number" step="0.01" required></div>';
-    h += '<button type="submit" class="btn btn-primary btn-sm">إضافة رصيد</button></form></div>';
-    
-    // Load current price
-    var pr = await get('/admin/price');
-    if (pr && pr.ok && pr.price) {
-      setTimeout(function() {
-        var ue = document.getElementById('usdPrice');
-        var ut = document.getElementById('usdtPrice');
-        if (ue) ue.value = pr.price.usd_ils || '';
-        if (ut) ut.value = pr.price.usdt_ils || '';
-      }, 100);
-    }
-    tc.innerHTML = h;
-  } else {
-    tc.innerHTML = '<div class="muted text-sm text-center" style="padding:20px;">اختر قسم من الأعلى</div>';
-  }
-}
-
-async function adminAction(action, username) {
-  var r = await post('/admin/users/' + username + '/' + action, {});
-  if (r && r.ok) { toast('✅ تم'); loadDashboard(); } else { toast(r ? r.error : 'خطأ'); }
-}
-async function updatePrice(e) {
-  e.preventDefault();
-  var r = await post('/admin/price', { usd_ils: parseFloat($('#usdPrice').value), usdt_ils: parseFloat($('#usdtPrice').value) });
-  if (r && r.ok) toast('✅ تم تحديث الأسعار'); else toast(r ? r.error : 'خطأ');
-  return false;
-}
-async function creditUser(e) {
-  e.preventDefault();
-  var r = await post('/admin/credit', { username: $('#creditUser').value.trim(), amount: parseFloat($('#creditAmount').value) });
-  if (r && r.ok) toast('✅ تم إضافة الرصيد'); else toast(r ? r.error : 'خطأ');
-  return false;
-}
-
-loadDashboard();
+  load();
+})();
 </script>
 </body>
 </html>

@@ -6,15 +6,19 @@
 <meta name="theme-color" content="#0a0e18">
 <title>تسجيل الدخول — USDT P2P Palestine</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/app.css">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/app.css">
 </head>
 <body>
-<div class="container" style="max-width:420px;padding-top:50px;">
-  <div class="text-center" style="margin-bottom:30px;">
-    <div style="font-size:48px;margin-bottom:8px;">🇵🇸</div>
-    <h1 style="font-size:24px;font-weight:800;color:var(--primary);">USDT P2P Palestine</h1>
-    <p class="muted" style="margin-top:4px;">تداول USDT آمن بالضمان</p>
+<div class="navbar">
+  <a href="/" style="text-decoration:none;"><span class="logo">🇵🇸 USDT <span>P2P</span></span></a>
+</div>
+
+<div class="container" style="padding-top:32px;">
+  <div class="text-center" style="margin-bottom:28px;">
+    <div style="font-size:40px;margin-bottom:8px;">🇵🇸</div>
+    <h1 style="font-size:22px;font-weight:800;">تسجيل الدخول</h1>
+    <p class="text-secondary text-sm">ادخل إلى حسابك في USDT P2P Palestine</p>
   </div>
 
   <div id="errorBox" class="alert alert-error" style="display:none;"></div>
@@ -23,7 +27,7 @@
   <form id="loginForm" class="card">
     <div class="form-group">
       <label>البريد الإلكتروني أو اسم المستخدم</label>
-      <input id="identifier" type="text" required placeholder="email@example.com أو username" autocomplete="username">
+      <input id="identifier" type="text" required placeholder="email@example.com" autocomplete="username">
     </div>
     <div class="form-group">
       <label>كلمة المرور</label>
@@ -32,40 +36,91 @@
     <button type="submit" class="btn btn-primary" id="loginBtn">🔐 تسجيل الدخول</button>
   </form>
 
-  <div class="text-center" style="margin:16px 0;">
-    <a href="/register.html" class="text-sm text-dim">ليس لديك حساب؟ <b class="text-primary">سجّل الآن</b></a>
+  <div class="text-center mt-12 mb-12">
+    <a href="/register" class="text-sm text-secondary">ليس لديك حساب؟ <b class="text-primary">سجّل الآن</b></a>
   </div>
 
   <!-- Telegram Login -->
-  <button onclick="telegramLogin()" class="btn btn-ghost" id="tgBtn">
+  <button onclick="telegramLogin()" class="btn btn-ghost mb-12" id="tgBtn">
     <span style="font-size:18px;">✈️</span> تسجيل الدخول عبر Telegram
   </button>
 
   <!-- Admin Login -->
-  <div class="text-center" style="margin-top:20px;">
-    <a href="/admin_login.html" class="text-sm text-dim" style="opacity:0.5;">🔒 دخول الإدارة</a>
+  <div class="text-center" style="margin-top:24px;">
+    <a href="/admin_login" class="text-xs text-muted">🔒 دخول الإدارة</a>
   </div>
 </div>
+
+<div id="bottomNav"></div>
 <div id="toast"></div>
-<script src="assets/app.js"></script>
+<script src="/assets/app.js"></script>
 <script>
-if (window.Telegram && window.Telegram.WebApp) { Telegram.WebApp.ready(); Telegram.WebApp.BackButton.show(); Telegram.WebApp.BackButton.onClick(function() { location.href = '/'; }); }
+if (window.Telegram && window.Telegram.WebApp) {
+  Telegram.WebApp.ready();
+  if (Telegram.WebApp.BackButton) {
+    Telegram.WebApp.BackButton.show();
+    Telegram.WebApp.BackButton.onClick(function() { location.href = '/'; });
+  }
+}
+
 var returnTo = new URLSearchParams(location.search).get('returnTo') || '/';
+// If already logged in, redirect
+if (getUser()) { location.href = returnTo; }
 
 $('#loginForm').onsubmit = async function(e) {
   e.preventDefault();
-  var btn = $('#loginBtn'); btn.disabled = true; btn.textContent = 'جاري الدخول...';
-  var r = await post('/auth/login', { username: $('#identifier').value.trim(), password: $('#password').value });
-  if (!r || !r.ok) { $('#errorBox').style.display = 'block'; $('#errorBox').textContent = (r && r.error) || 'خطأ في تسجيل الدخول'; btn.disabled = false; btn.textContent = '🔐 تسجيل الدخول'; return; }
-  setCsrf(r.csrf_token); setUser({ username: $('#identifier').value.trim() }); location.href = returnTo;
+  var btn = $('#loginBtn');
+  btn.disabled = true;
+  btn.textContent = 'جاري الدخول...';
+  $('#errorBox').style.display = 'none';
+
+  var r = await post('/auth/login', {
+    username: $('#identifier').value.trim(),
+    password: $('#password').value
+  });
+
+  if (!r || !r.ok) {
+    $('#errorBox').style.display = 'block';
+    $('#errorBox').textContent = (r && r.error) || 'خطأ في تسجيل الدخول';
+    btn.disabled = false;
+    btn.textContent = '🔐 تسجيل الدخول';
+    return;
+  }
+
+  setCsrf(r.csrf_token);
+  // Fetch user info for sidebar
+  var me = await get('/auth/me');
+  if (me && me.authenticated) {
+    setUser({ username: me.username, isAdmin: me.isAdmin });
+  } else {
+    setUser({ username: $('#identifier').value.trim() });
+  }
+  location.href = returnTo;
 };
 
 async function telegramLogin() {
-  if (!window.Telegram || !window.Telegram.WebApp || !window.Telegram.WebApp.initData) { toast('افتح من داخل Telegram'); return; }
+  // Check if we're inside Telegram
+  if (!window.Telegram || !window.Telegram.WebApp || !window.Telegram.WebApp.initData) {
+    toast('افتح من داخل Telegram لتسجيل الدخول عبر Telegram', 4000);
+    return;
+  }
   $('#tgBtn').disabled = true;
+  $('#tgBtn').textContent = '⏳ جاري التحقق...';
+  $('#errorBox').style.display = 'none';
+
   var r = await post('/auth/telegram', { initData: Telegram.WebApp.initData });
-  if (!r || !r.ok) { $('#errorBox').style.display = 'block'; $('#errorBox').textContent = (r && r.error) || 'فشل التحقق'; $('#tgBtn').disabled = false; return; }
-  setCsrf(r.csrf_token); setUser({ username: r.username }); location.href = returnTo;
+
+  if (!r || !r.ok) {
+    $('#errorBox').style.display = 'block';
+    $('#errorBox').textContent = (r && r.error) || 'فشل التحقق من Telegram';
+    $('#tgBtn').disabled = false;
+    $('#tgBtn').textContent = '✈️ تسجيل الدخول عبر Telegram';
+    return;
+  }
+
+  setCsrf(r.csrf_token);
+  setUser({ username: r.username || 'telegram_user' });
+  location.href = returnTo;
 }
 </script>
 </body>
