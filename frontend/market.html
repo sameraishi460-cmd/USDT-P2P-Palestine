@@ -9,73 +9,83 @@
 <body>
 <div class="app">
 <nav class="nav" id="nav"></nav>
-<main class="main"><div class="container" style="max-width:640px">
-  <div class="page-header" style="margin-bottom:16px">
-    <h1 class="page-title">السوق</h1>
-    <div id="priceInfo" class="page-subtitle" style="font-weight:600;color:var(--accent)"></div>
+<main class="main"><div class="container" style="max-width:960px" id="app">
+  <div style="margin-bottom:16px">
+    <h1 style="font-size:1.4rem;font-weight:800;margin-bottom:4px">السوق</h1>
+    <p style="color:var(--text-muted);font-size:.85rem">ابحث عن أفضل عروض USDT</p>
+  </div>
+  <div id="priceBar" class="card" style="padding:12px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+    <span style="font-size:.85rem;color:var(--text-muted)">سعر USDT</span>
+    <span id="priceVal" style="font-size:1.1rem;font-weight:800;color:var(--primary)">—</span>
   </div>
   <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
-    <select class="form-input" id="filterType" style="width:auto;flex:1;min-width:100px">
-      <option value="">الكل</option><option value="BUY">شراء</option><option value="SELL">بيع</option>
+    <input type="text" id="searchInput" placeholder="🔍 بحث..." style="flex:1;min-width:200px;padding:10px 14px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:14px" oninput="filterAds()">
+    <select id="typeFilter" style="padding:10px 14px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:14px" onchange="filterAds()">
+      <option value="">الكل</option>
+      <option value="BUY">شراء USDT</option>
+      <option value="SELL">بيع USDT</option>
     </select>
-    <input type="text" class="form-input" id="filterSearch" placeholder="بحث..." style="flex:2;min-width:120px">
-    <a href="/create_ad" class="btn btn-accent btn-sm" style="white-space:nowrap">+ إعلان</a>
+    <select id="sortFilter" style="padding:10px 14px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:14px" onchange="filterAds()">
+      <option value="newest">الأحدث</option>
+      <option value="price_low">أقل سعر</option>
+      <option value="price_high">أعلى سعر</option>
+      <option value="amount_high">أكبر كمية</option>
+    </select>
   </div>
-  <div id="adsList"><div class="card"><div class="spinner"></div></div></div>
+  <div id="adsList"><div class="spinner"></div></div>
+  <div id="createAdBtn" style="display:none;margin-top:16px;text-align:center">
+    <a href="/create_ad" class="btn btn-primary" style="width:auto;display:inline-flex">+ إنشاء إعلان</a>
+  </div>
 </div></main>
 <div class="bottom-nav" id="bottomNav"></div>
 </div>
 <script src="/assets/app.js"></script>
 <script>
 let allAds = [];
-async function loadAds() {
-  const r = await api('/market');
-  if (!r || !r.ok) { document.getElementById('adsList').innerHTML = '<div class="card text-center" style="padding:32px;color:var(--text-muted)">تعذر تحميل الإعلانات</div>'; return; }
-  allAds = r.ads || [];
-  document.getElementById('priceInfo').textContent = r.price ? fmtNum(r.price.usdt_ils) + ' ₪ / USDT' : '';
+async function load() {
+  const [market, priceResp] = await Promise.all([api('/market'), api('/market/price')]);
+  allAds = (market?.ads || []).filter(a => a.status === 'OPEN');
+  const price = priceResp?.usdt_ils || priceResp?.price || 3.7;
+  document.getElementById('priceVal').textContent = fmtNum(price, 2) + ' ₪';
+  if (isLoggedIn()) document.getElementById('createAdBtn').style.display = 'block';
   filterAds();
 }
+
 function filterAds() {
-  const type = document.getElementById('filterType').value;
-  const q = document.getElementById('filterSearch').value.trim().toLowerCase();
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  const type = document.getElementById('typeFilter').value;
+  const sort = document.getElementById('sortFilter').value;
   let filtered = allAds;
+  if (q) filtered = filtered.filter(a => (a.user||'').toLowerCase().includes(q) || (a.title||'').toLowerCase().includes(q) || (a.payment||'').toLowerCase().includes(q));
   if (type) filtered = filtered.filter(a => a.type === type);
-  if (q) filtered = filtered.filter(a => (a.user||'').toLowerCase().includes(q) || (a.title||'').toLowerCase().includes(q));
-  const el = document.getElementById('adsList');
-  if (!filtered.length) { el.innerHTML = '<div class="card text-center" style="padding:32px;color:var(--text-muted)">لا توجد إعلانات</div>'; return; }
-  el.innerHTML = filtered.map(a => `
-    <div class="card" style="margin-bottom:12px;padding:16px">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+  if (sort === 'price_low') filtered.sort((a,b) => a.price - b.price);
+  else if (sort === 'price_high') filtered.sort((a,b) => b.price - a.price);
+  else if (sort === 'amount_high') filtered.sort((a,b) => b.amount - a.amount);
+  else filtered.sort((a,b) => (b.id||0) - (a.id||0));
+
+  const list = document.getElementById('adsList');
+  if (!filtered.length) { list.innerHTML = '<div class="card"><div class="empty"><div class="empty-icon">📭</div><div class="empty-title">لا توجد إعلانات</div><div class="empty-desc">جرّب تغيير معايير البحث</div></div></div>'; return; }
+  list.innerHTML = filtered.map(a => `
+    <div class="ad-card" style="cursor:pointer" onclick="location.href='/trade?ad=${a.id}'">
+      <div class="ad-card-header">
         <div>
-          ${typeBadge(a.type)}
-          <span style="font-size:.8rem;color:var(--text-muted);margin-right:8px">${esc(a.title||'')}</span>
+          <span class="${a.type==='BUY'?'badge badge-buy':'badge badge-sell'}" style="font-size:11px">${a.type==='BUY'?'شراء':'بيع'}</span>
+          <div class="ad-card-price" style="margin-top:4px">${fmtNum(a.price)} ₪</div>
         </div>
         <div style="text-align:left">
-          <div style="font-size:1.3rem;font-weight:800;color:var(--accent)">${fmtNum(a.price)} ₪</div>
-          <div style="font-size:.75rem;color:var(--text-muted)">لكل USDT</div>
+          <div style="font-size:.8rem;color:var(--text-muted)">الكمية</div>
+          <div style="font-weight:700">${fmtNum(a.amount)} USDT</div>
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;font-size:.8rem;color:var(--text-secondary);margin:8px 0;padding:8px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
-        <div><span style="color:var(--text-muted)">الكمية</span><br><strong>${fmtNum(a.amount)}</strong></div>
-        <div><span style="color:var(--text-muted)">الحد الأدنى</span><br><strong>${fmtNum(a.min_amount)}</strong></div>
-        <div><span style="color:var(--text-muted)">طريقة الدفع</span><br><strong>${esc(a.payment||'')}</strong></div>
-      </div>
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div style="display:flex;align-items:center;gap:6px">
-          ${profileAvatar(a.user, '')}
-          <div>
-            <div style="font-size:.85rem;font-weight:600">${esc(a.user)}</div>
-            <div style="font-size:.7rem;color:var(--text-muted)">⭐ ${fmtNum(a.rating,1)} · ${a.trades_count||0} صفقة</div>
-          </div>
-          ${a.verified ? verifiedBadge(1) : ''}
-        </div>
-        <a href="/market?buy=${a.id}" class="btn btn-${a.type==='BUY'?'accent':'outline'} btn-sm">${a.type==='BUY'?'شراء':'بيع'} USDT</a>
+      <div class="ad-card-info">
+        <dt>الحد الأدنى</dt><dd>${fmtNum(a.min_amount || 0)}</dd>
+        <dt>الحد الأقصى</dt><dd>${fmtNum(a.max_amount || a.amount)}</dd>
+        <dt>طريقة الدفع</dt><dd>${esc(a.payment || '—')}</dd>
+        <dt>المعلن</dt><dd><a href="/trader?u=${esc(a.user)}" onclick="event.stopPropagation()" style="font-weight:600">${esc(a.user)}</a></dd>
       </div>
     </div>`).join('');
 }
-document.getElementById('filterType').addEventListener('change', filterAds);
-document.getElementById('filterSearch').addEventListener('input', filterAds);
-loadAds();
+load();
 </script>
 </body>
 </html>

@@ -27,18 +27,21 @@ async function load() {
   const t = trustResp.trust || {}; const v = trustResp.vip || {};
   const vc = v.level === 'verified' ? '💎' : v.level === 'gold' ? '🥇' : v.level === 'silver' ? '🥈' : '🥉';
   const vl = v.label || 'برونزي';
+  const tg = u.telegram_id ? '🟢 مرتبط' : '⚪ غير مرتبط';
+  const emailStatus = u.email_verified ? '🟢 موثق' : (u.email ? '🟡 غير موثق' : '🔴 بدون بريد');
+  const themeLabel = getTheme() === 'dark' ? '🌙 الليلي' : getTheme() === 'light' ? '☀️ الفاتح' : '⚙️ تلقائي';
 
   document.getElementById('app').innerHTML = `
     <div style="text-align:center;padding:24px 0">
       <div class="avatar avatar-xl" style="margin:0 auto 12px">${(u.username||'?')[0].toUpperCase()}</div>
-      <h1 style="font-size:1.2rem;font-weight:700;margin:0 0 4px">${esc(u.username)}</h1>
+      <h1 style="font-size:1.3rem;font-weight:700;margin:0 0 4px">${esc(u.username)}</h1>
       <div style="display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin-bottom:8px">
-        ${u.verified ? '<span class="badge badge-verified">✓ موثق</span>' : ''}
+        ${u.verified ? '<span class="badge badge-verified">✓ موثق</span>' : '<span class="badge" style="background:rgba(245,158,11,0.15);color:#f59e0b">غير موثق</span>'}
         <span class="badge badge-vip">${vc} ${vl}</span>
         ${t.trust_score ? `<span class="trust-score trust-high">🟢 ${fmtNum(t.trust_score,0)}% موثوق</span>` : ''}
         ${t.avg_rating ? `<span class="badge badge-info">⭐ ${fmtNum(t.avg_rating,1)}</span>` : ''}
       </div>
-      <div style="font-size:.8rem;color:var(--text-muted)">${p.email || ''} · منذ ${fmtDate(u.created_at).split(',')[0]}</div>
+      <div style="font-size:.8rem;color:var(--text-muted)">${p.email || 'لا يوجد بريد'} · منذ ${fmtDate(u.created_at).split(',')[0]}</div>
     </div>
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
@@ -46,42 +49,20 @@ async function load() {
       <div class="card" style="text-align:center;padding:14px"><div style="font-size:1.3rem;font-weight:800;color:var(--success)">${stats.completed||0}</div><div style="font-size:.75rem;color:var(--text-muted)">مكتملة</div></div>
     </div>
 
-    <div class="card" style="padding:16px;margin-bottom:10px">
-      <div class="flex-between">
-        <div class="flex" style="gap:12px;align-items:center">
-          <span style="font-size:1.3rem">💰</span>
-          <div><div style="font-weight:600">المحفظة</div><div style="font-size:.8rem;color:var(--text-muted)">${fmtNum(w.balance)} USDT</div></div>
-        </div>
-        <a href="/wallet" class="btn btn-ghost btn-sm">فتح</a>
-      </div>
+    <!-- Quick Actions -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+      <a href="/wallet" class="card" style="padding:14px;text-align:center;text-decoration:none"><div style="font-size:1.5rem">💰</div><div style="font-size:.85rem;font-weight:600;margin-top:4px">المحفظة</div><div style="font-size:.75rem;color:var(--text-muted)">${fmtNum(w.balance)} USDT</div></a>
+      <a href="/trades" class="card" style="padding:14px;text-align:center;text-decoration:none"><div style="font-size:1.5rem">📄</div><div style="font-size:.85rem;font-weight:600;margin-top:4px">الصفقات</div><div style="font-size:.75rem;color:var(--text-muted)">${stats.total||0} صفقة</div></a>
+      <a href="/notifications" class="card" style="padding:14px;text-align:center;text-decoration:none"><div style="font-size:1.5rem">🔔</div><div style="font-size:.85rem;font-weight:600;margin-top:4px">الإشعارات</div></a>
+      <a href="/create_ad" class="card" style="padding:14px;text-align:center;text-decoration:none"><div style="font-size:1.5rem">➕</div><div style="font-size:.85rem;font-weight:600;margin-top:4px">إعلان جديد</div></a>
     </div>
 
-    <div class="card" style="padding:16px;margin-bottom:10px">
-      <div class="flex-between">
-        <div class="flex" style="gap:12px;align-items:center">
-          <span style="font-size:1.3rem">📄</span>
-          <div><div style="font-weight:600">الصفقات</div><div style="font-size:.8rem;color:var(--text-muted)">${stats.total||0} صفقة</div></div>
-        </div>
-        <a href="/trades" class="btn btn-ghost btn-sm">فتح</a>
-      </div>
-    </div>
-
-    <div class="card" style="padding:16px;margin-bottom:10px">
-      <div class="flex-between">
-        <div class="flex" style="gap:12px;align-items:center">
-          <span style="font-size:1.3rem">🔔</span>
-          <div><div style="font-weight:600">الإشعارات</div><div style="font-size:.8rem;color:var(--text-muted)">إدارة الإشعارات</div></div>
-        </div>
-        <a href="/notifications" class="btn btn-ghost btn-sm">فتح</a>
-      </div>
-    </div>
-
-    <!-- Telegram Section -->
+    <!-- Telegram -->
     <div class="card" style="padding:16px;margin-bottom:10px" id="tgSection">
       <div class="flex-between">
         <div class="flex" style="gap:12px;align-items:center">
           <span style="font-size:1.3rem">📱</span>
-          <div><div style="font-weight:600">ربط Telegram</div><div style="font-size:.8rem;color:var(--text-muted)" id="tgStatus">${u.telegram_id ? '🟢 مرتبط' : '⚪ غير مرتبط'}</div></div>
+          <div><div style="font-weight:600">Telegram</div><div style="font-size:.8rem;color:var(--text-muted)" id="tgStatus">${tg}</div></div>
         </div>
         ${u.telegram_id
           ? '<span class="badge badge-verified">متصل ✓</span>'
@@ -99,20 +80,45 @@ async function load() {
       </div>
     </div>
 
+    <!-- Appearance -->
+    <div class="card" style="padding:16px;margin-bottom:10px">
+      <div style="font-weight:600;margin-bottom:12px">🎨 المظهر</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-sm ${getTheme()==='dark'?'btn-primary':'btn-ghost'}" onclick="setTheme('dark');load()">🌙 الليلي</button>
+        <button class="btn btn-sm ${getTheme()==='light'?'btn-primary':'btn-ghost'}" onclick="setTheme('light');load()">☀️ الفاتح</button>
+        <button class="btn btn-sm ${getTheme()==='auto'?'btn-primary':'btn-ghost'}" onclick="setTheme('auto');load()">⚙️ تلقائي</button>
+      </div>
+    </div>
+
     <!-- Notification Preferences -->
     <div class="card" style="padding:16px;margin-bottom:10px">
-      <div style="font-weight:600;margin-bottom:12px">⚙️ إعدادات الإشعارات</div>
-      <div id="notifPrefs">
-        <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:.85rem;cursor:pointer">
-          <input type="checkbox" id="prefTrades" checked onchange="savePref('trades', this.checked)"> إشعارات الصفقات
-        </label>
-        <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:.85rem;cursor:pointer">
-          <input type="checkbox" id="prefPayments" checked onchange="savePref('payments', this.checked)"> إشعارات الدفع
-        </label>
-        <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:.85rem;cursor:pointer">
-          <input type="checkbox" id="prefDisputes" checked onchange="savePref('disputes', this.checked)"> إشعارات النزاعات
-        </label>
+      <div style="font-weight:600;margin-bottom:12px">🔔 إعدادات الإشعارات</div>
+      <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:.85rem;cursor:pointer">
+        <input type="checkbox" checked onchange="savePref('trades', this.checked)"> إشعارات الصفقات
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:.85rem;cursor:pointer">
+        <input type="checkbox" checked onchange="savePref('payments', this.checked)"> إشعارات الدفع
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:.85rem;cursor:pointer">
+        <input type="checkbox" checked onchange="savePref('disputes', this.checked)"> إشعارات النزاعات
+      </label>
+    </div>
+
+    <!-- Security -->
+    <div class="card" style="padding:16px;margin-bottom:10px">
+      <div style="font-weight:600;margin-bottom:12px">🔒 الأمان</div>
+      <div style="font-size:.85rem;color:var(--text-secondary);margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+          <span>البريد الإلكتروني</span><span>${emailStatus}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+          <span>Telegram</span><span>${tg}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0">
+          <span>التحقق من الهوية</span><span>${u.verified ? '🟢 موثق' : '🔴 غير موثق'}</span>
+        </div>
       </div>
+      <button class="btn btn-ghost btn-sm btn-block" onclick="toast('قريباً — تغيير كلمة المرور')">🔑 تغيير كلمة المرور</button>
     </div>
 
     <button class="btn btn-ghost btn-block" style="margin-top:8px;border-color:var(--danger);color:var(--danger)" onclick="doLogout()">تسجيل الخروج</button>`;
@@ -136,10 +142,7 @@ function copyLinkCode() {
 }
 
 async function savePref(type, enabled) {
-  await api('/v2/telegram/prefs', {
-    method: 'POST',
-    body: { [type]: enabled }
-  });
+  await api('/telegram/prefs', { method: 'POST', body: { [type]: enabled } });
 }
 
 load();

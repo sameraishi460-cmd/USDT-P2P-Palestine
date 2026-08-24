@@ -9,12 +9,12 @@
 <body>
 <div class="app">
 <nav class="nav" id="nav"></nav>
-<main class="main"><div class="container" style="max-width:640px">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-    <h1 style="font-size:1.3rem;font-weight:700">الإشعارات</h1>
-    <button class="btn btn-outline btn-sm" id="markAll" onclick="markRead()" style="display:none">تحديد الكل كمقروء</button>
+<main class="main"><div class="container" style="max-width:640px" id="app">
+  <div class="flex-between" style="margin-bottom:16px">
+    <h1 style="font-size:1.3rem;font-weight:800">🔔 الإشعارات</h1>
+    <button class="btn btn-ghost btn-sm" id="markAllBtn" onclick="markAllRead()" style="display:none">تحديد الكل كمقروء</button>
   </div>
-  <div id="list"><div class="card"><div class="spinner"></div></div></div>
+  <div id="notifList"><div class="spinner"></div></div>
 </div></main>
 <div class="bottom-nav" id="bottomNav"></div>
 </div>
@@ -22,20 +22,22 @@
 <script>
 async function load() {
   if (!requireAuth()) return;
-  const r = await api('/notifications');
-  const el = document.getElementById('list');
-  if (!r || !r.ok) { el.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:32px">خطأ</div>'; return; }
-  const n = r.notifications || [];
-  if (r.unread > 0) document.getElementById('markAll').style.display = '';
-  if (!n.length) { el.innerHTML = '<div class="card text-center" style="padding:32px"><div style="font-size:2rem">🔔</div><div style="color:var(--text-muted);margin-top:8px">لا توجد إشعارات</div></div>'; return; }
-  el.innerHTML = n.map(x => `<div class="card" style="padding:12px;margin-bottom:8px;${x.seen===0?'border-right:3px solid var(--accent)':''}">
-    <div style="font-weight:${x.seen===0?'600':'400'};font-size:.9rem">${esc(x.title)}</div>
-    <div style="font-size:.8rem;color:var(--text-muted);margin-top:4px">${esc(x.message)}</div>
-    <div style="font-size:.7rem;color:var(--text-muted);margin-top:4px">${fmtDate(x.created)}</div>
-  </div>`).join('');
+  const resp = await api('/notifications');
+  const notifs = resp?.notifications || [];
+  const unread = resp?.unread || 0;
+  if (unread > 0) document.getElementById('markAllBtn').style.display = 'block';
+  const list = document.getElementById('notifList');
+  if (!notifs.length) { list.innerHTML = '<div class="card"><div class="empty"><div class="empty-icon">🔔</div><div class="empty-title">لا توجد إشعارات</div></div></div>'; return; }
+  list.innerHTML = notifs.map(n => `
+    <div class="notif-item ${n.seen ? '' : 'unread'}" style="padding:12px 0;border-bottom:1px solid var(--border)">
+      <div style="font-weight:600;font-size:.9rem;margin-bottom:2px">${esc(n.title)}</div>
+      <div style="font-size:.8rem;color:var(--text-secondary)">${esc(n.message)}</div>
+      <div style="font-size:.7rem;color:var(--text-muted);margin-top:4px">${fmtDate(n.created)}</div>
+    </div>`).join('');
 }
-async function markRead() {
+async function markAllRead() {
   await api('/notifications/mark-read', { method: 'POST' });
+  toast('تم تحديد الكل كمقروء');
   load();
 }
 load();

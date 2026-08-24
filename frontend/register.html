@@ -10,30 +10,26 @@
 <div class="app">
 <nav class="nav" id="nav"></nav>
 <main class="main"><div class="container" style="max-width:420px;margin-top:48px">
-  <div class="text-center" style="margin-bottom:32px">
-    <div style="width:56px;height:56px;border-radius:14px;background:var(--primary);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:12px">🆕</div>
+  <div class="text-center" style="margin-bottom:24px">
+    <div style="width:56px;height:56px;border-radius:14px;background:var(--success);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:1.5rem;margin-bottom:12px">🚀</div>
     <h1 style="font-size:1.4rem;font-weight:700">إنشاء حساب جديد</h1>
-    <p style="color:var(--text-muted);font-size:.85rem;margin-top:4px">سجّل وابدأ التداول فوراً</p>
+    <p style="color:var(--text-muted);font-size:.85rem;margin-top:4px">انضم إلى منصة USDT P2P Palestine</p>
   </div>
   <div id="errBox" class="alert alert-error" style="display:none;margin-bottom:16px"></div>
   <div class="card" style="padding:24px">
     <div class="form-group">
       <label>اسم المستخدم</label>
-      <input type="text" class="form-input" id="username" placeholder="3-20 حرفاً" autocomplete="username">
+      <input type="text" class="form-input" id="username" placeholder="username" autocomplete="username">
     </div>
     <div class="form-group">
       <label>البريد الإلكتروني</label>
-      <input type="email" class="form-input" id="email" placeholder="you@email.com" autocomplete="email">
+      <input type="email" class="form-input" id="email" placeholder="email@example.com" autocomplete="email">
     </div>
     <div class="form-group">
       <label>كلمة المرور</label>
       <input type="password" class="form-input" id="password" placeholder="6 أحرف على الأقل" autocomplete="new-password">
     </div>
-    <div class="form-group">
-      <label>تأكيد كلمة المرور</label>
-      <input type="password" class="form-input" id="password2" placeholder="أعد إدخال كلمة المرور" autocomplete="new-password">
-    </div>
-    <button class="btn btn-primary btn-block" id="regBtn" style="margin-top:8px">إنشاء الحساب</button>
+    <button class="btn btn-primary btn-block" id="regBtn" style="margin-top:8px">إنشاء حساب</button>
   </div>
   <div class="text-center" style="margin-top:16px;font-size:.85rem">
     <span style="color:var(--text-muted)">لديك حساب بالفعل؟</span> <a href="/login" style="color:var(--primary);font-weight:600;text-decoration:none">تسجيل الدخول</a>
@@ -43,28 +39,20 @@
 <script src="/assets/app.js"></script>
 <script>
 document.getElementById('regBtn').addEventListener('click', doSubmit);
-
 async function doSubmit() {
-  const u = document.getElementById('username').value.trim();
-  const e = document.getElementById('email').value.trim();
-  const p = document.getElementById('password').value;
-  const p2 = document.getElementById('password2').value;
+  const username = document.getElementById('username').value.trim();
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
   const errBox = document.getElementById('errBox');
   const btn = document.getElementById('regBtn');
-  if (!u || !e || !p) { errBox.textContent = 'أدخل جميع البيانات'; errBox.style.display = 'block'; return; }
-  if (p !== p2) { errBox.textContent = 'كلمتا المرور غير متطابقتين'; errBox.style.display = 'block'; return; }
-  if (p.length < 6) { errBox.textContent = 'كلمة المرور يجب أن تكون 6 أحرف على الأقل'; errBox.style.display = 'block'; return; }
-  errBox.style.display = 'none';
-  btn.disabled = true; btn.textContent = 'جاري الإنشاء...';
-  const r = await doRegister(u, e, p);
-  btn.disabled = false; btn.textContent = 'إنشاء الحساب';
-  if (r && r.ok) {
-    location.href = '/market';
-  } else if (r && r.error) {
-    errBox.textContent = r.error; errBox.style.display = 'block';
-  } else {
-    errBox.textContent = 'خطأ في الاتصال'; errBox.style.display = 'block';
-  }
+  if (!username || !email || !password) { errBox.textContent = 'أدخل جميع البيانات'; errBox.style.display = 'block'; return; }
+  if (password.length < 6) { errBox.textContent = 'كلمة المرور يجب أن تكون 6 أحرف على الأقل'; errBox.style.display = 'block'; return; }
+  errBox.style.display = 'none'; btn.disabled = true; btn.textContent = 'جاري الإنشاء...';
+  const r = await doRegister(username, email, password);
+  btn.disabled = false; btn.textContent = 'إنشاء حساب';
+  if (r && r.ok) { location.href = '/market'; }
+  else if (r && r.error) { errBox.textContent = r.error; errBox.style.display = 'block'; }
+  else { errBox.textContent = 'خطأ في الاتصال'; errBox.style.display = 'block'; }
 }
 </script>
 </body>

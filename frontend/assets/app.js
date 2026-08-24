@@ -26,6 +26,27 @@ function clearUser() { _user = null; _csrf = ''; localStorage.removeItem(USER_KE
 function isLoggedIn() { return !!_user; }
 function currentUser() { return _user; }
 
+/* ── Theme (Dark/Light) ──────────────────────────────── */
+const THEME_KEY = 'usp_theme';
+function getTheme() { return localStorage.getItem(THEME_KEY) || 'dark'; }
+function setTheme(t) {
+  localStorage.setItem(THEME_KEY, t);
+  applyTheme(t);
+}
+function applyTheme(t) {
+  if (t === 'auto') {
+    t = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  }
+  document.documentElement.setAttribute('data-theme', t);
+}
+applyTheme(getTheme());
+function toggleTheme() {
+  const cur = getTheme();
+  const next = cur === 'dark' ? 'light' : cur === 'light' ? 'auto' : 'dark';
+  setTheme(next);
+  toast(next === 'dark' ? '🌙 الوضع الليلي' : next === 'light' ? '☀️ الوضع الفاتح' : '⚙️ تلقائي حسب الجهاز');
+}
+
 /* ── Toast ─────────────────────────────────────────────────── */
 let _tt;
 function toast(msg, ms) {
@@ -143,6 +164,8 @@ function fmtDate(d) { return d ? new Date(d).toLocaleString('ar', { dateStyle: '
 function copyText(t) { navigator.clipboard?.writeText(t); toast('تم النسخ'); }
 
 /* ── Navigation ────────────────────────────────────────────── */
+function themeIcon() { const t = getTheme(); return t === 'dark' ? '🌙' : t === 'light' ? '☀️' : '⚙️'; }
+
 function renderNav() {
   const nav = document.getElementById('nav');
   if (!nav) return;
@@ -152,6 +175,7 @@ function renderNav() {
     <div class="nav-links">
       <a href="/market">السوق</a>
       ${u ? `<a href="/trades">الصفقات</a><a href="/wallet">المحفظة</a><a href="/notifications">الإشعارات</a><a href="/profile">حسابي</a>${u.isAdmin ? '<a href="/admin">الإدارة</a>' : ''}` : `<a href="/login">تسجيل الدخول</a>`}
+      <button onclick="toggleTheme()" style="background:none;border:none;cursor:pointer;font-size:1.1rem;padding:4px 8px" title="تبديل المظهر">${themeIcon()}</button>
     </div></div>`;
   const bn = document.getElementById('bottomNav');
   if (bn && u) {

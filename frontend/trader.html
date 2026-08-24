@@ -1,71 +1,72 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#0a0e18">
-<title>ال trader — USDT P2P Palestine</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/app.css">
-<style>
-.trust-circle { width:120px; height:120px; border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center;
-  border:4px solid var(--primary); margin:0 auto 16px; }
-.trust-circle .score { font-size:32px; font-weight:800; color:var(--primary); }
-.trust-circle .label { font-size:11px; color:var(--text-dim); }
-.stat-row { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border); }
-.stat-row:last-child { border-bottom:none; }
-</style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ملف المتداول — USDT P2P Palestine</title>
+<link rel="stylesheet" href="/assets/app.css">
 </head>
 <body>
-<div class="navbar">
-  <a href="/" style="text-decoration:none;"><span class="logo">🇵🇸 USDT P2P</span></a>
-  <div class="actions"><a href="/profile.html">👤</a></div>
+<div class="app">
+<nav class="nav" id="nav"></nav>
+<main class="main"><div class="container" style="max-width:640px" id="app"><div class="card"><div class="spinner"></div></div></div></main>
+<div class="bottom-nav" id="bottomNav"></div>
 </div>
-<div class="container" id="content"><div class="skeleton"></div></div>
-<div id="toast"></div>
-<script src="assets/app.js"></script>
+<script src="/assets/app.js"></script>
 <script>
-var params = new URLSearchParams(location.search);
-var username = params.get('u');
-if (!username) { location.href = '/market.html'; throw new Error('no username'); }
-(async function() {
-  var r = await get('/v2/trader/' + encodeURIComponent(username));
-  if (!r || !r.ok) { document.getElementById('content').innerHTML = '<div class="empty"><p>المستخدم غير موجود</p></div>'; return; }
-  var u = r.user, t = r.trust, v = r.vip;
-  var h = '';
-  h += '<div class="text-center">';
-  h += '<div class="avatar avatar-lg" style="margin:0 auto 12px;">' + ((u.username||'?')[0]||'?').toUpperCase() + '</div>';
-  h += '<h2 style="font-size:20px;font-weight:800;">' + escHtml(u.first_name || u.username) + '</h2>';
-  h += '<div class="muted text-sm">@' + escHtml(u.username) + '</div>';
-  h += '<div style="margin-top:8px;">';
-  if (u.verified) h += verifiedBadge(true) + ' ';
-  h += '<span class="vip-badge">' + v.badge + ' ' + v.label + '</span>';
-  h += '</div></div>';
+async function load() {
+  const params = new URLSearchParams(location.search);
+  const username = params.get('u') || location.pathname.split('/trader/')[1];
+  if (!username) { document.getElementById('app').innerHTML = '<div class="card"><div class="empty"><div class="empty-icon">👤</div><div class="empty-title">متداول غير موجود</div></div></div>'; return; }
 
-  // Trust Score Circle
-  h += '<div class="card" style="text-align:center;margin-top:16px;">';
-  h += '<div class="trust-circle"><div class="score">' + Math.round(t.trust_score) + '%</div><div class="label">Trust Score</div></div>';
-  h += '<div class="text-sm text-dim">' + (t.trust_score >= 75 ? '🟢 موثوق' : t.trust_score >= 50 ? '🟡 مقبول' : '🔴 منخفض') + '</div>';
-  h += '</div>';
+  const [prof, trustResp, adsResp, reviewsResp] = await Promise.all([
+    api('/v2/trust/' + username).catch(() => ({})),
+    api('/v2/trust/' + username).catch(() => ({})),
+    api('/market').catch(() => ({ ads: [] })),
+    api('/v2/reviews/' + username).catch(() => ({ reviews: [] })),
+  ]);
 
-  // Stats
-  h += '<div class="card"><div class="card-title">📊 الإحصائيات</div>';
-  h += '<div class="stat-row"><span>التقييم</span><span class="text-gold">⭐ ' + formatNum(t.avg_rating || u.rating, 1) + ' (' + (t.total_ratings||0) + ' تقييم)</span></div>';
-  h += '<div class="stat-row"><span>الصفقات المكتملة</span><span class="text-primary">' + (t.completed_trades || u.trades_count || 0) + '</span></div>';
-  h += '<div class="stat-row"><span>نسبة الإتمام</span><span>' + formatNum(t.completion_rate || 0, 1) + '%</span></div>';
-  h += '<div class="stat-row"><span>الصفقات الملغاة</span><span class="text-danger">' + (t.cancelled_trades || 0) + '</span></div>';
-  h += '<div class="stat-row"><span>النزاعات</span><span class="text-warning">' + (t.disputed_trades || 0) + '</span></div>';
-  h += '<div class="stat-row"><span>عمر الحساب</span><span>' + (t.account_age_days || 0) + ' يوم</span></div>';
-  h += '</div>';
+  const t = (trustResp?.trust) || {};
+  const v = (trustResp?.vip) || {};
+  const vc = v.level === 'verified' ? '💎' : v.level === 'gold' ? '🥇' : v.level === 'silver' ? '🥈' : '🥉';
+  const vl = v.label || 'برونزي';
+  const ads = (adsResp?.ads || []).filter(a => a.user === username).slice(0, 5);
+  const reviews = (reviewsResp?.reviews || []).slice(0, 10);
 
-  // Security note
-  h += '<div class="card" style="border-color:rgba(0,201,167,.15);">';
-  h += '<div class="muted text-xs">🛡️ جميع المعاملات محمية بضمان USDT Palestine. لا تتم مشاركة أي معلومات خاصة.</div>';
-  h += '</div>';
+  document.getElementById('app').innerHTML = `
+    <div class="card" style="text-align:center;padding:24px">
+      <div class="avatar avatar-xl" style="margin:0 auto 12px">${username[0].toUpperCase()}</div>
+      <h1 style="font-size:1.3rem;font-weight:700;margin:0 0 4px">${esc(username)}</h1>
+      <div style="display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin-bottom:8px">
+        <span class="badge badge-vip">${vc} ${vl}</span>
+        ${t.trust_score >= 80 ? '<span class="trust-score trust-high">🛡️ موثوق</span>' : ''}
+        ${t.avg_rating ? `<span class="badge badge-info">⭐ ${fmtNum(t.avg_rating,1)}</span>` : ''}
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px">
+        <div><div style="font-size:1.2rem;font-weight:800;color:var(--primary)">${t.completed_trades || 0}</div><div style="font-size:.75rem;color:var(--text-muted)">صفقة</div></div>
+        <div><div style="font-size:1.2rem;font-weight:800;color:var(--success)">${t.completion_rate || 0}%</div><div style="font-size:.75rem;color:var(--text-muted)">نسبة الإتمام</div></div>
+        <div><div style="font-size:1.2rem;font-weight:800;color:var(--warning)">${fmtNum(t.trust_score,0)}%</div><div style="font-size:.75rem;color:var(--text-muted)">Trust Score</div></div>
+      </div>
+    </div>
 
-  document.getElementById('content').innerHTML = h;
-})();
+    ${ads.length ? `<div class="card" style="padding:16px"><div class="card-title">📢 الإعلانات النشطة</div>${ads.map(a => `
+      <div style="padding:10px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+        <div><span class="${a.type==='BUY'?'badge badge-buy':'badge badge-sell'}">${a.type==='BUY'?'شراء':'بيع'}</span> ${fmtNum(a.amount)} USDT</div>
+        <div style="font-weight:700;color:var(--primary)">${fmtNum(a.price)} ₪</div>
+      </div>`).join('')}</div>` : ''}
+
+    ${reviews.length ? `<div class="card" style="padding:16px"><div class="card-title">⭐ التقييمات</div>${reviews.map(r => `
+      <div style="padding:10px 0;border-bottom:1px solid var(--border)">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-weight:600">${esc(r.from_user)}</span>
+          <span style="color:var(--warning)">${'⭐'.repeat(r.rating)}</span>
+        </div>
+        ${r.comment ? `<p style="font-size:.85rem;color:var(--text-secondary);margin-top:4px">${esc(r.comment)}</p>` : ''}
+        <div style="font-size:.75rem;color:var(--text-muted);margin-top:2px">${fmtDate(r.created)}</div>
+      </div>`).join('')}</div>` : '<div class="card"><div class="empty"><p>لا توجد تقييمات بعد</p></div></div>'}
+  `;
+}
+load();
 </script>
 </body>
 </html>

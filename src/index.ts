@@ -144,6 +144,12 @@ app.post("/telegram/webhook", (c) => handleTelegramUpdate(c));
 // ------------------------------------------------------------
 // Static frontend files (served from bundled frontend/ directory)
 // ------------------------------------------------------------
+// Trader profile page (SPA-style routing)
+app.get("/trader/*", async (c) => {
+  const file = await serveStaticFile(c.env.ASSETS, "/trader.html");
+  return file ?? c.json({ error: "المسار غير موجود" }, 404);
+});
+
 // Static frontend — only handles non-API, non-webhook paths
 app.get("/*", async (c) => {
   const pathname = new URL(c.req.url).pathname;
