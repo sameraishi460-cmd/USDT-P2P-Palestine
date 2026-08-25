@@ -867,6 +867,60 @@ const V2_TABLES: string[] = [
     created_at TEXT DEFAULT (datetime('now')),
     FOREIGN KEY (username) REFERENCES users(username)
   )`,
+
+  // Price history for charts — stores periodic market price snapshots
+  `CREATE TABLE IF NOT EXISTS price_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    source TEXT DEFAULT 'coingecko',
+    pair TEXT DEFAULT 'USDT/ILS',
+    market_price REAL NOT NULL,
+    buy_price REAL,
+    sell_price REAL,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`,
+
+  // Price alerts — user-configured price notifications
+  `CREATE TABLE IF NOT EXISTS price_alerts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT NOT NULL,
+    pair TEXT DEFAULT 'USDT/ILS',
+    direction TEXT NOT NULL CHECK (direction IN ('ABOVE', 'BELOW')),
+    target_price REAL NOT NULL,
+    active INTEGER DEFAULT 1,
+    triggered INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now')),
+    triggered_at TEXT,
+    FOREIGN KEY (username) REFERENCES users(username)
+  )`,
+
+  // Escrow transaction ledger — dedicated trail for every escrow action
+  `CREATE TABLE IF NOT EXISTS escrow_transactions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    trade_id INTEGER NOT NULL,
+    user_id TEXT NOT NULL,
+    asset TEXT DEFAULT 'USDT',
+    amount REAL NOT NULL,
+    action TEXT NOT NULL CHECK (action IN ('LOCK','RELEASE','REFUND')),
+    status TEXT DEFAULT 'COMPLETED' CHECK (status IN ('PENDING','COMPLETED','FAILED')),
+    tx_hash TEXT DEFAULT '',
+    reason TEXT DEFAULT '',
+    admin_actor TEXT DEFAULT '',
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (trade_id) REFERENCES trades(id)
+  )`,
+
+  // Telegram deep-link login tokens — one-time tokens for bot→web session creation
+  `CREATE TABLE IF NOT EXISTS telegram_login_tokens (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    telegram_user_id TEXT NOT NULL,
+    username TEXT NOT NULL,
+    token TEXT NOT NULL,
+    expires_at TEXT NOT NULL,
+    used INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (username) REFERENCES users(username)
+  )`,
 ];
 
 const V2_INDEXES: string[] = [
@@ -891,4 +945,20 @@ const V2_INDEXES: string[] = [
   `CREATE INDEX IF NOT EXISTS idx_tg_auth_user ON telegram_auth_codes(telegram_user_id)`,
   `CREATE INDEX IF NOT EXISTS idx_tg_prefs_user ON telegram_prefs(username)`,
   `CREATE INDEX IF NOT EXISTS idx_login_activity_user ON login_activity(username, created_at)`,
+  `CREATE INDEX IF NOT EXISTS idx_price_history_pair ON price_history(pair, created_at)`,
+  `CREATE INDEX IF NOT EXISTS idx_price_history_source ON price_history(source, created_at)`,
+  `CREATE INDEX IF NOT EXISTS idx_price_alerts_user ON price_alerts(username, active)`,
+  `CREATE INDEX IF NOT EXISTS idx_price_alerts_pair ON price_alerts(pair, direction, target_price)`,
+  `CREATE INDEX IF NOT EXISTS idx_escrow_trade ON escrow_transactions(trade_id, action)`,
+  `CREATE INDEX IF NOT EXISTS idx_escrow_user ON escrow_transactions(user_id, created_at)`,
+  `CREATE INDEX IF NOT EXISTS idx_escrow_status ON escrow_transactions(status, action)`,
+
+  // Phase 2 — Admin Settings (uses platform_config, but adds tx_hash unique index)
+  `CREATE INDEX IF NOT EXISTS idx_deposits_tx_hash ON usdt_deposits(tx_hash)`,
+  `CREATE INDEX IF NOT EXISTS idx_wallet_history_action ON wallet_history(action, created)`,
+  `CREATE INDEX IF NOT EXISTS idx_trades_platform_fee ON trades(platform_fee)`,
+
+  // Telegram login tokens
+  `CREATE INDEX IF NOT EXISTS idx_tg_login_token ON telegram_login_tokens(token)`,
+  `CREATE INDEX IF NOT EXISTS idx_tg_login_user ON telegram_login_tokens(telegram_user_id, used)`,
 ];

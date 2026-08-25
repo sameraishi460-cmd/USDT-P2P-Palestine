@@ -3,149 +3,458 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#0a0e1a">
+  <meta name="theme-color" content="#07090D">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>USDT P2P Palestine — سوق USDT فلسطين</title>
+  <title>USDT P2P Palestine</title>
   <link rel="stylesheet" href="/assets/design-system.css">
-<link rel="manifest" href="/manifest.json">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<script>(function(){var t=localStorage.getItem("usp_theme")||"dark";if(t==="auto")t=window.matchMedia("(prefers-color-scheme:light)").matches?"light":"dark";document.documentElement.setAttribute("data-theme",t);})();</script>
+  <link rel="manifest" href="/manifest.json">
+  <script>(function(){var t=localStorage.getItem("usp_theme")||"dark";if(t==="auto")t=window.matchMedia("(prefers-color-scheme:light)").matches?"light":"dark";document.documentElement.setAttribute("data-theme",t);})();</script>
+  <style>
+    /* Home page styles — isolated, no conflicts */
+    .home-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;position:sticky;top:0;z-index:100;background:rgba(7,9,13,0.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,0.05);}
+    .home-brand{font-size:15px;font-weight:800;color:#F5F7FA;letter-spacing:-0.3px;}
+    .home-brand span{color:#00D6A0;}
+    .home-menu{background:none;border:none;color:#F5F7FA;font-size:20px;cursor:pointer;padding:6px;}
+    .greeting{padding:24px 20px 0;}
+    .greeting h1{font-size:22px;font-weight:800;color:#F5F7FA;line-height:1.3;}
+    .greeting p{font-size:14px;color:#8A96A6;margin-top:4px;}
+    .balance-hero{margin:20px 16px;background:#111820;border:1px solid rgba(255,255,255,0.07);border-radius:20px;padding:28px 24px;position:relative;overflow:hidden;}
+    .balance-hero::before{content:'';position:absolute;top:-60px;right:-40px;width:200px;height:200px;background:radial-gradient(circle,rgba(0,214,160,0.06),transparent 70%);pointer-events:none;}
+    .balance-hero::after{content:'';position:absolute;bottom:-80px;left:-60px;width:250px;height:250px;background:radial-gradient(circle,rgba(0,214,160,0.03),transparent 70%);pointer-events:none;}
+    .balance-label{font-size:12px;color:#5A6577;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;margin-bottom:8px;}
+    .balance-amount{display:flex;align-items:baseline;gap:8px;margin-bottom:6px;}
+    .balance-value{font-size:36px;font-weight:900;color:#F5F7FA;letter-spacing:-1px;line-height:1;}
+    .balance-currency{font-size:16px;font-weight:600;color:#5A6577;}
+    .balance-usd{font-size:14px;color:#8A96A6;margin-bottom:16px;}
+    .balance-change{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:#00D6A0;background:rgba(0,214,160,0.08);padding:4px 10px;border-radius:20px;}
+    .action-row{display:flex;gap:12px;margin:0 16px;}
+    .action-btn{flex:1;padding:14px;border-radius:16px;font-size:15px;font-weight:700;text-align:center;text-decoration:none;cursor:pointer;border:none;transition:all 0.2s ease;}
+    .action-buy{background:#00D6A0;color:#07090D;}
+    .action-buy:hover{background:#00BF8F;transform:translateY(-1px);}
+    .action-sell{background:#151E27;color:#F5F7FA;border:1px solid rgba(255,255,255,0.07);}
+    .action-sell:hover{background:#1A2430;border-color:rgba(255,255,255,0.12);}
+    .section-header{display:flex;justify-content:space-between;align-items:center;padding:24px 16px 12px;}
+    .section-title{font-size:16px;font-weight:700;color:#F5F7FA;}
+    .section-link{font-size:13px;color:#00D6A0;text-decoration:none;font-weight:600;}
+    .market-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px;}
+    .market-card{background:#111820;border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:16px;}
+    .market-pair{font-size:12px;color:#5A6577;font-weight:600;margin-bottom:6px;}
+    .market-price{font-size:22px;font-weight:800;color:#F5F7FA;margin-bottom:4px;}
+    .market-status{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 8px;border-radius:8px;margin-bottom:8px;}
+    .market-status.live{color:#00D6A0;background:rgba(0,214,160,0.08);}
+    .market-status.live::before{content:'';width:5px;height:5px;border-radius:50%;background:#00D6A0;animation:pulse 2s infinite;}
+    .market-status.stale{color:#D6B36A;background:rgba(214,179,106,0.08);}
+    .market-change{font-size:11px;font-weight:600;}
+    .market-change.up{color:#00D6A0;}
+    .market-change.stable{color:#5A6577;}
+    .p2p-list{padding:0 16px;}
+    .p2p-card{background:#111820;border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:16px;margin-bottom:10px;}
+    .p2p-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+    .p2p-user{display:flex;align-items:center;gap:8px;}
+    .p2p-avatar{width:32px;height:32px;border-radius:50%;background:rgba(0,214,160,0.10);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#00D6A0;}
+    .p2p-name{font-size:13px;font-weight:600;color:#F5F7FA;}
+    .p2p-online{font-size:11px;color:#00D6A0;display:flex;align-items:center;gap:4px;}
+    .p2p-online::before{content:'';width:6px;height:6px;border-radius:50%;background:#00D6A0;}
+    .p2p-price{font-size:24px;font-weight:800;color:#00D6A0;margin-bottom:8px;}
+    .p2p-price small{font-size:12px;color:#5A6577;font-weight:500;}
+    .p2p-meta{display:flex;gap:16px;font-size:12px;color:#8A96A6;margin-bottom:12px;}
+    .p2p-meta strong{color:#F5F7FA;font-weight:600;}
+    .p2p-pay{display:flex;gap:6px;margin-bottom:12px;}
+    .p2p-pay-tag{font-size:11px;padding:4px 10px;border-radius:8px;background:#0D1218;color:#8A96A6;border:1px solid rgba(255,255,255,0.05);}
+    .p2p-buy-btn{width:100%;padding:12px;border-radius:12px;background:#00D6A0;color:#07090D;font-size:14px;font-weight:700;border:none;cursor:pointer;transition:all 0.15s ease;}
+    .p2p-buy-btn:hover{background:#00BF8F;}
+    .home-features{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px;}
+    .home-feature{background:#111820;border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:16px;text-align:center;}
+    .home-feature-icon{width:40px;height:40px;border-radius:12px;background:rgba(0,214,160,0.08);display:flex;align-items:center;justify-content:center;margin:0 auto 10px;font-size:18px;color:#00D6A0;}
+    .home-feature-title{font-size:13px;font-weight:700;color:#F5F7FA;margin-bottom:2px;}
+    .home-feature-desc{font-size:11px;color:#5A6577;}
+    .home-cta{margin:24px 16px;background:#111820;border:1px solid rgba(255,255,255,0.07);border-radius:20px;padding:28px 20px;text-align:center;}
+    .home-cta h2{font-size:18px;font-weight:800;color:#F5F7FA;margin-bottom:6px;}
+    .home-cta p{font-size:13px;color:#5A6577;margin-bottom:16px;}
+    .chart-container{margin:0 16px;background:#111820;border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:16px;}
+    .chart-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+    .chart-tabs{display:flex;gap:4px;}
+    .chart-tab{padding:5px 12px;border-radius:8px;font-size:11px;font-weight:600;background:transparent;color:#5A6577;border:none;cursor:pointer;transition:all 0.15s;}
+    .chart-tab.active{background:rgba(0,214,160,0.10);color:#00D6A0;}
+    .chart-canvas{width:100%;height:120px;position:relative;overflow:hidden;}
+    .chart-canvas canvas{width:100%!important;height:100%!important;}
+    .fee-calc{margin:24px 16px 0;background:#111820;border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:16px;}
+    .fee-calc-title{font-size:14px;font-weight:700;color:#F5F7FA;margin-bottom:12px;}
+    .fee-calc-input{width:100%;padding:12px 14px;background:#0D1218;border:1px solid rgba(255,255,255,0.07);border-radius:12px;color:#F5F7FA;font-size:15px;font-weight:600;box-sizing:border-box;outline:none;direction:ltr;text-align:right;}
+    .fee-calc-input:focus{border-color:#00D6A0;box-shadow:0 0 0 3px rgba(0,214,160,0.08);}
+    .fee-calc-results{margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+    .fee-result{background:#0D1218;border-radius:10px;padding:10px 12px;}
+    .fee-result-label{font-size:10px;color:#5A6577;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;}
+    .fee-result-value{font-size:15px;font-weight:700;color:#F5F7FA;}
+    .fee-result-value.primary{color:#00D6A0;}
+    .fee-result-value.danger{color:#FF5C6C;}
+    @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+    @media(max-width:380px){.balance-value{font-size:30px;}.p2p-price{font-size:20px;}.home-brand{font-size:14px;}.chart-canvas{height:100px;}}
+  </style>
 </head>
-<body>
+<body style="background:#07090D;">
 
-<!-- ===== Navbar ===== -->
-<nav class="navbar" id="nav">
-  <div class="navbar-inner">
-    <a href="/" class="navbar-brand">🇵🇸 <span>USDT</span> P2P</a>
-    <div class="navbar-links">
-      <a href="/login" class="btn-nav">دخول</a>
-      <a href="/register" class="btn-nav-accent btn-nav">حساب جديد</a>
-    </div>
-  </div>
-</nav>
+<!-- Mobile Header -->
+<header class="home-header">
+  <div class="home-brand">USDT P2P <span>Palestine</span></div>
+  <button class="home-menu" onclick="toggleMobileSidebar()" aria-label="القائمة">☰</button>
+</header>
 
-<!-- ===== Content ===== -->
-<main>
-<div class="container">
-
-  <!-- Balance Card (when logged in) -->
-  <div id="dashBalance" style="display:none;">
-    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:var(--sp-6);margin-bottom:var(--sp-4);position:relative;overflow:hidden;">
-      <div style="position:absolute;top:-30px;right:-30px;width:150px;height:150px;background:radial-gradient(circle,rgba(32,211,154,0.06),transparent 70%);pointer-events:none;"></div>
-      <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:var(--sp-2);">إجمالي الرصيد</div>
-      <div style="font-size:2rem;font-weight:900;color:var(--text-primary);margin-bottom:var(--sp-1);" id="dashTotal">— USDT</div>
-      <div style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:var(--sp-4);" id="dashUsd">≈ — USD</div>
-      <div style="display:flex;gap:var(--sp-3);">
-        <a href="/wallet" class="btn btn-primary" style="flex:1;">المحفظة</a>
-        <a href="/market" class="btn btn-ghost" style="flex:1;">السوق</a>
-      </div>
-    </div>
-  </div>
-
-  <!-- Hero Section -->
-  <section class="page-header animate-slideUp" style="background:var(--bg-card);border:1px solid var(--border);padding:var(--sp-8) var(--sp-4);position:relative;overflow:hidden;border-radius:var(--radius-lg);margin-bottom:var(--sp-4);">
-    <div style="position:absolute;top:-40px;left:50%;transform:translateX(-50%);width:200px;height:200px;background:radial-gradient(circle,rgba(32,211,154,0.06),transparent 70%);pointer-events:none;"></div>
-    <div style="display:inline-flex;align-items:center;gap:var(--sp-2);background:var(--primary-dim);border:1px solid rgba(32,211,154,0.15);border-radius:var(--radius-full);padding:var(--sp-2) var(--sp-3);margin-bottom:var(--sp-5);font-size:0.8rem;">
-      <span style="width:7px;height:7px;border-radius:50%;background:var(--primary);display:inline-block;animation:pulse 2s infinite;"></span>
-      <span style="color:var(--text-muted);">سعر مباشر</span>
-      <span style="color:var(--primary);font-weight:700;" id="livePrice">— ₪</span>
-    </div>
-    <h1 style="font-size:1.7rem;font-weight:900;margin-bottom:var(--sp-3);line-height:1.4;">
-      شراء وبيع <span style="color:var(--primary);">USDT</span> بأمان
-    </h1>
-    <p style="color:var(--text-secondary);font-size:0.9rem;margin:0 auto var(--sp-6);line-height:1.7;">
-      منصة فلسطينية للتداول الآمن مع حماية Escrow والمقابلات الشخصية
-    </p>
-    <div style="display:flex;flex-wrap:wrap;gap:var(--sp-3);justify-content:center;">
-      <a href="/register" class="btn btn-primary btn-lg">ابدأ الآن</a>
-      <a href="/market" class="btn btn-ghost btn-lg">تصفّح السوق</a>
-    </div>
-  </section>
-
-  <!-- Features -->
-  <section style="display:grid;grid-template-columns:repeat(2,1fr);gap:var(--sp-3);margin-top:var(--sp-2);">
-    <div class="stat-card" style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);">
-      <div style="width:36px;height:36px;border-radius:var(--radius-sm);background:var(--primary-dim);display:flex;align-items:center;justify-content:center;margin:0 auto var(--sp-2);color:var(--primary);font-size:1rem;">◈</div>
-      <div style="font-weight:600;font-size:0.8rem;">حماية Escrow</div>
-      <div style="font-size:0.7rem;color:var(--text-muted);">USDT محجوز بأمان</div>
-    </div>
-    <div class="stat-card" style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);">
-      <div style="width:36px;height:36px;border-radius:var(--radius-sm);background:var(--primary-dim);display:flex;align-items:center;justify-content:center;margin:0 auto var(--sp-2);color:var(--primary);font-size:1rem;">◎</div>
-      <div style="font-weight:600;font-size:0.8rem;">تداول شخصي</div>
-      <div style="font-size:0.7rem;color:var(--text-muted);">مقابلات مباشرة آمنة</div>
-    </div>
-    <div class="stat-card" style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);">
-      <div style="width:36px;height:36px;border-radius:var(--radius-sm);background:var(--primary-dim);display:flex;align-items:center;justify-content:center;margin:0 auto var(--sp-2);color:var(--primary);font-size:1rem;">⚡</div>
-      <div style="font-weight:600;font-size:0.8rem;">سريع وموثوق</div>
-      <div style="font-size:0.7rem;color:var(--text-muted);">تنفيذ فوري للصفقات</div>
-    </div>
-    <div class="stat-card" style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);">
-      <div style="width:36px;height:36px;border-radius:var(--radius-sm);background:var(--premium-dim,rgba(214,179,106,0.12));display:flex;align-items:center;justify-content:center;margin:0 auto var(--sp-2);color:var(--premium,#D6B36A);font-size:1rem;">◆</div>
-      <div style="font-weight:600;font-size:0.8rem;">فلسطيني 100%</div>
-      <div style="font-size:0.7rem;color:var(--text-muted);">منصة محلية</div>
-    </div>
-  </section>
-
-  <!-- How it works -->
-  <div class="section-title" style="margin-top:var(--sp-8);">كيف تعمل المنصة؟</div>
-  <div style="display:grid;gap:var(--sp-3);">
-    <div class="card" style="display:flex;align-items:center;gap:var(--sp-4);">
-      <div style="width:36px;height:36px;border-radius:var(--radius-sm);background:var(--primary-dim);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.85rem;color:var(--primary);flex-shrink:0;">1</div>
-      <div><div style="font-weight:600;font-size:0.85rem;">اختر العرض</div><div style="font-size:0.75rem;color:var(--text-muted);">تصفح أسعار USDT واختر أفضل عرض</div></div>
-    </div>
-    <div class="card" style="display:flex;align-items:center;gap:var(--sp-4);">
-      <div style="width:36px;height:36px;border-radius:var(--radius-sm);background:var(--primary-dim);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.85rem;color:var(--primary);flex-shrink:0;">2</div>
-      <div><div style="font-weight:600;font-size:0.85rem;">افتح الصفقة</div><div style="font-size:0.75rem;color:var(--text-muted);">ابدأ صفقة آمنة مع الضمان</div></div>
-    </div>
-    <div class="card" style="display:flex;align-items:center;gap:var(--sp-4);">
-      <div style="width:36px;height:36px;border-radius:var(--radius-sm);background:var(--warning-dim);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.85rem;color:var(--warning);flex-shrink:0;">3</div>
-      <div><div style="font-weight:600;font-size:0.85rem;">ادفع</div><div style="font-size:0.75rem;color:var(--text-muted);">أرسل الدفعة وأرفق الإيصال</div></div>
-    </div>
-    <div class="card" style="display:flex;align-items:center;gap:var(--sp-4);">
-      <div style="width:36px;height:36px;border-radius:var(--radius-sm);background:var(--primary-dim);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.85rem;color:var(--primary);flex-shrink:0;">4</div>
-      <div><div style="font-weight:600;font-size:0.85rem;">استلم USDT</div><div style="font-size:0.75rem;color:var(--text-muted);">يتم تحرير USDT لمحفظتك</div></div>
-    </div>
-  </div>
-
-  <!-- CTA -->
-  <div style="text-align:center;margin-top:var(--sp-8);padding:var(--sp-8) var(--sp-4);background:var(--bg-card);border-radius:var(--radius-lg);border:1px solid var(--border);">
-    <h2 style="font-size:1.2rem;font-weight:800;margin-bottom:var(--sp-2);">ابدأ التداول الآن</h2>
-    <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:var(--sp-5);">انضم إلى منصة USDT P2P Palestine</p>
-    <a href="/register" class="btn btn-primary btn-lg btn-block">إنشاء حساب مجاني</a>
-  </div>
-
+<!-- Greeting -->
+<div class="greeting" id="homeGreeting" style="display:none;">
+  <h1 id="greetingText">أهلاً بك 👋</h1>
+  <p>إدارة أموالك بسهولة وأمان</p>
 </div>
-</main>
 
-<!-- ===== Bottom Navigation ===== -->
+<!-- Balance Hero -->
+<div class="balance-hero" id="dashBalance" style="display:none;">
+  <div class="balance-label">إجمالي الرصيد</div>
+  <div class="balance-amount">
+    <span class="balance-value" id="dashTotal">—</span>
+    <span class="balance-currency">USDT</span>
+  </div>
+  <div class="balance-usd" id="dashUsd">≈ — USD</div>
+  <div class="balance-change">↗ +0.00% اليوم</div>
+</div>
 
+<!-- Action Buttons -->
+<div class="action-row" id="actionBtns" style="display:none;">
+  <a href="/market?type=SELL" class="action-btn action-buy">شراء USDT</a>
+  <a href="/market?type=BUY" class="action-btn action-sell">بيع USDT</a>
+</div>
 
-<!-- ===== Scripts ===== -->
+<!-- Market Status + Price -->
+<div class="section-header" id="marketSection">
+  <div class="section-title">السوق</div>
+  <a href="/market" class="section-link">عرض الكل</a>
+</div>
+<div class="market-cards">
+  <div class="market-card">
+    <div class="market-status live" id="mktStatus"><span>مباشر</span></div>
+    <div class="market-pair">USDT / ILS</div>
+    <div class="market-price" id="mktILS">—</div>
+    <div class="market-change up" id="mktILSChg">—</div>
+    <div style="font-size:10px;color:#5A6577;margin-top:4px;" id="mktSource"></div>
+  </div>
+  <div class="market-card">
+    <div class="market-pair">USDT / USD</div>
+    <div class="market-price">1.00</div>
+    <div class="market-change stable">Stable</div>
+    <div style="margin-top:8px;">
+      <div style="font-size:10px;color:#5A6577;">سعر الشراء</div>
+      <div style="font-size:16px;font-weight:700;color:#00D6A0;" id="mktBuy">—</div>
+    </div>
+    <div style="margin-top:4px;">
+      <div style="font-size:10px;color:#5A6577;">سعر البيع</div>
+      <div style="font-size:16px;font-weight:700;color:#FF5C6C;" id="mktSell">—</div>
+    </div>
+  </div>
+</div>
+
+<!-- Price Chart -->
+<div class="chart-container" style="margin-top:10px;">
+  <div class="chart-header">
+    <span style="font-size:13px;font-weight:700;color:#F5F7FA;">مخطط السعر</span>
+    <div class="chart-tabs">
+      <button class="chart-tab" data-hours="1">1س</button>
+      <button class="chart-tab" data-hours="6">6س</button>
+      <button class="chart-tab active" data-hours="24">24س</button>
+      <button class="chart-tab" data-hours="168">7ي</button>
+    </div>
+  </div>
+  <div class="chart-canvas"><canvas id="priceChart"></canvas></div>
+</div>
+
+<!-- Fee Calculator -->
+<div class="fee-calc">
+  <div class="fee-calc-title">حاسبة الرسوم</div>
+  <input type="number" class="fee-calc-input" id="feeAmount" placeholder="أدخل المبلغ بالUSDT" inputmode="decimal" step="0.01" min="0">
+  <div class="fee-calc-results">
+    <div class="fee-result">
+      <div class="fee-result-label">سعر السوق</div>
+      <div class="fee-result-value" id="feeMarket">—</div>
+    </div>
+    <div class="fee-result">
+      <div class="fee-result-label">العمولة</div>
+      <div class="fee-result-value danger" id="feePlatform">—</div>
+    </div>
+    <div class="fee-result">
+      <div class="fee-result-label">الإجمالي</div>
+      <div class="fee-result-value primary" id="feeTotal">—</div>
+    </div>
+    <div class="fee-result">
+      <div class="fee-result-label">الإجمالي بالدولار</div>
+      <div class="fee-result-value" id="feeTotalUsd">—</div>
+    </div>
+  </div>
+</div>
+
+<!-- P2P Offers -->
+<div class="section-header">
+  <div class="section-title">أفضل عروض USDT</div>
+  <a href="/market" class="section-link">عرض الكل</a>
+</div>
+<div class="p2p-list" id="p2pList">
+  <div style="text-align:center;padding:32px 16px;color:#5A6577;font-size:13px;">جاري تحميل العروض...</div>
+</div>
+
+<!-- Features -->
+<div class="section-header">
+  <div class="section-title">لماذا USDT P2P؟</div>
+</div>
+<div class="home-features">
+  <div class="home-feature">
+    <div class="home-feature-icon">🛡</div>
+    <div class="home-feature-title">حماية Escrow</div>
+    <div class="home-feature-desc">USDT محجوز بأمان</div>
+  </div>
+  <div class="home-feature">
+    <div class="home-feature-icon">🤝</div>
+    <div class="home-feature-title">تداول شخصي</div>
+    <div class="home-feature-desc">مقابلات مباشرة آمنة</div>
+  </div>
+  <div class="home-feature">
+    <div class="home-feature-icon">⚡</div>
+    <div class="home-feature-title">سريع وموثوق</div>
+    <div class="home-feature-desc">تنفيذ فوري للصفقات</div>
+  </div>
+  <div class="home-feature">
+    <div class="home-feature-icon">🇵🇸</div>
+    <div class="home-feature-title">فلسطيني 100%</div>
+    <div class="home-feature-desc">منصة محلية</div>
+  </div>
+</div>
+
+<!-- CTA -->
+<div class="home-cta" id="ctaSection">
+  <h2>ابدأ التداول الآن</h2>
+  <p>انضم إلى منصة USDT P2P Palestine</p>
+  <a href="/register" class="action-btn action-buy" style="display:block;">إنشاء حساب مجاني</a>
+</div>
+
+<div style="height:40px;"></div>
+
+<!-- Sidebar (from app.js) -->
+
+<!-- Scripts -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="/assets/app.js"></script>
 <script>
-// Telegram WebApp auto-redirect: if inside Telegram and not authenticated, go to login
+// Telegram auto-redirect
 (function() {
   try {
-    // Don't redirect if user just logged out
     if (localStorage.getItem('usp_logged_out') === '1') return;
     const tg = window.Telegram?.WebApp;
     if (tg && tg.initData && tg.initDataUnsafe?.user) {
       fetch('/api/auth/me').then(r => r.json()).then(d => {
-        if (!d.authenticated) {
-          window.location.href = '/login';
-        }
+        if (!d.authenticated) window.location.href = '/login';
       }).catch(() => {});
     }
   } catch(e) {}
 })();
 
 (async function() {
-  const priceResp = await api('/market/price');
-  const price = priceResp?.usdt_ils || priceResp?.price || 3.7;
-  document.getElementById('livePrice').textContent = fmtNum(price, 2) + ' ₪';
+  const E = s => { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; };
+  const F = (n, d) => Number(n || 0).toFixed(d ?? 2);
+  let currentPrice = 3.7;
+  let currentFee = 1.0;
+
+  // Load live market price with spread
+  try {
+    const priceResp = await api('/market/price');
+    const priceData = priceResp?.price || priceResp;
+    currentPrice = priceData?.usdt_ils || priceData?.usdt_ils || 3.7;
+    const buyPrice = priceData?.buy_price || currentPrice;
+    const sellPrice = priceData?.sell_price || currentPrice;
+    const change = priceData?.change_24h || 0;
+    const source = priceData?.source || 'unknown';
+
+    document.getElementById('mktILS').textContent = F(currentPrice);
+    const chgEl = document.getElementById('mktILSChg');
+    chgEl.textContent = (change >= 0 ? '+' : '') + change.toFixed(2) + '%';
+    chgEl.className = 'market-change ' + (change >= 0 ? 'up' : 'down');
+    chgEl.style.color = change >= 0 ? '#00D6A0' : '#FF5C6C';
+    document.getElementById('mktSource').textContent = 'المصدر: ' + source;
+    document.getElementById('mktBuy').textContent = F(buyPrice);
+    document.getElementById('mktSell').textContent = F(sellPrice);
+
+    // Update market status
+    try {
+      const statusResp = await api('/market/status');
+      const statusEl = document.getElementById('mktStatus');
+      if (statusResp?.status === 'stale') {
+        statusEl.className = 'market-status stale';
+        statusEl.innerHTML = '<span>⚠️ غير متاح مؤقتاً</span>';
+      }
+    } catch(e) {}
+  } catch(e) {}
+
+  // Load fee info
+  try {
+    const feeResp = await api('/market/fees');
+    if (feeResp?.fee_percent !== undefined) currentFee = feeResp.fee_percent;
+  } catch(e) {}
+
+  // Fee calculator
+  const feeInput = document.getElementById('feeAmount');
+  if (feeInput) {
+    feeInput.addEventListener('input', function() {
+      const amount = parseFloat(this.value) || 0;
+      const fee = amount * currentFee / 100;
+      const total = amount - fee;
+      const totalUsd = total;
+      document.getElementById('feeMarket').textContent = amount > 0 ? F(amount * currentPrice) + ' ILS' : '—';
+      document.getElementById('feePlatform').textContent = fee > 0 ? F(fee) + ' USDT' : '—';
+      document.getElementById('feeTotal').textContent = total > 0 ? F(total) + ' USDT' : '—';
+      document.getElementById('feeTotalUsd').textContent = totalUsd > 0 ? '$' + F(totalUsd) : '—';
+    });
+  }
+
+  // Load chart
+  async function loadChart(hours) {
+    try {
+      const resp = await api('/market/price/history?hours=' + hours);
+      const history = resp?.history || [];
+      drawChart(history);
+    } catch(e) {}
+  }
+
+  function drawChart(data) {
+    const canvas = document.getElementById('priceChart');
+    if (!canvas || !data.length) return;
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.parentElement.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    canvas.style.width = rect.width + 'px';
+    canvas.style.height = rect.height + 'px';
+    ctx.scale(dpr, dpr);
+    const w = rect.width, h = rect.height;
+    const prices = data.map(d => d.market_price);
+    const minP = Math.min(...prices) * 0.999;
+    const maxP = Math.max(...prices) * 1.001;
+    const range = maxP - minP || 0.01;
+
+    // Gradient fill
+    const grad = ctx.createLinearGradient(0, 0, 0, h);
+    grad.addColorStop(0, 'rgba(0, 214, 160, 0.15)');
+    grad.addColorStop(1, 'rgba(0, 214, 160, 0.0)');
+
+    // Draw area
+    ctx.beginPath();
+    ctx.moveTo(0, h);
+    for (let i = 0; i < data.length; i++) {
+      const x = (i / (data.length - 1)) * w;
+      const y = h - ((prices[i] - minP) / range) * h;
+      ctx.lineTo(x, y);
+    }
+    ctx.lineTo(w, h);
+    ctx.closePath();
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // Draw line
+    ctx.beginPath();
+    for (let i = 0; i < data.length; i++) {
+      const x = (i / (data.length - 1)) * w;
+      const y = h - ((prices[i] - minP) / range) * h;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.strokeStyle = '#00D6A0';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Draw last price dot
+    if (data.length > 0) {
+      const lx = w;
+      const ly = h - ((prices[prices.length-1] - minP) / range) * h;
+      ctx.beginPath();
+      ctx.arc(lx - 2, ly, 3, 0, Math.PI * 2);
+      ctx.fillStyle = '#00D6A0';
+      ctx.fill();
+    }
+  }
+
+  // Chart tab clicks
+  document.querySelectorAll('.chart-tab').forEach(tab => {
+    tab.addEventListener('click', function() {
+      document.querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active'));
+      this.classList.add('active');
+      loadChart(parseInt(this.dataset.hours));
+    });
+  });
+
+  // Load default chart (24h)
+  loadChart(24);
+
+  // Auto-refresh price every 60 seconds
+  setInterval(async () => {
+    try {
+      const priceResp = await api('/market/price');
+      const priceData = priceResp?.price || priceResp;
+      currentPrice = priceData?.usdt_ils || currentPrice;
+      document.getElementById('mktILS').textContent = F(currentPrice);
+      document.getElementById('mktBuy').textContent = F(priceData?.buy_price || currentPrice);
+      document.getElementById('mktSell').textContent = F(priceData?.sell_price || currentPrice);
+    } catch(e) {}
+  }, 60000);
+
+  // Load user data
+  try {
+    const me = await api('/auth/me');
+    if (me && me.authenticated) {
+      const greetEl = document.getElementById('homeGreeting');
+      greetEl.style.display = 'block';
+      const name = me.username || 'صديقي';
+      document.getElementById('greetingText').textContent = 'أهلاً ' + name + ' 👋';
+
+      const wallet = await api('/wallet');
+      if (wallet && wallet.ok !== false) {
+        document.getElementById('dashBalance').style.display = 'block';
+        document.getElementById('dashTotal').textContent = F(wallet.balance || 0);
+        document.getElementById('dashUsd').textContent = '≈ $' + F(wallet.balance || 0);
+        document.getElementById('actionBtns').style.display = 'flex';
+        document.getElementById('ctaSection').style.display = 'none';
+      }
+    }
+  } catch(e) {}
+
+  // Load P2P ads
+  try {
+    const mkt = await api('/market?sort=price&limit=5');
+    const ads = (mkt?.ads || []).filter(a => a.status === 'OPEN').slice(0, 5);
+    if (ads.length) {
+      document.getElementById('p2pList').innerHTML = ads.map(a => {
+        const price = a.price || 3.7;
+        const amount = a.amount || a.available || 0;
+        const type = a.type || 'SELL';
+        const pay = a.payment || a.payment_method || 'Bank';
+        const verified = a.verified ? '<span style="color:#00D6A0;font-size:10px;">✓ موثق</span>' : '';
+        return '<div class="p2p-card">' +
+          '<div class="p2p-top">' +
+            '<div class="p2p-user">' +
+              '<div class="p2p-avatar">' + E((a.user||a.username||'?')[0]) + '</div>' +
+              '<div><div class="p2p-name">' + E(a.user||a.username||'') + ' ' + verified + '</div>' +
+              '<div class="p2p-online">متصل</div></div>' +
+            '</div>' +
+          '</div>' +
+          '<div class="p2p-price">' + F(price) + ' <small>ILS</small></div>' +
+          '<div class="p2p-meta">' +
+            '<span>متاح <strong>' + F(amount, 0) + ' USDT</strong></span>' +
+          '</div>' +
+          '<div class="p2p-pay">' +
+            pay.split('/').map(p => '<span class="p2p-pay-tag">' + E(p.trim()) + '</span>').join('') +
+          '</div>' +
+          '<a href="/market" class="p2p-buy-btn">' + (type === 'SELL' ? 'شراء USDT' : 'بيع USDT') + '</a>' +
+        '</div>';
+      }).join('');
+    } else {
+      document.getElementById('p2pList').innerHTML = '<div style="text-align:center;padding:32px 16px;color:#5A6577;font-size:13px;">لا توجد عروض حالياً</div>';
+    }
+  } catch(e) {}
 })();
 </script>
 </body>

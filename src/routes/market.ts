@@ -13,14 +13,105 @@ import { formBody } from "../utils/body";
 const market = new Hono<AppEnv>();
 
 // ============================================================
-// GET /api/market/price — current market price (public)
+// GET /api/market/price — current market price with spread (public)
 // ============================================================
 market.get("/price", async (c) => {
   const row = await c.env.DB.prepare(
     "SELECT id, usd_ils, usdt_ils, updated FROM market_price WHERE id = 1"
   ).first<{ id: number; usd_ils: number; usdt_ils: number; updated: string }>();
-  if (!row) return c.json({ ok: true, price: { usd_ils: 3.7, usdt_ils: 3.7, updated: null } });
-  return c.json({ ok: true, price: row });
+  if (!row) return c.json({ ok: true, price: { usd_ils: 3.7, usdt_ils: 3.7, buy_price: 3.7, sell_price: 3.7, updated: null, source: 'fallback' } });
+
+  // Read spread from platform config
+  const getVal = async (k: string, fb: string) => {
+    const r = await c.env.DB.prepare("SELECT value FROM platform_config WHERE key = ?").bind(k).first<{value:string}>();
+    return r?.value ?? fb;
+  };
+  const buySpread = parseFloat(await getVal('buy_spread', '0.005'));
+  const sellSpread = parseFloat(await getVal('sell_spread', '0.005'));
+  const source = await getVal('market_source', 'unknown');
+
+  const marketPrice = row.usdt_ils;
+  const buyPrice = Math.round(marketPrice * (1 + buySpread) * 10000) / 10000;
+  const sellPrice = Math.round(marketPrice * (1 - sellSpread) * 10000) / 10000;
+
+  // Calculate 24h change from price_history
+  let change24h = 0;
+  try {
+    const oldPrice = await c.env.DB.prepare(
+      `SELECT market_price FROM price_history WHERE pair = 'USDT/ILS' AND created_at <= datetime('now', '-24 hours') ORDER BY created_at DESC LIMIT 1`
+    ).first<{market_price: number}>();
+    if (oldPrice && oldPrice.market_price > 0) {
+      change24h = ((marketPrice - oldPrice.market_price) / oldPrice.market_price) * 100;
+      change24h = Math.round(change24h * 100) / 100;
+    }
+  } catch { /* history may not exist yet */ }
+
+  return c.json({
+    ok: true,
+    price: {
+      usd_ils: row.usd_ils,
+      usdt_ils: row.usdt_ils,
+      buy_price: buyPrice,
+      sell_price: sellPrice,
+      buy_spread: buySpread,
+      sell_spread: sellSpread,
+      change_24h: change24h,
+      source,
+      updated: row.updated,
+    },
+  });
+});
+
+// ============================================================
+// GET /api/market/price/history — price history for charts (public)
+// Query: hours=24 (1H, 6H, 24H, 7D)
+// ============================================================
+market.get("/price/history", async (c) => {
+  const hours = parseInt(c.req.query("hours") || "24", 10);
+  const limit = Math.min(Math.max(hours, 1), 168); // max 7 days
+  const rows = await c.env.DB.prepare(
+    `SELECT market_price, buy_price, sell_price, source, created_at
+     FROM price_history WHERE pair = 'USDT/ILS'
+     AND created_at >= datetime('now', '-${limit} hours')
+     ORDER BY created_at ASC LIMIT 200`
+  ).all();
+  return c.json({ ok: true, history: rows.results ?? [] });
+});
+
+// ============================================================
+// GET /api/market/fees — fee calculator data (public)
+// ============================================================
+market.get("/fees", async (c) => {
+  const feeRow = await c.env.DB.prepare(
+    "SELECT value FROM platform_config WHERE key = 'p2p_fee_percent'"
+  ).first<{value:string}>();
+  const feePercent = parseFloat(feeRow?.value ?? '1.0');
+  return c.json({ ok: true, fee_percent: feePercent });
+});
+
+// ============================================================
+// GET /api/market/status — market status indicator (public)
+// ============================================================
+market.get("/status", async (c) => {
+  const row = await c.env.DB.prepare(
+    "SELECT updated FROM market_price WHERE id = 1"
+  ).first<{updated: string}>();
+  const source = await c.env.DB.prepare(
+    "SELECT value FROM platform_config WHERE key = 'market_source'"
+  ).first<{value:string}>();
+
+  const lastUpdate = row?.updated ? new Date(row.updated).getTime() : 0;
+  const now = Date.now;
+  const age = lastUpdate ? now() - lastUpdate : Infinity;
+  const isStale = age > 2 * 60 * 60 * 1000; // stale if > 2 hours old
+
+  return c.json({
+    ok: true,
+    status: isStale ? 'stale' : 'live',
+    source: source?.value ?? 'unknown',
+    last_updated: row?.updated ?? null,
+    age_minutes: lastUpdate ? Math.round(age / 60000) : null,
+  });
 });
 
 // ============================================================
@@ -212,24 +303,49 @@ market.post("/trades/buy/:adId", requireUser, requireCsrf, rateLimit(10, 60), as
     return c.json({ error: `المبلغ يجب أن يكون بين ${ad.min_amount || 0} و ${Math.min(ad.amount, ad.max_amount || ad.amount)}` }, 400);
   }
 
+  // ═══ CRITICAL: Atomically reserve ad amount BEFORE creating trade ═══
+  // This prevents the race condition where two concurrent requests
+  // both pass the amount check and create duplicate trades.
+  // The conditional UPDATE only succeeds if amount >= requested amount AND status = 'OPEN'.
+  const reserveResult = await c.env.DB.prepare(
+    `UPDATE ads SET amount = amount - ?,
+       status = CASE WHEN amount - ? <= 0 THEN 'TRADED' ELSE 'OPEN' END
+     WHERE id = ? AND status = 'OPEN' AND amount >= ?`
+  ).bind(amount, amount, adId, amount).run();
+
+  if (reserveResult.meta.changes === 0) {
+    // Ad was already sold out or another request reserved it first
+    return c.json({ error: "الإعلان غير متاح أو المبلغ غير كافٍ" }, 400);
+  }
+
   const feePercent = parseFloat(await getConfigValue(c) || "1.0");
 
-  // Create trade first to get an ID for the ledger reference
+  // Price is LOCKED at creation time — never recalculated later
+  const lockedPrice = ad.price;
+  const lockedFee = Math.round(amount * feePercent) / 100;
+
+  // Create trade with price lock
   const res = await c.env.DB.prepare(
     `INSERT INTO trades (ad_id, buyer, seller, amount, price, platform_fee, status, escrow_status)
      VALUES (?, ?, ?, ?, ?, ?, 'PENDING', ?)`
   ).bind(
-    adId, buyer, ad.user, amount, ad.price,
-    Math.round(amount * feePercent) / 100,
+    adId, buyer, ad.user, amount, lockedPrice,
+    lockedFee,
     ad.type === "SELL" ? "LOCKED" : "WAITING"
   ).run();
   const tradeId = Number(res.meta.last_row_id);
 
-  // SELL ad → lock seller's funds in escrow atomically (with trade ref)
+  // SELL ad → lock seller's funds in escrow atomically
   if (ad.type === "SELL") {
-    const lock = await escrowLock(c.env, ad.user, amount, tradeId);
+    const { escrowLock: lockFn } = await import("../utils/db");
+    const lock = await lockFn(c.env, ad.user, amount, tradeId);
     if (!lock.ok) {
-      // Rollback: delete the just-created trade and fail cleanly
+      // Rollback: restore ad amount and status
+      await c.env.DB.prepare(
+        `UPDATE ads SET amount = amount + ?,
+           status = CASE WHEN amount + ? > 0 THEN 'OPEN' ELSE status END
+         WHERE id = ?`
+      ).bind(amount, amount, adId).run();
       await c.env.DB.prepare("DELETE FROM trades WHERE id = ?").bind(tradeId).run();
       return c.json({
         error: lock.reason,
@@ -237,19 +353,77 @@ market.post("/trades/buy/:adId", requireUser, requireCsrf, rateLimit(10, 60), as
         actions: ["إيداع USDT"],
       }, 400);
     }
-  }
 
-  await c.env.DB.prepare(
-    "UPDATE ads SET amount = amount - ?, status = CASE WHEN amount - ? <= 0 THEN 'TRADED' ELSE 'OPEN' END WHERE id = ?"
-  ).bind(amount, amount, adId).run();
+    // Record in escrow ledger
+    const { recordEscrowTransaction } = await import("../escrow");
+    await recordEscrowTransaction(c.env.DB, tradeId, ad.user, amount, "LOCK", {
+      reason: `قفل ضمان: ${amount} USDT للصفقة #${tradeId}`,
+    });
+  }
 
   await notify(c.env, ad.user, "صفقة جديدة 🎉",
     `قام ${buyer} بشراء ${amount} USDT من إعلانك #${adId}. افتح الصفقة للتواصل.`);
   await notify(c.env, buyer, "تم إنشاء الصفقة ✅",
     `تواصل مع البائع ${ad.user} لإتمام الدفع. الصفقة #${tradeId}`);
 
-  await auditLog(c, buyer, "user", "TRADE_CREATE", `trade:${tradeId}`, `${amount} USDT @ ${ad.price}`);
+  await auditLog(c, buyer, "user", "TRADE_CREATE", `trade:${tradeId}`, `${amount} USDT @ ${lockedPrice}`);
   return c.json({ ok: true, trade_id: tradeId });
+});
+
+// ============================================================
+// GET /api/market/alerts — user's price alerts (auth required)
+// ============================================================
+market.get("/alerts", requireUser, async (c) => {
+  const username = c.get("user")!.username;
+  const alerts = await c.env.DB.prepare(
+    `SELECT id, pair, direction, target_price, active, triggered, created_at, triggered_at
+     FROM price_alerts WHERE username = ? ORDER BY created_at DESC LIMIT 20`
+  ).bind(username).all();
+  return c.json({ ok: true, alerts: alerts.results ?? [] });
+});
+
+// ============================================================
+// POST /api/market/alerts — create price alert (auth required)
+// ============================================================
+market.post("/alerts", requireUser, requireCsrf, rateLimit(20, 60), async (c) => {
+  const username = c.get("user")!.username;
+  const body = await formBody(c);
+  const direction = String(body.direction ?? "").toUpperCase();
+  const targetPrice = parseFloat(String(body.target_price ?? ""));
+  const pair = String(body.pair ?? "USDT/ILS").trim();
+
+  if (direction !== "ABOVE" && direction !== "BELOW") {
+    return c.json({ error: "الاتجاه غير صالح" }, 400);
+  }
+  if (!(targetPrice > 0)) {
+    return c.json({ error: "السعر المستهدف غير صالح" }, 400);
+  }
+
+  // Limit: max 10 active alerts per user
+  const count = await c.env.DB.prepare(
+    "SELECT COUNT(*) as cnt FROM price_alerts WHERE username = ? AND active = 1 AND triggered = 0"
+  ).bind(username).first<{cnt: number}>();
+  if ((count?.cnt ?? 0) >= 10) {
+    return c.json({ error: "الحد الأقصى 10 تنبيهات نشطة" }, 400);
+  }
+
+  await c.env.DB.prepare(
+    `INSERT INTO price_alerts (username, pair, direction, target_price) VALUES (?, ?, ?, ?)`
+  ).bind(username, pair, direction, targetPrice).run();
+
+  return c.json({ ok: true });
+});
+
+// ============================================================
+// DELETE /api/market/alerts/:id — delete price alert
+// ============================================================
+market.delete("/alerts/:id", requireUser, async (c) => {
+  const id = Number(c.req.param("id"));
+  const username = c.get("user")!.username;
+  await c.env.DB.prepare(
+    "DELETE FROM price_alerts WHERE id = ? AND username = ?"
+  ).bind(id, username).run();
+  return c.json({ ok: true });
 });
 
 async function getConfigValue(c: any): Promise<string> {

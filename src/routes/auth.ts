@@ -579,6 +579,76 @@ auth.post("/verify-email", rateLimit(5, 300), async (c) => {
 });
 
 // ============================================================
+// POST /api/auth/telegram-login — deep-link login for Telegram bot users
+// The bot generates a one-time token and includes it in URL buttons.
+// The frontend detects ?tg_token=XXX, calls this endpoint, and gets a session.
+// ============================================================
+auth.post("/telegram-login", rateLimit(10, 60), async (c) => {
+  const body = await formBody(c);
+  const token = String(body.token ?? "").trim();
+
+  if (!token || token.length < 10) {
+    return c.json({ error: "رمز غير صالح" }, 400);
+  }
+
+  // Look up the token
+  const tokenRow = await c.env.DB.prepare(
+    "SELECT id, telegram_user_id, username, used, expires_at FROM telegram_login_tokens WHERE token = ?"
+  ).bind(token).first<{ id: number; telegram_user_id: string; username: string; used: number; expires_at: string }>();
+
+  if (!tokenRow) {
+    return c.json({ error: "رمز غير صالح" }, 401);
+  }
+  if (tokenRow.used) {
+    return c.json({ error: "تم استخدام هذا الرمز بالفعل" }, 409);
+  }
+  if (new Date(tokenRow.expires_at) < new Date()) {
+    return c.json({ error: "انتهت صلاحية الرمز" }, 410);
+  }
+
+  // Look up user
+  const user = await c.env.DB.prepare(
+    "SELECT id, username, status FROM users WHERE username = ?"
+  ).bind(tokenRow.username).first<{ id: number; username: string; status: string }>();
+
+  if (!user) {
+    return c.json({ error: "المستخدم غير موجود" }, 404);
+  }
+  if (user.status === "BANNED") {
+    return c.json({ error: "الحساب محظور" }, 403);
+  }
+
+  // Mark token as used (one-time only)
+  await c.env.DB.prepare(
+    "UPDATE telegram_login_tokens SET used = 1 WHERE id = ?"
+  ).bind(tokenRow.id).run();
+
+  // Create a web session (same as normal login)
+  await ensureWallet(c.env, user.username);
+  const sid = randomSid();
+  const sessionToken = await signSession(
+    { sub: user.id, username: user.username, admin: user.status === "ADMIN", sid },
+    c.env.SECRET_KEY
+  );
+  setSessionCookie(c, sessionToken);
+  try {
+    await c.env.DB.prepare(
+      "INSERT INTO user_sessions (id, username, user_agent, ip, created_at) VALUES (?, ?, ?, ?, datetime('now'))"
+    ).bind(sid, user.username, c.req.header("User-Agent")?.slice(0, 200) || "", c.req.header("CF-Connecting-IP") || "").run();
+  } catch { /* best effort */ }
+
+  await auditLog(c, user.username, "user", "TELEGRAM_DEEPLINK_LOGIN", `tg:${tokenRow.telegram_user_id}`);
+  await logActivity(c.env, user.username, "TELEGRAM_DEEPLINK_LOGIN", c);
+
+  return c.json({
+    ok: true,
+    csrf_token: await generateCsrfToken(sessionToken, c.env.SECRET_KEY),
+    username: user.username,
+    isAdmin: user.status === "ADMIN",
+  });
+});
+
+// ============================================================
 // Helper: log activity
 // ============================================================
 async function logActivity(env: AppEnv["Bindings"], username: string, action: string, c: any): Promise<void> {

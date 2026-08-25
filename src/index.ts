@@ -20,6 +20,7 @@ import marketRoutes from "./routes/market";
 import tradeRoutes from "./routes/trades";
 import walletRoutes from "./routes/wallet";
 import adminRoutes from "./routes/admin";
+import adminSettingsRoutes from "./routes/admin-settings";
 import miscRoutes from "./routes/misc";
 import uploadRoutes from "./routes/uploads";
 import { registerV2Routes } from "./routes/v2";
@@ -130,6 +131,7 @@ app.route("/api/market", marketRoutes);
 app.route("/api/trades", tradeRoutes);
 app.route("/api/wallet", walletRoutes);
 app.route("/api/admin", adminRoutes);
+app.route("/api/admin/settings", adminSettingsRoutes);
 app.route("/api", miscRoutes); // /api/notifications, /api/profile, /api/reviews, cash
 app.route("/api/uploads", uploadRoutes);
 // V2 Advanced Features — registered directly on main app

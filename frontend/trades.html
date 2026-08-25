@@ -3,118 +3,147 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#0a0e1a">
+  <meta name="theme-color" content="#07090D">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>الصفقات — USDT P2P Palestine</title>
   <link rel="stylesheet" href="/assets/design-system.css">
   <link rel="manifest" href="/manifest.json">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <script>(function(){var t=localStorage.getItem("usp_theme")||"dark";if(t==="auto")t=window.matchMedia("(prefers-color-scheme:light)").matches?"light":"dark";document.documentElement.setAttribute("data-theme",t);})();</script>
+  <style>
+    .trade-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:var(--sp-4);margin-bottom:var(--sp-3);transition:background 0.15s;text-decoration:none;display:block;color:inherit;}
+    .trade-card:hover{background:var(--bg-card-hover);}
+    .trade-card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--sp-2);}
+    .trade-id{font-size:0.75rem;color:var(--text-muted);font-weight:600;}
+    .trade-amount{font-size:1.1rem;font-weight:800;color:var(--text-primary);}
+    .trade-amount small{font-size:0.7rem;font-weight:500;color:var(--text-muted);}
+    .trade-meta{display:flex;gap:var(--sp-3);margin-top:var(--sp-2);font-size:0.75rem;color:var(--text-secondary);}
+    .trade-bottom{display:flex;justify-content:space-between;align-items:center;margin-top:var(--sp-3);padding-top:var(--sp-2);border-top:1px solid var(--border-light);}
+    .trade-status{font-size:0.7rem;padding:3px 10px;border-radius:8px;font-weight:600;}
+    .trade-status.pending{background:var(--warning-dim);color:var(--warning);}
+    .trade-status.paid{background:rgba(91,141,239,0.10);color:#5B8DEF;}
+    .trade-status.completed{background:var(--success-dim);color:var(--success);}
+    .trade-status.cancelled{background:var(--danger-dim);color:var(--danger);}
+    .trade-status.disputed{background:var(--danger-dim);color:var(--danger);}
+    .trade-arrow{font-size:1rem;color:var(--text-muted);}
+  </style>
 </head>
 <body>
-  <nav class="navbar" id="nav"><div class="navbar-inner"><a href="/" class="navbar-brand">🇵🇸 <span>USDT</span> P2P</a><div class="navbar-links"></div></div></nav>
-  <main><div class="container">
-    <div class="page-header" style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:var(--sp-4);margin-bottom:var(--sp-4);"><h2 style="font-size:1.1rem;font-weight:800;">صفقاتي</h2></div>
-    <!-- Filter Tabs -->
-    <div class="card" style="padding:var(--sp-2);margin-bottom:var(--sp-3);overflow-x:auto;">
-      <div style="display:flex;gap:var(--sp-2);min-width:max-content;">
-        <button class="btn btn-sm tab-btn active" data-filter="ALL" onclick="setFilter('ALL')">الكل</button>
-        <button class="btn btn-sm tab-btn" data-filter="BUYING" onclick="setFilter('BUYING')">شراء 🟦</button>
-        <button class="btn btn-sm tab-btn" data-filter="SELLING" onclick="setFilter('SELLING')">بيع 🟩</button>
-        <button class="btn btn-sm tab-btn" data-filter="ACTIVE" onclick="setFilter('ACTIVE')">⏳ جارية</button>
-        <button class="btn btn-sm tab-btn" data-filter="COMPLETED" onclick="setFilter('COMPLETED')">✅ مكتملة</button>
-        <button class="btn btn-sm tab-btn" data-filter="DISPUTED" onclick="setFilter('DISPUTED')">⚠️ نزاع</button>
-        <button class="btn btn-sm tab-btn" data-filter="CANCELLED" onclick="setFilter('CANCELLED')">❌ ملغاة</button>
+  <nav class="navbar" id="nav"></nav>
+  <main>
+    <div class="container page-pad">
+      <!-- Tabs -->
+      <div class="tab-bar" id="tradeTabs">
+        <button class="tab-item active" data-filter="all" onclick="filterTrades('all', this)">الكل</button>
+        <button class="tab-item" data-filter="active" onclick="filterTrades('active', this)">نشطة</button>
+        <button class="tab-item" data-filter="completed" onclick="filterTrades('completed', this)">مكتملة</button>
+        <button class="tab-item" data-filter="disputed" onclick="filterTrades('disputed', this)">نزاع</button>
+      </div>
+
+      <!-- Trades List -->
+      <div id="tradesList">
+        <div class="card-section"><div class="spinner"></div></div>
+      </div>
+
+      <!-- Empty state -->
+      <div id="emptyState" style="display:none;">
+        <div class="empty-state">
+          <div class="empty-state-icon">🤝</div>
+          <div class="empty-state-text">لا توجد صفقات بعد</div>
+          <a href="/market" class="btn btn-primary" style="margin-top:var(--sp-3);">تصفح السوق</a>
+        </div>
       </div>
     </div>
-    <div id="app"><div class="skeleton" style="height:80px;"></div></div>
-  </div></main>
+  </main>
+
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script src="/assets/app.js"></script>
   <script>
-    const STATUS_MAP = {
-      PENDING:       { label: '⏳ بانتظار الدفع', color: 'badge-warning' },
-      PAYMENT_SENT:  { label: '💳 تم إرسال الدفع', color: 'badge-info' },
-      COMPLETED:     { label: '✅ مكتملة', color: 'badge-success' },
-      CANCELLED:     { label: '❌ ملغاة', color: 'badge-error' },
-      DISPUTED:      { label: '⚠️ نزاع', color: 'badge-error' },
-    };
-    let allTrades = [];
-    let currentFilter = 'ALL';
+  (async function() {
+    const user = await requireAuth();
+    if (!user) return;
 
-    function setFilter(f) {
-      currentFilter = f;
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.filter === f));
-      renderTrades();
+    let allTrades = [];
+    try {
+      const res = await api('/trades');
+      allTrades = res?.trades || [];
+    } catch {}
+
+    function getStatusText(status) {
+      const map = {
+        'PENDING': 'بانتظار الدفع',
+        'PAYMENT_SENT': 'تم الإبلاغ عن الدفع',
+        'PAYMENT_CONFIRMED': 'تم تأكيد الدفع',
+        'COMPLETED': 'مكتملة',
+        'CANCELLED': 'ملغاة',
+        'DISPUTED': 'نزاع'
+      };
+      return map[status] || status;
     }
 
-    function renderTrades() {
-      const me = currentUser();
-      if (!me) return;
-      let filtered = allTrades;
-      if (currentFilter === 'BUYING') filtered = filtered.filter(t => t.buyer === me.username);
-      else if (currentFilter === 'SELLING') filtered = filtered.filter(t => t.seller === me.username);
-      else if (currentFilter === 'ACTIVE') filtered = filtered.filter(t => ['PENDING','PAYMENT_SENT'].includes(t.status));
-      else if (currentFilter === 'COMPLETED') filtered = filtered.filter(t => t.status === 'COMPLETED');
-      else if (currentFilter === 'DISPUTED') filtered = filtered.filter(t => t.status === 'DISPUTED');
-      else if (currentFilter === 'CANCELLED') filtered = filtered.filter(t => t.status === 'CANCELLED');
+    function getStatusClass(status) {
+      if (status === 'COMPLETED') return 'completed';
+      if (status === 'CANCELLED') return 'cancelled';
+      if (status === 'DISPUTED') return 'disputed';
+      if (status === 'PAYMENT_SENT' || status === 'PAYMENT_CONFIRMED') return 'paid';
+      return 'pending';
+    }
 
-      const list = document.getElementById('app');
+    function renderTrades(filter) {
+      const list = document.getElementById('tradesList');
+      const empty = document.getElementById('emptyState');
+      let filtered = allTrades;
+      if (filter === 'active') filtered = allTrades.filter(t => ['PENDING','PAYMENT_SENT','PAYMENT_CONFIRMED'].includes(t.status));
+      else if (filter === 'completed') filtered = allTrades.filter(t => t.status === 'COMPLETED');
+      else if (filter === 'disputed') filtered = allTrades.filter(t => t.status === 'DISPUTED');
+
       if (!filtered.length) {
-        list.innerHTML = `
-          <div class="card" style="text-align:center;padding:var(--sp-8);">
-            <div style="font-size:2rem;margin-bottom:var(--sp-2);">📄</div>
-            <div style="color:var(--text-muted);">لا توجد صفقات ${currentFilter !== 'ALL' ? 'في هذا القسم' : 'بعد'}</div>
-            <a href="/market" class="btn btn-success btn-sm" style="margin-top:var(--sp-3);">تصفح السوق</a>
-          </div>`;
+        list.innerHTML = '';
+        empty.style.display = 'block';
         return;
       }
+      empty.style.display = 'none';
+
       list.innerHTML = filtered.map(t => {
-        const u = me;
-        const isBuyer = t.buyer === u.username;
-        const other = isBuyer ? t.seller : t.buyer;
-        const s = STATUS_MAP[t.status] || { label: t.status, color: 'badge-neutral' };
-        const total = (parseFloat(t.amount) * parseFloat(t.price)).toFixed(2);
-        const role = isBuyer ? 'شراء 🟦' : 'بيع 🟩';
-        const disputeIcon = t.status === 'DISPUTED' ? ' ⚠️' : '';
+        const buyer = t.buyer || '';
+        const seller = t.seller || '';
+        const counterparty = buyer === user.username ? seller : buyer;
+        const direction = buyer === user.username ? 'شراء' : 'بيع';
         return `
-        <a href="/trade?id=${t.id}" class="card" style="display:block;text-decoration:none;margin-bottom:var(--sp-2);padding:var(--sp-3);">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--sp-2);">
-            <div style="display:flex;align-items:center;gap:var(--sp-2);">
-              <span style="font-weight:700;font-size:.9rem;">الصفقة #${t.id}</span>
-              <span style="font-size:.7rem;color:var(--text-muted);">${role}</span>
-            </div>
-            <span class="badge ${s.color}">${s.label}${disputeIcon}</span>
+        <a href="/trade?id=${t.id}" class="trade-card">
+          <div class="trade-card-top">
+            <span class="trade-id">#${t.id}</span>
+            <span class="trade-status ${getStatusClass(t.status)}">${getStatusText(t.status)}</span>
           </div>
-          <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div class="flex-between">
             <div>
-              <div style="font-size:.8rem;color:var(--text-muted);">المتداول: ${esc(other)}</div>
-              <div style="font-size:.75rem;color:var(--text-muted);">${fmtDate(t.created)}</div>
+              <div class="trade-amount">${fmtNum(t.amount)} <small>USDT</small></div>
+              <div class="trade-meta">
+                <span>${fmtNum(t.price)} ₪/USDT</span>
+                <span>إجمالي: ${fmtNum((t.amount * t.price).toFixed(2))} ₪</span>
+              </div>
             </div>
-            <div style="text-align:left;">
-              <div style="font-weight:700;color:var(--accent-light);">${fmtNum(t.amount)} USDT</div>
-              <div style="font-size:.8rem;color:var(--text-secondary);">${fmtNum(total)} ₪</div>
+            <div class="text-right">
+              <div class="text-sm font-bold">${esc(counterparty)}</div>
+              <div class="text-xs text-muted">${direction}</div>
             </div>
+          </div>
+          <div class="trade-bottom">
+            <span class="text-xs text-muted">${t.created || ''}</span>
+            <span class="trade-arrow">←</span>
           </div>
         </a>`;
       }).join('');
     }
 
-    async function load() {
-      if (!requireAuth()) return;
-      const resp = await api('/trades');
-      allTrades = resp?.trades || [];
-      renderTrades();
-    }
-    load();
+    window.filterTrades = function(filter, btn) {
+      document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      renderTrades(filter);
+    };
+
+    renderTrades('all');
+  })();
   </script>
-  <style>
-    .tab-btn { background:transparent; color:var(--text-muted); border:1px solid var(--border); white-space:nowrap; font-size:.75rem; padding:.35rem .6rem; border-radius:var(--radius-sm); cursor:pointer; transition:all .15s; }
-    .tab-btn.active { background:var(--primary); color:#fff; border-color:var(--primary); }
-    .tab-btn:hover:not(.active) { background:var(--bg-secondary, rgba(255,255,255,.05)); }
-    @media (max-width:430px) {
-      .tab-btn { font-size:.65rem; padding:.3rem .5rem; }
-    }
-  </style>
 </body>
 </html>

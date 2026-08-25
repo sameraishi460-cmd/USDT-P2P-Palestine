@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>إعدادات الإدارة — USDT P2P Palestine</title>
+  <link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/assets/design-system.css">
+  <link rel="stylesheet" href="/assets/app.css">
+  <style>
+    :root {
+      --bg-primary: #07090D;
+      --bg-surface: #0D1218;
+      --bg-card: #111820;
+      --bg-card-hover: #151E27;
+      --primary: #00D6A0;
+      --primary-hover: #00B98A;
+      --primary-soft: rgba(0,214,160,0.10);
+      --text-primary: #F5F7FA;
+      --text-secondary: #8A96A6;
+      --text-muted: #5F6B7A;
+      --border: rgba(255,255,255,0.07);
+      --danger: #FF5C6C;
+      --warning: #F4C95D;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-height: 100vh;
+      padding-top: 60px;
+    }
+    .settings-page { max-width: 1200px; margin: 0 auto; padding: 20px 16px; }
+    .settings-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 24px; gap: 12px; flex-wrap: wrap;
+    }
+    .settings-header h1 { font-size: 22px; font-weight: 700; }
+    .settings-header .badge {
+      background: var(--primary-soft); color: var(--primary);
+      padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;
+    }
+    .settings-layout {
+      display: grid; grid-template-columns: 240px 1fr; gap: 20px;
+    }
+    @media (max-width: 768px) {
+      .settings-layout { grid-template-columns: 1fr; }
+      .settings-nav { display: flex; overflow-x: auto; gap: 4px; padding-bottom: 8px; }
+      .settings-nav a {
+        white-space: nowrap; padding: 8px 16px; font-size: 13px;
+        border-radius: 10px; text-decoration: none; color: var(--text-secondary);
+        background: var(--bg-card); border: 1px solid var(--border);
+        flex-shrink: 0;
+      }
+      .settings-nav a.active { background: var(--primary-soft); color: var(--primary); border-color: var(--primary); }
+    }
+    @media (min-width: 769px) {
+      .settings-nav {
+        display: flex; flex-direction: column; gap: 2px;
+        background: var(--bg-card); border: 1px solid var(--border);
+        border-radius: 14px; padding: 8px; position: sticky; top: 80px; align-self: start;
+      }
+      .settings-nav a {
+        display: flex; align-items: center; gap: 10px;
+        padding: 10px 14px; border-radius: 10px; text-decoration: none;
+        color: var(--text-secondary); font-size: 14px; transition: all 0.15s;
+      }
+      .settings-nav a:hover { background: var(--bg-card-hover); color: var(--text-primary); }
+      .settings-nav a.active { background: var(--primary-soft); color: var(--primary); font-weight: 600; }
+    }
+    .settings-content {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 24px; min-height: 400px;
+    }
+    .section-title {
+      font-size: 16px; font-weight: 600; margin-bottom: 20px;
+      padding-bottom: 12px; border-bottom: 1px solid var(--border);
+    }
+    .form-group { margin-bottom: 18px; }
+    .form-group label {
+      display: block; font-size: 13px; color: var(--text-secondary);
+      margin-bottom: 6px; font-weight: 500;
+    }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%; padding: 10px 14px; border-radius: 10px;
+      background: var(--bg-surface); border: 1px solid var(--border);
+      color: var(--text-primary); font-size: 14px; outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-group input:focus, .form-group select:focus {
+      border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft);
+    }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 480px) { .form-row { grid-template-columns: 1fr; } }
+    .toggle-group {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 0; border-bottom: 1px solid var(--border);
+    }
+    .toggle-group:last-child { border-bottom: none; }
+    .toggle-label { font-size: 14px; }
+    .toggle-desc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .toggle-switch {
+      position: relative; width: 44px; height: 24px; flex-shrink: 0;
+    }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-switch .slider {
+      position: absolute; inset: 0; background: var(--bg-surface);
+      border: 1px solid var(--border); border-radius: 24px; cursor: pointer;
+      transition: 0.2s;
+    }
+    .toggle-switch .slider:before {
+      content: ''; position: absolute; width: 18px; height: 18px;
+      left: 2px; bottom: 2px; background: var(--text-muted);
+      border-radius: 50%; transition: 0.2s;
+    }
+    .toggle-switch input:checked + .slider { background: var(--primary); border-color: var(--primary); }
+    .toggle-switch input:checked + .slider:before { transform: translateX(20px); background: #fff; }
+    .btn-primary {
+      background: var(--primary); color: #07090D; padding: 10px 24px;
+      border: none; border-radius: 10px; font-size: 14px; font-weight: 600;
+      cursor: pointer; transition: background 0.15s;
+    }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-secondary {
+      background: transparent; color: var(--text-secondary); padding: 10px 24px;
+      border: 1px solid var(--border); border-radius: 10px; font-size: 14px;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .btn-secondary:hover { color: var(--text-primary); border-color: var(--text-muted); }
+    .btn-danger {
+      background: rgba(255,92,108,0.1); color: var(--danger);
+      padding: 10px 24px; border: 1px solid rgba(255,92,108,0.2);
+      border-radius: 10px; font-size: 14px; cursor: pointer;
+    }
+    .btn-group { display: flex; gap: 12px; margin-top: 24px; flex-wrap: wrap; }
+    .alert-success {
+      background: rgba(0,214,160,0.1); border: 1px solid rgba(0,214,160,0.2);
+      color: var(--primary); padding: 12px 16px; border-radius: 10px;
+      font-size: 14px; margin-bottom: 16px; display: none;
+    }
+    .alert-warning {
+      background: rgba(244,201,93,0.1); border: 1px solid rgba(244,201,93,0.2);
+      color: var(--warning); padding: 12px 16px; border-radius: 10px;
+      font-size: 14px; margin-bottom: 16px; display: none;
+    }
+    .stat-card {
+      background: var(--bg-surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 16px;
+    }
+    .stat-card .stat-label { font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
+    .stat-card .stat-value { font-size: 20px; font-weight: 700; }
+    .stat-card .stat-value.green { color: var(--primary); }
+    .stat-card .stat-value.red { color: var(--danger); }
+    .stat-card .stat-value.gold { color: var(--warning); }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-bottom: 24px; }
+    .section-hidden { display: none; }
+    .reconciliation-ok {
+      background: rgba(0,214,160,0.08); border: 1px solid rgba(0,214,160,0.15);
+      color: var(--primary); padding: 16px; border-radius: 12px;
+      text-align: center; font-weight: 600; margin: 16px 0;
+    }
+    .reconciliation-error {
+      background: rgba(255,92,108,0.08); border: 1px solid rgba(255,92,108,0.15);
+      color: var(--danger); padding: 16px; border-radius: 12px;
+      text-align: center; font-weight: 600; margin: 16px 0;
+    }
+    .manual-override-warning {
+      background: rgba(244,201,93,0.1); border: 1px solid rgba(244,201,93,0.2);
+      color: var(--warning); padding: 12px; border-radius: 10px;
+      font-size: 13px; margin-top: 8px; display: none;
+    }
+  </style>
+</head>
+<body>
+  <!-- Mobile Header -->
+  <div id="mobileHeader"></div>
+
+  <div class="settings-page">
+    <div class="settings-header">
+      <div>
+        <h1>إعدادات الإدارة</h1>
+        <div style="font-size:13px;color:var(--text-secondary);margin-top:4px;">إدارة إعدادات المنصة والسوق والأمان</div>
+      </div>
+      <div class="badge" id="lastSaved">آخر حفظ: —</div>
+    </div>
+
+    <div class="settings-layout">
+      <!-- Sidebar Navigation -->
+      <nav class="settings-nav" id="settingsNav">
+        <a href="#general" class="active" data-section="general">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          عام
+        </a>
+        <a href="#market" data-section="market">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          السوق والأسعار
+        </a>
+        <a href="#trading" data-section="trading">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          التداول
+        </a>
+        <a href="#fees" data-section="fees">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          الرسوم
+        </a>
+        <a href="#escrow" data-section="escrow">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          الضمان
+        </a>
+        <a href="#security" data-section="security">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          الأمان
+        </a>
+        <a href="#notifications" data-section="notifications">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          التنبيهات
+        </a>
+        <a href="#financial" data-section="financial">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+          المالية
+        </a>
+        <a href="#reconciliation" data-section="reconciliation">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          التسوية المالية
+        </a>
+      </nav>
+
+      <!-- Content Area -->
+      <div class="settings-content">
+        <div class="alert-success" id="alertSuccess">تم حفظ الإعدادات بنجاح</div>
+        <div class="alert-warning" id="alertWarning"></div>
+
+        <!-- General Settings -->
+        <div id="section-general" class="settings-section">
+          <div class="section-title">إعدادات عامة</div>
+          <div class="form-group">
+            <label>اسم المنصة</label>
+            <input type="text" id="platform_name" value="USDT P2P Palestine">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>حالة المنصة</label>
+              <select id="platform_status">
+                <option value="OPEN">مفتوحة</option>
+                <option value="MAINTENANCE">صيانة</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>العملة الافتراضية</label>
+              <select id="default_currency">
+                <option value="ILS">ش.إ (ILS)</option>
+                <option value="USD">دولار (USD)</option>
+              </select>
+            </div>
+          </div>
+          <div class="toggle-group">
+            <div><div class="toggle-label">السماح بالتسجيل الجديد</div><div class="toggle-desc">تفعيل/تعطيل صفحة التسجيل</div></div>
+            <label class="toggle-switch"><input type="checkbox" id="allow_registration" checked><span class="slider"></span></label>
+          </div>
+          <div class="toggle-group">
+            <div><div class="toggle-label">تفعيل تداول P2P</div><div class="toggle-desc">تفعيل/تعطيل إنشاء الصفقات</div></div>
+            <label class="toggle-switch"><input type="checkbox" id="allow_p2p_trading" checked><span class="slider"></span></label>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>الحد الأدنى للصفقة (USDT)</label>
+              <input type="number" id="min_trade_amount" value="10" min="1">
+            </div>
+            <div class="form-group">
+              <label>الحد الأقصى للصفقة (USDT)</label>
+              <input type="number" id="max_trade_amount" value="100000" min="1">
+            </div>
+          </div>
+        </div>
+
+        <!-- Market Settings -->
+        <div id="section-market" class="settings-section section-hidden">
+          <div class="section-title">إعدادات السوق والأسعار</div>
+          <div class="toggle-group">
+            <div><div class="toggle-label">تفعيل السعر اليدوي</div><div class="toggle-desc">إيقاف السعر التلقائي واستخدام سعر يدوي</div></div>
+            <label class="toggle-switch"><input type="checkbox" id="manual_override_active"><span class="slider"></span></label>
+          </div>
+          <div class="manual-override-warning" id="overrideWarning">السعر اليدوي مفعّل — الأسعار الحالية تعتمد على القيمة المُدخلة يدوياً</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>هامش الشراء (%)</label>
+              <input type="number" id="buy_spread" value="0.5" min="0" max="50" step="0.01">
+            </div>
+            <div class="form-group">
+              <label>هامش البيع (%)</label>
+              <input type="number" id="sell_spread" value="0.5" min="0" max="50" step="0.01">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>الحد الأدنى للسعر المقبول</label>
+              <input type="number" id="min_acceptable_price" value="1" min="0" step="0.01">
+            </div>
+            <div class="form-group">
+              <label>الحد الأقصى للسعر المقبول</label>
+              <input type="number" id="max_acceptable_price" value="10" min="0" step="0.01">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>فترة تحديث السعر (ثانية)</label>
+            <input type="number" id="price_refresh_interval" value="3600" min="60" max="86400">
+          </div>
+          <div class="form-group">
+            <label>عتبة انتهاء صلاحية السعر (دقيقة)</label>
+            <input type="number" id="stale_threshold_minutes" value="120" min="10" max="1440">
+          </div>
+        </div>
+
+        <!-- Trading Settings -->
+        <div id="section-trading" class="settings-section section-hidden">
+          <div class="section-title">إعدادات التداول</div>
+          <div class="toggle-group">
+            <div><div class="toggle-label">تفعيل التداول</div><div class="toggle-desc">تشغيل/إيقاف منصة التداول بالكامل</div></div>
+            <label class="toggle-switch"><input type="checkbox" id="trading_enabled" checked><span class="slider"></span></label>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>الحد الأدنى للصفقة (USDT)</label>
+              <input type="number" id="trade_min_usdt" value="1" min="0.1" step="0.1">
+            </div>
+            <div class="form-group">
+              <label>الحد الأقصى للصفقة (USDT)</label>
+              <input type="number" id="trade_max_usdt" value="50000" min="1">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>مهلة انتهاء الصفقة (دقيقة)</label>
+              <input type="number" id="trade_timeout_minutes" value="30" min="5" max="1440">
+            </div>
+            <div class="form-group">
+              <label>مهلة تأكيد الدفع (دقيقة)</label>
+              <input type="number" id="payment_confirmation_timeout" value="60" min="5" max="1440">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>الحد الأقصى للصفقات النشطة لكل مستخدم</label>
+            <input type="number" id="max_active_trades_per_user" value="10" min="1" max="100">
+          </div>
+        </div>
+
+        <!-- Fees Settings -->
+        <div id="section-fees" class="settings-section section-hidden">
+          <div class="section-title">إعدادات الرسوم</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>رسوم تداول P2P (%)</label>
+              <input type="number" id="p2p_fee_percent" value="1.0" min="0" max="50" step="0.1">
+            </div>
+            <div class="form-group">
+              <label>رسوم الإيداع (%)</label>
+              <input type="number" id="deposit_fee_percent" value="0" min="0" max="50" step="0.1">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>رسوم السحب (%)</label>
+              <input type="number" id="withdrawal_fee_percent" value="1.0" min="0" max="50" step="0.1">
+            </div>
+            <div class="form-group">
+              <label>الحد الأدنى للرسوم (USDT)</label>
+              <input type="number" id="min_fee" value="0.1" min="0" step="0.1">
+            </div>
+          </div>
+        </div>
+
+        <!-- Escrow Settings -->
+        <div id="section-escrow" class="settings-section section-hidden">
+          <div class="section-title">إعدادات الضمان المالي</div>
+          <div class="toggle-group">
+            <div><div class="toggle-label">تفعيل الضمان</div><div class="toggle-desc">حجز USDT أثناء الصفقات النشطة</div></div>
+            <label class="toggle-switch"><input type="checkbox" id="escrow_enabled" checked><span class="slider"></span></label>
+          </div>
+          <div class="toggle-group">
+            <div><div class="toggle-label">الإطلاق التلقائي</div><div class="toggle-desc">تحرير USDT تلقائياً بعد تأكيد الدفع</div></div>
+            <label class="toggle-switch"><input type="checkbox" id="auto_release_enabled"><span class="slider"></span></label>
+          </div>
+          <div class="toggle-group">
+            <div><div class="toggle-label">الإرجاع التلقائي</div><div class="toggle-desc">إرجاع USDT تلقائياً عند انتهاء المهلة</div></div>
+            <label class="toggle-switch"><input type="checkbox" id="auto_refund_enabled"><span class="slider"></span></label>
+          </div>
+        </div>
+
+        <!-- Security Settings -->
+        <div id="section-security" class="settings-section section-hidden">
+          <div class="section-title">إعدادات الأمان</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>مهلة الجلسة (ساعة)</label>
+              <input type="number" id="session_expiration_hours" value="720" min="1" max="8760">
+            </div>
+            <div class="form-group">
+              <label>الحد الأقصى لمحاولات الدخول</label>
+              <input type="number" id="max_login_attempts" value="5" min="1" max="20">
+            </div>
+          </div>
+          <div class="toggle-group">
+            <div><div class="toggle-label">إلزام تأكيد البريد الإلكتروني</div><div class="toggle-desc">يجب تأكيد البريد قبل استخدام المنصة</div></div>
+            <label class="toggle-switch"><input type="checkbox" id="require_email_verification"><span class="slider"></span></label>
+          </div>
+          <div class="toggle-group">
+            <div><div class="toggle-label">إلزام KYC قبل التداول</div><div class="toggle-desc">يجب التحقق من الهوية قبل الشراء أو البيع</div></div>
+            <label class="toggle-switch"><input type="checkbox" id="require_kyc_trading"><span class="slider"></span></label>
+          </div>
+          <div class="toggle-group">
+            <div><div class="toggle-label">إلزام KYC قبل السحب</div><div class="toggle-desc">يجب التحقق من الهوية قبل سحب USDT</div></div>
+            <label class="toggle-switch"><input type="checkbox" id="require_kyc_withdrawal"><span class="slider"></span></label>
+          </div>
+        </div>
+
+        <!-- Notification Settings -->
+        <div id="section-notifications" class="settings-section section-hidden">
+          <div class="section-title">إعدادات التنبيهات</div>
+          <div class="toggle-group">
+            <div><div class="toggle-label">تنبيهات الأسعار</div><div class="toggle-desc">إشعارات عندما يصل السعر إلى مستوى محدد</div></div>
+            <label class="toggle-switch"><input type="checkbox" id="enable_price_alerts" checked><span class="slider"></span></label>
+          </div>
+          <div class="toggle-group">
+            <div><div class="toggle-label">تنبيهات الصفقات</div><div class="toggle-desc">إشعارات عند إنشاء أو إتمام صفقة</div></div>
+            <label class="toggle-switch"><input type="checkbox" id="enable_trade_alerts" checked><span class="slider"></span></label>
+          </div>
+          <div class="toggle-group">
+            <div><div class="toggle-label">تنبيهات أمان الإدارة</div><div class="toggle-desc">تنبيهات عند محاولات دخول مشبوهة</div></div>
+            <label class="toggle-switch"><input type="checkbox" id="enable_admin_security_alerts" checked><span class="slider"></span></label>
+          </div>
+          <div class="toggle-group">
+            <div><div class="toggle-label">إشعارات Telegram</div><div class="toggle-desc">إرسال الإشعارات عبر Telegram</div></div>
+            <label class="toggle-switch"><input type="checkbox" id="enable_telegram_notifications" checked><span class="slider"></span></label>
+          </div>
+        </div>
+
+        <!-- Financial Dashboard -->
+        <div id="section-financial" class="settings-section section-hidden">
+          <div class="section-title">لوحة التحكم المالية</div>
+          <div id="financialStats" class="stats-grid" style="margin-bottom:16px;"></div>
+          <button class="btn-secondary" onclick="loadFinancial()" style="margin-bottom:16px;">تحديث البيانات</button>
+        </div>
+
+        <!-- Reconciliation -->
+        <div id="section-reconciliation" class="settings-section section-hidden">
+          <div class="section-title">تسوية مالية</div>
+          <div id="reconciliationResult"></div>
+          <button class="btn-secondary" onclick="loadReconciliation()" style="margin-top:12px;">تشغيل التسوية</button>
+        </div>
+
+        <!-- Save Button -->
+        <div class="btn-group">
+          <button class="btn-primary" onclick="saveSettings()">حفظ الإعدادات</button>
+          <button class="btn-secondary" onclick="resetSettings()">إعادة التعيين</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/assets/app.js"></script>
+  <script>
+    let currentSettings = {};
+    const API_BASE = window.API_BASE || location.origin + '/api';
+
+    // Navigation
+    document.querySelectorAll('.settings-nav a').forEach(link => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const section = link.dataset.section;
+        document.querySelectorAll('.settings-nav a').forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+        document.querySelectorAll('.settings-section').forEach(s => s.classList.add('section-hidden'));
+        document.getElementById('section-' + section).classList.remove('section-hidden');
+        if (section === 'financial') loadFinancial();
+        if (section === 'reconciliation') loadReconciliation();
+      });
+    });
+
+    // Load settings
+    async function loadSettings() {
+      try {
+        const res = await fetch(API_BASE + '/admin/settings', { credentials: 'include' });
+        if (res.status === 401 || res.status === 403) {
+          window.location.href = '/login.html?returnTo=/admin/settings.html';
+          return;
+        }
+        const data = await res.json();
+        if (data.ok) {
+          currentSettings = data.settings;
+          applySettings(data.settings);
+        }
+      } catch (err) { console.error('Failed to load settings:', err); }
+    }
+
+    function applySettings(s) {
+      // Checkboxes
+      ['allow_registration', 'allow_p2p_trading', 'manual_override_active',
+       'trading_enabled', 'escrow_enabled', 'auto_release_enabled', 'auto_refund_enabled',
+       'require_email_verification', 'require_kyc_trading', 'require_kyc_withdrawal',
+       'enable_price_alerts', 'enable_trade_alerts', 'enable_admin_security_alerts',
+       'enable_telegram_notifications'].forEach(key => {
+        const el = document.getElementById(key);
+        if (el) el.checked = s[key] === '1';
+      });
+      // Text/number
+      ['platform_name', 'min_trade_amount', 'max_trade_amount', 'default_currency',
+       'buy_spread', 'sell_spread', 'min_acceptable_price', 'max_acceptable_price',
+       'price_refresh_interval', 'stale_threshold_minutes', 'trade_min_usdt', 'trade_max_usdt',
+       'trade_timeout_minutes', 'payment_confirmation_timeout', 'max_active_trades_per_user',
+       'p2p_fee_percent', 'deposit_fee_percent', 'withdrawal_fee_percent', 'min_fee',
+       'session_expiration_hours', 'max_login_attempts'].forEach(key => {
+        const el = document.getElementById(key);
+        if (el) el.value = s[key] || '';
+      });
+      // Selects
+      const statusEl = document.getElementById('platform_status');
+      if (statusEl) statusEl.value = s.platform_status || 'OPEN';
+      // Override warning
+      const warnEl = document.getElementById('overrideWarning');
+      if (warnEl) warnEl.style.display = s.manual_override_active === '1' ? 'block' : 'none';
+    }
+
+    // Save
+    async function saveSettings() {
+      const body = {};
+      // Collect all values
+      document.querySelectorAll('.settings-section input[type="number"], .settings-section input[type="text"], .settings-section select').forEach(el => {
+        body[el.id] = el.value;
+      });
+      document.querySelectorAll('.settings-section input[type="checkbox"]').forEach(el => {
+        body[el.id] = el.checked ? '1' : '0';
+      });
+
+      try {
+        const csrf = getCsrfToken();
+        const res = await fetch(API_BASE + '/admin/settings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
+          credentials: 'include',
+          body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        if (data.ok) {
+          document.getElementById('alertSuccess').style.display = 'block';
+          document.getElementById('lastSaved').textContent = 'آخر حفظ: ' + new Date().toLocaleTimeString('ar');
+          setTimeout(() => document.getElementById('alertSuccess').style.display = 'none', 3000);
+        }
+      } catch (err) { console.error('Save failed:', err); }
+    }
+
+    function resetSettings() {
+      if (currentSettings) applySettings(currentSettings);
+    }
+
+    // Financial dashboard
+    async function loadFinancial() {
+      try {
+        const res = await fetch(API_BASE + '/admin/settings/financial', { credentials: 'include' });
+        const data = await res.json();
+        if (!data.ok) return;
+        const f = data.financial;
+        document.getElementById('financialStats').innerHTML = `
+          <div class="stat-card"><div class="stat-label">إجمالي USDT المتاح</div><div class="stat-value green">${f.total_available.toFixed(2)}</div></div>
+          <div class="stat-card"><div class="stat-label">USDT المقفل</div><div class="stat-value gold">${f.total_locked.toFixed(2)}</div></div>
+          <div class="stat-card"><div class="stat-label">USDT في الضمان</div><div class="stat-value">${f.total_escrow.toFixed(2)}</div></div>
+          <div class="stat-card"><div class="stat-label">إجمالي الإيداعات</div><div class="stat-value green">${f.total_deposited.toFixed(2)}</div></div>
+          <div class="stat-card"><div class="stat-label">إجمالي السحوبات</div><div class="stat-value red">${f.total_withdrawn.toFixed(2)}</div></div>
+          <div class="stat-card"><div class="stat-label">رسوم المنصة</div><div class="stat-value green">${f.platform_fees.toFixed(2)}</div></div>
+          <div class="stat-card"><div class="stat-label">إجمالي المستخدمين</div><div class="stat-value">${f.total_users}</div></div>
+          <div class="stat-card"><div class="stat-label">إجمالي التداول</div><div class="stat-value green">${f.trades.total_volume.toFixed(2)} USDT</div></div>
+          <div class="stat-card"><div class="stat-label">الصفقات المكتملة</div><div class="stat-value green">${f.trades.completed}</div></div>
+          <div class="stat-card"><div class="stat-label">قيد الدفع</div><div class="stat-value gold">${f.trades.payment_sent}</div></div>
+          <div class="stat-card"><div class="stat-label">نزاعات</div><div class="stat-value red">${f.trades.disputed}</div></div>
+          <div class="stat-card"><div class="stat-label">ملغاة</div><div class="stat-value red">${f.trades.cancelled}</div></div>
+        `;
+      } catch (err) { console.error('Financial load failed:', err); }
+    }
+
+    // Reconciliation
+    async function loadReconciliation() {
+      try {
+        const res = await fetch(API_BASE + '/admin/settings/reconciliation', { credentials: 'include' });
+        const data = await res.json();
+        if (!data.ok) return;
+        const r = data;
+        const ws = r.wallet_summary;
+        let html = '';
+        if (r.healthy) {
+          html = `<div class="reconciliation-ok">النظام المالي سليم — الإجمالي: ${ws.combined.toFixed(2)} USDT</div>`;
+        } else {
+          html = `<div class="reconciliation-error">تم اكتشاف مشكلة في التسوية المالية!</div>`;
+          if (r.issues.negative_balances > 0) {
+            html += `<div style="color:var(--danger);margin:8px 0;">أرصدة سالبة: ${r.issues.negative_balances}</div>`;
+            r.issues.negative_wallets.forEach(w => {
+              html += `<div style="font-size:13px;color:var(--text-secondary);margin:4px 0;">${w.username}: balance=${w.balance}, locked=${w.locked}</div>`;
+            });
+          }
+          if (r.issues.orphaned_escrow > 0) {
+            html += `<div style="color:var(--warning);margin:8px 0;">ضمان مفقود: ${r.issues.orphaned_escrow} صفقة</div>`;
+            r.issues.orphaned_trades.forEach(t => {
+              html += `<div style="font-size:13px;color:var(--text-secondary);margin:4px 0;">#${t.id}: ${t.amount} USDT (${t.status}/${t.escrow_status})</div>`;
+            });
+          }
+        }
+        document.getElementById('reconciliationResult').innerHTML = html;
+      } catch (err) { console.error('Reconciliation failed:', err); }
+    }
+
+    // CSRF helper
+    function getCsrfToken() {
+      const m = document.cookie.match(/csrf_token=([^;]+)/);
+      return m ? m[1] : '';
+    }
+
+    // Mobile header
+    if (window.innerWidth < 768) {
+      document.getElementById('mobileHeader').innerHTML = `
+        <div style="position:fixed;top:0;left:0;right:0;height:56px;background:var(--bg-surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;z-index:1000;">
+          <a href="/admin.html" style="color:var(--text-secondary);text-decoration:none;margin-left:12px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+          </a>
+          <span style="font-size:16px;font-weight:600;">إعدادات الإدارة</span>
+        </div>
+      `;
+    }
+
+    // Override warning listener
+    document.getElementById('manual_override_active')?.addEventListener('change', function() {
+      document.getElementById('overrideWarning').style.display = this.checked ? 'block' : 'none';
+    });
+
+    // Auth check
+    async function checkAdminAuth() {
+      try {
+        const res = await fetch(API_BASE + '/auth/me', { credentials: 'include' });
+        const data = await res.json();
+        if (!data.authenticated || !data.isAdmin) {
+          document.querySelector('.settings-page').innerHTML = `
+            <div style="text-align:center;padding:80px 20px;">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2" style="margin-bottom:16px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <h2 style="color:var(--text-primary);margin-bottom:8px;">غير مصرح بالوصول</h2>
+              <p style="color:var(--text-secondary);margin-bottom:24px;">هذه الصفحة للمشرفين فقط. تحقق من صلاحيات حساب الإدارة.</p>
+              <a href="/admin.html" class="btn-primary" style="display:inline-block;text-decoration:none;">العودة للوحة الإدارة</a>
+            </div>
+          `;
+          return;
+        }
+        loadSettings();
+      } catch (err) {
+        document.querySelector('.settings-page').innerHTML = `
+          <div style="text-align:center;padding:80px 20px;">
+            <h2 style="color:var(--text-primary);margin-bottom:8px;">تعذر الاتصال</h2>
+            <p style="color:var(--text-secondary);margin-bottom:24px;">تعذر تحميل إعدادات الإدارة. تحقق من اتصال الخادم.</p>
+            <a href="/admin.html" class="btn-primary" style="display:inline-block;text-decoration:none;">العودة</a>
+          </div>
+        `;
+      }
+    }
+    checkAdminAuth();
+  </script>
+</body>
+</html>

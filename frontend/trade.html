@@ -13,7 +13,7 @@
   <script>(function(){var t=localStorage.getItem("usp_theme")||"dark";if(t==="auto")t=window.matchMedia("(prefers-color-scheme:light)").matches?"light":"dark";document.documentElement.setAttribute("data-theme",t);})();</script>
 </head>
 <body>
-  <nav class="navbar" id="nav"><div class="navbar-inner"><a href="/" class="navbar-brand">🇵🇸 <span>USDT</span> P2P</a><div class="navbar-links"></div></div></nav>
+  <nav class="navbar" id="nav"><div class="navbar-inner"><a href="/" class="navbar-brand"><span>USDT</span> P2P</a><div class="navbar-links"></div></div></nav>
 
   <main class="main-content">
     <div id="loading" class="loading-spinner">
@@ -35,11 +35,11 @@
   <script>
     // ── Status labels matching backend ──
     const STATUS = {
-      PENDING:        { label: '⏳ بانتظار الدفع', color: 'badge-warning', step: 0 },
-      PAYMENT_SENT:   { label: '💳 تم إرسال الدفع', color: 'badge-info', step: 1 },
-      COMPLETED:      { label: '✅ مكتملة', color: 'badge-success', step: 4 },
-      CANCELLED:      { label: '❌ ملغاة', color: 'badge-error', step: -1 },
-      DISPUTED:       { label: '⚠️ نزاع', color: 'badge-error', step: -1 },
+      PENDING:        { label: 'بانتظار الدفع', color: 'badge-warning', step: 0 },
+      PAYMENT_SENT:   { label: 'تم إرسال الدفع', color: 'badge-info', step: 1 },
+      COMPLETED:      { label: 'مكتملة', color: 'badge-success', step: 4 },
+      CANCELLED:      { label: 'ملغاة', color: 'badge-error', step: -1 },
+      DISPUTED:       { label: 'نزاع', color: 'badge-error', step: -1 },
     };
     const TIMELINE_STEPS = [
       { key: 'created', label: 'إنشاء الصفقة' },

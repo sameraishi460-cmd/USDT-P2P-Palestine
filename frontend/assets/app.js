@@ -5,6 +5,39 @@
    ============================================================ */
 const API_BASE = location.origin + '/api';
 
+/* ── Telegram Deep-Link Login ──────────────────────────
+   When user clicks a bot URL button with ?tg_token=XXX,
+   exchange it for a proper web session cookie. */
+(function() {
+  const params = new URLSearchParams(location.search);
+  const tgToken = params.get('tg_token');
+  if (!tgToken) return;
+  // Remove token from URL immediately (prevent re-use/bookmark)
+  params.delete('tg_token');
+  const cleanUrl = location.pathname + (params.toString() ? '?' + params.toString() : '') + location.hash;
+  history.replaceState(null, '', cleanUrl);
+  // Exchange token for a session
+  fetch(API_BASE + '/auth/telegram-login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: 'token=' + encodeURIComponent(tgToken),
+    credentials: 'include',
+  }).then(r => r.json()).then(data => {
+    if (data.ok) {
+      // Store CSRF token if returned
+      if (data.csrf_token) {
+        try { localStorage.setItem('csrf_token', data.csrf_token); } catch {}
+      }
+      // Reload to pick up the new session
+      location.reload();
+    } else {
+      console.warn('[tg-login] Token exchange failed:', data.error);
+    }
+  }).catch(err => {
+    console.error('[tg-login] Network error:', err);
+  });
+})();
+
 /* ── Telegram WebApp SDK ──────────────────────────────── */
 const tg = window.Telegram?.WebApp || null;
 let _isTelegram = !!tg;
@@ -226,7 +259,7 @@ function fmtDate(d) { return d ? new Date(d).toLocaleString('ar', { dateStyle: '
 function copyText(t) { navigator.clipboard?.writeText(t); toast('تم النسخ'); }
 
 /* ── Navigation ────────────────────────────────────────────── */
-function themeIcon() { const t = getTheme(); return t === 'dark' ? '🌙' : t === 'light' ? '☀️' : '⚙️'; }
+function themeIcon() { const t = getTheme(); if (t === 'dark') return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>'; if (t === 'light') return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>'; return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'; }
 
 /* Page titles for mobile header */
 const PAGE_TITLES = {
@@ -287,7 +320,7 @@ function renderNav() {
   const nav = document.getElementById('nav');
   if (nav) {
     nav.innerHTML = `<div class="navbar-inner">
-      <a href="/" class="navbar-brand">🇵🇸 <span>USDT</span> P2P</a>
+      <a href="/" class="navbar-brand"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-left:4px;"><path d="M3 21V3h18v18H3zM7 11h4m-2-2v4m6-4h4m-2-2v4"/></svg> <span>USDT</span> P2P</a>
       <div class="navbar-links">
         ${u ? `
           <a href="/market">السوق</a>
@@ -321,11 +354,13 @@ function buildMobileShell(u, p) {
   // ── Mobile Header ──
   const header = document.createElement('header');
   header.className = 'mobile-header';
+  const menuSvg = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>';
+  const backSvg = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 19l-7-7 7-7"/></svg>';
   header.innerHTML = `<div class="mobile-header-left">
-      ${showBack ? '<button class="mobile-header-back" onclick="history.back()" aria-label="رجوع">←</button>' : ''}
+      ${showBack ? '<button class="mobile-header-back" onclick="history.back()" aria-label="رجوع">' + backSvg + '</button>' : ''}
       <span class="mobile-header-title">${title}</span>
     </div>
-    <button class="mobile-header-menu" onclick="toggleMobileSidebar()" aria-label="فتح القائمة" aria-expanded="false">☰</button>`;
+    <button class="mobile-header-menu" onclick="toggleMobileSidebar()" aria-label="فتح القائمة" aria-expanded="false">${menuSvg}</button>`;
   document.body.prepend(header);
 
   // ── Sidebar Overlay ──
@@ -340,26 +375,43 @@ function buildMobileShell(u, p) {
   panel.setAttribute('role', 'navigation');
   panel.setAttribute('aria-label', 'قائمة التنقل');
 
+  // SVG icon helper
+  const svgIcon = (d, size = 20) => `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg>`;
+  const I = {
+    home: svgIcon('M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0h4'),
+    market: svgIcon('M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V6m0 8v2m6-6a6 6 0 11-12 0 6 6 0 0112 0z'),
+    trades: svgIcon('M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2'),
+    wallet: svgIcon('M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z'),
+    ads: svgIcon('M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10'),
+    plus: svgIcon('M12 4v16m8-8H4'),
+    bell: svgIcon('M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9'),
+    user: svgIcon('M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'),
+    admin: svgIcon('M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065zM15 12a3 3 0 11-6 0 3 3 0 016 0z'),
+    logout: svgIcon('M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1'),
+    login: svgIcon('M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1'),
+    register: svgIcon('M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z'),
+  };
+
   // Build sidebar items
   const guestItems = [
-    { href: '/', icon: '◈', label: 'الرئيسية' },
-    { href: '/market', icon: '⇄', label: 'سوق USDT' },
-    { href: '/login', icon: '→', label: 'دخول' },
-    { href: '/register', icon: '+', label: 'حساب جديد' },
+    { href: '/', icon: I.home, label: 'الرئيسية' },
+    { href: '/market', icon: I.market, label: 'سوق USDT' },
+    { href: '/login', icon: I.login, label: 'دخول' },
+    { href: '/register', icon: I.register, label: 'حساب جديد' },
   ];
 
   const userItems = [
-    { href: '/', icon: '◈', label: 'الرئيسية' },
-    { href: '/market', icon: '⇄', label: 'سوق USDT' },
-    { href: '/trades', icon: '◎', label: 'الصفقات' },
-    { href: '/wallet', icon: '◉', label: 'المحفظة' },
-    { href: '/my_ads', icon: '♢', label: 'إعلاناتي' },
-    { href: '/create_ad', icon: '＋', label: 'إنشاء إعلان' },
-    { href: '/notifications', icon: '⬡', label: 'الإشعارات' },
-    { href: '/profile', icon: '○', label: 'الملف الشخصي' },
+    { href: '/', icon: I.home, label: 'الرئيسية' },
+    { href: '/market', icon: I.market, label: 'سوق USDT' },
+    { href: '/trades', icon: I.trades, label: 'الصفقات' },
+    { href: '/wallet', icon: I.wallet, label: 'المحفظة' },
+    { href: '/my_ads', icon: I.ads, label: 'إعلاناتي' },
+    { href: '/create_ad', icon: I.plus, label: 'إنشاء إعلان' },
+    { href: '/notifications', icon: I.bell, label: 'الإشعارات' },
+    { href: '/profile', icon: I.user, label: 'الملف الشخصي' },
   ];
 
-  const adminItem = u && u.isAdmin ? [{ href: '/admin', icon: '⚙', label: 'لوحة الإدارة' }] : [];
+  const adminItem = u && u.isAdmin ? [{ href: '/admin', icon: I.admin, label: 'لوحة الإدارة' }] : [];
   const items = u ? [...userItems, ...adminItem] : guestItems;
 
   const navHtml = items.map(it => {
@@ -372,21 +424,21 @@ function buildMobileShell(u, p) {
   const logoutHtml = u ? `
     <div class="mobile-sidebar-divider"></div>
     <button class="mobile-sidebar-item" onclick="doLogout()" style="color:var(--danger)">
-      <span class="mobile-sidebar-item-icon">←</span>
+      <span class="mobile-sidebar-item-icon">${I.logout}</span>
       <span>تسجيل الخروج</span>
     </button>` : '';
 
   const themeToggle = `
     <div class="mobile-sidebar-divider"></div>
     <div class="mobile-sidebar-theme">
-      <button onclick="toggleTheme()" style="background:none;border:none;cursor:pointer;font-size:1.1rem;color:var(--text-primary);padding:4px 8px" title="تبديل المظهر">${themeIcon()}</button>
+      <button onclick="toggleTheme()" style="background:none;border:none;cursor:pointer;color:var(--text-primary);padding:4px 8px;display:flex;align-items:center;" title="تبديل المظهر">${themeIcon()}</button>
       <span style="font-size:0.8rem;">تبديل المظهر</span>
     </div>`;
 
   panel.innerHTML = `
     <div class="mobile-sidebar-header">
-      <span class="mobile-sidebar-brand">🇵🇸 <span>USDT</span> P2P</span>
-      <button class="mobile-sidebar-close" onclick="closeMobileSidebar()" aria-label="إغلاق القائمة">✕</button>
+      <span class="mobile-sidebar-brand"><span>USDT</span> P2P</span>
+      <button class="mobile-sidebar-close" onclick="closeMobileSidebar()" aria-label="إغلاق القائمة"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
     </div>
     <nav class="mobile-sidebar-nav">${navHtml}</nav>
     <div class="mobile-sidebar-footer">

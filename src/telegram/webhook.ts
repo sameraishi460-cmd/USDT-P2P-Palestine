@@ -73,19 +73,20 @@ async function answerCallback(env: AppEnv["Bindings"], callbackQueryId: string, 
 // Keyboards — use url buttons (NOT web_app which requires Mini App config)
 // ============================================================
 
-function mainKeyboard(appUrl: string) {
+function mainKeyboard(appUrl: string, tgToken?: string) {
+  const auth = tgToken ? `?tg_token=${tgToken}` : "";
   return {
     inline_keyboard: [
       [
-        { text: "🛒 السوق", url: `${appUrl}/market` },
-        { text: "💰 المحفظة", url: `${appUrl}/wallet` },
+        { text: "🛒 السوق", url: `${appUrl}/market.html${auth}` },
+        { text: "💰 المحفظة", url: `${appUrl}/wallet.html${auth}` },
       ],
       [
-        { text: "📄 صفقاتي", url: `${appUrl}/trades` },
-        { text: "👤 حسابي", url: `${appUrl}/profile` },
+        { text: "📄 صفقاتي", url: `${appUrl}/trades.html${auth}` },
+        { text: "👤 حسابي", url: `${appUrl}/profile.html${auth}` },
       ],
       [
-        { text: "🌐 فتح المنصة", url: appUrl },
+        { text: "🌐 فتح المنصة", url: `${appUrl}${auth ? '/' + auth.slice(1) : ''}` },
         { text: "❓ المساعدة", callback_data: "help" },
       ],
     ],
@@ -95,7 +96,7 @@ function mainKeyboard(appUrl: string) {
 function helpKeyboard(appUrl: string) {
   return {
     inline_keyboard: [
-      [{ text: "🌐 فتح المنصة", url: appUrl }],
+      [{ text: "🌐 فتح المنصة", url: `${appUrl}/index.html` }],
       [{ text: "🛒 السوق", callback_data: "open_market" }],
       [{ text: "👤 حسابي", callback_data: "open_profile" }],
       [{ text: "💰 المحفظة", callback_data: "open_wallet" }],
@@ -218,7 +219,34 @@ export async function handleTelegramUpdate(c: Context<AppEnv>): Promise<Response
 
     if (linked) {
       console.log(`[tg] /start linked user: ${linked.username}, sending welcome to chat ${chatId}`);
-      const kb = mainKeyboard(appUrl);
+      // Generate a one-time deep-link login token so clicking URL buttons creates a web session
+      const loginToken = Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2);
+      const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString(); // 15 minutes
+      try {
+        await env.DB.prepare(
+          "INSERT INTO telegram_login_tokens (telegram_user_id, username, token, expires_at) VALUES (?, ?, ?, ?)"
+        ).bind(String(tgUser.id), linked.username, loginToken, expiresAt).run();
+      } catch (e: any) {
+        console.error("[tg] failed to create login token:", e?.message);
+      }
+      // Build URLs with the login token embedded
+      const authedUrl = (page: string) => `${appUrl}/${page}?tg_token=${loginToken}`;
+      const kb = {
+        inline_keyboard: [
+          [
+            { text: "🛒 السوق", url: authedUrl("market.html") },
+            { text: "💰 المحفظة", url: authedUrl("wallet.html") },
+          ],
+          [
+            { text: "📄 صفقاتي", url: authedUrl("trades.html") },
+            { text: "👤 حسابي", url: authedUrl("profile.html") },
+          ],
+          [
+            { text: "🌐 فتح المنصة", url: authedUrl("index.html") },
+            { text: "❓ المساعدة", callback_data: "help" },
+          ],
+        ],
+      };
       const sendRes = await sendMessage(env, chatId,
         `👋 <b>أهلاً وسهلاً بك في USDT P2P Palestine</b> 🇵🇸\n\nمرحباً <b>${linked.username}</b>\n\nمنصة آمنة وسهلة لشراء وبيع USDT.\nاختر من القائمة للمتابعة:`,
         kb);

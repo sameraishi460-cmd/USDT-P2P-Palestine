@@ -585,4 +585,200 @@ admin.get("/notifications", async (c) => {
   }});
 });
 
+// ============================================================
+// Admin Market Settings — spread, price source, manual override
+// ============================================================
+admin.get("/market-settings", async (c) => {
+  const db = c.env.DB;
+  const keys = ['buy_spread', 'sell_spread', 'market_source', 'market_override_price'];
+  const settings: Record<string, string> = {};
+  for (const k of keys) {
+    const r = await db.prepare("SELECT value FROM platform_config WHERE key = ?").bind(k).first<{value:string}>();
+    settings[k] = r?.value ?? '';
+  }
+  const price = await db.prepare("SELECT * FROM market_price WHERE id = 1").first();
+  const historyCount = await db.prepare("SELECT COUNT(*) as cnt FROM price_history").first<{cnt:number}>();
+  return c.json({ ok: true, settings, price, history_count: historyCount?.cnt ?? 0 });
+});
+
+admin.post("/market-settings", async (c) => {
+  const db = c.env.DB;
+  const body = await formBody(c);
+  const actor = c.get("user")!.username;
+
+  // Validate and store spread settings
+  const buySpread = parseFloat(String(body.buy_spread ?? '0.005'));
+  const sellSpread = parseFloat(String(body.sell_spread ?? '0.005'));
+
+  if (!Number.isFinite(buySpread) || buySpread < 0 || buySpread > 0.1) {
+    return c.json({ error: "Buy spread must be between 0 and 10%" }, 400);
+  }
+  if (!Number.isFinite(sellSpread) || sellSpread < 0 || sellSpread > 0.1) {
+    return c.json({ error: "Sell spread must be between 0 and 10%" }, 400);
+  }
+
+  // Store each setting with audit log
+  const updates: [string, string][] = [
+    ['buy_spread', String(buySpread)],
+    ['sell_spread', String(sellSpread)],
+  ];
+
+  // Optional: manual price override
+  if (body.override_price) {
+    const overridePrice = parseFloat(String(body.override_price));
+    if (Number.isFinite(overridePrice) && overridePrice > 0) {
+      await db.prepare(
+        "UPDATE market_price SET usdt_ils = ?, updated = datetime('now') WHERE id = 1"
+      ).bind(overridePrice).run();
+      await db.prepare(
+        "INSERT OR IGNORE INTO market_price (id, usdt_ils) VALUES (1, ?)"
+      ).bind(overridePrice).run();
+      await auditLog(c, actor, 'admin', 'MARKET_PRICE_OVERRIDE', `price:${overridePrice}`);
+    }
+  }
+
+  for (const [k, v] of updates) {
+    await db.prepare(
+      "INSERT OR REPLACE INTO platform_config (key, value, updated) VALUES (?, ?, datetime('now'))"
+    ).bind(k, v).run();
+    await auditLog(c, actor, 'admin', `SETTING_CHANGE`, `key:${k}=${v}`);
+  }
+
+  return c.json({ ok: true });
+});
+
+// ============================================================
+// Admin Escrow Panel — detailed trade/escrow view + actions
+// ============================================================
+admin.get("/escrow/:tradeId", async (c) => {
+  const tradeId = Number(c.req.param("tradeId"));
+  const trade = await c.env.DB.prepare(
+    `SELECT t.*, a.title AS ad_title, a.payment AS payment_method
+     FROM trades t LEFT JOIN ads a ON t.ad_id = a.id WHERE t.id = ?`
+  ).bind(tradeId).first<any>();
+  if (!trade) return c.json({ error: "الصفقة غير موجودة" }, 404);
+
+  // Escrow ledger for this trade
+  const ledger = await c.env.DB.prepare(
+    `SELECT * FROM escrow_transactions WHERE trade_id = ? ORDER BY id ASC`
+  ).bind(tradeId).all();
+
+  // Dispute info
+  const dispute = await c.env.DB.prepare(
+    "SELECT * FROM disputes WHERE trade_id = ?"
+  ).bind(tradeId).first();
+
+  // Buyer/seller wallet info
+  const buyerWallet = await c.env.DB.prepare(
+    "SELECT balance, locked FROM wallets WHERE username = ?"
+  ).bind(trade.buyer).first();
+  const sellerWallet = await c.env.DB.prepare(
+    "SELECT balance, locked FROM wallets WHERE username = ?"
+  ).bind(trade.seller).first();
+
+  return c.json({
+    ok: true,
+    trade,
+    escrow_ledger: ledger.results ?? [],
+    dispute: dispute || null,
+    buyer_wallet: buyerWallet || null,
+    seller_wallet: sellerWallet || null,
+  });
+});
+
+// Admin: manual escrow release (with reason + audit log)
+admin.post("/escrow/:tradeId/release", async (c) => {
+  const tradeId = Number(c.req.param("tradeId"));
+  const actor = c.get("user")!.username;
+  const body = await formBody(c);
+  const reason = String(body.reason ?? "").trim();
+  if (!reason || reason.length < 5) {
+    return c.json({ error: "سبب التحرير مطلوب (5 أحرف على الأقل)" }, 400);
+  }
+
+  const trade = await c.env.DB.prepare("SELECT * FROM trades WHERE id = ?").bind(tradeId).first<any>();
+  if (!trade) return c.json({ error: "الصفقة غير موجودة" }, 404);
+  if (trade.status === "COMPLETED") return c.json({ ok: true }); // idempotent
+  if (trade.escrow_status !== "LOCKED") {
+    return c.json({ error: "لا توجد أموال مقفلة في هذه الصفقة" }, 400);
+  }
+
+  // Release escrow
+  const { escrowReleaseToBuyer } = await import("../utils/db");
+  const release = await escrowReleaseToBuyer(c.env, trade.seller, trade.buyer, trade.amount, tradeId);
+  if (!release.ok) return c.json({ error: release.reason }, 400);
+
+  // Record in ledger
+  const { recordEscrowTransaction } = await import("../escrow");
+  await recordEscrowTransaction(c.env.DB, tradeId, actor, trade.amount, "RELEASE", {
+    reason: `[Admin] ${reason}`,
+    adminActor: actor,
+  });
+
+  // Update trade status
+  await c.env.DB.prepare(
+    "UPDATE trades SET status = 'COMPLETED', escrow_status = 'RELEASED', completed_at = datetime('now') WHERE id = ? AND status != 'COMPLETED'"
+  ).bind(tradeId).run();
+
+  const { notify: notifyFn } = await import("../utils/db");
+  await notifyFn(c.env, trade.buyer, "USDT تحرر من قبل الإدارة 🎉",
+    `تم تحرير ${trade.amount} USDT من الصفقة #${tradeId} بناءً على قرار الإدارة.`);
+  await notifyFn(c.env, trade.seller, "USDT تحرر من قبل الإدارة ✅",
+    `تم تحرير ${trade.amount} USDT من الصفقة #${tradeId} بناءً على قرار الإدارة.`);
+  await auditLog(c, actor, "admin", "ADMIN_ESCROW_RELEASE", `trade:${tradeId}`, `${trade.amount} USDT — ${reason}`);
+  return c.json({ ok: true });
+});
+
+// Admin: manual escrow refund (with reason + audit log)
+admin.post("/escrow/:tradeId/refund", async (c) => {
+  const tradeId = Number(c.req.param("tradeId"));
+  const actor = c.get("user")!.username;
+  const body = await formBody(c);
+  const reason = String(body.reason ?? "").trim();
+  if (!reason || reason.length < 5) {
+    return c.json({ error: "سبب الإرجاع مطلوب (5 أحرف على الأقل)" }, 400);
+  }
+
+  const trade = await c.env.DB.prepare("SELECT * FROM trades WHERE id = ?").bind(tradeId).first<any>();
+  if (!trade) return c.json({ error: "الصفقة غير موجودة" }, 404);
+  if (trade.escrow_status !== "LOCKED") {
+    return c.json({ error: "لا توجد أموال مقفلة في هذه الصفقة" }, 400);
+  }
+
+  // Refund to seller
+  const { escrowRefundSeller } = await import("../utils/db");
+  const refund = await escrowRefundSeller(c.env, trade.seller, trade.amount, tradeId);
+  if (!refund.ok) return c.json({ error: refund.reason }, 400);
+
+  // Record in ledger
+  const { recordEscrowTransaction } = await import("../escrow");
+  await recordEscrowTransaction(c.env.DB, tradeId, actor, trade.amount, "REFUND", {
+    reason: `[Admin] ${reason}`,
+    adminActor: actor,
+  });
+
+  // Update trade status
+  await c.env.DB.prepare(
+    "UPDATE trades SET status = 'CANCELLED', escrow_status = 'REFUNDED' WHERE id = ?"
+  ).bind(tradeId).run();
+
+  const { notify: notifyFn } = await import("../utils/db");
+  await notifyFn(c.env, trade.seller, "USDT تمت إزارته من قبل الإدارة 💰",
+    `تم إرجاع ${trade.amount} USDT إلى محفظتك من الصفقة #${tradeId}.`);
+  await auditLog(c, actor, "admin", "ADMIN_ESCROW_REFUND", `trade:${tradeId}`, `${trade.amount} USDT — ${reason}`);
+  return c.json({ ok: true });
+});
+
+// Admin: list all trades with escrow info
+admin.get("/trades/all", async (c) => {
+  const rows = await c.env.DB.prepare(
+    `SELECT t.id, t.buyer, t.seller, t.amount, t.price, t.platform_fee,
+            t.status, t.escrow_status, t.created, t.completed_at,
+            a.title AS ad_title, a.type AS ad_type
+     FROM trades t LEFT JOIN ads a ON t.ad_id = a.id
+     ORDER BY t.id DESC LIMIT 200`
+  ).all();
+  return c.json({ ok: true, trades: rows.results ?? [] });
+});
+
 export default admin;

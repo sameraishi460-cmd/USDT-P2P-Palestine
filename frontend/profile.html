@@ -3,474 +3,126 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#0a0e1a">
+  <meta name="theme-color" content="#07090D">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>حسابي — USDT P2P Palestine</title>
+  <title>الملف الشخصي — USDT P2P Palestine</title>
   <link rel="stylesheet" href="/assets/design-system.css">
   <link rel="manifest" href="/manifest.json">
-<script>(function(){var t=localStorage.getItem("usp_theme")||"dark";if(t==="auto")t=window.matchMedia("(prefers-color-scheme:light)").matches?"light":"dark";document.documentElement.setAttribute("data-theme",t);})();</script>
+  <script>(function(){var t=localStorage.getItem("usp_theme")||"dark";if(t==="auto")t=window.matchMedia("(prefers-color-scheme:light)").matches?"light":"dark";document.documentElement.setAttribute("data-theme",t);})();</script>
+  <style>
+    .profile-hero{text-align:center;padding:var(--sp-5) var(--sp-4);background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);margin-bottom:var(--sp-4);position:relative;overflow:hidden;}
+    .profile-hero::before{content:'';position:absolute;top:-40px;right:-30px;width:150px;height:150px;background:radial-gradient(circle,rgba(0,214,160,0.06),transparent 70%);pointer-events:none;}
+    .profile-avatar{width:64px;height:64px;border-radius:50%;background:var(--primary-dim);display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:800;color:var(--primary);margin:0 auto var(--sp-3);border:2px solid var(--primary);}
+    .profile-name{font-size:1.1rem;font-weight:800;color:var(--text-primary);margin-bottom:var(--sp-1);}
+    .profile-badge{font-size:0.7rem;padding:3px 10px;border-radius:8px;font-weight:600;display:inline-flex;align-items:center;gap:4px;}
+    .profile-badge.verified{background:var(--success-dim);color:var(--success);}
+    .profile-badge.pending{background:var(--warning-dim);color:var(--warning);}
+    .profile-badge.unverified{background:var(--danger-dim);color:var(--danger);}
+    .profile-menu{margin-bottom:var(--sp-3);}
+    .profile-menu-item{display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3) var(--sp-4);background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:var(--sp-2);text-decoration:none;color:var(--text-primary);transition:background 0.15s;}
+    .profile-menu-item:hover{background:var(--bg-card-hover);}
+    .profile-menu-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+    .profile-menu-icon.security{background:rgba(255,92,108,0.10);color:var(--danger);}
+    .profile-menu-icon.kyc{background:var(--warning-dim);color:var(--warning);}
+    .profile-menu-icon.email{background:rgba(91,141,239,0.10);color:#5B8DEF;}
+    .profile-menu-icon.password{background:var(--primary-dim);color:var(--primary);}
+    .profile-menu-icon.sessions{background:rgba(108,99,255,0.10);color:var(--purple);}
+    .profile-menu-icon.logout{background:var(--danger-dim);color:var(--danger);}
+    .profile-menu-label{flex:1;font-size:0.85rem;font-weight:600;}
+    .profile-menu-arrow{color:var(--text-muted);font-size:0.8rem;}
+    .profile-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--sp-2);margin-bottom:var(--sp-4);}
+  </style>
 </head>
 <body>
-
-<nav class="navbar" id="nav"></nav>
-
-<main>
-<div class="container" style="padding-top:var(--sp-4);">
-
-  <div id="loading" style="text-align:center;padding:var(--sp-8);">
-    <div class="spinner" style="margin:0 auto var(--sp-3);"></div>
-    <p style="color:var(--text-muted);">جاري تحميل الحساب...</p>
-  </div>
-
-  <div id="profile-content" style="display:none"></div>
-
-</div>
-</main>
-
-
-
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script src="/assets/app.js"></script>
-<script>
-(async function() {
-  const user = await requireAuth();
-  if (!user) return;
-
-  let trust = {};
-  try { const tRes = await api('/v2/trust/' + user.username); trust = tRes.trust || {}; } catch {}
-
-  let wallet = {};
-  try { const wRes = await api('/wallet'); wallet = wRes || {}; } catch {}
-
-  let verifyStatus = null;
-  try { const vRes = await api('/v2/verify/status'); verifyStatus = vRes; } catch {}
-
-  let unreadCount = 0;
-  try { const nRes = await api('/notifications'); unreadCount = (nRes.notifications || []).filter(n => !n.is_read).length; } catch {}
-
-  const tgData = window.Telegram?.WebApp?.initDataUnsafe?.user;
-  const tgName = tgData ? [tgData.first_name, tgData.last_name].filter(Boolean).join(' ') : '';
-  const tgUsername = tgData?.username ? '@' + tgData.username : '';
-  const isLinked = !!user.telegram_id;
-
-  const kycStatus = verifyStatus?.request?.status || 'NONE';
-  const kycLabels = { 'NONE': '🔴 غير موثق', 'PENDING': '🟡 قيد المراجعة', 'UNDER_REVIEW': '🟡 قيد المراجعة', 'APPROVED': '🟢 موثق', 'REJECTED': '🔴 مرفوض' };
-
-  document.getElementById('profile-content').innerHTML = `
-    <!-- Profile Header -->
-    <div class="card" style="margin-bottom:var(--sp-3);overflow:hidden;">
-      <div style="background:linear-gradient(135deg,var(--bg-surface),rgba(34,197,94,0.08));padding:var(--sp-5) var(--sp-4);text-align:center;">
-        <div class="avatar" style="width:64px;height:64px;font-size:1.5rem;margin:0 auto var(--sp-3);background:var(--accent);">${(user.username||'?')[0].toUpperCase()}</div>
-        <h2 style="font-size:1.2rem;font-weight:800;margin-bottom:var(--sp-1);">${esc(user.username)}</h2>
-        ${tgName ? `<p style="color:var(--text-muted);font-size:0.8rem;">${esc(tgName)} ${tgUsername ? '(' + esc(tgUsername) + ')' : ''}</p>` : ''}
-        ${user.email ? `<p style="color:var(--text-muted);font-size:0.75rem;">📧 ${esc(user.email)}</p>` : ''}
-        <div style="display:flex;justify-content:center;gap:var(--sp-2);margin-top:var(--sp-2);flex-wrap:wrap;">
-          ${isLinked ? '<span class="badge badge-success">🔗 Telegram</span>' : ''}
-          ${user.isAdmin ? '<span class="badge badge-warning">👑 Admin</span>' : ''}
-          ${trust.is_verified ? '<span class="badge badge-success">✓ موثق</span>' : ''}
-        </div>
+  <nav class="navbar" id="nav"></nav>
+  <main>
+    <div class="container page-pad">
+      <div id="loading" class="text-center py-3">
+        <div class="spinner"></div>
       </div>
+      <div id="profile-content" style="display:none;"></div>
     </div>
+  </main>
 
-    <!-- Stats -->
-    <div class="card" style="margin-bottom:var(--sp-3);">
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--sp-2);padding:var(--sp-2);">
-        <div style="text-align:center;"><div style="font-size:1.1rem;font-weight:800;color:var(--accent);">${trust.completed_trades || 0}</div><div style="font-size:0.65rem;color:var(--text-muted);">صفقات</div></div>
-        <div style="text-align:center;"><div style="font-size:1.1rem;font-weight:800;color:var(--accent);">${trust.trust_score || 0}</div><div style="font-size:0.65rem;color:var(--text-muted);">ثقة</div></div>
-        <div style="text-align:center;"><div style="font-size:1.1rem;font-weight:800;">${trust.rating ? Number(trust.rating).toFixed(1) : '—'}</div><div style="font-size:0.65rem;color:var(--text-muted);">تقييم</div></div>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="/assets/app.js"></script>
+  <script>
+  (async function() {
+    const user = await requireAuth();
+    if (!user) return;
+
+    let me = {};
+    try { me = await api('/auth/me') || {}; } catch {}
+    let wallet = {};
+    try { wallet = await api('/wallet') || {}; } catch {}
+
+    const username = me.username || user.username || '—';
+    const email = me.email || '';
+    const verified = me.email_verified || me.verified;
+    const isAdmin = me.role === 'ADMIN' || me.isAdmin;
+
+    document.getElementById('profile-content').innerHTML = `
+      <!-- Profile Hero -->
+      <div class="profile-hero">
+        <div class="profile-avatar">${username[0].toUpperCase()}</div>
+        <div class="profile-name">${esc(username)}</div>
+        ${verified ? '<div class="profile-badge verified">✓ موثق</div>' : '<div class="profile-badge unverified">غير موثق</div>'}
+        ${isAdmin ? '<div style="margin-top:var(--sp-2);"><span class="badge badge-primary" style="font-size:0.65rem;">Admin</span></div>' : ''}
       </div>
-    </div>
 
-    <!-- Menu Items -->
-    <div class="card" style="margin-bottom:var(--sp-3);padding:0;">
-      <a href="/market" style="display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3) var(--sp-4);border-bottom:1px solid var(--border);text-decoration:none;color:var(--text-primary);">
-        <span style="font-size:1.2rem;">🛒</span><span style="flex:1;font-weight:600;">السوق</span><span style="color:var(--text-muted);font-size:0.8rem;">→</span>
-      </a>
-      <a href="/trades" style="display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3) var(--sp-4);border-bottom:1px solid var(--border);text-decoration:none;color:var(--text-primary);">
-        <span style="font-size:1.2rem;">📋</span><span style="flex:1;font-weight:600;">صفقاتي</span><span style="color:var(--text-muted);font-size:0.8rem;">→</span>
-      </a>
-      <a href="/wallet" style="display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3) var(--sp-4);border-bottom:1px solid var(--border);text-decoration:none;color:var(--text-primary);">
-        <span style="font-size:1.2rem;">💰</span>
-        <span style="flex:1;"><span style="font-weight:600;">المحفظة</span><span style="display:block;font-size:0.7rem;color:var(--accent);">${fmtNum(wallet.available || wallet.balance || 0)} USDT</span></span>
-        <span style="color:var(--text-muted);font-size:0.8rem;">→</span>
-      </a>
-      <a href="/notifications" style="display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3) var(--sp-4);border-bottom:1px solid var(--border);text-decoration:none;color:var(--text-primary);">
-        <span style="font-size:1.2rem;">🔔</span>
-        <span style="flex:1;"><span style="font-weight:600;">الإشعارات</span>${unreadCount > 0 ? `<span style="display:inline-block;background:var(--danger);color:#fff;font-size:0.65rem;padding:1px 6px;border-radius:10px;margin-right:6px;">${unreadCount}</span>` : ''}</span>
-        <span style="color:var(--text-muted);font-size:0.8rem;">→</span>
-      </a>
-      <a href="/create_ad" style="display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3) var(--sp-4);border-bottom:1px solid var(--border);text-decoration:none;color:var(--text-primary);">
-        <span style="font-size:1.2rem;">➕</span><span style="flex:1;font-weight:600;">إنشاء إعلان</span><span style="color:var(--text-muted);font-size:0.8rem;">→</span>
-      </a>
-      <a href="/trader?u=${esc(user.username)}" style="display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3) var(--sp-4);text-decoration:none;color:var(--text-primary);">
-        <span style="font-size:1.2rem;">👤</span><span style="flex:1;font-weight:600;">ملفي العام</span><span style="color:var(--text-muted);font-size:0.8rem;">→</span>
-      </a>
-    </div>
-
-    <!-- Settings -->
-    <div class="card" style="margin-bottom:var(--sp-3);padding:0;">
-      <!-- Theme -->
-      <div style="padding:var(--sp-3) var(--sp-4);border-bottom:1px solid var(--border);">
-        <div style="font-weight:600;font-size:0.85rem;margin-bottom:var(--sp-2);">🎨 المظهر</div>
-        <div style="display:flex;gap:var(--sp-2);">
-          <button onclick="setTheme('light')" class="btn btn-sm ${getTheme()==='light'?'btn-success':'btn-ghost'}" style="flex:1;">☀️ فاتح</button>
-          <button onclick="setTheme('dark')" class="btn btn-sm ${getTheme()==='dark'?'btn-success':'btn-ghost'}" style="flex:1;">🌙 داكن</button>
-          <button onclick="setTheme('auto')" class="btn btn-sm ${getTheme()==='auto'?'btn-success':'btn-ghost'}" style="flex:1;">⚙️ تلقائي</button>
+      <!-- Stats -->
+      <div class="profile-stats">
+        <div class="stat-card">
+          <div class="stat-label">الرصيد</div>
+          <div class="stat-value success">${fmtNum(wallet.balance || 0)}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">المقفل</div>
+          <div class="stat-value warning">${fmtNum(wallet.locked || 0)}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">التقييم</div>
+          <div class="stat-value">${me.rating ? fmtNum(me.rating, 1) : '—'}</div>
         </div>
       </div>
 
-      <!-- KYC Verification -->
-      <div style="padding:var(--sp-3) var(--sp-4);border-bottom:1px solid var(--border);">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <span style="font-weight:600;font-size:0.85rem;">🪪 التوثيق الهويتي (KYC)</span>
-          <span style="font-size:0.8rem;">${kycLabels[kycStatus] || '🔴 غير موثق'}</span>
-        </div>
+      <!-- Email -->
+      ${email ? `<div class="card-section mb-3"><div class="flex-between"><span class="text-sm text-secondary">📧 ${esc(email)}</span>${verified ? '<span class="profile-badge verified" style="font-size:0.6rem;">✓ موثق</span>' : '<span class="profile-badge pending" style="font-size:0.6rem;">غير موثق</span>'}</div></div>` : ''}
 
-        ${kycStatus === 'NONE' || !verifyStatus?.request ? `
-        <div id="kyc-form-section" style="margin-top:var(--sp-3);">
-          <p style="font-size:0.75rem;color:var(--text-muted);margin-bottom:var(--sp-2);">أرسل صورة هويتك للمراجعة</p>
-          <div id="kyc-err" style="color:var(--danger);font-size:0.75rem;margin-bottom:var(--sp-2);display:none;"></div>
-          <div id="kyc-success" style="color:var(--accent);font-size:0.75rem;margin-bottom:var(--sp-2);display:none;"></div>
-
-          <div class="form-group">
-            <label class="form-label" style="font-size:0.75rem;">نوع الوثيقة</label>
-            <select class="form-input" id="kyc-doc-type" style="font-size:0.8rem;">
-              <option value="national_id">بطاقة هوية</option>
-              <option value="passport">جواز سفر</option>
-              <option value="driving_license">رخصة قيادة</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label" style="font-size:0.75rem;">الاسم الكامل</label>
-            <input class="form-input" type="text" id="kyc-full-name" placeholder="كما هو مكتوب على الوثيقة" style="font-size:0.8rem;">
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-2);">
-            <div class="form-group">
-              <label class="form-label" style="font-size:0.75rem;">الدولة</label>
-              <input class="form-input" type="text" id="kyc-country" placeholder="فلسطين" style="font-size:0.8rem;">
-            </div>
-            <div class="form-group">
-              <label class="form-label" style="font-size:0.75rem;">تاريخ الميلاد</label>
-              <input class="form-input" type="date" id="kyc-dob" style="font-size:0.8rem;">
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label" style="font-size:0.75rem;">صورة الوثيقة (JPG/PNG/PDF، حد 5MB)</label>
-            <input type="file" id="kyc-file" accept="image/jpeg,image/png,image/webp,application/pdf" style="font-size:0.75rem;width:100%;color:var(--text-primary);">
-          </div>
-          <button onclick="submitKYC()" class="btn btn-success btn-sm btn-block" id="kyc-submit-btn">📤 إرسال طلب التوثيق</button>
-        </div>
-        ` : `
-        <div style="margin-top:var(--sp-2);font-size:0.75rem;">
-          <p>النوع: ${verifyStatus.request.document_type || '—'}</p>
-          ${verifyStatus.request.full_name ? `<p>الاسم: ${esc(verifyStatus.request.full_name)}</p>` : ''}
-          ${verifyStatus.request.admin_note ? `<p style="color:var(--danger);">سبب الرفض: ${esc(verifyStatus.request.admin_note)}</p>` : ''}
-          ${verifyStatus.request.status === 'REJECTED' ? '<button onclick="resetKYC()" class="btn btn-ghost btn-sm btn-block" style="margin-top:var(--sp-2);">🔄 إعادة الإرسال</button>' : ''}
-        </div>
-        `}
+      <!-- Menu -->
+      <div class="profile-menu">
+        ${isAdmin ? '<a href="/admin" class="profile-menu-item"><div class="profile-menu-icon security">⚙</div><div class="profile-menu-label">لوحة الإدارة</div><div class="profile-menu-arrow">←</div></a>' : ''}
+        <a href="/profile?section=security" class="profile-menu-item">
+          <div class="profile-menu-icon security">🔐</div>
+          <div class="profile-menu-label">مركز الأمان</div>
+          <div class="profile-menu-arrow">←</div>
+        </a>
+        <a href="/profile?section=kyc" class="profile-menu-item">
+          <div class="profile-menu-icon kyc">🪪</div>
+          <div class="profile-menu-label">التحقق من الهوية</div>
+          <div class="profile-menu-arrow">←</div>
+        </a>
+        <a href="/profile?section=sessions" class="profile-menu-item">
+          <div class="profile-menu-icon sessions">📱</div>
+          <div class="profile-menu-label">الجلسات النشطة</div>
+          <div class="profile-menu-arrow">←</div>
+        </a>
+        <a href="/forgot_password" class="profile-menu-item">
+          <div class="profile-menu-icon password">🔑</div>
+          <div class="profile-menu-label">تغيير كلمة المرور</div>
+          <div class="profile-menu-arrow">←</div>
+        </a>
+        <button class="profile-menu-item" onclick="doLogout()" style="width:100%;cursor:pointer;border:none;background:none;text-align:right;">
+          <div class="profile-menu-icon logout">🚪</div>
+          <div class="profile-menu-label" style="color:var(--danger);">تسجيل الخروج</div>
+        </button>
       </div>
+    `;
 
-      <!-- Telegram -->
-      <div style="padding:var(--sp-3) var(--sp-4);border-bottom:1px solid var(--border);">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <span style="font-weight:600;font-size:0.85rem;">🔗 Telegram</span>
-          <span style="font-size:0.8rem;">${isLinked ? '🟢 مرتبط' : '⚪ غير مرتبط'}</span>
-        </div>
-        ${!isLinked ? '<button onclick="linkTelegram()" class="btn btn-ghost btn-sm btn-block" style="margin-top:var(--sp-2);">ربط حساب Telegram</button>' : ''}
-      </div>
-
-      <!-- Security Center -->
-      <div style="padding:var(--sp-3) var(--sp-4);border-bottom:1px solid var(--border);">
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <span style="font-weight:600;font-size:0.85rem;">🔐 مركز الأمان</span>
-        </div>
-
-        <!-- Email Verification -->
-        <div style="margin-top:var(--sp-3);padding:var(--sp-2) 0;border-bottom:1px solid var(--border);">
-          <div style="display:flex;justify-content:space-between;align-items:center;">
-            <span style="font-size:0.8rem;">📧 البريد الإلكتروني</span>
-            <span style="font-size:0.75rem;" id="email-status-badge">${user.email_verified ? '✅ موثق' : (user.email ? '⚠️ غير موثق' : '⚪ بدون بريد')}</span>
-          </div>
-          ${user.email ? `<p style="font-size:0.7rem;color:var(--text-muted);margin-top:var(--sp-1);">${esc(user.email)}</p>` : ''}
-          ${user.email && !user.email_verified ? '<button onclick="sendVerification()" class="btn btn-ghost btn-sm btn-block" style="margin-top:var(--sp-2);" id="sendVerifyBtn">📨 إرسال رابط التوثيق</button>' : ''}
-          <div id="verify-msg" style="display:none;margin-top:var(--sp-2);font-size:0.75rem;"></div>
-        </div>
-
-        <!-- Password -->
-        <div style="margin-top:var(--sp-3);padding:var(--sp-2) 0;border-bottom:1px solid var(--border);">
-          <div style="display:flex;justify-content:space-between;align-items:center;">
-            <span style="font-size:0.8rem;">🔑 كلمة المرور</span>
-            <button onclick="showSection('pw-section')" class="btn btn-ghost btn-sm">تغيير</button>
-          </div>
-          <div id="pw-section" style="display:none;margin-top:var(--sp-3);">
-            <input class="form-input" type="password" id="current-pw" placeholder="كلمة المرور الحالية" style="margin-bottom:var(--sp-2);">
-            <input class="form-input" type="password" id="new-pw" placeholder="كلمة المرور الجديدة" style="margin-bottom:var(--sp-2);">
-            <input class="form-input" type="password" id="confirm-pw" placeholder="تأكيد كلمة المرور" style="margin-bottom:var(--sp-2);">
-            <div id="pw-err" style="color:var(--danger);font-size:0.8rem;margin-bottom:var(--sp-2);display:none;"></div>
-            <button onclick="changePassword()" class="btn btn-success btn-sm btn-block">💾 حفظ</button>
-          </div>
-        </div>
-
-        <!-- Forgot Password -->
-        <div style="margin-top:var(--sp-3);padding:var(--sp-2) 0;border-bottom:1px solid var(--border);">
-          <a href="/forgot_password" style="font-size:0.8rem;color:var(--primary);text-decoration:none;">نسيت كلمة المرور؟</a>
-        </div>
-
-        <!-- Active Sessions -->
-        <div style="margin-top:var(--sp-3);padding:var(--sp-2) 0;border-bottom:1px solid var(--border);">
-          <div style="display:flex;justify-content:space-between;align-items:center;">
-            <span style="font-size:0.8rem;">📱 الجلسات النشطة</span>
-            <button onclick="loadSessions()" class="btn btn-ghost btn-sm" id="sessionsToggle">عرض</button>
-          </div>
-          <div id="sessions-section" style="display:none;margin-top:var(--sp-2);">
-            <div id="sessions-list" style="font-size:0.75rem;color:var(--text-muted);">جاري التحميل...</div>
-            <button onclick="logoutAllSessions()" class="btn btn-ghost btn-sm btn-block" style="margin-top:var(--sp-2);color:var(--danger);">🚪 تسجيل الخروج من جميع الأجهزة</button>
-          </div>
-        </div>
-
-        <!-- Login Activity -->
-        <div style="margin-top:var(--sp-3);padding:var(--sp-2) 0;">
-          <div style="display:flex;justify-content:space-between;align-items:center;">
-            <span style="font-size:0.8rem;">📋 سجل النشاط</span>
-            <button onclick="loadActivity()" class="btn btn-ghost btn-sm" id="activityToggle">عرض</button>
-          </div>
-          <div id="activity-section" style="display:none;margin-top:var(--sp-2);">
-            <div id="activity-list" style="font-size:0.75rem;color:var(--text-muted);">جاري التحميل...</div>
-          </div>
-        </div>
-      </div>
-
-      ${user.isAdmin ? `
-      <!-- Admin -->
-      <a href="/admin" style="display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3) var(--sp-4);border-bottom:1px solid var(--border);text-decoration:none;color:var(--text-primary);">
-        <span style="font-size:1.2rem;">⚙️</span><span style="flex:1;font-weight:600;">الإدارة</span><span style="color:var(--text-muted);font-size:0.8rem;">→</span>
-      </a>
-      ` : ''}
-
-      <!-- Logout -->
-      <button onclick="doLogout()" style="display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3) var(--sp-4);width:100%;border:none;background:none;cursor:pointer;color:var(--danger);font-size:0.9rem;font-weight:600;text-align:right;">
-        <span style="font-size:1.2rem;">🚪</span><span style="flex:1;">تسجيل الخروج</span>
-      </button>
-    </div>
-  `;
-
-  document.getElementById('loading').style.display = 'none';
-  document.getElementById('profile-content').style.display = 'block';
-
-  try {
-    const prefsRes = await api('/telegram/prefs');
-    const prefs = prefsRes.prefs || {};
-  } catch {}
-})();
-
-window.showSection = function(id) {
-  const el = document.getElementById(id);
-  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
-};
-
-window.linkTelegram = async function() {
-  try {
-    const res = await api('/auth/telegram/link', { method: 'POST' });
-    if (res && res.ok && res.code) {
-      alert('أرسل هذا الكود للبوت:\n\n/link ' + res.code);
-      window.open('https://t.me/usdt_p2p_palestine_bot?start=link_' + res.code, '_blank');
-    }
-  } catch(e) { showToast('خطأ'); }
-};
-
-window.changePassword = async function() {
-  const current = document.getElementById('current-pw').value;
-  const newPw = document.getElementById('new-pw').value;
-  const confirm = document.getElementById('confirm-pw').value;
-  const errEl = document.getElementById('pw-err');
-  if (!current || !newPw || !confirm) { errEl.textContent = 'أدخل جميع البيانات'; errEl.style.display = 'block'; return; }
-  if (newPw !== confirm) { errEl.textContent = 'كلمتا المرور غير متطابقتين'; errEl.style.display = 'block'; return; }
-  if (newPw.length < 6) { errEl.textContent = '6 أحرف على الأقل'; errEl.style.display = 'block'; return; }
-  errEl.style.display = 'none';
-  const r = await api('/auth/change-password', { method: 'POST', body: { current_password: current, new_password: newPw } });
-  if (r && r.ok) { showToast('تم التغيير بنجاح'); document.getElementById('pw-section').style.display = 'none'; }
-  else { errEl.textContent = r?.error || 'خطأ'; errEl.style.display = 'block'; }
-};
-
-window.submitKYC = async function() {
-  const docType = document.getElementById('kyc-doc-type').value;
-  const fullName = document.getElementById('kyc-full-name').value.trim();
-  const country = document.getElementById('kyc-country').value.trim();
-  const dob = document.getElementById('kyc-dob').value;
-  const fileInput = document.getElementById('kyc-file');
-  const errEl = document.getElementById('kyc-err');
-  const successEl = document.getElementById('kyc-success');
-  const btn = document.getElementById('kyc-submit-btn');
-
-  errEl.style.display = 'none';
-  successEl.style.display = 'none';
-
-  if (!fullName || fullName.length < 3) { errEl.textContent = 'أدخل الاسم الكامل'; errEl.style.display = 'block'; return; }
-  if (!country) { errEl.textContent = 'أدخل الدولة'; errEl.style.display = 'block'; return; }
-  if (!dob) { errEl.textContent = 'أدخل تاريخ الميلاد'; errEl.style.display = 'block'; return; }
-  if (!fileInput.files || !fileInput.files[0]) { errEl.textContent = 'ارفع صورة الوثيقة'; errEl.style.display = 'block'; return; }
-
-  btn.disabled = true;
-  btn.textContent = 'جاري الرفع...';
-
-  try {
-    // Step 1: Upload document to R2
-    const formData = new FormData();
-    formData.append('file', fileInput.files[0]);
-    const csrf = localStorage.getItem('usp_csrf') || '';
-    const uploadRes = await fetch('/api/uploads/kyc-documents', {
-      method: 'POST',
-      headers: { 'X-CSRF-Token': csrf },
-      credentials: 'same-origin',
-      body: formData,
-    });
-    const uploadData = await uploadRes.json();
-
-    if (!uploadData.ok || !uploadData.upload_id) {
-      errEl.textContent = uploadData.error || 'فشل رفع الملف';
-      errEl.style.display = 'block';
-      btn.disabled = false;
-      btn.textContent = '📤 إرسال طلب التوثيق';
-      return;
-    }
-
-    // Step 2: Submit KYC request with upload_id
-    const kycRes = await api('/v2/verify/request', {
-      method: 'POST',
-      body: {
-        document_type: docType,
-        upload_id: uploadData.upload_id,
-        full_name: fullName,
-        country: country,
-        dob: dob,
-      },
-    });
-
-    if (kycRes && kycRes.ok) {
-      successEl.textContent = '✅ تم إرسال طلب التوثيق بنجاح — ستتلقى إشعاراً عند المراجعة.';
-      successEl.style.display = 'block';
-      document.getElementById('kyc-form-section').style.display = 'none';
-      hapticFeedback('success');
-    } else {
-      errEl.textContent = kycRes?.error || 'خطأ في الإرسال';
-      errEl.style.display = 'block';
-    }
-  } catch(e) {
-    errEl.textContent = 'خطأ في الاتصال';
-    errEl.style.display = 'block';
-  }
-  btn.disabled = false;
-  btn.textContent = '📤 إرسال طلب التوثيق';
-};
-
-window.resetKYC = function() {
-  // Allow resubmission by reloading the profile
-  location.reload();
-};
-
-// ============================================================
-// Security Center functions
-// ============================================================
-
-window.sendVerification = async function() {
-  const btn = document.getElementById('sendVerifyBtn');
-  const msg = document.getElementById('verify-msg');
-  btn.disabled = true;
-  btn.textContent = 'جاري الإرسال...';
-  const r = await api('/auth/send-verification', { method: 'POST' });
-  btn.disabled = false;
-  btn.textContent = '📨 إرسال رابط التوثيق';
-  if (r && r.ok) {
-    msg.textContent = '✅ ' + (r.message || 'تم الإرسال');
-    msg.style.color = 'var(--accent)';
-    msg.style.display = 'block';
-    btn.style.display = 'none';
-  } else {
-    msg.textContent = '❌ ' + (r?.error || 'خطأ');
-    msg.style.color = 'var(--danger)';
-    msg.style.display = 'block';
-  }
-};
-
-window.loadSessions = async function() {
-  const section = document.getElementById('sessions-section');
-  const list = document.getElementById('sessions-list');
-  if (section.style.display === 'none') {
-    section.style.display = 'block';
-    list.innerHTML = 'جاري التحميل...';
-    const r = await api('/security/sessions');
-    if (r && r.ok && r.sessions) {
-      if (r.sessions.length === 0) {
-        list.innerHTML = '<p>لا توجد جلسات مسجلة</p>';
-      } else {
-        list.innerHTML = r.sessions.map(s => {
-          const icon = (s.user_agent || '').includes('Mobile') ? '📱' : '💻';
-          const status = s.revoked ? '<span style="color:var(--danger);">مهملة</span>' : (s.is_current ? '<span style="color:var(--accent);">الحالية</span>' : '<span style="color:var(--text-muted);">نشطة</span>');
-          const time = s.last_active ? fmtDate(s.last_active) : fmtDate(s.created_at);
-          return `<div style="padding:var(--sp-2) 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
-            <span>${icon} ${status}</span>
-            <span style="font-size:0.7rem;color:var(--text-muted);">${time}</span>
-          </div>`;
-        }).join('');
-      }
-    } else {
-      list.innerHTML = '<p>خطأ في التحميل</p>';
-    }
-  } else {
-    section.style.display = 'none';
-  }
-};
-
-window.logoutAllSessions = async function() {
-  if (!confirm('هل تريد تسجيل الخروج من جميع الأجهزة الأخرى؟')) return;
-  const r = await api('/security/logout-all', { method: 'POST' });
-  if (r && r.ok) {
-    showToast('تم تسجيل الخروج من جميع الأجهزة');
-    document.getElementById('sessions-section').style.display = 'none';
-  } else {
-    showToast(r?.error || 'خطأ', 4000);
-  }
-};
-
-window.loadActivity = async function() {
-  const section = document.getElementById('activity-section');
-  const list = document.getElementById('activity-list');
-  if (section.style.display === 'none') {
-    section.style.display = 'block';
-    list.innerHTML = 'جاري التحميل...';
-    const r = await api('/security/activity?limit=15');
-    if (r && r.ok && r.activity) {
-      if (r.activity.length === 0) {
-        list.innerHTML = '<p>لا يوجد نشاط مسجل</p>';
-      } else {
-        const actionLabels = {
-          'LOGIN': '🔑 تسجيل دخول',
-          'REGISTER': '📝 تسجيل حساب جديد',
-          'ADMIN_LOGIN': '⚙️ دخول الإدارة',
-          'TELEGRAM_LOGIN': '🤖 تسجيل عبر Telegram',
-          'PASSWORD_CHANGED': '🔑 تغيير كلمة المرور',
-          'PASSWORD_RESET': '🔑 إعادة تعيين كلمة المرور',
-          'PASSWORD_RESET_REQUESTED': '🔑 طلب إعادة تعيين',
-          'EMAIL_VERIFY_SENT': '📧 إرسال توثيق البريد',
-          'EMAIL_VERIFIED': '✅ توثيق البريد',
-          'LOGOUT_ALL': '🚪 تسجيل خروج شامل',
-        };
-        list.innerHTML = r.activity.map(a => {
-          const label = actionLabels[a.action] || a.action;
-          return `<div style="padding:var(--sp-2) 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
-            <span>${label}</span>
-            <span style="font-size:0.7rem;color:var(--text-muted);">${fmtDate(a.created_at)}</span>
-          </div>`;
-        }).join('');
-      }
-    } else {
-      list.innerHTML = '<p>خطأ في التحميل</p>';
-    }
-  } else {
-    section.style.display = 'none';
-  }
-};
-</script>
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('profile-content').style.display = 'block';
+  })();
+  </script>
 </body>
 </html>

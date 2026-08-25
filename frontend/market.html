@@ -3,44 +3,112 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#0a0e1a">
+  <meta name="theme-color" content="#07090D">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>سوق USDT — USDT P2P Palestine</title>
   <link rel="stylesheet" href="/assets/design-system.css">
   <link rel="manifest" href="/manifest.json">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <script>(function(){var t=localStorage.getItem("usp_theme")||"dark";if(t==="auto")t=window.matchMedia("(prefers-color-scheme:light)").matches?"light":"dark";document.documentElement.setAttribute("data-theme",t);})();</script>
+  <style>
+    .market-hero{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:var(--sp-4);margin-bottom:var(--sp-3);}
+    .market-hero-title{font-size:1.05rem;font-weight:800;color:var(--text-primary);margin-bottom:var(--sp-2);}
+    .market-prices{display:flex;gap:var(--sp-3);margin-top:var(--sp-3);}
+    .market-price-item{flex:1;text-align:center;}
+    .market-price-label{font-size:0.65rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;}
+    .market-price-value{font-size:1.1rem;font-weight:800;color:var(--text-primary);}
+    .market-price-value.buy{color:var(--success);}
+    .market-price-value.sell{color:var(--danger);}
+    .ad-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:var(--sp-4);margin-bottom:var(--sp-3);transition:background 0.15s;}
+    .ad-card:hover{background:var(--bg-card-hover);}
+    .ad-card-top{display:flex;align-items:center;gap:var(--sp-2);margin-bottom:var(--sp-3);}
+    .ad-avatar{width:36px;height:36px;border-radius:50%;background:var(--primary-dim);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--primary);flex-shrink:0;}
+    .ad-seller-info{flex:1;}
+    .ad-seller-name{font-size:0.85rem;font-weight:700;color:var(--text-primary);}
+    .ad-seller-meta{font-size:0.7rem;color:var(--text-muted);margin-top:2px;}
+    .ad-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--sp-2);margin-bottom:var(--sp-3);}
+    .ad-stat{background:var(--bg-input);border-radius:var(--radius-sm);padding:var(--sp-2);text-align:center;}
+    .ad-stat-label{font-size:0.6rem;color:var(--text-muted);margin-bottom:2px;}
+    .ad-stat-value{font-size:0.82rem;font-weight:700;color:var(--text-primary);}
+    .ad-stat-value.highlight{color:var(--primary);}
+    .ad-payments{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:var(--sp-3);}
+    .ad-pay-tag{font-size:0.65rem;padding:3px 8px;border-radius:8px;background:var(--bg-input);color:var(--text-secondary);border:1px solid var(--border-light);}
+    .verified-badge{color:var(--success);font-size:0.7rem;font-weight:600;display:inline-flex;align-items:center;gap:3px;}
+    @media(max-width:380px){.ad-stats{grid-template-columns:1fr 1fr;}.market-price-value{font-size:0.95rem;}}
+  </style>
 </head>
 <body>
-  <nav class="navbar" id="nav"><div class="navbar-inner"><a href="/" class="navbar-brand">🇵🇸 <span>USDT</span> P2P</a><div class="navbar-links"></div></div></nav>
-  <main><div class="container">
-    <div class="page-header" style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:var(--sp-5);margin-bottom:var(--sp-4);text-align:center;">
-      <h2 style="font-size:1.1rem;font-weight:800;">سوق USDT</h2>
-      <p style="color:var(--text-muted);font-size:0.8rem;margin-top:var(--sp-1);">السعر الحالي: <span style="color:var(--primary);font-weight:700;" id="livePrice">— ₪</span></p>
-    </div>
-    <!-- Filters -->
-    <div class="card" style="padding:var(--sp-3);margin-bottom:var(--sp-3);">
-      <div style="display:flex;gap:var(--sp-2);flex-wrap:wrap;">
-        <input type="text" id="searchInput" placeholder="🔍 بحث..." class="form-input" style="flex:2;min-width:120px;" oninput="filterAds()">
-        <select id="typeFilter" class="form-input" style="flex:1;min-width:90px;" onchange="filterAds()">
-          <option value="">الكل</option><option value="BUY">شراء</option><option value="SELL">بيع</option>
-        </select>
-        <select id="sortFilter" class="form-input" style="flex:1;min-width:90px;" onchange="filterAds()">
-          <option value="price">السعر</option><option value="rating">التقييم</option><option value="newest">الأحدث</option>
-        </select>
+  <nav class="navbar" id="nav"><div class="navbar-inner"><a href="/" class="navbar-brand"><span>USDT</span> P2P</a><div class="navbar-links"></div></div></nav>
+  <main>
+    <div class="container page-pad">
+
+      <!-- Market Hero -->
+      <div class="market-hero">
+        <div class="flex-between">
+          <div class="market-hero-title">سوق USDT</div>
+          <div class="badge-live" id="mktStatus">مباشر</div>
+        </div>
+        <div class="flex-center" style="margin-top:var(--sp-2);">
+          <div class="price-display">— <span class="currency">ILS</span></div>
+        </div>
+        <div class="market-prices">
+          <div class="market-price-item">
+            <div class="market-price-label">شراء</div>
+            <div class="market-price-value buy" id="mktBuy">—</div>
+          </div>
+          <div class="market-price-item">
+            <div class="market-price-label">السوق</div>
+            <div class="market-price-value" id="mktMarket">—</div>
+          </div>
+          <div class="market-price-item">
+            <div class="market-price-label">بيع</div>
+            <div class="market-price-value sell" id="mktSell">—</div>
+          </div>
+        </div>
+        <div class="text-center mt-2">
+          <span class="text-xs text-muted" id="mktChange"></span>
+          <span class="text-xs text-muted" id="mktUpdated"></span>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="card-section">
+        <div class="filter-bar">
+          <input type="text" id="searchInput" placeholder="بحث..." class="form-input" oninput="filterAds()">
+          <select id="typeFilter" class="form-input" onchange="filterAds()">
+            <option value="">الكل</option><option value="BUY">شراء</option><option value="SELL">بيع</option>
+          </select>
+          <select id="sortFilter" class="form-input" onchange="filterAds()">
+            <option value="price">أفضل سعر</option><option value="rating">الموثوقية</option><option value="newest">الأحدث</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Ads List -->
+      <div id="adsList">
+        <div class="card-section"><div class="spinner"></div></div>
+      </div>
+
+      <!-- Empty state -->
+      <div id="emptyState" style="display:none;">
+        <div class="empty-state">
+          <div class="empty-state-icon">📭</div>
+          <div class="empty-state-text">لا توجد إعلانات حالياً</div>
+          <a href="/create_ad" class="btn btn-primary" style="margin-top:var(--sp-3);">+ إنشاء إعلان</a>
+        </div>
+      </div>
+
+      <!-- Create Ad Button -->
+      <div id="createAdBtn" style="display:none;text-align:center;margin-top:var(--sp-3);">
+        <a href="/create_ad" class="btn btn-primary">+ إنشاء إعلان</a>
       </div>
     </div>
-    <!-- Ads List -->
-    <div id="adsList"><div class="skeleton" style="height:120px;"></div></div>
-    <div id="createAdBtn" style="display:none;margin-top:var(--sp-4);text-align:center;">
-      <a href="/create_ad" class="btn btn-primary btn-block">+ إنشاء إعلان</a>
-    </div>
-  </div></main>
+  </main>
 
   <!-- Buy Modal -->
-  <div id="buyModal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:var(--sp-3);" onclick="if(event.target===this)closeBuyModal()">
+  <div id="buyModal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.6);align-items:center;justify-content:center;padding:var(--sp-3);" onclick="if(event.target===this)closeBuyModal()">
     <div class="card" style="max-width:420px;width:100%;max-height:90vh;overflow-y:auto;">
-      <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
+      <div class="card-header flex-between">
         <h3 id="buyModalTitle">شراء USDT</h3>
         <button class="btn btn-ghost btn-sm" onclick="closeBuyModal()" style="font-size:1.2rem;">✕</button>
       </div>
@@ -52,12 +120,38 @@
   <script src="/assets/app.js"></script>
   <script>
     let allAds = [];
+    let currentPrice = 3.7;
 
     async function load() {
-      const [market, priceResp] = await Promise.all([api('/market'), api('/market/price')]);
-      allAds = (market?.ads || []).filter(a => a.status === 'OPEN');
-      const price = priceResp?.price?.usdt_ils || priceResp?.usdt_ils || 3.7;
-      document.getElementById('livePrice').textContent = fmtNum(price, 2) + ' ₪';
+      const [marketResp, priceResp, statusResp] = await Promise.all([
+        api('/market'), api('/market/price'), api('/market/status').catch(() => null)
+      ]);
+      allAds = (marketResp?.ads || []).filter(a => a.status === 'OPEN');
+
+      // Update price display
+      const priceData = priceResp?.price || priceResp;
+      currentPrice = priceData?.usdt_ils || 3.7;
+      const buyPrice = priceData?.buy_price || currentPrice;
+      const sellPrice = priceData?.sell_price || currentPrice;
+      const change = priceData?.change_24h || 0;
+
+      document.querySelector('.price-display').innerHTML = fmtNum(currentPrice, 2) + ' <span class="currency">ILS</span>';
+      document.getElementById('mktBuy').textContent = fmtNum(buyPrice, 2);
+      document.getElementById('mktMarket').textContent = fmtNum(currentPrice, 2);
+      document.getElementById('mktSell').textContent = fmtNum(sellPrice, 2);
+
+      const changeEl = document.getElementById('mktChange');
+      if (change !== 0) {
+        changeEl.textContent = (change >= 0 ? '+' : '') + change.toFixed(2) + '% اليوم';
+        changeEl.style.color = change >= 0 ? 'var(--success)' : 'var(--danger)';
+      }
+
+      // Status
+      if (statusResp?.status === 'stale') {
+        document.getElementById('mktStatus').className = 'badge-stale';
+        document.getElementById('mktStatus').textContent = '⚠️ غير متاح مؤقتاً';
+      }
+
       if (isLoggedIn()) document.getElementById('createAdBtn').style.display = 'block';
       filterAds();
     }
@@ -74,86 +168,87 @@
       else filtered.sort((a,b) => (b.id||0) - (a.id||0));
 
       const list = document.getElementById('adsList');
+      const empty = document.getElementById('emptyState');
+
       if (!filtered.length) {
-        list.innerHTML = '<div class="card" style="text-align:center;padding:var(--sp-8);"><div style="font-size:2rem;margin-bottom:var(--sp-2);">📭</div><div style="color:var(--text-muted);">لا توجد إعلانات حالياً</div></div>';
+        list.innerHTML = '';
+        empty.style.display = 'block';
         return;
       }
+      empty.style.display = 'none';
+
       list.innerHTML = filtered.map(a => {
         const isSell = a.type === 'SELL';
         const tradeCount = a.trades_count || 0;
         const rating = a.rating ? fmtNum(a.rating, 1) : '—';
-        const verified = a.verified ? ' <span style="color:var(--success);">✓</span>' : '';
-        const minLabel = a.min_amount ? `${fmtNum(a.min_amount)} USDT` : '—';
-        const maxLabel = a.max_amount ? `${fmtNum(a.max_amount)} USDT` : fmtNum(a.amount);
+        const verified = a.verified ? '<span class="verified-badge">✓ موثق</span>' : '';
+        const minLabel = a.min_amount ? fmtNum(a.min_amount) : '—';
+        const maxLabel = a.max_amount ? fmtNum(a.max_amount) : fmtNum(a.amount);
+        const pay = a.payment || '';
         return `
-        <div class="ad-card" style="margin-bottom:var(--sp-3);">
-          <div class="ad-card-seller">
-            <div class="avatar avatar-sm">${(a.user||'?')[0].toUpperCase()}</div>
-            <div style="flex:1;">
-              <div style="font-weight:700;font-size:0.9rem;">${esc(a.user)}${verified}</div>
-              <div style="font-size:0.7rem;color:var(--text-muted);">${esc(a.payment || '')} · ⭐ ${rating} · ${tradeCount} صفقة</div>
+        <div class="ad-card">
+          <div class="ad-card-top">
+            <div class="ad-avatar">${(a.user||'?')[0].toUpperCase()}</div>
+            <div class="ad-seller-info">
+              <div class="ad-seller-name">${esc(a.user)} ${verified}</div>
+              <div class="ad-seller-meta">⭐ ${rating} · ${tradeCount} صفقة</div>
             </div>
-            <span class="badge ${isSell?'badge-primary':'badge-success'}">${isSell?'💰 بيع':'🛒 شراء'}</span>
+            <span class="badge ${isSell?'badge-primary':'badge-success'}" style="font-size:0.7rem;">${isSell?'بيع':'شراء'}</span>
           </div>
-          <div style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:var(--sp-2);">📝 ${esc(a.title || a.type + ' USDT')}</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--sp-2);margin-bottom:var(--sp-3);">
-            <div style="background:var(--bg-input);border-radius:var(--radius-sm);padding:var(--sp-2);text-align:center;">
-              <div style="font-size:0.65rem;color:var(--text-muted);">💰 الكمية</div>
-              <div style="font-weight:700;color:var(--accent-light);font-size:.85rem;">${fmtNum(a.amount)}</div>
+          <div class="ad-stats">
+            <div class="ad-stat">
+              <div class="ad-stat-label">السعر</div>
+              <div class="ad-stat-value highlight">${fmtNum(a.price)} ₪</div>
             </div>
-            <div style="background:var(--bg-input);border-radius:var(--radius-sm);padding:var(--sp-2);text-align:center;">
-              <div style="font-size:0.65rem;color:var(--text-muted);">💲 السعر</div>
-              <div style="font-weight:700;color:var(--text);font-size:.9rem;">${fmtNum(a.price)} ₪</div>
+            <div class="ad-stat">
+              <div class="ad-stat-label">المتاح</div>
+              <div class="ad-stat-value">${fmtNum(a.amount)} USDT</div>
             </div>
-            <div style="background:var(--bg-input);border-radius:var(--radius-sm);padding:var(--sp-2);text-align:center;">
-              <div style="font-size:0.65rem;color:var(--text-muted);">📊 الحد</div>
-              <div style="font-weight:600;color:var(--text-secondary);font-size:.75rem;">${minLabel} - ${maxLabel}</div>
+            <div class="ad-stat">
+              <div class="ad-stat-label">الحد</div>
+              <div class="ad-stat-value">${minLabel} - ${maxLabel}</div>
             </div>
           </div>
+          ${pay ? '<div class="ad-payments">' + pay.split('/').map(p => '<span class="ad-pay-tag">' + esc(p.trim()) + '</span>').join('') + '</div>' : ''}
           <button class="btn ${isSell?'btn-primary':'btn-success'} btn-block" onclick="openBuyModal(${a.id}, '${isSell?'SELL':'BUY'}', ${a.amount}, ${a.price}, '${esc(a.user)}', ${a.min_amount||0}, ${a.max_amount||a.amount})">
-            ${isSell?'🛒 شراء':'💰 بيع'} USDT
+            ${isSell?'شراء':'بيع'} USDT
           </button>
         </div>`;
       }).join('');
     }
 
-    // ── Buy Modal ──
     window.openBuyModal = function(adId, type, maxAmount, price, seller, minAmount, maxAmountLimit) {
       if (!isLoggedIn()) { window.location.href = '/login?returnTo=' + encodeURIComponent('/market'); return; }
       const isSell = type === 'SELL';
-      const title = isSell ? '🛒 شراء USDT' : '💰 بيع USDT';
+      const title = isSell ? 'شراء USDT' : 'بيع USDT';
       document.getElementById('buyModalTitle').textContent = title;
       document.getElementById('buyModalBody').innerHTML = `
-        <div style="margin-bottom:var(--sp-3);">
-          <div style="font-size:.85rem;color:var(--text-muted);margin-bottom:.25rem;">التاجر</div>
-          <div style="font-weight:700;">${esc(seller)} <span style="color:var(--text-muted);font-weight:400;">— ${fmtNum(price)} ₪/USDT</span></div>
+        <div class="mb-3">
+          <div class="text-sm text-muted mb-1">التاجر</div>
+          <div class="font-bold">${esc(seller)} <span class="text-muted font-normal">${fmtNum(price)} ₪/USDT</span></div>
         </div>
         <div class="form-group">
           <label class="form-label">المبلغ (USDT)</label>
           <input type="number" id="buyAmount" class="form-input" min="${minAmount}" max="${maxAmountLimit}" step="0.01" value="${Math.min(maxAmount, maxAmountLimit)}" placeholder="أدخل المبلغ">
-          <div style="font-size:.75rem;color:var(--text-muted);margin-top:.25rem;">الحد: ${fmtNum(minAmount)} - ${fmtNum(maxAmountLimit)} USDT</div>
+          <div class="text-xs text-muted mt-1">الحد: ${fmtNum(minAmount)} - ${fmtNum(maxAmountLimit)} USDT</div>
         </div>
-        <div id="buyTotal" style="background:var(--bg-input);border-radius:var(--radius-sm);padding:var(--sp-3);margin-bottom:var(--sp-3);text-align:center;">
-          <div style="font-size:.75rem;color:var(--text-muted);">الإجمالي</div>
-          <div style="font-size:1.2rem;font-weight:700;color:var(--accent-light);">${fmtNum((Math.min(maxAmount, maxAmountLimit) * price).toFixed(2))} ₪</div>
+        <div id="buyTotal" class="stat-card mb-3">
+          <div class="stat-label">الإجمالي</div>
+          <div class="stat-value success text-xl">${fmtNum((Math.min(maxAmount, maxAmountLimit) * price).toFixed(2))} ₪</div>
         </div>
         <button class="btn ${isSell?'btn-primary':'btn-success'} btn-block" onclick="executeBuy(${adId})" id="buyBtn">
           تأكيد ${isSell?'الشراء':'البيع'}
         </button>
-        <div id="buyError" style="color:var(--error);font-size:.8rem;margin-top:var(--sp-2);display:none;"></div>
+        <div id="buyError" class="text-danger text-sm mt-2" style="display:none;"></div>
       `;
-
-      // Update total on amount change
       document.getElementById('buyAmount').addEventListener('input', function() {
         const amt = parseFloat(this.value) || 0;
         const total = (amt * price).toFixed(2);
         document.getElementById('buyTotal').innerHTML = `
-          <div style="font-size:.75rem;color:var(--text-muted);">الإجمالي</div>
-          <div style="font-size:1.2rem;font-weight:700;color:var(--accent-light);">${fmtNum(total)} ₪</div>`;
+          <div class="stat-label">الإجمالي</div>
+          <div class="stat-value success text-xl">${fmtNum(total)} ₪</div>`;
       });
-
-      const modal = document.getElementById('buyModal');
-      modal.style.display = 'flex';
+      document.getElementById('buyModal').style.display = 'flex';
     };
 
     window.closeBuyModal = function() {
@@ -165,27 +260,17 @@
       const errEl = document.getElementById('buyError');
       const amount = parseFloat(document.getElementById('buyAmount').value);
       if (!amount || amount <= 0) { errEl.textContent = 'أدخل مبلغ صحيح'; errEl.style.display = 'block'; return; }
-
       btn.disabled = true;
       btn.textContent = 'جاري المعالجة...';
       errEl.style.display = 'none';
-
       try {
         const res = await api(`/market/trades/buy/${adId}`, 'POST', { amount });
-        if (res.error) {
-          errEl.textContent = res.error;
-          errEl.style.display = 'block';
-          btn.disabled = false;
-          btn.textContent = 'تأكيد الشراء';
-          return;
-        }
+        if (res.error) { errEl.textContent = res.error; errEl.style.display = 'block'; btn.disabled = false; btn.textContent = 'تأكيد الشراء'; return; }
         closeBuyModal();
         window.location.href = `/trade?id=${res.trade_id}`;
       } catch(e) {
-        errEl.textContent = 'حدث خطأ، حاول مرة أخرى';
-        errEl.style.display = 'block';
-        btn.disabled = false;
-        btn.textContent = 'تأكيد الشراء';
+        errEl.textContent = 'حدث خطأ، حاول مرة أخرى'; errEl.style.display = 'block';
+        btn.disabled = false; btn.textContent = 'تأكيد الشراء';
       }
     };
 

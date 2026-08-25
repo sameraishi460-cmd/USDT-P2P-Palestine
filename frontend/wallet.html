@@ -3,215 +3,174 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#0a0e1a">
+  <meta name="theme-color" content="#07090D">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>المحفظة — USDT P2P Palestine</title>
   <link rel="stylesheet" href="/assets/design-system.css">
   <link rel="manifest" href="/manifest.json">
-<script>(function(){var t=localStorage.getItem("usp_theme")||"dark";if(t==="auto")t=window.matchMedia("(prefers-color-scheme:light)").matches?"light":"dark";document.documentElement.setAttribute("data-theme",t);})();</script>
+  <script>(function(){var t=localStorage.getItem("usp_theme")||"dark";if(t==="auto")t=window.matchMedia("(prefers-color-scheme:light)").matches?"light":"dark";document.documentElement.setAttribute("data-theme",t);})();</script>
+  <style>
+    .wallet-balance{background:linear-gradient(135deg,var(--bg-surface),rgba(0,214,160,0.06));border:1px solid var(--border);border-radius:var(--radius-lg);padding:var(--sp-5) var(--sp-4);text-align:center;position:relative;overflow:hidden;margin-bottom:var(--sp-3);}
+    .wallet-balance::before{content:'';position:absolute;top:-60px;right:-40px;width:200px;height:200px;background:radial-gradient(circle,rgba(0,214,160,0.06),transparent 70%);pointer-events:none;}
+    .wallet-balance-label{font-size:0.75rem;color:var(--text-muted);margin-bottom:var(--sp-1);}
+    .wallet-balance-value{font-size:2rem;font-weight:900;color:var(--primary);margin-bottom:var(--sp-3);}
+    .wallet-balance-value span{font-size:0.85rem;font-weight:600;color:var(--text-muted);}
+    .wallet-split{display:flex;gap:var(--sp-4);justify-content:center;}
+    .wallet-split-item{text-align:center;}
+    .wallet-split-label{font-size:0.65rem;color:var(--text-muted);margin-bottom:2px;}
+    .wallet-split-value{font-size:1rem;font-weight:700;}
+    .wallet-split-value.available{color:var(--primary);}
+    .wallet-split-value.locked{color:var(--warning);}
+    .wallet-actions{display:flex;gap:var(--sp-2);margin-bottom:var(--sp-4);}
+    .wallet-action-btn{flex:1;padding:12px;border-radius:var(--radius);font-size:0.85rem;font-weight:700;text-align:center;text-decoration:none;border:none;cursor:pointer;transition:all 0.15s;}
+    .wallet-action-deposit{background:var(--primary);color:#07090D;}
+    .wallet-action-deposit:hover{background:var(--primary-hover);}
+    .wallet-action-withdraw{background:var(--bg-card);color:var(--text-primary);border:1px solid var(--border);}
+    .wallet-action-withdraw:hover{background:var(--bg-card-hover);}
+    .tx-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:var(--sp-3);margin-bottom:var(--sp-2);display:flex;align-items:center;gap:var(--sp-3);}
+    .tx-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+    .tx-icon.deposit{background:rgba(0,214,160,0.10);color:var(--primary);}
+    .tx-icon.withdraw{background:rgba(255,92,108,0.10);color:var(--danger);}
+    .tx-icon.trade{background:rgba(108,99,255,0.10);color:var(--purple);}
+    .tx-info{flex:1;min-width:0;}
+    .tx-title{font-size:0.85rem;font-weight:600;color:var(--text-primary);}
+    .tx-date{font-size:0.7rem;color:var(--text-muted);margin-top:2px;}
+    .tx-amount{font-size:0.9rem;font-weight:700;white-space:nowrap;}
+    .tx-amount.positive{color:var(--primary);}
+    .tx-amount.negative{color:var(--danger);}
+    .tx-status{font-size:0.65rem;padding:2px 8px;border-radius:6px;font-weight:600;}
+    .tx-status.completed{background:var(--success-dim);color:var(--success);}
+    .tx-status.pending{background:var(--warning-dim);color:var(--warning);}
+    @media(max-width:380px){.wallet-balance-value{font-size:1.6rem;}.wallet-split{gap:var(--sp-3);}}
+  </style>
 </head>
 <body>
+  <nav class="navbar" id="nav"></nav>
+  <main>
+    <div class="container page-pad">
+      <div id="loading" class="text-center py-3">
+        <div class="spinner"></div>
+        <p class="text-muted mt-2">جاري تحميل المحفظة...</p>
+      </div>
+      <div id="wallet-content" style="display:none"></div>
+    </div>
+  </main>
 
-<nav class="navbar" id="nav"></nav>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="/assets/app.js"></script>
+  <script>
+  (async function() {
+    const user = await requireAuth();
+    if (!user) return;
 
-<main>
-<div class="container" style="padding-top:var(--sp-4);">
+    let wallet = {};
+    try { wallet = await api('/wallet') || {}; } catch {}
 
-  <div id="loading" style="text-align:center;padding:var(--sp-8);">
-    <div class="spinner" style="margin:0 auto var(--sp-3);"></div>
-    <p style="color:var(--text-muted);">جاري تحميل المحفظة...</p>
-  </div>
+    const balance = wallet.balance || 0;
+    const locked = wallet.locked || 0;
+    const total = wallet.total || (balance + locked);
 
-  <div id="wallet-content" style="display:none"></div>
+    let history = [];
+    try { const hRes = await api('/wallet/history'); history = hRes.history || []; } catch {}
 
-</div>
-</main>
-
-
-
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script src="/assets/app.js"></script>
-<script>
-(async function() {
-  const user = await requireAuth();
-  if (!user) return;
-
-  // Fetch wallet data
-  let wallet = {};
-  try { wallet = await api('/wallet') || {}; } catch {}
-
-  const balance = wallet.balance || 0;
-  const locked = wallet.locked || 0;
-  const total = wallet.total || (balance + locked);
-  const depositAddress = wallet.deposit_address || '';
-  const network = wallet.network || 'BNB Smart Chain (BEP-20)';
-
-  // Fetch history
-  let history = [];
-  try { const hRes = await api('/wallet/history'); history = hRes.history || []; } catch {}
-
-  // Fetch deposits
-  let deposits = [];
-  try { const dRes = await api('/wallet/deposit-info'); deposits = dRes.deposits || []; } catch {}
-
-  document.getElementById('wallet-content').innerHTML = `
-    <!-- Balance Card -->
-    <div class="card" style="margin-bottom:var(--sp-3);overflow:hidden;">
-      <div style="background:linear-gradient(135deg,var(--bg-surface),rgba(34,197,94,0.08));padding:var(--sp-5) var(--sp-4);text-align:center;">
-        <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:var(--sp-1);">💰 إجمالي الرصيد</div>
-        <div style="font-size:2rem;font-weight:900;color:var(--accent);margin-bottom:var(--sp-3);">${fmtNum(total)} <span style="font-size:0.9rem;">USDT</span></div>
-        <div style="display:flex;gap:var(--sp-3);justify-content:center;">
-          <div style="text-align:center;">
-            <div style="font-size:0.65rem;color:var(--text-muted);">المتاح</div>
-            <div style="font-size:1rem;font-weight:700;color:var(--accent);">${fmtNum(balance)}</div>
+    document.getElementById('wallet-content').innerHTML = `
+      <!-- Balance Card -->
+      <div class="wallet-balance">
+        <div class="wallet-balance-label">إجمالي الرصيد</div>
+        <div class="wallet-balance-value">${fmtNum(total)} <span>USDT</span></div>
+        <div class="wallet-split">
+          <div class="wallet-split-item">
+            <div class="wallet-split-label">المتاح</div>
+            <div class="wallet-split-value available">${fmtNum(balance)}</div>
           </div>
-          <div style="width:1px;background:var(--border);"></div>
-          <div style="text-align:center;">
-            <div style="font-size:0.65rem;color:var(--text-muted);">المقفل</div>
-            <div style="font-size:1rem;font-weight:700;color:var(--warning);">${fmtNum(locked)}</div>
+          <div class="wallet-split-item">
+            <div class="wallet-split-label">المقفل</div>
+            <div class="wallet-split-value locked">${fmtNum(locked)}</div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Action Buttons -->
-    <div style="display:flex;gap:var(--sp-2);margin-bottom:var(--sp-3);">
-      <button onclick="showSection('deposit-section')" class="btn btn-success" style="flex:1;">💵 إيداع</button>
-      <button onclick="showSection('withdraw-section')" class="btn btn-ghost" style="flex:1;border-color:var(--danger);color:var(--danger);">🏦 سحب</button>
-    </div>
+      <!-- Actions -->
+      <div class="wallet-actions">
+        <a href="/wallet?action=deposit" class="wallet-action-btn wallet-action-deposit">💵 إيداع</a>
+        <a href="/wallet?action=withdraw" class="wallet-action-btn wallet-action-withdraw">💸 سحب</a>
+      </div>
 
-    <!-- Deposit Section (hidden) -->
-    <div id="deposit-section" style="display:none;">
-      <div class="card" style="margin-bottom:var(--sp-3);">
-        <div style="padding:var(--sp-3);font-weight:700;font-size:0.9rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
-          <span>💵 إيداع USDT</span>
-          <button onclick="hideSection('deposit-section')" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1.2rem;">✕</button>
+      <!-- Quick Stats -->
+      <div class="grid grid-2 gap-2 mb-4">
+        <div class="stat-card">
+          <div class="stat-label">العملة</div>
+          <div class="stat-value">USDT</div>
         </div>
-        <div style="padding:var(--sp-3);">
-          <div style="background:var(--bg-surface);border-radius:var(--radius-sm);padding:var(--sp-3);margin-bottom:var(--sp-3);text-align:center;">
-            <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:var(--sp-1);">عنوان الإيداع</div>
-            <div style="font-size:0.8rem;font-weight:600;direction:ltr;text-align:center;word-break:break-all;">${esc(depositAddress || 'غير متوفر')}</div>
-            <button onclick="copyText('${esc(depositAddress)}')" class="btn btn-ghost btn-sm" style="margin-top:var(--sp-2);">📋 نسخ العنوان</button>
-          </div>
-          <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:var(--sp-2);">
-            <div>🌐 الشبكة: ${esc(network)}</div>
-            <div>⚠️ أرسل فقط USDT على شبكة BEP-20</div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Transaction Hash</label>
-            <input class="form-input" type="text" id="dep-tx" placeholder="0x..." style="direction:ltr;text-align:left;">
-          </div>
-          <button onclick="submitDeposit()" class="btn btn-success btn-block" id="dep-btn">✓ تأكيد الإيداع</button>
+        <div class="stat-card">
+          <div class="stat-label">الشبكة</div>
+          <div class="stat-value">BEP-20</div>
         </div>
       </div>
-    </div>
 
-    <!-- Withdraw Section (hidden) -->
-    <div id="withdraw-section" style="display:none;">
-      <div class="card" style="margin-bottom:var(--sp-3);">
-        <div style="padding:var(--sp-3);font-weight:700;font-size:0.9rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
-          <span>🏦 سحب USDT</span>
-          <button onclick="hideSection('withdraw-section')" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1.2rem;">✕</button>
+      <!-- Transaction History -->
+      <div class="card-section">
+        <div class="card-section-header">
+          <div class="card-section-title">سجل المعاملات</div>
         </div>
-        <div style="padding:var(--sp-3);">
-          <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:var(--sp-2);">الرصيد المتاح: <span style="color:var(--accent);font-weight:700;">${fmtNum(balance)} USDT</span></div>
-          <div class="form-group">
-            <label class="form-label">المبلغ (USDT)</label>
-            <input class="form-input" type="number" step="0.01" min="1" id="wd-amount" placeholder="100">
-          </div>
-          <div class="form-group">
-            <label class="form-label">عنوان المحفظة (BEP-20)</label>
-            <input class="form-input" type="text" id="wd-wallet" placeholder="0x..." style="direction:ltr;text-align:left;">
-          </div>
-          <div id="wd-err" style="color:var(--danger);font-size:0.8rem;margin-bottom:var(--sp-2);display:none;"></div>
-          <button onclick="submitWithdraw()" class="btn btn-block" id="wd-btn" style="background:var(--danger);color:#fff;">📤 طلب سحب</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Deposit History -->
-    ${deposits.length ? `
-    <div class="card" style="margin-bottom:var(--sp-3);">
-      <div style="padding:var(--sp-3);font-weight:700;font-size:0.9rem;border-bottom:1px solid var(--border);">📋 سجل الإيداعات</div>
-      <div style="padding:var(--sp-2);">
-        ${deposits.map(d => `
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:var(--sp-2);border-bottom:1px solid var(--border);font-size:0.8rem;">
-            <div>
-              <div style="font-weight:600;">${d.amount} USDT</div>
-              <div style="color:var(--text-muted);font-size:0.7rem;">${fmtDate(d.created)}</div>
-            </div>
-            <span class="badge ${d.status === 'CONFIRMED' ? 'badge-success' : d.status === 'REJECTED' ? 'badge-sell' : 'badge-pending'}">${d.status === 'CONFIRMED' ? '✅ مؤكد' : d.status === 'REJECTED' ? '❌ مرفوض' : '⏳ قيد المراجعة'}</span>
-          </div>
-        `).join('')}
-      </div>
-    </div>
-    ` : ''}
-
-    <!-- Transaction History -->
-    <div class="card" style="margin-bottom:var(--sp-3);">
-      <div style="padding:var(--sp-3);font-weight:700;font-size:0.9rem;border-bottom:1px solid var(--border);">📜 سجل المعاملات</div>
-      <div style="padding:var(--sp-2);">
-        ${history.length ? history.map(h => `
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:var(--sp-2);border-bottom:1px solid var(--border);font-size:0.8rem;">
-            <div style="flex:1;min-width:0;">
-              <div style="font-weight:600;">${esc(h.note || h.action)}</div>
-              <div style="color:var(--text-muted);font-size:0.7rem;">${fmtDate(h.created)}</div>
-            </div>
-            <div style="text-align:left;min-width:80px;">
-              <div style="font-weight:700;color:${h.action === 'DEPOSIT' || h.action === 'ESCROW_RELEASE' || h.action === 'REFUND' || h.action === 'ADMIN_CREDIT' ? 'var(--accent)' : 'var(--danger)'};">
-                ${h.action === 'DEPOSIT' || h.action === 'ESCROW_RELEASE' || h.action === 'REFUND' || h.action === 'ADMIN_CREDIT' ? '+' : '-'}${fmtNum(h.amount)}
+        <div id="txList">
+          ${history.length ? history.slice(0, 20).map(tx => {
+            const action = tx.action || 'UNKNOWN';
+            const isDeposit = action.includes('DEPOSIT') || action.includes('CREDIT');
+            const isWithdraw = action.includes('WITHDRAW') || action.includes('DEBIT');
+            const isTrade = action.includes('TRADE') || action.includes('ESCROW');
+            const isPositive = isDeposit || action.includes('RELEASE') || action.includes('REFUND');
+            const iconClass = isDeposit ? 'deposit' : isWithdraw ? 'withdraw' : 'trade';
+            const icon = isDeposit ? '↓' : isWithdraw ? '↑' : '⇄';
+            const amountClass = isPositive ? 'positive' : 'negative';
+            const amountPrefix = isPositive ? '+' : '-';
+            return `
+            <div class="tx-card">
+              <div class="tx-icon ${iconClass}">${icon}</div>
+              <div class="tx-info">
+                <div class="tx-title">${esc(action.replace(/_/g, ' '))}</div>
+                <div class="tx-date">${tx.created || ''}</div>
               </div>
-              <div style="color:var(--text-muted);font-size:0.65rem;">${h.action}</div>
-            </div>
-          </div>
-        `).join('') : '<p style="text-align:center;color:var(--text-muted);padding:var(--sp-4);font-size:0.85rem;">لا توجد معاملات بعد</p>'}
+              <div>
+                <div class="tx-amount ${amountClass}">${amountPrefix}${fmtNum(tx.amount)} USDT</div>
+              </div>
+            </div>`;
+          }).join('') : '<div class="empty-state"><div class="empty-state-icon">📭</div><div class="empty-state-text">لا توجد معاملات بعد</div></div>'}
+        </div>
       </div>
-    </div>
-  `;
 
-  document.getElementById('loading').style.display = 'none';
-  document.getElementById('wallet-content').style.display = 'block';
-})();
+      <!-- Deposit Info -->
+      <div class="card-section" id="depositInfo" style="display:none;">
+        <div class="card-section-header">
+          <div class="card-section-title">معلومات الإيداع</div>
+        </div>
+        <div class="mb-3">
+          <div class="text-sm text-muted mb-1">عنوان المحفظة</div>
+          <div class="text-sm font-bold" style="word-break:break-all;" id="depositAddr"></div>
+        </div>
+        <div class="mb-3">
+          <div class="text-sm text-muted mb-1">الشبكة</div>
+          <div class="text-sm font-bold">BNB Smart Chain (BEP-20)</div>
+        </div>
+        <div class="text-xs text-danger">⚠️ أرسل USDT فقط على شبكة BEP-20. إرسال أي عملة أخرى سينتج عن فقدان أموالك.</div>
+      </div>
+    `;
 
-window.showSection = function(id) { document.getElementById(id).style.display = 'block'; };
-window.hideSection = function(id) { document.getElementById(id).style.display = 'none'; };
+    // Handle deposit/withdraw actions
+    const params = new URLSearchParams(window.location.search);
+    const action = params.get('action');
+    if (action === 'deposit') {
+      document.getElementById('depositInfo').style.display = 'block';
+      try {
+        const info = await api('/wallet/deposit-info');
+        if (info?.address) document.getElementById('depositAddr').textContent = info.address;
+      } catch {}
+    }
 
-window.submitDeposit = async function() {
-  const txHash = document.getElementById('dep-tx').value.trim();
-  if (!txHash) { showToast('أدخل Transaction Hash'); return; }
-  const btn = document.getElementById('dep-btn');
-  btn.disabled = true; btn.textContent = 'جاري التحقق...';
-  const r = await api('/wallet/deposit', { method: 'POST', body: { tx_hash: txHash, amount: 0 } });
-  btn.disabled = false; btn.textContent = '✓ تأكيد الإيداع';
-  if (r && r.ok) {
-    showToast('تم تأكيد الإيداع: ' + r.credited + ' USDT');
-    location.reload();
-  } else {
-    showToast(r?.error || 'فشل التحقق', 4000);
-  }
-};
-
-window.submitWithdraw = async function() {
-  const amount = parseFloat(document.getElementById('wd-amount').value);
-  const wallet = document.getElementById('wd-wallet').value.trim();
-  const errEl = document.getElementById('wd-err');
-  if (!amount || amount <= 0) { errEl.textContent = 'أدخل مبلغ صحيح'; errEl.style.display = 'block'; return; }
-  if (!wallet) { errEl.textContent = 'أدخل عنوان المحفظة'; errEl.style.display = 'block'; return; }
-  errEl.style.display = 'none';
-  if (!confirm('هل أنت متأكد من طلب سحب ' + amount + ' USDT؟')) return;
-  const btn = document.getElementById('wd-btn');
-  btn.disabled = true; btn.textContent = 'جاري الإرسال...';
-  const r = await api('/wallet/withdraw', { method: 'POST', body: { amount, wallet } });
-  btn.disabled = false; btn.textContent = '📤 طلب سحب';
-  if (r && r.ok) {
-    showToast('تم إرسال طلب السحب — بانتظار مراجعة الإدارة');
-    location.reload();
-  } else {
-    errEl.textContent = r?.error || 'خطأ';
-    errEl.style.display = 'block';
-  }
-};
-</script>
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('wallet-content').style.display = 'block';
+  })();
+  </script>
 </body>
 </html>

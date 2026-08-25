@@ -11,7 +11,7 @@
 <script>(function(){var t=localStorage.getItem("usp_theme")||"dark";if(t==="auto")t=window.matchMedia("(prefers-color-scheme:light)").matches?"light":"dark";document.documentElement.setAttribute("data-theme",t);})();</script>
 </head>
 <body>
-<nav class="navbar"><div class="navbar-inner"><a href="/" class="navbar-brand">🇵🇸 <span>USDT</span> P2P</a><div class="navbar-links"><span style="color:var(--accent);font-weight:700;font-size:0.85rem;">⚙️ الإدارة</span></div></div></nav>
+<nav class="navbar"><div class="navbar-inner"><a href="/" class="navbar-brand"><span>USDT</span> P2P</a><div class="navbar-links"><span style="color:var(--accent);font-weight:700;font-size:0.85rem;">⚙️ الإدارة</span></div></div></nav>
 <!-- Mobile admin header (shown on small screens) -->
 <header class="mobile-header" id="adminMobileHeader" style="display:none;">
   <div class="mobile-header-left">
@@ -36,7 +36,7 @@
       <a class="sidebar-link" data-section="ads" onclick="go('ads',this)">📢 الإعلانات</a>
       <a class="sidebar-link" data-section="finance" onclick="go('finance',this)">💰 المالية</a>
       <a class="sidebar-link" data-section="audit" onclick="go('audit',this)">📝 سجل النشاط</a>
-      <a class="sidebar-link" data-section="settings" onclick="go('settings',this)">⚙️ الإعدادات</a>
+      <a class="sidebar-link" data-section="settings" onclick="go('settings',this)" style="display:flex;align-items:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> الإعدادات</a>
     </nav>
   </aside>
   <!-- Main Content -->
@@ -106,6 +106,20 @@ async function loadDashboard(){
       <div class="kpi-card"><div class="kpi-value">${N(k2.open_ads||0)}</div><div class="kpi-label">📢 إعلانات نشطة</div></div>
     </div>
     ${n.total_unread>0?`<div class="card" style="margin-top:var(--sp-3);padding:var(--sp-3);border-left:3px solid var(--warning);"><strong>🔔 تنبيهات:</strong> ${n.pending_kyc} KYC معلق · ${n.open_disputes} نزاعات · ${n.pending_deposits} إيداعات · ${n.pending_withdrawals} سحوبات</div>`:''}
+    <div style="margin-top:var(--sp-3);display:flex;gap:var(--sp-2);flex-wrap:wrap;">
+      <a href="/admin-settings.html" style="display:inline-flex;align-items:center;gap:8px;padding:8px 16px;background:var(--primary);color:#07090D;border-radius:10px;font-size:0.85rem;font-weight:600;text-decoration:none;transition:opacity 0.15s;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        إعدادات الإدارة
+      </a>
+      <button class="btn btn-ghost" style="font-size:0.85rem;display:inline-flex;align-items:center;gap:6px;" onclick="loadFinancial()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        مركز التحكم المالي
+      </button>
+      <button class="btn btn-ghost" style="font-size:0.85rem;display:inline-flex;align-items:center;gap:6px;" onclick="loadReconciliation()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        مراجعة التوازن
+      </button>
+    </div>
   `);
 }
 
@@ -311,21 +325,96 @@ async function loadAds(){
   `);
 }
 
-async function loadFinance(){
-  const r=await api('/admin/finance');const f=r.finance||{};
+async function loadFinance(){await loadFinancial();}
+window.loadFinancial=async function(){
+  const r=await api('/admin/financial');const f=r.financial||{};
+  const rc=f.reconciliation||{};
+  const rcHealthy=rc.healthy;
   _C(`
-    <h2 style="font-size:1.2rem;font-weight:800;margin-bottom:var(--sp-3);">💰 الإحصائيات المالية</h2>
+    <h2 style="font-size:1.2rem;font-weight:800;margin-bottom:var(--sp-3);">💰 مركز التحكم المالي</h2>
+    <div class="card" style="padding:var(--sp-3);margin-bottom:var(--sp-3);border-left:3px solid ${rcHealthy?'var(--success)':'var(--error)'};">
+      <div style="display:flex;align-items:center;gap:var(--sp-2);">
+        <div style="width:10px;height:10px;border-radius:50%;background:${rcHealthy?'var(--success)':'var(--error)'};"></div>
+        <strong style="font-size:0.9rem;">${rcHealthy?'✅ النظام المالي سليم':'🔴 يوجد عدم تطابق في الأرصدة'}</strong>
+      </div>
+      ${!rcHealthy?`<div style="margin-top:var(--sp-2);font-size:0.8rem;color:var(--error);">
+        المتوقع: ${N(rc.expected_platform||0)} USDT · الفرق: ${N(rc.difference||0)} USDT
+      </div>`:''}
+    </div>
     <div class="kpi-grid">
-      <div class="kpi-card"><div class="kpi-value">${N(f.total_volume||0)}</div><div class="kpi-label">💰 إجمالي التداول</div></div>
+      <div class="kpi-card"><div class="kpi-value">${N(f.total_users||0)}</div><div class="kpi-label">👥 المستخدمون</div></div>
+      <div class="kpi-card"><div class="kpi-value" style="color:var(--primary)">${N(f.total_available||0)}</div><div class="kpi-label">💰 USDT متاح</div></div>
+      <div class="kpi-card"><div class="kpi-value" style="color:var(--warning)">${N(f.total_locked||0)}</div><div class="kpi-label">🔒 USDT مقفل</div></div>
+      <div class="kpi-card"><div class="kpi-value">${N(f.total_escrow||0)}</div><div class="kpi-label">🏦 USDT في Escrow</div></div>
+      <div class="kpi-card"><div class="kpi-value" style="color:var(--success)">${N(f.total_deposited||0)}</div><div class="kpi-label">💳 إجمالي الإيداعات</div></div>
+      <div class="kpi-card"><div class="kpi-value" style="color:var(--error)">${N(f.total_withdrawn||0)}</div><div class="kpi-label">↗️ إجمالي السحوبات</div></div>
       <div class="kpi-card"><div class="kpi-value">${N(f.platform_fees||0)}</div><div class="kpi-label">💵 إجمالي العمولات</div></div>
-      <div class="kpi-card"><div class="kpi-value" style="color:var(--success)">${N(f.deposit_volume||0)}</div><div class="kpi-label">💳 حجم الإيداعات</div></div>
-      <div class="kpi-card"><div class="kpi-value" style="color:var(--warning)">${N(f.withdrawal_volume||0)}</div><div class="kpi-label">🏦 حجم السحوبات</div></div>
-      <div class="kpi-card"><div class="kpi-value">${N(f.today_volume||0)}</div><div class="kpi-label">📅 حجم اليوم</div></div>
-      <div class="kpi-card"><div class="kpi-value">${N(f.week_volume||0)}</div><div class="kpi-label">📅 حجم الأسبوع</div></div>
-      <div class="kpi-card"><div class="kpi-value">${N(f.month_volume||0)}</div><div class="kpi-label">📅 حجم الشهر</div></div>
+      <div class="kpi-card"><div class="kpi-value">${N(f.net_flow||0)}</div><div class="kpi-label">📊 صافي التدفق</div></div>
+    </div>
+    <h3 style="font-size:0.9rem;font-weight:700;margin:var(--sp-3) 0 var(--sp-2);">📋 الصفقات</h3>
+    <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);">
+      <div class="kpi-card"><div class="kpi-value">${N(f.trades?.total||0)}</div><div class="kpi-label">📋 الكل</div></div>
+      <div class="kpi-card"><div class="kpi-value" style="color:var(--success)">${N(f.trades?.completed||0)}</div><div class="kpi-label">✅ مكتملة</div></div>
+      <div class="kpi-card"><div class="kpi-value" style="color:var(--warning)">${N(f.trades?.pending||0)}</div><div class="kpi-label">⏳ معلقة</div></div>
+      <div class="kpi-card"><div class="kpi-value" style="color:var(--info)">${N(f.trades?.payment_sent||0)}</div><div class="kpi-label">💳 دفع</div></div>
+      <div class="kpi-card"><div class="kpi-value" style="color:var(--error)">${N(f.trades?.disputed||0)}</div><div class="kpi-label">⚠️ نزاع</div></div>
+      <div class="kpi-card"><div class="kpi-value" style="color:var(--text-muted)">${N(f.trades?.cancelled||0)}</div><div class="kpi-label">❌ ملغاة</div></div>
+    </div>
+    <div style="display:flex;gap:var(--sp-2);margin-top:var(--sp-3);flex-wrap:wrap;">
+      <button class="btn btn-ghost btn-sm" onclick="loadLedger()">📒 السجل المالي</button>
+      <button class="btn btn-ghost btn-sm" onclick="loadReconciliation()">🔄 مراجعة التوازن</button>
+      <a href="/admin-settings.html" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:var(--primary);color:#07090D;border-radius:8px;font-size:0.8rem;font-weight:600;text-decoration:none;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        إعدادات الإدارة
+      </a>
     </div>
   `);
-}
+};
+
+window.loadReconciliation=async function(){
+  const r=await api('/admin/reconciliation');const rc=r;
+  _C(`
+    <div style="display:flex;align-items:center;gap:var(--sp-3);margin-bottom:var(--sp-3);">
+      <button class="btn btn-ghost btn-sm" onclick="loadDashboard()">→ رجوع</button>
+      <h2 style="font-size:1.2rem;font-weight:800;">🔄 مراجعة التوازن المالي</h2>
+    </div>
+    <div class="card" style="padding:var(--sp-4);border-left:3px solid ${rc.healthy?'var(--success)':'var(--error)'};">
+      <div style="font-size:1.1rem;font-weight:700;margin-bottom:var(--sp-3);">${rc.healthy?'✅ النظام المالي سليم':'🔴 يوجد مشكلة في التوازن'}</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:var(--sp-3);">
+        <div><span style="color:var(--text-muted);font-size:0.75rem;">إجمالي الأرصدة المتاحة</span><div style="font-weight:700;color:var(--primary);">${N(rc.wallet_summary?.total_balance||0)} USDT</div></div>
+        <div><span style="color:var(--text-muted);font-size:0.75rem;">إجمالي الأرقام المقفلة</span><div style="font-weight:700;">${N(rc.wallet_summary?.total_locked||0)} USDT</div></div>
+        <div><span style="color:var(--text-muted);font-size:0.75rem;">المجموع</span><div style="font-weight:700;">${N(rc.wallet_summary?.combined||0)} USDT</div></div>
+      </div>
+      ${rc.issues?.negative_balances?`<div style="margin-top:var(--sp-3);padding:var(--sp-3);background:rgba(255,92,108,0.1);border-radius:var(--radius-sm);color:var(--error);">
+        ⚠️ يوجد ${rc.issues.negative_balances} محفظة برصيد سالب
+      </div>`:''}
+      ${rc.issues?.orphaned_escrow?`<div style="margin-top:var(--sp-3);padding:var(--sp-3);background:rgba(255,92,108,0.1);border-radius:var(--radius-sm);color:var(--error);">
+        ⚠️ يوجد ${rc.issues.orphaned_escrow} صفقات بمبالغ مقفلة مؤسسة (مكتملة/ملغاة مع escrow مقفل)
+      </div>`:''}
+    </div>
+  `);
+};
+
+window.loadLedger=async function(){
+  const r=await api('/admin/ledger?limit=50');const ledger=r.ledger||[];
+  _C(`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-3);flex-wrap:wrap;gap:var(--sp-2);">
+      <h2 style="font-size:1.2rem;font-weight:800;">📒 السجل المالي (${r.total||0})</h2>
+      <button class="btn btn-ghost btn-sm" onclick="loadFinancial()">→ رجوع</button>
+    </div>
+    <div class="card overflow-x"><table class="tbl"><thead><tr>
+      <th>#</th><th>المستخدم</th><th>الإجراء</th><th>المبلغ</th><th>قبل</th><th>بعد</th><th>ملاحظة</th><th>التاريخ</th>
+    </tr></thead><tbody>
+    ${ledger.map(l=>`<tr>
+      <td>${l.id}</td><td>${E(l.username)}</td>
+      <td><span class="badge badge-${l.action.includes('CREDIT')?'success':'error'}" style="font-size:0.65rem;">${E(l.action)}</span></td>
+      <td>${N(l.amount||0)}</td><td style="font-size:0.7rem;">${N(l.balance_before||0)}</td><td style="font-size:0.7rem;">${N(l.balance_after||0)}</td>
+      <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;font-size:0.7rem;">${E(l.note||'')}</td>
+      <td style="font-size:0.7rem;">${D(l.created)}</td>
+    </tr>`).join('')}
+    </tbody></table></div>
+  `);
+};
 
 async function loadAudit(){
   const r=await api('/admin/audit-log');const list=r.logs||[];
