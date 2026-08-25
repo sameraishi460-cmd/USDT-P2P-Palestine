@@ -204,6 +204,43 @@ h4 { font-size: 1rem; }
 }
 .navbar-links a:hover { color: var(--text-primary); background: rgba(255,255,255,0.05); }
 
+.navbar-admin-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px !important;
+  background: rgba(0,214,160,0.08) !important;
+  color: var(--primary, #00D6A0) !important;
+  border: 1px solid rgba(0,214,160,0.2) !important;
+  border-radius: 10px !important;
+  font-size: 0.8rem !important;
+  font-weight: 700 !important;
+  transition: all 0.2s ease !important;
+  white-space: nowrap;
+}
+.navbar-admin-btn:hover {
+  background: rgba(0,214,160,0.15) !important;
+  border-color: rgba(0,214,160,0.35) !important;
+  box-shadow: 0 0 12px rgba(0,214,160,0.15) !important;
+  transform: translateY(-1px);
+}
+.navbar-admin-btn svg {
+  width: 16px;
+  height: 16px;
+  stroke-width: 2;
+}
+
+.sidebar-admin-item {
+  background: rgba(0,214,160,0.06) !important;
+  border: 1px solid rgba(0,214,160,0.12) !important;
+  border-radius: 10px !important;
+  margin: 0 var(--sp-3) var(--sp-2) !important;
+  padding: var(--sp-2) var(--sp-3) !important;
+}
+.sidebar-admin-item .mobile-sidebar-item-icon {
+  color: var(--primary, #00D6A0);
+}
+
 .btn-nav {
   display: inline-flex;
   align-items: center;

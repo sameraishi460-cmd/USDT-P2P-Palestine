@@ -11,317 +11,368 @@
   <link rel="manifest" href="/manifest.json">
   <script>(function(){var t=localStorage.getItem("usp_theme")||"dark";if(t==="auto")t=window.matchMedia("(prefers-color-scheme:light)").matches?"light":"dark";document.documentElement.setAttribute("data-theme",t);var a=localStorage.getItem("usp_accent")||"green";document.documentElement.setAttribute("data-accent",a);})();</script>
   <style>
-    /* Home page styles — isolated, no conflicts */
-    .home-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;position:sticky;top:0;z-index:100;background:rgba(7,9,13,0.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,0.05);}
-    .home-brand{font-size:15px;font-weight:800;color:#F5F7FA;letter-spacing:-0.3px;}
-    .home-brand span{color:#00D6A0;}
-    .home-menu{background:none;border:none;color:#F5F7FA;font-size:20px;cursor:pointer;padding:6px;}
-    .greeting{padding:24px 20px 0;}
-    .greeting h1{font-size:22px;font-weight:800;color:#F5F7FA;line-height:1.3;}
-    .greeting p{font-size:14px;color:#8A96A6;margin-top:4px;}
-    .balance-hero{margin:20px 16px;background:#111820;border:1px solid rgba(255,255,255,0.07);border-radius:20px;padding:28px 24px;position:relative;overflow:hidden;}
-    .balance-hero::before{content:'';position:absolute;top:-60px;right:-40px;width:200px;height:200px;background:radial-gradient(circle,rgba(0,214,160,0.06),transparent 70%);pointer-events:none;}
-    .balance-hero::after{content:'';position:absolute;bottom:-80px;left:-60px;width:250px;height:250px;background:radial-gradient(circle,rgba(0,214,160,0.03),transparent 70%);pointer-events:none;}
-    .balance-label{font-size:12px;color:#5A6577;text-transform:uppercase;letter-spacing:0.5px;font-weight:600;margin-bottom:8px;}
-    .balance-amount{display:flex;align-items:baseline;gap:8px;margin-bottom:6px;}
-    .balance-value{font-size:36px;font-weight:900;color:#F5F7FA;letter-spacing:-1px;line-height:1;}
-    .balance-currency{font-size:16px;font-weight:600;color:#5A6577;}
-    .balance-usd{font-size:14px;color:#8A96A6;margin-bottom:16px;}
-    .balance-change{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:#00D6A0;background:rgba(0,214,160,0.08);padding:4px 10px;border-radius:20px;}
-    .action-row{display:flex;gap:12px;margin:0 16px;}
-    .action-btn{flex:1;padding:14px;border-radius:16px;font-size:15px;font-weight:700;text-align:center;text-decoration:none;cursor:pointer;border:none;transition:all 0.2s ease;}
-    .action-buy{background:#00D6A0;color:#07090D;}
-    .action-buy:hover{background:#00BF8F;transform:translateY(-1px);}
-    .action-sell{background:#151E27;color:#F5F7FA;border:1px solid rgba(255,255,255,0.07);}
-    .action-sell:hover{background:#1A2430;border-color:rgba(255,255,255,0.12);}
-    .section-header{display:flex;justify-content:space-between;align-items:center;padding:24px 16px 12px;}
-    .section-title{font-size:16px;font-weight:700;color:#F5F7FA;}
-    .section-link{font-size:13px;color:#00D6A0;text-decoration:none;font-weight:600;}
-    .market-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px;}
-    .market-card{background:#111820;border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:16px;}
-    .market-pair{font-size:12px;color:#5A6577;font-weight:600;margin-bottom:6px;}
-    .market-price{font-size:22px;font-weight:800;color:#F5F7FA;margin-bottom:4px;}
-    .market-status{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 8px;border-radius:8px;margin-bottom:8px;}
-    .market-status.live{color:#00D6A0;background:rgba(0,214,160,0.08);}
-    .market-status.live::before{content:'';width:5px;height:5px;border-radius:50%;background:#00D6A0;animation:pulse 2s infinite;}
-    .market-status.stale{color:#D6B36A;background:rgba(214,179,106,0.08);}
-    .market-change{font-size:11px;font-weight:600;}
-    .market-change.up{color:#00D6A0;}
-    .market-change.stable{color:#5A6577;}
-    .p2p-list{padding:0 16px;}
-    .p2p-card{background:#111820;border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:16px;margin-bottom:10px;}
-    .p2p-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
-    .p2p-user{display:flex;align-items:center;gap:8px;}
-    .p2p-avatar{width:32px;height:32px;border-radius:50%;background:rgba(0,214,160,0.10);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#00D6A0;}
-    .p2p-name{font-size:13px;font-weight:600;color:#F5F7FA;}
-    .p2p-online{font-size:11px;color:#00D6A0;display:flex;align-items:center;gap:4px;}
-    .p2p-online::before{content:'';width:6px;height:6px;border-radius:50%;background:#00D6A0;}
-    .p2p-price{font-size:24px;font-weight:800;color:#00D6A0;margin-bottom:8px;}
-    .p2p-price small{font-size:12px;color:#5A6577;font-weight:500;}
-    .p2p-meta{display:flex;gap:16px;font-size:12px;color:#8A96A6;margin-bottom:12px;}
-    .p2p-meta strong{color:#F5F7FA;font-weight:600;}
-    .p2p-pay{display:flex;gap:6px;margin-bottom:12px;}
-    .p2p-pay-tag{font-size:11px;padding:4px 10px;border-radius:8px;background:#0D1218;color:#8A96A6;border:1px solid rgba(255,255,255,0.05);}
-    .p2p-buy-btn{width:100%;padding:12px;border-radius:12px;background:#00D6A0;color:#07090D;font-size:14px;font-weight:700;border:none;cursor:pointer;transition:all 0.15s ease;}
-    .p2p-buy-btn:hover{background:#00BF8F;}
-    .home-features{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px;}
-    .home-feature{background:#111820;border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:16px;text-align:center;}
-    .home-feature-icon{width:40px;height:40px;border-radius:12px;background:rgba(0,214,160,0.08);display:flex;align-items:center;justify-content:center;margin:0 auto 10px;font-size:18px;color:#00D6A0;}
-    .home-feature-title{font-size:13px;font-weight:700;color:#F5F7FA;margin-bottom:2px;}
-    .home-feature-desc{font-size:11px;color:#5A6577;}
-    .home-cta{margin:24px 16px;background:#111820;border:1px solid rgba(255,255,255,0.07);border-radius:20px;padding:28px 20px;text-align:center;}
-    .home-cta h2{font-size:18px;font-weight:800;color:#F5F7FA;margin-bottom:6px;}
-    .home-cta p{font-size:13px;color:#5A6577;margin-bottom:16px;}
-    .chart-container{margin:0 16px;background:#111820;border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:16px;}
-    .chart-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
-    .chart-tabs{display:flex;gap:4px;}
-    .chart-tab{padding:5px 12px;border-radius:8px;font-size:11px;font-weight:600;background:transparent;color:#5A6577;border:none;cursor:pointer;transition:all 0.15s;}
-    .chart-tab.active{background:rgba(0,214,160,0.10);color:#00D6A0;}
-    .chart-canvas{width:100%;height:120px;position:relative;overflow:hidden;}
-    .chart-canvas canvas{width:100%!important;height:100%!important;}
-    .fee-calc{margin:24px 16px 0;background:#111820;border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:16px;}
-    .fee-calc-title{font-size:14px;font-weight:700;color:#F5F7FA;margin-bottom:12px;}
-    .fee-calc-input{width:100%;padding:12px 14px;background:#0D1218;border:1px solid rgba(255,255,255,0.07);border-radius:12px;color:#F5F7FA;font-size:15px;font-weight:600;box-sizing:border-box;outline:none;direction:ltr;text-align:right;}
-    .fee-calc-input:focus{border-color:#00D6A0;box-shadow:0 0 0 3px rgba(0,214,160,0.08);}
-    .fee-calc-results{margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-    .fee-result{background:#0D1218;border-radius:10px;padding:10px 12px;}
-    .fee-result-label{font-size:10px;color:#5A6577;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;}
-    .fee-result-value{font-size:15px;font-weight:700;color:#F5F7FA;}
-    .fee-result-value.primary{color:#00D6A0;}
-    .fee-result-value.danger{color:#FF5C6C;}
+    .hp{background:#07090D;min-height:100vh;padding-bottom:60px;}
+    .hp-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;position:sticky;top:0;z-index:100;background:rgba(7,9,13,0.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid rgba(255,255,255,0.05);}
+    .hp-brand{font-size:15px;font-weight:800;color:#F5F7FA;letter-spacing:-0.3px;display:flex;align-items:center;gap:6px;}
+    .hp-brand span{color:var(--primary,#00D6A0);}
+    .hp-menu{background:none;border:none;color:#F5F7FA;cursor:pointer;padding:6px;display:flex;align-items:center;}
+    /* Greeting */
+    .hp-greeting{padding:24px 16px 0;}
+    .hp-greeting h1{font-size:22px;font-weight:800;color:#F5F7FA;line-height:1.3;}
+    .hp-greeting p{font-size:13px;color:#8A96A6;margin-top:4px;}
+    /* Hero Market Card */
+    .hp-hero{margin:20px 16px;background:linear-gradient(135deg,#111820,#0D1218);border:1px solid rgba(255,255,255,0.07);border-radius:20px;padding:24px 20px;position:relative;overflow:hidden;}
+    .hp-hero::before{content:'';position:absolute;top:-60px;right:-40px;width:200px;height:200px;background:radial-gradient(circle,rgba(0,214,160,0.06),transparent 70%);pointer-events:none;}
+    .hp-hero-pair{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+    .hp-hero-pair-label{font-size:14px;font-weight:700;color:#F5F7FA;}
+    .hp-hero-pair-live{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 10px;border-radius:8px;color:#00D6A0;background:rgba(0,214,160,0.08);}
+    .hp-hero-pair-live::before{content:'';width:6px;height:6px;border-radius:50%;background:#00D6A0;animation:pulse 2s infinite;}
+    .hp-hero-pair-live.stale{color:#F5C542;background:rgba(245,197,66,0.08);}
+    .hp-hero-pair-live.stale::before{background:#F5C542;}
+    .hp-hero-price{text-align:center;margin-bottom:20px;}
+    .hp-hero-price .label{font-size:11px;color:#5A6577;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;}
+    .hp-hero-price .value{font-size:32px;font-weight:900;color:#F5F7FA;letter-spacing:-1px;}
+    .hp-hero-price .value small{font-size:14px;color:#5A6577;font-weight:500;}
+    .hp-hero-prices{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    .hp-hero-price-box{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);border-radius:14px;padding:14px;text-align:center;}
+    .hp-hero-price-box .label{font-size:10px;color:#5A6577;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;}
+    .hp-hero-price-box .value{font-size:18px;font-weight:800;}
+    .hp-hero-price-box.buy .value{color:#00D6A0;}
+    .hp-hero-price-box.sell .value{color:#FF5C6C;}
+    .hp-hero-meta{display:flex;justify-content:space-between;align-items:center;margin-top:12px;font-size:11px;color:#5A6577;}
+    /* Balance */
+    .hp-balance{margin:0 16px 16px;background:#111820;border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:20px;position:relative;overflow:hidden;}
+    .hp-balance::before{content:'';position:absolute;top:-40px;right:-30px;width:150px;height:150px;background:radial-gradient(circle,rgba(0,214,160,0.05),transparent 70%);pointer-events:none;}
+    .hp-balance .label{font-size:11px;color:#5A6577;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;}
+    .hp-balance .amount{display:flex;align-items:baseline;gap:8px;margin-bottom:4px;}
+    .hp-balance .amount .val{font-size:28px;font-weight:900;color:#F5F7FA;letter-spacing:-1px;}
+    .hp-balance .amount .cur{font-size:14px;font-weight:600;color:#5A6577;}
+    .hp-balance .usd{font-size:13px;color:#8A96A6;}
+    /* Action Buttons */
+    .hp-actions{display:flex;gap:12px;margin:0 16px 20px;}
+    .hp-btn{flex:1;padding:14px;border-radius:14px;font-size:14px;font-weight:700;text-align:center;text-decoration:none;cursor:pointer;border:none;transition:all 0.2s ease;display:flex;align-items:center;justify-content:center;gap:8px;}
+    .hp-btn-buy{background:#00D6A0;color:#07090D;}
+    .hp-btn-buy:hover{background:#00BF8F;transform:translateY(-1px);}
+    .hp-btn-sell{background:#151E27;color:#F5F7FA;border:1px solid rgba(255,255,255,0.07);}
+    .hp-btn-sell:hover{background:#1A2430;}
+    .hp-btn-secondary{background:rgba(255,255,255,0.03);color:#8A96A6;border:1px solid rgba(255,255,255,0.05);font-size:13px;padding:10px 16px;border-radius:12px;flex:none;display:inline-flex;align-items:center;gap:6px;text-decoration:none;font-weight:600;}
+    .hp-btn-secondary:hover{background:rgba(255,255,255,0.06);}
+    /* Chart */
+    .hp-chart{margin:0 16px 20px;background:#111820;border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:16px;}
+    .hp-chart-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+    .hp-chart-title{font-size:13px;font-weight:700;color:#F5F7FA;}
+    .hp-chart-tabs{display:flex;gap:4px;}
+    .hp-chart-tab{padding:5px 12px;border-radius:8px;font-size:11px;font-weight:600;background:transparent;color:#5A6577;border:none;cursor:pointer;transition:all 0.15s;}
+    .hp-chart-tab.active{background:rgba(0,214,160,0.10);color:#00D6A0;}
+    .hp-chart-canvas{width:100%;height:140px;position:relative;overflow:hidden;}
+    .hp-chart-canvas canvas{width:100%!important;height:100%!important;}
+    .hp-chart-empty{text-align:center;padding:32px;color:#5A6577;font-size:12px;}
+    /* Fee Calculator */
+    .hp-fee{margin:0 16px 20px;background:#111820;border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:16px;}
+    .hp-fee-title{font-size:13px;font-weight:700;color:#F5F7FA;margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+    .hp-fee-input{width:100%;padding:12px 14px;background:#0D1218;border:1px solid rgba(255,255,255,0.07);border-radius:12px;color:#F5F7FA;font-size:15px;font-weight:600;box-sizing:border-box;outline:none;direction:ltr;text-align:right;}
+    .hp-fee-input:focus{border-color:#00D6A0;box-shadow:0 0 0 3px rgba(0,214,160,0.08);}
+    .hp-fee-results{margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+    .hp-fee-result{background:#0D1218;border-radius:10px;padding:10px 12px;}
+    .hp-fee-result .label{font-size:10px;color:#5A6577;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;}
+    .hp-fee-result .value{font-size:15px;font-weight:700;color:#F5F7FA;}
+    .hp-fee-result .value.primary{color:#00D6A0;}
+    .hp-fee-result .value.danger{color:#FF5C6C;}
+    /* Section Headers */
+    .hp-section{display:flex;justify-content:space-between;align-items:center;padding:20px 16px 12px;}
+    .hp-section-title{font-size:15px;font-weight:700;color:#F5F7FA;}
+    .hp-section-link{font-size:12px;color:#00D6A0;text-decoration:none;font-weight:600;}
+    /* P2P Cards */
+    .hp-p2p{padding:0 16px;}
+    .hp-p2p-card{background:#111820;border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:16px;margin-bottom:10px;}
+    .hp-p2p-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+    .hp-p2p-user{display:flex;align-items:center;gap:8px;}
+    .hp-p2p-avatar{width:36px;height:36px;border-radius:50%;background:rgba(0,214,160,0.10);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#00D6A0;}
+    .hp-p2p-name{font-size:13px;font-weight:600;color:#F5F7FA;}
+    .hp-p2p-verified{display:inline-flex;align-items:center;gap:3px;font-size:10px;color:#00D6A0;font-weight:600;background:rgba(0,214,160,0.08);padding:2px 6px;border-radius:6px;margin-right:4px;}
+    .hp-p2p-price{font-size:22px;font-weight:800;color:#00D6A0;margin-bottom:8px;}
+    .hp-p2p-price small{font-size:12px;color:#5A6577;font-weight:500;}
+    .hp-p2p-meta{display:flex;gap:16px;font-size:12px;color:#8A96A6;margin-bottom:12px;}
+    .hp-p2p-meta strong{color:#F5F7FA;font-weight:600;}
+    .hp-p2p-pay{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;}
+    .hp-p2p-pay-tag{font-size:11px;padding:4px 10px;border-radius:8px;background:#0D1218;color:#8A96A6;border:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;gap:4px;}
+    .hp-p2p-btn{width:100%;padding:12px;border-radius:12px;background:#00D6A0;color:#07090D;font-size:13px;font-weight:700;border:none;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;justify-content:center;gap:6px;}
+    .hp-p2p-btn:hover{background:#00BF8F;}
+    /* Features */
+    .hp-features{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px;}
+    .hp-feature{background:#111820;border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:16px;text-align:center;}
+    .hp-feature-icon{width:40px;height:40px;border-radius:12px;background:rgba(0,214,160,0.08);display:flex;align-items:center;justify-content:center;margin:0 auto 10px;color:#00D6A0;}
+    .hp-feature-title{font-size:12px;font-weight:700;color:#F5F7FA;margin-bottom:2px;}
+    .hp-feature-desc{font-size:10px;color:#5A6577;}
+    /* CTA */
+    .hp-cta{margin:24px 16px;background:linear-gradient(135deg,#111820,#0D1218);border:1px solid rgba(255,255,255,0.07);border-radius:20px;padding:28px 20px;text-align:center;}
+    .hp-cta h2{font-size:18px;font-weight:800;color:#F5F7FA;margin-bottom:6px;}
+    .hp-cta p{font-size:12px;color:#5A6577;margin-bottom:16px;}
+    .hp-cta .hp-btn-buy{display:block;text-decoration:none;}
     @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
-    @media(max-width:380px){.balance-value{font-size:30px;}.p2p-price{font-size:20px;}.home-brand{font-size:14px;}.chart-canvas{height:100px;}}
+    @media(max-width:380px){.hp-hero-price .value{font-size:26px;}.hp-p2p-price{font-size:18px;}.hp-brand{font-size:14px;}.hp-chart-canvas{height:110px;}}
   </style>
 </head>
-<body style="background:#07090D;">
+<body class="hp">
 
 <!-- Mobile Header -->
-<header class="home-header">
-  <div class="home-brand">USDT P2P <span>Palestine</span></div>
-  <button class="home-menu" onclick="toggleMobileSidebar()" aria-label="القائمة">☰</button>
+<header class="hp-header">
+  <div class="hp-brand">USDT P2P <span>Palestine</span></div>
+  <button class="hp-menu" onclick="toggleMobileSidebar()" aria-label="القائمة" id="hpMenuBtn"></button>
 </header>
 
 <!-- Greeting -->
-<div class="greeting" id="homeGreeting" style="display:none;">
-  <h1 id="greetingText">أهلاً بك 👋</h1>
+<div class="hp-greeting" id="hpGreeting" style="display:none;">
+  <h1 id="greetingText">أهلاً بك</h1>
   <p>إدارة أموالك بسهولة وأمان</p>
 </div>
 
-<!-- Balance Hero -->
-<div class="balance-hero" id="dashBalance" style="display:none;">
-  <div class="balance-label">إجمالي الرصيد</div>
-  <div class="balance-amount">
-    <span class="balance-value" id="dashTotal">—</span>
-    <span class="balance-currency">USDT</span>
+<!-- Balance Hero (only for logged-in users) -->
+<div class="hp-balance" id="hpBalance" style="display:none;">
+  <div class="label">إجمالي الرصيد</div>
+  <div class="amount">
+    <span class="val" id="hpBalVal">—</span>
+    <span class="cur">USDT</span>
   </div>
-  <div class="balance-usd" id="dashUsd">≈ — USD</div>
-  <div class="balance-change">↗ +0.00% اليوم</div>
+  <div class="usd" id="hpBalUsd">≈ — USD</div>
+</div>
+
+<!-- Live Market Hero -->
+<div class="hp-hero" id="hpMarketHero">
+  <div class="hp-hero-pair">
+    <div class="hp-hero-pair-label">USDT / ILS</div>
+    <div class="hp-hero-pair-live" id="hpMarketStatus">
+      <span>مباشر</span>
+    </div>
+  </div>
+  <div class="hp-hero-price">
+    <div class="label">سعر السوق</div>
+    <div class="value" id="hpMarketPrice">— <small>ILS</small></div>
+  </div>
+  <div class="hp-hero-prices">
+    <div class="hp-hero-price-box buy">
+      <div class="label">شراء USDT</div>
+      <div class="value" id="hpBuyPrice">—</div>
+    </div>
+    <div class="hp-hero-price-box sell">
+      <div class="label">بيع USDT</div>
+      <div class="value" id="hpSellPrice">—</div>
+    </div>
+  </div>
+  <div class="hp-hero-meta">
+    <span id="hpMarketChange">—</span>
+    <span id="hpMarketUpdated">—</span>
+  </div>
 </div>
 
 <!-- Action Buttons -->
-<div class="action-row" id="actionBtns" style="display:none;">
-  <a href="/market?type=SELL" class="action-btn action-buy">شراء USDT</a>
-  <a href="/market?type=BUY" class="action-btn action-sell">بيع USDT</a>
+<div class="hp-actions" id="hpActions">
+  <a href="/market.html" class="hp-btn hp-btn-buy" id="hpBtnBuy">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14m-7-7h14"/></svg>
+    شراء USDT
+  </a>
+  <a href="/market.html" class="hp-btn hp-btn-sell" id="hpBtnSell">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 12h14m-7-7l7 7-7 7"/></svg>
+    بيع USDT
+  </a>
 </div>
-
-<!-- Market Status + Price -->
-<div class="section-header" id="marketSection">
-  <div class="section-title">السوق</div>
-  <a href="/market" class="section-link">عرض الكل</a>
-</div>
-<div class="market-cards">
-  <div class="market-card">
-    <div class="market-status live" id="mktStatus"><span>مباشر</span></div>
-    <div class="market-pair">USDT / ILS</div>
-    <div class="market-price" id="mktILS">—</div>
-    <div class="market-change up" id="mktILSChg">—</div>
-    <div style="font-size:10px;color:#5A6577;margin-top:4px;" id="mktSource"></div>
-  </div>
-  <div class="market-card">
-    <div class="market-pair">USDT / USD</div>
-    <div class="market-price">1.00</div>
-    <div class="market-change stable">Stable</div>
-    <div style="margin-top:8px;">
-      <div style="font-size:10px;color:#5A6577;">سعر الشراء</div>
-      <div style="font-size:16px;font-weight:700;color:#00D6A0;" id="mktBuy">—</div>
-    </div>
-    <div style="margin-top:4px;">
-      <div style="font-size:10px;color:#5A6577;">سعر البيع</div>
-      <div style="font-size:16px;font-weight:700;color:#FF5C6C;" id="mktSell">—</div>
-    </div>
-  </div>
+<div style="display:flex;gap:8px;margin:0 16px 20px;justify-content:center;">
+  <a href="/create_ad.html" class="hp-btn-secondary">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8m-4-4h8"/></svg>
+    إنشاء إعلان
+  </a>
+  <button class="hp-btn-secondary" onclick="openGuide()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+    كيف تعمل المنصة؟
+  </button>
 </div>
 
 <!-- Price Chart -->
-<div class="chart-container" style="margin-top:10px;">
-  <div class="chart-header">
-    <span style="font-size:13px;font-weight:700;color:#F5F7FA;">مخطط السعر</span>
-    <div class="chart-tabs">
-      <button class="chart-tab" data-hours="1">1س</button>
-      <button class="chart-tab" data-hours="6">6س</button>
-      <button class="chart-tab active" data-hours="24">24س</button>
-      <button class="chart-tab" data-hours="168">7ي</button>
+<div class="hp-chart">
+  <div class="hp-chart-header">
+    <span class="hp-chart-title">مخطط السعر</span>
+    <div class="hp-chart-tabs">
+      <button class="hp-chart-tab" data-hours="1">1س</button>
+      <button class="hp-chart-tab" data-hours="6">6س</button>
+      <button class="hp-chart-tab active" data-hours="24">24س</button>
+      <button class="hp-chart-tab" data-hours="168">7ي</button>
     </div>
   </div>
-  <div class="chart-canvas"><canvas id="priceChart"></canvas></div>
+  <div class="hp-chart-canvas"><canvas id="hpChart"></canvas></div>
+  <div class="hp-chart-empty" id="hpChartEmpty" style="display:none;">لا توجد بيانات كافية للفترة المحددة</div>
 </div>
 
 <!-- Fee Calculator -->
-<div class="fee-calc">
-  <div class="fee-calc-title">حاسبة الرسوم</div>
-  <input type="number" class="fee-calc-input" id="feeAmount" placeholder="أدخل المبلغ بالUSDT" inputmode="decimal" step="0.01" min="0">
-  <div class="fee-calc-results">
-    <div class="fee-result">
-      <div class="fee-result-label">سعر السوق</div>
-      <div class="fee-result-value" id="feeMarket">—</div>
+<div class="hp-fee">
+  <div class="hp-fee-title">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+    حاسبة الرسوم
+  </div>
+  <input type="number" class="hp-fee-input" id="hpFeeAmount" placeholder="أدخل المبلغ بالUSDT" inputmode="decimal" step="0.01" min="0">
+  <div class="hp-fee-results">
+    <div class="hp-fee-result">
+      <div class="label">المبلغ</div>
+      <div class="value" id="hpFeeAmountVal">—</div>
     </div>
-    <div class="fee-result">
-      <div class="fee-result-label">العمولة</div>
-      <div class="fee-result-value danger" id="feePlatform">—</div>
+    <div class="hp-fee-result">
+      <div class="label">رسوم المنصة</div>
+      <div class="value danger" id="hpFeeFee">—</div>
     </div>
-    <div class="fee-result">
-      <div class="fee-result-label">الإجمالي</div>
-      <div class="fee-result-value primary" id="feeTotal">—</div>
+    <div class="hp-fee-result">
+      <div class="label">الإجمالي</div>
+      <div class="value primary" id="hpFeeTotal">—</div>
     </div>
-    <div class="fee-result">
-      <div class="fee-result-label">الإجمالي بالدولار</div>
-      <div class="fee-result-value" id="feeTotalUsd">—</div>
+    <div class="hp-fee-result">
+      <div class="label">بالدولار</div>
+      <div class="value" id="hpFeeUsd">—</div>
     </div>
   </div>
 </div>
 
 <!-- P2P Offers -->
-<div class="section-header">
-  <div class="section-title">أفضل عروض USDT</div>
-  <a href="/market" class="section-link">عرض الكل</a>
+<div class="hp-section">
+  <div class="hp-section-title">أفضل عروض USDT</div>
+  <a href="/market.html" class="hp-section-link">عرض الكل</a>
 </div>
-<div class="p2p-list" id="p2pList">
-  <div style="text-align:center;padding:32px 16px;color:#5A6577;font-size:13px;">جاري تحميل العروض...</div>
+<div class="hp-p2p" id="hpP2pList">
+  <div style="text-align:center;padding:32px;color:#5A6577;font-size:12px;">جاري تحميل العروض...</div>
 </div>
 
 <!-- Features -->
-<div class="section-header">
-  <div class="section-title">لماذا USDT P2P؟</div>
+<div class="hp-section">
+  <div class="hp-section-title">لماذا USDT P2P؟</div>
 </div>
-<div class="home-features">
-  <div class="home-feature">
-    <div class="home-feature-icon">🛡</div>
-    <div class="home-feature-title">حماية Escrow</div>
-    <div class="home-feature-desc">USDT محجوز بأمان</div>
+<div class="hp-features" id="hpFeatures">
+  <div class="hp-feature">
+    <div class="hp-feature-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 2l8 4v6c0 5.25-3.5 8.75-8 10-4.5-1.25-8-4.75-8-10V6l8-4z"/><path d="M9 12l2 2 4-4"/></svg></div>
+    <div class="hp-feature-title">حماية Escrow</div>
+    <div class="hp-feature-desc">USDT محجوز بأمان</div>
   </div>
-  <div class="home-feature">
-    <div class="home-feature-icon">🤝</div>
-    <div class="home-feature-title">تداول شخصي</div>
-    <div class="home-feature-desc">مقابلات مباشرة آمنة</div>
+  <div class="hp-feature">
+    <div class="hp-feature-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg></div>
+    <div class="hp-feature-title">تداول شخصي</div>
+    <div class="hp-feature-desc">مقابلات مباشرة آمنة</div>
   </div>
-  <div class="home-feature">
-    <div class="home-feature-icon">⚡</div>
-    <div class="home-feature-title">سريع وموثوق</div>
-    <div class="home-feature-desc">تنفيذ فوري للصفقات</div>
+  <div class="hp-feature">
+    <div class="hp-feature-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+    <div class="hp-feature-title">سريع وموثوق</div>
+    <div class="hp-feature-desc">تنفيذ فوري للصفقات</div>
   </div>
-  <div class="home-feature">
-    <div class="home-feature-icon">🇵🇸</div>
-    <div class="home-feature-title">فلسطيني 100%</div>
-    <div class="home-feature-desc">منصة محلية</div>
+  <div class="hp-feature">
+    <div class="hp-feature-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+    <div class="hp-feature-title">مراقبة المعاملات</div>
+    <div class="hp-feature-desc">تتبع كل صفقة</div>
   </div>
 </div>
 
 <!-- CTA -->
-<div class="home-cta" id="ctaSection">
+<div class="hp-cta" id="hpCta">
   <h2>ابدأ التداول الآن</h2>
-  <p>انضم إلى منصة USDT P2P Palestine</p>
-  <a href="/register" class="action-btn action-buy" style="display:block;">إنشاء حساب مجاني</a>
+  <p>منصة USDT P2P آمنة وموثوقة</p>
+  <a href="/register.html" class="hp-btn hp-btn-buy">إنشاء حساب مجاني</a>
 </div>
 
-<div style="height:40px;"></div>
+<div style="height:60px;"></div>
 
-<!-- Sidebar (from app.js) -->
-
-<!-- Scripts -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="/assets/app.js"></script>
 <script>
-// Telegram auto-redirect
-(function() {
-  try {
-    if (localStorage.getItem('usp_logged_out') === '1') return;
-    const tg = window.Telegram?.WebApp;
-    if (tg && tg.initData && tg.initDataUnsafe?.user) {
-      fetch('/api/auth/me').then(r => r.json()).then(d => {
-        if (!d.authenticated) window.location.href = '/login';
-      }).catch(() => {});
-    }
-  } catch(e) {}
-})();
-
 (async function() {
-  const E = s => { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; };
   const F = (n, d) => Number(n || 0).toFixed(d ?? 2);
+  const E = s => { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; };
+
+  // Set menu icon
+  document.getElementById('hpMenuBtn').innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>';
+
   let currentPrice = 3.7;
   let currentFee = 1.0;
 
-  // Load live market price with spread
-  try {
-    const priceResp = await api('/market/price');
-    const priceData = priceResp?.price || priceResp;
-    currentPrice = priceData?.usdt_ils || priceData?.usdt_ils || 3.7;
-    const buyPrice = priceData?.buy_price || currentPrice;
-    const sellPrice = priceData?.sell_price || currentPrice;
-    const change = priceData?.change_24h || 0;
-    const source = priceData?.source || 'unknown';
-
-    document.getElementById('mktILS').textContent = F(currentPrice);
-    const chgEl = document.getElementById('mktILSChg');
-    chgEl.textContent = (change >= 0 ? '+' : '') + change.toFixed(2) + '%';
-    chgEl.className = 'market-change ' + (change >= 0 ? 'up' : 'down');
-    chgEl.style.color = change >= 0 ? '#00D6A0' : '#FF5C6C';
-    document.getElementById('mktSource').textContent = 'المصدر: ' + source;
-    document.getElementById('mktBuy').textContent = F(buyPrice);
-    document.getElementById('mktSell').textContent = F(sellPrice);
-
-    // Update market status
+  // ── Load Market Price ──
+  async function loadMarketPrice() {
     try {
-      const statusResp = await api('/market/status');
-      const statusEl = document.getElementById('mktStatus');
-      if (statusResp?.status === 'stale') {
-        statusEl.className = 'market-status stale';
-        statusEl.innerHTML = '<span>⚠️ غير متاح مؤقتاً</span>';
+      const resp = await api('/market/price');
+      const p = resp?.price || resp;
+      if (!p) return;
+      currentPrice = p.usdt_ils || p.market_price || currentPrice;
+      const buyPrice = p.buy_price || currentPrice;
+      const sellPrice = p.sell_price || currentPrice;
+      const change = p.change_24h || p.change || 0;
+      const source = p.source || '';
+
+      document.getElementById('hpMarketPrice').innerHTML = F(currentPrice) + ' <small>ILS</small>';
+      document.getElementById('hpBuyPrice').textContent = F(buyPrice);
+      document.getElementById('hpSellPrice').textContent = F(sellPrice);
+
+      const chgEl = document.getElementById('hpMarketChange');
+      chgEl.textContent = (change >= 0 ? '+' : '') + change.toFixed(2) + '% اليوم';
+      chgEl.style.color = change >= 0 ? '#00D6A0' : '#FF5C6C';
+
+      const statusEl = document.getElementById('hpMarketStatus');
+      const isStale = p.status === 'stale' || p.stale;
+      statusEl.className = 'hp-hero-pair-live' + (isStale ? ' stale' : '');
+      statusEl.innerHTML = '<span>' + (isStale ? 'متأخر' : 'مباشر') + '</span>';
+
+      if (source) document.getElementById('hpMarketUpdated').textContent = 'المصدر: ' + source;
+    } catch {}
+  }
+
+  // ── Load Market Status ──
+  async function loadMarketStatus() {
+    try {
+      const resp = await api('/market/status');
+      const statusEl = document.getElementById('hpMarketStatus');
+      if (resp?.status === 'stale') {
+        statusEl.className = 'hp-hero-pair-live stale';
+        statusEl.innerHTML = '<span>متأخر</span>';
       }
-    } catch(e) {}
-  } catch(e) {}
+    } catch {}
+  }
 
-  // Load fee info
-  try {
-    const feeResp = await api('/market/fees');
-    if (feeResp?.fee_percent !== undefined) currentFee = feeResp.fee_percent;
-  } catch(e) {}
+  // ── Load Fee Config ──
+  async function loadFeeConfig() {
+    try {
+      const resp = await api('/market/fees');
+      if (resp?.fee_percent !== undefined) currentFee = resp.fee_percent;
+    } catch {}
+  }
 
-  // Fee calculator
-  const feeInput = document.getElementById('feeAmount');
+  // ── Fee Calculator ──
+  const feeInput = document.getElementById('hpFeeAmount');
   if (feeInput) {
     feeInput.addEventListener('input', function() {
       const amount = parseFloat(this.value) || 0;
       const fee = amount * currentFee / 100;
-      const total = amount - fee;
-      const totalUsd = total;
-      document.getElementById('feeMarket').textContent = amount > 0 ? F(amount * currentPrice) + ' ILS' : '—';
-      document.getElementById('feePlatform').textContent = fee > 0 ? F(fee) + ' USDT' : '—';
-      document.getElementById('feeTotal').textContent = total > 0 ? F(total) + ' USDT' : '—';
-      document.getElementById('feeTotalUsd').textContent = totalUsd > 0 ? '$' + F(totalUsd) : '—';
+      const total = amount + fee;
+      document.getElementById('hpFeeAmountVal').textContent = amount > 0 ? F(amount) + ' USDT' : '—';
+      document.getElementById('hpFeeFee').textContent = fee > 0 ? F(fee) + ' USDT' : '—';
+      document.getElementById('hpFeeTotal').textContent = total > 0 ? F(total) + ' USDT' : '—';
+      document.getElementById('hpFeeUsd').textContent = total > 0 ? '$' + F(total) : '—';
     });
   }
 
-  // Load chart
+  // ── Chart ──
   async function loadChart(hours) {
     try {
       const resp = await api('/market/price/history?hours=' + hours);
-      const history = resp?.history || [];
+      const history = resp?.history || resp?.data || [];
+      const emptyEl = document.getElementById('hpChartEmpty');
+      if (!history.length) {
+        document.getElementById('hpChart').style.display = 'none';
+        if (emptyEl) emptyEl.style.display = 'block';
+        return;
+      }
+      document.getElementById('hpChart').style.display = 'block';
+      if (emptyEl) emptyEl.style.display = 'none';
       drawChart(history);
-    } catch(e) {}
+    } catch {
+      document.getElementById('hpChart').style.display = 'none';
+      const emptyEl = document.getElementById('hpChartEmpty');
+      if (emptyEl) { emptyEl.style.display = 'block'; emptyEl.textContent = 'تعذر تحميل البيانات'; }
+    }
   }
 
   function drawChart(data) {
-    const canvas = document.getElementById('priceChart');
+    const canvas = document.getElementById('hpChart');
     if (!canvas || !data.length) return;
     const ctx = canvas.getContext('2d');
     const dpr = window.devicePixelRatio || 1;
@@ -332,10 +383,20 @@
     canvas.style.height = rect.height + 'px';
     ctx.scale(dpr, dpr);
     const w = rect.width, h = rect.height;
-    const prices = data.map(d => d.market_price);
+    const pad = 8;
+    const prices = data.map(d => d.market_price || d.price || 0).filter(p => p > 0);
+    if (!prices.length) return;
     const minP = Math.min(...prices) * 0.999;
     const maxP = Math.max(...prices) * 1.001;
     const range = maxP - minP || 0.01;
+
+    // Grid lines
+    ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 4; i++) {
+      const y = pad + (i / 3) * (h - 2 * pad);
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+    }
 
     // Gradient fill
     const grad = ctx.createLinearGradient(0, 0, 0, h);
@@ -345,9 +406,9 @@
     // Draw area
     ctx.beginPath();
     ctx.moveTo(0, h);
-    for (let i = 0; i < data.length; i++) {
-      const x = (i / (data.length - 1)) * w;
-      const y = h - ((prices[i] - minP) / range) * h;
+    for (let i = 0; i < prices.length; i++) {
+      const x = pad + (i / (prices.length - 1)) * (w - 2 * pad);
+      const y = pad + (1 - (prices[i] - minP) / range) * (h - 2 * pad);
       ctx.lineTo(x, y);
     }
     ctx.lineTo(w, h);
@@ -357,104 +418,91 @@
 
     // Draw line
     ctx.beginPath();
-    for (let i = 0; i < data.length; i++) {
-      const x = (i / (data.length - 1)) * w;
-      const y = h - ((prices[i] - minP) / range) * h;
-      if (i === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
+    for (let i = 0; i < prices.length; i++) {
+      const x = pad + (i / (prices.length - 1)) * (w - 2 * pad);
+      const y = pad + (1 - (prices[i] - minP) / range) * (h - 2 * pad);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
     }
     ctx.strokeStyle = '#00D6A0';
     ctx.lineWidth = 2;
+    ctx.lineJoin = 'round';
     ctx.stroke();
 
-    // Draw last price dot
-    if (data.length > 0) {
-      const lx = w;
-      const ly = h - ((prices[prices.length-1] - minP) / range) * h;
-      ctx.beginPath();
-      ctx.arc(lx - 2, ly, 3, 0, Math.PI * 2);
-      ctx.fillStyle = '#00D6A0';
-      ctx.fill();
-    }
+    // Last price dot
+    const lx = pad + (w - 2 * pad);
+    const ly = pad + (1 - (prices[prices.length - 1] - minP) / range) * (h - 2 * pad);
+    ctx.beginPath();
+    ctx.arc(lx, ly, 4, 0, Math.PI * 2);
+    ctx.fillStyle = '#00D6A0';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(lx, ly, 7, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(0,214,160,0.3)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
   }
 
-  // Chart tab clicks
-  document.querySelectorAll('.chart-tab').forEach(tab => {
+  // Chart tabs
+  document.querySelectorAll('.hp-chart-tab').forEach(tab => {
     tab.addEventListener('click', function() {
-      document.querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.hp-chart-tab').forEach(t => t.classList.remove('active'));
       this.classList.add('active');
       loadChart(parseInt(this.dataset.hours));
     });
   });
 
-  // Load default chart (24h)
-  loadChart(24);
-
-  // Auto-refresh price every 60 seconds
-  setInterval(async () => {
-    try {
-      const priceResp = await api('/market/price');
-      const priceData = priceResp?.price || priceResp;
-      currentPrice = priceData?.usdt_ils || currentPrice;
-      document.getElementById('mktILS').textContent = F(currentPrice);
-      document.getElementById('mktBuy').textContent = F(priceData?.buy_price || currentPrice);
-      document.getElementById('mktSell').textContent = F(priceData?.sell_price || currentPrice);
-    } catch(e) {}
-  }, 60000);
-
-  // Load user data
+  // ── Load User Data ──
   try {
     const me = await api('/auth/me');
     if (me && me.authenticated) {
-      const greetEl = document.getElementById('homeGreeting');
-      greetEl.style.display = 'block';
-      const name = me.username || 'صديقي';
-      document.getElementById('greetingText').textContent = 'أهلاً ' + name + ' 👋';
-
+      document.getElementById('hpGreeting').style.display = 'block';
+      document.getElementById('greetingText').textContent = 'أهلاً ' + (me.username || 'صديقي');
       const wallet = await api('/wallet');
-      if (wallet && wallet.ok !== false) {
-        document.getElementById('dashBalance').style.display = 'block';
-        document.getElementById('dashTotal').textContent = F(wallet.balance || 0);
-        document.getElementById('dashUsd').textContent = '≈ $' + F(wallet.balance || 0);
-        document.getElementById('actionBtns').style.display = 'flex';
-        document.getElementById('ctaSection').style.display = 'none';
+      if (wallet && wallet.ok !== false && wallet.balance !== undefined) {
+        document.getElementById('hpBalance').style.display = 'block';
+        document.getElementById('hpBalVal').textContent = F(wallet.balance || 0);
+        document.getElementById('hpBalUsd').textContent = '≈ $' + F(wallet.balance || 0);
+        document.getElementById('hpCta').style.display = 'none';
       }
     }
-  } catch(e) {}
+  } catch {}
 
-  // Load P2P ads
+  // ── Load P2P Ads ──
   try {
     const mkt = await api('/market?sort=price&limit=5');
     const ads = (mkt?.ads || []).filter(a => a.status === 'OPEN').slice(0, 5);
+    const listEl = document.getElementById('hpP2pList');
     if (ads.length) {
-      document.getElementById('p2pList').innerHTML = ads.map(a => {
+      listEl.innerHTML = ads.map(a => {
         const price = a.price || 3.7;
         const amount = a.amount || a.available || 0;
         const type = a.type || 'SELL';
         const pay = a.payment || a.payment_method || 'Bank';
-        const verified = a.verified ? '<span style="color:#00D6A0;font-size:10px;">✓ موثق</span>' : '';
-        return '<div class="p2p-card">' +
-          '<div class="p2p-top">' +
-            '<div class="p2p-user">' +
-              '<div class="p2p-avatar">' + E((a.user||a.username||'?')[0]) + '</div>' +
-              '<div><div class="p2p-name">' + E(a.user||a.username||'') + ' ' + verified + '</div>' +
-              '<div class="p2p-online">متصل</div></div>' +
-            '</div>' +
-          '</div>' +
-          '<div class="p2p-price">' + F(price) + ' <small>ILS</small></div>' +
-          '<div class="p2p-meta">' +
-            '<span>متاح <strong>' + F(amount, 0) + ' USDT</strong></span>' +
-          '</div>' +
-          '<div class="p2p-pay">' +
-            pay.split('/').map(p => '<span class="p2p-pay-tag">' + E(p.trim()) + '</span>').join('') +
-          '</div>' +
-          '<a href="/market" class="p2p-buy-btn">' + (type === 'SELL' ? 'شراء USDT' : 'بيع USDT') + '</a>' +
-        '</div>';
+        const verified = a.verified ? '<span class="hp-p2p-verified"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg> موثق</span>' : '';
+        return `<div class="hp-p2p-card">
+          <div class="hp-p2p-top">
+            <div class="hp-p2p-user">
+              <div class="hp-p2p-avatar">${E((a.user||a.username||'?')[0])}</div>
+              <div><div class="hp-p2p-name">${E(a.user||a.username||'')} ${verified}</div></div>
+            </div>
+          </div>
+          <div class="hp-p2p-price">${F(price)} <small>ILS</small></div>
+          <div class="hp-p2p-meta"><span>متاح <strong>${F(amount, 0)} USDT</strong></span></div>
+          <div class="hp-p2p-pay">${pay.split('/').map(p => '<span class="hp-p2p-pay-tag">' + E(p.trim()) + '</span>').join('')}</div>
+          <a href="/market.html" class="hp-p2p-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14m-7-7h14"/></svg> ${type === 'SELL' ? 'شراء USDT' : 'بيع USDT'}</a>
+        </div>`;
       }).join('');
     } else {
-      document.getElementById('p2pList').innerHTML = '<div style="text-align:center;padding:32px 16px;color:#5A6577;font-size:13px;">لا توجد عروض حالياً</div>';
+      listEl.innerHTML = '<div style="text-align:center;padding:32px;color:#5A6577;font-size:12px;">لا توجد عروض حالياً</div>';
     }
-  } catch(e) {}
+  } catch {}
+
+  // ── Init ──
+  await Promise.all([loadMarketPrice(), loadMarketStatus(), loadFeeConfig()]);
+  loadChart(24);
+
+  // Auto-refresh price every 60s
+  setInterval(loadMarketPrice, 60000);
 })();
 </script>
 </body>

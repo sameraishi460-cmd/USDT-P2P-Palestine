@@ -1,26 +1,55 @@
 /* ============================================================
-   USDT P2P Palestine — Shared JavaScript (v5)
+   USDT P2P Palestine — Shared JavaScript (v6)
    Auth: cookie-based sessions + localStorage user cache + CSRF
-   Telegram WebApp Integration
+   Telegram Deep-Link Login + Admin Button Fix + Icon System
    ============================================================ */
 const API_BASE = location.origin + '/api';
 
-/* ── Telegram Deep-Link Login ──────────────────────────
-   When user clicks a bot URL button with ?tg_token=XXX,
-   exchange it for a proper web session cookie. */
+/* ── Professional SVG Icon System ───────────────────────── */
+const ICO = {
+  home:    `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>`,
+  market:  `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M5 16l4-8 4 4 4-10"/></svg>`,
+  trades:  `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3l4 4-4 4"/><path d="M3 11V9a4 4 0 014-4h14"/><path d="M7 21l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>`,
+  wallet:  `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M16 12h2"/><path d="M2 10h20"/></svg>`,
+  plus:    `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8m-4-4h8"/></svg>`,
+  bell:    `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 00-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>`,
+  user:    `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M5 20c0-4 3-7 7-7s7 3 7 7"/></svg>`,
+  admin:   `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 4v6c0 5.25-3.5 8.75-8 10-4.5-1.25-8-4.75-8-10V6l8-4z"/><path d="M9 12l2 2 4-4"/></svg>`,
+  settings:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>`,
+  guide:   `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>`,
+  palette: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="8" cy="10" r="1.5" fill="currentColor"/><circle cx="16" cy="10" r="1.5" fill="currentColor"/><circle cx="12" cy="15" r="1.5" fill="currentColor"/></svg>`,
+  logout:  `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>`,
+  login:   `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/></svg>`,
+  register:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="8.5" cy="7" r="4"/><path d="M20 8v6m3-3h-6"/></svg>`,
+  back:    `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 19l-7-7 7-7"/></svg>`,
+  close:   `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>`,
+  menu:    `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>`,
+  buy:     `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14m-7-7h14"/></svg>`,
+  sell:    `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14m-7-7l7 7-7 7"/></svg>`,
+  shield:  `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l8 4v6c0 5.25-3.5 8.75-8 10-4.5-1.25-8-4.75-8-10V6l8-4z"/></svg>`,
+  chart:   `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18"/><path d="M5 16l4-8 4 4 4-10"/></svg>`,
+  dollar:  `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>`,
+  refresh: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>`,
+  lock:    `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>`,
+  globe:   `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>`,
+  moon:    `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>`,
+  sun:     `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>`,
+  list:    `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>`,
+  check:   `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>`,
+  refresh2:`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>`,
+};
+
+/* ── Telegram Deep-Link Login ────────────────────────── */
 window.__tgLoginPending = false;
 (function() {
   const params = new URLSearchParams(location.search);
   const tgToken = params.get('tg_token');
   if (!tgToken) return;
-  // Signal to other scripts that a login exchange is in progress
   window.__tgLoginPending = true;
   try { sessionStorage.setItem('tg_login_pending', '1'); } catch {}
-  // Remove token from URL immediately (prevent re-use/bookmark)
   params.delete('tg_token');
   const cleanUrl = location.pathname + (params.toString() ? '?' + params.toString() : '') + location.hash;
   history.replaceState(null, '', cleanUrl);
-  // Exchange token for a session
   fetch(API_BASE + '/auth/telegram-login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -28,28 +57,18 @@ window.__tgLoginPending = false;
     credentials: 'include',
   }).then(r => r.json()).then(data => {
     if (data.ok) {
-      // Store CSRF token if returned
-      if (data.csrf_token) {
-        try { localStorage.setItem('csrf_token', data.csrf_token); } catch {}
-      }
-      // Also fetch /api/auth/me to update the cached user with correct isAdmin
+      if (data.csrf_token) try { localStorage.setItem('csrf_token', data.csrf_token); } catch {}
       fetch(API_BASE + '/auth/me', { credentials: 'include' })
         .then(r => r.json()).then(me => {
-          if (me && me.authenticated) {
-            try { localStorage.setItem(USER_KEY, JSON.stringify(me)); } catch {}
-          }
-          // Reload to pick up the new session and refreshed user data
+          if (me && me.authenticated) try { localStorage.setItem(USER_KEY, JSON.stringify(me)); } catch {}
           location.reload();
-        }).catch(() => {
-          location.reload();
-        });
+        }).catch(() => location.reload());
     } else {
-      console.warn('[tg-login] Token exchange failed:', data.error);
+      console.warn('[tg-login] Failed:', data.error);
       window.__tgLoginPending = false;
       try { sessionStorage.removeItem('tg_login_pending'); } catch {}
     }
-  }).catch(err => {
-    console.error('[tg-login] Network error:', err);
+  }).catch(() => {
     window.__tgLoginPending = false;
     try { sessionStorage.removeItem('tg_login_pending'); } catch {}
   });
@@ -58,54 +77,25 @@ window.__tgLoginPending = false;
 /* ── Telegram WebApp SDK ──────────────────────────────── */
 const tg = window.Telegram?.WebApp || null;
 let _isTelegram = !!tg;
-
 function initTelegram() {
   if (!tg) return;
-  tg.expand();
-  tg.ready();
+  tg.expand(); tg.ready();
   if (tg.themeParams) {
-    document.documentElement.style.setProperty('--tg-bg', tg.themeParams.bg_color || '');
-    document.documentElement.style.setProperty('--tg-text', tg.themeParams.text_color || '');
-    document.documentElement.style.setProperty('--tg-hint', tg.themeParams.hint_color || '');
-    document.documentElement.style.setProperty('--tg-link', tg.themeParams.link_color || '');
-    document.documentElement.style.setProperty('--tg-button', tg.themeParams.button_color || '');
-    document.documentElement.style.setProperty('--tg-button-text', tg.themeParams.button_text_color || '');
-    document.documentElement.style.setProperty('--tg-secondary-bg', tg.themeParams.secondary_bg_color || '');
+    Object.entries({ '--tg-bg': 'bg_color', '--tg-text': 'text_color', '--tg-hint': 'hint_color', '--tg-link': 'link_color', '--tg-button': 'button_color', '--tg-button-text': 'button_text_color', '--tg-secondary-bg': 'secondary_bg_color' }).forEach(([v, k]) => {
+      document.documentElement.style.setProperty(v, tg.themeParams[k] || '');
+    });
   }
-  tg.onEvent('themeChanged', () => {
-    if (tg.themeParams) {
-      document.documentElement.style.setProperty('--tg-bg', tg.themeParams.bg_color || '');
-      document.documentElement.style.setProperty('--tg-text', tg.themeParams.text_color || '');
-      document.documentElement.style.setProperty('--tg-button', tg.themeParams.button_color || '');
-      document.documentElement.style.setProperty('--tg-button-text', tg.themeParams.button_text_color || '');
-      document.documentElement.style.setProperty('--tg-secondary-bg', tg.themeParams.secondary_bg_color || '');
-    }
-  });
   tg.MainButton.hide();
-  tg.BackButton.onClick(() => {
-    if (window.history.length > 1) window.history.back();
-    else tg.close();
-  });
-  tg.setHeaderColor('#0a0e18');
-  tg.setBackgroundColor('#0a0e18');
+  tg.BackButton.onClick(() => { window.history.length > 1 ? window.history.back() : tg.close(); });
+  tg.setHeaderColor('#07090D');
+  tg.setBackgroundColor('#07090D');
 }
-
 function isTelegram() { return _isTelegram; }
-function tgUser() { return tg?.initDataUnsafe?.user || null; }
-function tgInitData() { return tg?.initData || ''; }
 
-function hapticFeedback(type) {
-  if (!tg) return;
-  if (type === 'success') tg.HapticFeedback.impactOccurred('medium');
-  else if (type === 'error') tg.HapticFeedback.notificationOccurred('error');
-  else if (type === 'tap') tg.HapticFeedback.impactOccurred('light');
-  else tg.HapticFeedback.impactOccurred('medium');
-}
-
+/* ── User State ───────────────────────────────────────── */
 const USER_KEY = 'usp_user';
 const CSRF_KEY = 'usp_csrf';
 const LOGOUT_KEY = 'usp_logged_out';
-
 let _user = null;
 let _csrf = '';
 
@@ -120,42 +110,31 @@ function saveUser(u, csrf) {
   if (u) localStorage.setItem(USER_KEY, JSON.stringify(u));
   else localStorage.removeItem(USER_KEY);
   if (csrf) localStorage.setItem(CSRF_KEY, csrf);
-  // Clear logout flag on successful login
   localStorage.removeItem(LOGOUT_KEY);
 }
-
-function clearUser() {
-  _user = null; _csrf = '';
-  localStorage.removeItem(USER_KEY);
-  localStorage.removeItem(CSRF_KEY);
-}
-
+function clearUser() { _user = null; _csrf = ''; localStorage.removeItem(USER_KEY); localStorage.removeItem(CSRF_KEY); }
 function isLoggedIn() { return !!_user; }
 function currentUser() { return _user; }
+function isUserAdmin(u) {
+  u = u || _user;
+  return !!(u && (u.isAdmin === true || u.status === 'ADMIN'));
+}
 
-/* ── Theme (Dark/Light) ──────────────────────────────── */
+/* ── Theme & Accent ───────────────────────────────────── */
 const THEME_KEY = 'usp_theme';
 const ACCENT_KEY = 'usp_accent';
 function getTheme() { return localStorage.getItem(THEME_KEY) || 'dark'; }
-function setTheme(t) {
-  localStorage.setItem(THEME_KEY, t);
-  applyTheme(t);
-}
+function setTheme(t) { localStorage.setItem(THEME_KEY, t); applyTheme(t); }
 function applyTheme(t) {
-  if (t === 'auto') {
-    t = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
-  }
+  if (t === 'auto') t = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
   document.documentElement.setAttribute('data-theme', t);
 }
 applyTheme(getTheme());
 function toggleTheme() {
-  const cur = getTheme();
-  const next = cur === 'dark' ? 'light' : cur === 'light' ? 'auto' : 'dark';
+  const cur = getTheme(); const next = cur === 'dark' ? 'light' : cur === 'light' ? 'auto' : 'dark';
   setTheme(next);
-  toast(next === 'dark' ? '🌙 الوضع الليلي' : next === 'light' ? '☀️ الوضع الفاتح' : '⚙️ تلقائي حسب الجهاز');
+  toast(next === 'dark' ? '🌙 الوضع الليلي' : next === 'light' ? '☀️ الوضع الفاتح' : '⚙️ تلقائي');
 }
-
-/* ── Accent Color Theme Switcher ─────────────────────── */
 const ACCENTS = [
   { id: 'green', label: 'أخضر', color: '#00D6A0' },
   { id: 'yellow', label: 'أصفر', color: '#F5C542' },
@@ -163,13 +142,8 @@ const ACCENTS = [
   { id: 'red', label: 'أحمر', color: '#EF4444' },
 ];
 function getAccent() { return localStorage.getItem(ACCENT_KEY) || 'green'; }
-function setAccent(id) {
-  localStorage.setItem(ACCENT_KEY, id);
-  document.documentElement.setAttribute('data-accent', id);
-}
-function applyAccent() {
-  document.documentElement.setAttribute('data-accent', getAccent());
-}
+function setAccent(id) { localStorage.setItem(ACCENT_KEY, id); document.documentElement.setAttribute('data-accent', id); }
+function applyAccent() { document.documentElement.setAttribute('data-accent', getAccent()); }
 applyAccent();
 function toggleAccentPicker(ev) {
   ev.stopPropagation();
@@ -184,8 +158,8 @@ function toggleAccentPicker(ev) {
     ACCENTS.forEach(a => {
       const btn = document.createElement('button');
       btn.className = 'theme-picker-opt' + (getAccent() === a.id ? ' selected' : '');
-      btn.innerHTML = `<span class="theme-picker-swatch" style="background:${a.color}"></span><span>${a.label}</span><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>`;
-      btn.onclick = (e) => { e.stopPropagation(); setAccent(a.id); opts.querySelectorAll('.theme-picker-opt').forEach(o => o.classList.remove('selected')); btn.classList.add('selected'); toast('تم تغيير لون الواجهة'); };
+      btn.innerHTML = `<span class="theme-picker-swatch" style="background:${a.color}"></span><span>${a.label}</span>${ICO.check}`;
+      btn.onclick = (e) => { e.stopPropagation(); setAccent(a.id); opts.querySelectorAll('.theme-picker-opt').forEach(o => o.classList.remove('selected')); btn.classList.add('selected'); toast('تم تغيير اللون'); };
       opts.appendChild(btn);
     });
     document.addEventListener('click', () => pop.classList.remove('open'));
@@ -193,38 +167,29 @@ function toggleAccentPicker(ev) {
   pop.classList.toggle('open');
 }
 
-/* ── How It Works Interactive Guide ──────────────────── */
+/* ── Interactive Guide ────────────────────────────────── */
 const GUIDE_KEY = 'usp_guide_done';
 const GUIDE_STEPS = [
-  { icon: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>', title: 'إنشاء حساب', desc: 'أنشئ حسابك الخاص بشكل آمن وسريع. اختر اسم مستخدم وكلمة مرور قوية، وابدأ رحلتك في عالم تداول USDT.' },
-  { icon: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>', title: 'اختر شراء أو بيع USDT', desc: 'تصفح سوق USDT واختر أفضل عرض شراء أو بيع يناسبك. السعر实时 من السوق و_singular瞬间.' },
-  { icon: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>', title: 'اختر العرض المناسب', desc: 'كل عرض يُظهر السعر وطريقة الدفع والمبلغ المتاح. اختر البائع أو المشتري الأفضل من حيث السعر والسمعة.' },
-  { icon: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>', title: 'الدفع والحماية', desc: 'تُدخل الصفقة في نظام الحماية الضمانية. USDT محمية في حساب الضمان حتى يتم تأكيد الدفع.' },
-  { icon: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>', title: 'تأكيد العملية', desc: 'بعد الدفع، يقوم البائع بتأكيد استلام المبلغ ثم يُحرر USDT لك. كل خطوة محمية ومُوثقة.' },
-  { icon: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>', title: 'المحفظة', desc: 'أدر محفظتك: أودع USDT أو اسحبه، وتابع رصيدك المتاح والمحجوز وسجل المعاملات.' },
-  { icon: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>', title: 'مراقبة السعر', desc: 'تابع سعر USDT في الوقت الحقيقي مع الرسم البياني والتاريخي. أطلق تنبيهات سعر لكي لا تفوتك أي فرصة.' },
+  { icon: ICO.user, title: 'إنشاء حساب', desc: 'أنشئ حسابك بشكل آمن وسريع. اختر اسم مستخدم وكلمة مرور قوية.' },
+  { icon: ICO.trades, title: 'اختر شراء أو بيع USDT', desc: 'تصفح سوق USDT واختر أفضل عرض يناسبك. السعر لحظي من السوق.' },
+  { icon: ICO.list, title: 'اختر العرض المناسب', desc: 'كل عرض يُظهر السعر وطريقة الدفع والمبلغ المتاح والسمعة.' },
+  { icon: ICO.shield, title: 'الدفع والحماية', desc: 'USDT محمية في نظام الضمان حتى يتم تأكيد الدفع.' },
+  { icon: ICO.check, title: 'تأكيد العملية', desc: 'بعد الدفع، يؤكد البائع ثم يُحرر USDT لك. كل خطوة موثقة.' },
+  { icon: ICO.wallet, title: 'المحفظة', desc: 'أدر محفظتك: أودع أو اسحب، وتابع رصيدك وسجل المعاملات.' },
+  { icon: ICO.chart, title: 'مراقبة السعر', desc: 'تابع سعر USDT لحظياً مع الرسم البياني. أطلق تنبيهات سعر.' },
 ];
 let _guideStep = 0;
-function openGuide() {
-  _guideStep = 0;
-  renderGuideStep();
-  let overlay = document.getElementById('guide-overlay');
-  if (overlay) overlay.classList.add('open');
-}
-function closeGuide() {
-  const overlay = document.getElementById('guide-overlay');
-  if (overlay) overlay.classList.remove('open');
-  localStorage.setItem(GUIDE_KEY, '1');
-}
-function guideNext() { if (_guideStep < GUIDE_STEPS.length - 1) { _guideStep++; renderGuideStep(); } else { renderGuideFinal(); } }
+function openGuide() { _guideStep = 0; renderGuideStep(); const o = document.getElementById('guide-overlay'); if (o) o.classList.add('open'); }
+function closeGuide() { const o = document.getElementById('guide-overlay'); if (o) o.classList.remove('open'); localStorage.setItem(GUIDE_KEY, '1'); }
+function guideNext() { if (_guideStep < GUIDE_STEPS.length - 1) { _guideStep++; renderGuideStep(); } else renderGuideFinal(); }
 function guidePrev() { if (_guideStep > 0) { _guideStep--; renderGuideStep(); } }
 function renderGuideStep() {
-  const step = GUIDE_STEPS[_guideStep];
+  const s = GUIDE_STEPS[_guideStep];
   const body = document.querySelector('.guide-body');
   const footer = document.querySelector('.guide-footer');
   const prog = document.querySelector('.guide-progress');
   if (!body) return;
-  body.innerHTML = `<div class="guide-step-icon">${step.icon}</div><div class="guide-step-title">${step.title}</div><div class="guide-step-desc">${step.desc}</div>`;
+  body.innerHTML = `<div class="guide-step-icon" style="background:var(--primary-dim,rgba(0,214,160,0.1));">${s.icon}</div><div class="guide-step-title">${s.title}</div><div class="guide-step-desc">${s.desc}</div>`;
   if (prog) prog.innerHTML = GUIDE_STEPS.map((_, i) => `<div class="guide-progress-dot${i === _guideStep ? ' active' : ''}"></div>`).join('');
   if (footer) footer.innerHTML = `<button class="guide-btn guide-btn-ghost" onclick="guidePrev()" ${_guideStep === 0 ? 'style="visibility:hidden"' : ''}>السابق</button><button class="guide-skip" onclick="closeGuide()">تخطي</button><button class="guide-btn guide-btn-primary" onclick="guideNext()">${_guideStep === GUIDE_STEPS.length - 1 ? 'جاهز!' : 'التالي'}</button>`;
 }
@@ -233,350 +198,274 @@ function renderGuideFinal() {
   const footer = document.querySelector('.guide-footer');
   const prog = document.querySelector('.guide-progress');
   if (!body) return;
-  body.innerHTML = `<div class="guide-step-icon" style="background:var(--primary-light);"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg></div><div class="guide-step-title">جاهز للبدء؟</div><div class="guide-step-desc">أنت الآن جاهز لاستخدام المنصة. ابدأ بالشراء أو البيع الآن!</div><div class="guide-final-actions"><a href="/market" class="guide-btn guide-btn-primary">شراء USDT</a><a href="/market?tab=sell" class="guide-btn" style="background:var(--bg-card-hover);color:var(--text);">بيع USDT</a></div>`;
-  if (prog) prog.innerHTML = GUIDE_STEPS.map((_, i) => `<div class="guide-progress-dot active"></div>`).join('');
+  body.innerHTML = `<div class="guide-step-icon" style="background:var(--primary-dim,rgba(0,214,160,0.1));color:var(--primary,#00D6A0);">${ICO.check}</div><div class="guide-step-title">جاهز للبدء؟</div><div class="guide-step-desc">أنت الآن جاهز لاستخدام المنصة!</div><div class="guide-final-actions"><a href="/market.html" class="guide-btn guide-btn-primary">شراء USDT</a><a href="/market.html?tab=sell" class="guide-btn" style="background:var(--bg-card-hover,#151E27);color:var(--text-primary,#F5F7FA);">بيع USDT</a></div>`;
+  if (prog) prog.innerHTML = GUIDE_STEPS.map(() => `<div class="guide-progress-dot active"></div>`).join('');
   if (footer) footer.innerHTML = `<button class="guide-btn guide-btn-ghost" onclick="guidePrev()">السابق</button><button class="guide-btn guide-btn-primary" onclick="closeGuide()">إغلاق</button>`;
 }
 function createGuideOverlay() {
   if (document.getElementById('guide-overlay')) return;
-  const overlay = document.createElement('div');
-  overlay.id = 'guide-overlay';
-  overlay.className = 'guide-overlay';
-  overlay.innerHTML = `<div class="guide-modal"><div class="guide-header"><span class="guide-header-title">كيف تعمل المنصة؟</span><button class="guide-close" onclick="closeGuide()" aria-label="إغلاق"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div><div class="guide-body"></div><div class="guide-progress"></div><div class="guide-footer"></div></div>`;
-  overlay.addEventListener('click', (e) => { if (e.target === overlay) closeGuide(); });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeGuide(); });
-  document.body.appendChild(overlay);
+  const o = document.createElement('div');
+  o.id = 'guide-overlay'; o.className = 'guide-overlay';
+  o.innerHTML = `<div class="guide-modal"><div class="guide-header"><span class="guide-header-title">كيف تعمل المنصة؟</span><button class="guide-close" onclick="closeGuide()" aria-label="إغلاق">${ICO.close}</button></div><div class="guide-body"></div><div class="guide-progress"></div><div class="guide-footer"></div></div>`;
+  o.addEventListener('click', e => { if (e.target === o) closeGuide(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeGuide(); });
+  document.body.appendChild(o);
 }
 createGuideOverlay();
 
-/* ── Toast ─────────────────────────────────────────────────── */
+/* ── Toast ────────────────────────────────────────────── */
 let _tt;
 function toast(msg, ms) {
   ms = ms || 3000;
   let el = document.getElementById('toast');
   if (!el) { el = document.createElement('div'); el.id = 'toast'; document.body.appendChild(el); }
-  clearTimeout(_tt);
-  el.textContent = msg; el.className = 'toast show';
+  clearTimeout(_tt); el.textContent = msg; el.className = 'toast show';
   _tt = setTimeout(() => el.className = 'toast', ms);
 }
 
-/* ── API ───────────────────────────────────────────────────── */
+/* ── API ──────────────────────────────────────────────── */
 async function api(path, opts) {
   opts = opts || {};
   const url = API_BASE + path;
   const headers = Object.assign({}, opts.headers);
   if (opts.body && typeof opts.body === 'object' && !(opts.body instanceof FormData)) {
-    headers['Content-Type'] = 'application/json';
-    opts.body = JSON.stringify(opts.body);
+    headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(opts.body);
   }
-  if (['POST', 'PUT', 'DELETE'].includes(opts.method || 'GET') && _csrf) {
-    headers['X-CSRF-Token'] = _csrf;
-  }
+  if (['POST', 'PUT', 'DELETE'].includes(opts.method || 'GET') && _csrf) headers['X-CSRF-Token'] = _csrf;
   try {
     const res = await fetch(url, { credentials: 'same-origin', ...opts, headers });
     const json = await res.json().catch(() => ({}));
     if (res.status === 401 && json.authenticated === false) { clearUser(); return json; }
-    if (res.status === 429) { toast('تم تجاوز الحد المسموح، حاول لاحقاً'); return json; }
-    if (!res.ok && !json.ok) { toast(json.error || 'خطأ في الخادم', 4000); return json; }
+    if (res.status === 429) { toast('تم تجاوز الحد المسموح'); return json; }
+    if (!res.ok && !json.ok) { toast(json.error || 'خطأ', 4000); return json; }
     return json;
-  } catch {
-    toast(navigator.onLine === false ? 'لا يوجد اتصال بالإنترنت' : 'خطأ في الاتصال');
-    return null;
-  }
+  } catch { toast(navigator.onLine === false ? 'لا يوجد اتصال' : 'خطأ في الاتصال'); return null; }
 }
 
-/* ── Auth helpers ──────────────────────────────────────────── */
+/* ── Auth helpers ─────────────────────────────────────── */
 async function doRegister(username, email, password) {
   const r = await api('/auth/register', { method: 'POST', body: { username, email, password } });
-  if (r && r.ok) {
-    const me = await api('/auth/me');
-    if (me && me.authenticated) saveUser(me, r.csrf_token);
-    return r;
-  }
+  if (r?.ok) { const me = await api('/auth/me'); if (me?.authenticated) saveUser(me, r.csrf_token); }
   return r;
 }
-
 async function doLogin(identifier, password) {
   const r = await api('/auth/login', { method: 'POST', body: { username: identifier, password } });
-  if (r && r.ok) {
-    const me = await api('/auth/me');
-    if (me && me.authenticated) saveUser(me, r.csrf_token);
-    return r;
-  }
+  if (r?.ok) { const me = await api('/auth/me'); if (me?.authenticated) saveUser(me, r.csrf_token); }
   return r;
 }
-
 async function doAdminLogin(username, password) {
   const r = await api('/auth/admin-login', { method: 'POST', body: { username, password } });
-  if (r && r.ok) {
-    const me = await api('/auth/me');
-    if (me && me.authenticated) { saveUser(me, r.csrf_token); me.isAdmin = true; }
-    return r;
-  }
+  if (r?.ok) { const me = await api('/auth/me'); if (me?.authenticated) saveUser({ ...me, isAdmin: true }, r.csrf_token); }
   return r;
 }
-
 async function doLogout() {
-  // Mark as logged out to prevent Telegram auto-re-login
   localStorage.setItem(LOGOUT_KEY, '1');
   await api('/auth/logout', { method: 'POST' });
-  clearUser();
-  window.location.href = '/login';
+  clearUser(); window.location.href = '/login.html';
 }
-
-function wasLoggedOut() {
-  return localStorage.getItem(LOGOUT_KEY) === '1';
-}
-
+function wasLoggedOut() { return localStorage.getItem(LOGOUT_KEY) === '1'; }
 function requireAuth() {
   if (!isLoggedIn()) {
     const rt = encodeURIComponent(location.pathname + location.search);
-    location.href = '/login?returnTo=' + rt;
+    location.href = '/login.html?returnTo=' + rt;
     return false;
   }
   return true;
 }
 
-/* ── Status helpers ────────────────────────────────────────── */
+/* ── Status helpers ───────────────────────────────────── */
 const STATUS_MAP = {
-  OPEN: { label: '🟢 مفتوحة', cls: 'badge-buy' },
-  PENDING: { label: '⏳ بانتظار', cls: 'badge-pending' },
-  PAYMENT_SENT: { label: '💳 تم الدفع', cls: 'badge-info' },
-  PAYMENT_CONFIRMED: { label: '✅ تم التأكيد', cls: 'badge-success' },
-  COMPLETED: { label: '✅ مكتمل', cls: 'badge-success' },
-  CANCELLED: { label: '❌ ملغي', cls: 'badge-error' },
-  DISPUTED: { label: '⚠️ نزاع', cls: 'badge-error' },
-  RELEASED: { label: '🔓 محرر', cls: 'badge-success' },
-  REFUNDED: { label: '↩️ مرجّع', cls: 'badge-pending' },
-  SELL: { label: '💰 بيع', cls: 'badge-sell' },
-  BUY: { label: '🛒 شراء', cls: 'badge-buy' },
+  OPEN: { label: 'مفتوحة', cls: 'badge-buy' }, PENDING: { label: 'بانتظار', cls: 'badge-pending' },
+  PAYMENT_SENT: { label: 'تم الدفع', cls: 'badge-info' }, COMPLETED: { label: 'مكتمل', cls: 'badge-success' },
+  CANCELLED: { label: 'ملغي', cls: 'badge-error' }, DISPUTED: { label: 'نزاع', cls: 'badge-error' },
+  SELL: { label: 'بيع', cls: 'badge-sell' }, BUY: { label: 'شراء', cls: 'badge-buy' },
 };
 function statusBadge(s) { const i = STATUS_MAP[s] || { label: s, cls: '' }; return `<span class="badge ${i.cls}">${i.label}</span>`; }
-function typeBadge(t) { return t === 'BUY' ? '<span class="badge badge-buy">🛒 شراء</span>' : '<span class="badge badge-sell">💰 بيع</span>'; }
-function profileAvatar(name, extra) {
-  const c = name ? name[0].toUpperCase() : '?';
-  return `<div class="avatar" style="width:32px;height:32px;font-size:13px">${c}</div>`;
-}
-function verifiedBadge(size) {
-  return '<span class="badge badge-verified" style="font-size:10px">✓ موثق</span>';
-}
-function trustBadge(score) {
-  if (!score) return '';
-  const cls = score >= 80 ? 'trust-high' : score >= 50 ? 'trust-mid' : 'trust-low';
-  return `<span class="trust-score ${cls}">🟢 ${score}% موثوق</span>`;
-}
 function esc(s) { const d = document.createElement('div'); d.textContent = s ?? ''; return d.innerHTML; }
 function fmtNum(n, d) { return Number(n || 0).toFixed(d ?? 2); }
 function fmtDate(d) { return d ? new Date(d).toLocaleString('ar', { dateStyle: 'medium', timeStyle: 'short' }) : ''; }
-function copyText(t) { navigator.clipboard?.writeText(t); toast('تم النسخ'); }
 
-/* ── Navigation ────────────────────────────────────────────── */
-function themeIcon() { const t = getTheme(); if (t === 'dark') return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>'; if (t === 'light') return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>'; return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>'; }
+/* ── Navigation ───────────────────────────────────────── */
+function themeIcon() { return getTheme() === 'dark' ? ICO.moon : getTheme() === 'light' ? ICO.sun : ICO.settings; }
 
-/* Page titles for mobile header */
 const PAGE_TITLES = {
-  '/': 'الرئيسية',
-  '/market': 'سوق USDT',
-  '/trades': 'الصفقات',
-  '/wallet': 'المحفظة',
-  '/profile': 'الملف الشخصي',
-  '/create_ad': 'إنشاء إعلان',
-  '/notifications': 'الإشعارات',
-  '/login': 'دخول',
-  '/register': 'حساب جديد',
-  '/admin_login': 'دخول الإدارة',
-  '/my_ads': 'إعلاناتي',
-  '/cash_market': 'سوق الكاش',
-  '/disputes': 'النزاعات',
-  '/forgot_password': 'نسيت كلمة المرور',
-  '/verify_email': 'تحقق من البريد',
+  '/': 'الرئيسية', '/market.html': 'سوق USDT', '/trades.html': 'الصفقات', '/wallet.html': 'المحفظة',
+  '/profile.html': 'الملف الشخصي', '/create_ad.html': 'إنشاء إعلان', '/notifications.html': 'الإشعارات',
+  '/login.html': 'دخول', '/register.html': 'حساب جديد', '/admin_login.html': 'دخول الإدارة',
+  '/my_ads.html': 'إعلاناتي', '/disputes.html': 'النزاعات',
 };
-
-/* Pages where back button is needed */
-const INNER_PAGES = ['/trade', '/trader', '/wallet', '/profile', '/create_ad', '/edit_ad',
-  '/notifications', '/my_ads', '/disputes', '/verify_email', '/forgot_password'];
-
-/* Pages with their own full layout (skip mobile header) */
+const INNER_PAGES = ['/trade', '/trader', '/wallet', '/profile', '/create_ad', '/edit_ad', '/notifications', '/my_ads', '/disputes'];
 const STANDALONE_PAGES = ['/admin', '/admin_login', '/login', '/register'];
-
 function getPageTitle(p) {
-  // Check exact match first
   if (PAGE_TITLES[p]) return PAGE_TITLES[p];
-  // Check dynamic pages
   if (p.startsWith('/trade/')) return 'تفاصيل الصفقة';
   if (p.startsWith('/trader/')) return 'البروفايل';
-  if (p.startsWith('/edit_ad/')) return 'تعديل الإعلان';
   return 'USDT P2P';
 }
+function needsBackButton(p) { return INNER_PAGES.some(pg => p.startsWith(pg)); }
+function isStandalonePage(p) { return STANDALONE_PAGES.some(pg => p.startsWith(pg)); }
 
-function needsBackButton(p) {
-  return INNER_PAGES.some(pg => p.startsWith(pg) && p !== pg);
-}
-
-function isStandalonePage(p) {
-  return STANDALONE_PAGES.some(pg => p.startsWith(pg));
-}
-
+/* ── Desktop Navbar ───────────────────────────────────── */
 function renderNav() {
   const u = currentUser();
   const p = location.pathname;
 
-  // Remove any stale bottom-nav elements from old implementations
-  document.querySelectorAll('.bottom-nav, #bottomNav, #bottom-nav, [id="bottom-nav"], .mobile-bottom-nav, #adminBottomNav').forEach(el => el.remove());
+  // Remove stale bottom-nav
+  document.querySelectorAll('.bottom-nav, #bottomNav, #bottom-nav, .mobile-bottom-nav').forEach(el => el.remove());
   document.body.classList.remove('has-bottom-nav');
 
-  // Skip standalone pages (admin, login, register)
   if (isStandalonePage(p)) return;
 
-  // ── Desktop Top Navbar ──
   const nav = document.getElementById('nav');
   if (nav) {
+    const adminBtn = isUserAdmin(u) ? `<a href="/admin.html" class="navbar-admin-btn">${ICO.shield} لوحة الإدارة</a>` : '';
     nav.innerHTML = `<div class="navbar-inner">
-      <a href="/" class="navbar-brand"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-left:4px;"><path d="M3 21V3h18v18H3zM7 11h4m-2-2v4m6-4h4m-2-2v4"/></svg> <span>USDT</span> P2P</a>
+      <a href="/" class="navbar-brand">${ICO.shield} <span>USDT</span> P2P</a>
       <div class="navbar-links">
         ${u ? `
-          <a href="/market">السوق</a>
-          <a href="/trades">الصفقات</a>
-          <a href="/wallet">المحفظة</a>
-          <a href="/create_ad">إنشاء إعلان</a>
-          <a href="/notifications">الإشعارات</a>
-          <a href="/profile">حسابي</a>
-          ${u.isAdmin ? '<a href="/admin">لوحة الإدارة</a>' : ''}
+          <a href="/market.html">السوق</a>
+          <a href="/trades.html">الصفقات</a>
+          <a href="/wallet.html">المحفظة</a>
+          <a href="/notifications.html">الإشعارات</a>
+          <a href="/profile.html">حسابي</a>
+          ${adminBtn}
         ` : `
-          <a href="/login" class="btn-nav">دخول</a>
-          <a href="/register" class="btn-nav-accent btn-nav">حساب جديد</a>
+          <a href="/login.html" class="btn-nav">دخول</a>
+          <a href="/register.html" class="btn-nav-accent btn-nav">حساب جديد</a>
         `}
-        <button onclick="openGuide()" style="background:none;border:none;cursor:pointer;padding:4px 8px;color:var(--text-secondary)" title="كيف تعمل المنصة؟"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg></button>
-        <button onclick="toggleAccentPicker(event)" style="background:none;border:none;cursor:pointer;padding:4px 8px;color:var(--text-secondary)" title="مظهر المنصة"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="15.5" r="2.5"/><circle cx="8.5" cy="15.5" r="2.5"/></svg></button>
-        <button onclick="toggleTheme()" style="background:none;border:none;cursor:pointer;font-size:1.1rem;padding:4px 8px" title="تبديل المظهر">${themeIcon()}</button>
+        <button onclick="openGuide()" style="background:none;border:none;cursor:pointer;padding:4px 8px;color:var(--text-secondary,#8A96A6)" title="كيف تعمل المنصة؟">${ICO.guide}</button>
+        <button onclick="toggleAccentPicker(event)" style="background:none;border:none;cursor:pointer;padding:4px 8px;color:var(--text-secondary,#8A96A6)" title="لون الواجهة">${ICO.palette}</button>
+        <button onclick="toggleTheme()" style="background:none;border:none;cursor:pointer;padding:4px 8px;color:var(--text-secondary,#8A96A6)" title="تبديل المظهر">${themeIcon()}</button>
       </div>
     </div>`;
   }
 
-  // ── Mobile Header + Sidebar (only on mobile, non-standalone pages) ──
   buildMobileShell(u, p);
 }
 
-/* ── Mobile Sidebar Drawer ────────────────────────────────── */
+/* ── Mobile Sidebar ───────────────────────────────────── */
+let _sidebarBuilt = false;
 function buildMobileShell(u, p) {
-  // Prevent duplicate creation
-  if (document.querySelector('.mobile-header')) return;
+  if (_sidebarBuilt && document.querySelector('.mobile-header')) {
+    // Update admin items without full rebuild
+    updateSidebarAdminItems(u);
+    return;
+  }
+  _sidebarBuilt = true;
 
   const title = getPageTitle(p);
   const showBack = needsBackButton(p);
 
-  // ── Mobile Header ──
+  // Mobile Header
   const header = document.createElement('header');
   header.className = 'mobile-header';
-  const menuSvg = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>';
-  const backSvg = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 19l-7-7 7-7"/></svg>';
   header.innerHTML = `<div class="mobile-header-left">
-      ${showBack ? '<button class="mobile-header-back" onclick="history.back()" aria-label="رجوع">' + backSvg + '</button>' : ''}
+      ${showBack ? `<button class="mobile-header-back" onclick="history.back()" aria-label="رجوع">${ICO.back}</button>` : ''}
       <span class="mobile-header-title">${title}</span>
     </div>
-    <button class="mobile-header-menu" onclick="toggleMobileSidebar()" aria-label="فتح القائمة" aria-expanded="false">${menuSvg}</button>`;
+    <button class="mobile-header-menu" onclick="toggleMobileSidebar()" aria-label="فتح القائمة">${ICO.menu}</button>`;
   document.body.prepend(header);
 
-  // ── Sidebar Overlay ──
+  // Overlay
   const overlay = document.createElement('div');
   overlay.className = 'mobile-sidebar-overlay';
   overlay.onclick = closeMobileSidebar;
   document.body.appendChild(overlay);
 
-  // ── Sidebar Panel ──
+  // Panel
   const panel = document.createElement('aside');
   panel.className = 'mobile-sidebar-panel';
   panel.setAttribute('role', 'navigation');
   panel.setAttribute('aria-label', 'قائمة التنقل');
 
-  // SVG icon helper
-  const svgIcon = (d, size = 20) => `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${d}"/></svg>`;
-  const I = {
-    home: svgIcon('M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0h4'),
-    market: svgIcon('M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V6m0 8v2m6-6a6 6 0 11-12 0 6 6 0 0112 0z'),
-    trades: svgIcon('M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2'),
-    wallet: svgIcon('M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z'),
-    ads: svgIcon('M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10'),
-    plus: svgIcon('M12 4v16m8-8H4'),
-    bell: svgIcon('M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9'),
-    user: svgIcon('M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'),
-    admin: svgIcon('M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065zM15 12a3 3 0 11-6 0 3 3 0 016 0z'),
-    logout: svgIcon('M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1'),
-    login: svgIcon('M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1'),
-    register: svgIcon('M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z'),
-  };
+  rebuildSidebarContent(panel, u, p);
+  document.body.appendChild(panel);
+}
 
-  // Build sidebar items
+function rebuildSidebarContent(panel, u, p) {
   const guestItems = [
-    { href: '/', icon: I.home, label: 'الرئيسية' },
-    { href: '/market', icon: I.market, label: 'سوق USDT' },
-    { href: '/login', icon: I.login, label: 'دخول' },
-    { href: '/register', icon: I.register, label: 'حساب جديد' },
+    { href: '/', icon: ICO.home, label: 'الرئيسية' },
+    { href: '/market.html', icon: ICO.market, label: 'سوق USDT' },
+    { href: '/login.html', icon: ICO.login, label: 'دخول' },
+    { href: '/register.html', icon: ICO.register, label: 'حساب جديد' },
   ];
-
   const userItems = [
-    { href: '/', icon: I.home, label: 'الرئيسية' },
-    { href: '/market', icon: I.market, label: 'سوق USDT' },
-    { href: '/trades', icon: I.trades, label: 'الصفقات' },
-    { href: '/wallet', icon: I.wallet, label: 'المحفظة' },
-    { href: '/my_ads', icon: I.ads, label: 'إعلاناتي' },
-    { href: '/create_ad', icon: I.plus, label: 'إنشاء إعلان' },
-    { href: '/notifications', icon: I.bell, label: 'الإشعارات' },
-    { href: '/profile', icon: I.user, label: 'الملف الشخصي' },
+    { href: '/', icon: ICO.home, label: 'الرئيسية' },
+    { href: '/market.html', icon: ICO.market, label: 'سوق USDT' },
+    { href: '/trades.html', icon: ICO.trades, label: 'الصفقات' },
+    { href: '/wallet.html', icon: ICO.wallet, label: 'المحفظة' },
+    { href: '/create_ad.html', icon: ICO.plus, label: 'إنشاء إعلان' },
+    { href: '/notifications.html', icon: ICO.bell, label: 'الإشعارات' },
+    { href: '/profile.html', icon: ICO.user, label: 'الملف الشخصي' },
   ];
-
-  const adminItem = u && u.isAdmin ? [{ href: '/admin', icon: I.admin, label: 'لوحة الإدارة' }] : [];
+  const adminItem = isUserAdmin(u) ? [{ href: '/admin.html', icon: ICO.admin, label: 'لوحة الإدارة', cls: 'sidebar-admin-item' }] : [];
   const items = u ? [...userItems, ...adminItem] : guestItems;
 
   const navHtml = items.map(it => {
-    const active = p === it.href ? ' active' : '';
-    return `<a href="${it.href}" class="mobile-sidebar-item${active}">` +
-      `<span class="mobile-sidebar-item-icon">${it.icon}</span>` +
-      `<span>${it.label}</span></a>`;
+    const active = p === it.href || (it.href !== '/' && p.startsWith(it.href)) ? ' active' : '';
+    const cls = it.cls || '';
+    return `<a href="${it.href}" class="mobile-sidebar-item${active} ${cls}">
+      <span class="mobile-sidebar-item-icon">${it.icon}</span>
+      <span>${it.label}</span>
+    </a>`;
   }).join('');
 
   const logoutHtml = u ? `
     <div class="mobile-sidebar-divider"></div>
-    <button class="mobile-sidebar-item" onclick="doLogout()" style="color:var(--danger)">
-      <span class="mobile-sidebar-item-icon">${I.logout}</span>
+    <button class="mobile-sidebar-item" onclick="doLogout()" style="color:var(--danger,#FF5C6C)">
+      <span class="mobile-sidebar-item-icon">${ICO.logout}</span>
       <span>تسجيل الخروج</span>
     </button>` : '';
 
-  const guideBtn = `
-    <div class="mobile-sidebar-divider"></div>
-    <button class="mobile-sidebar-item" onclick="closeMobileSidebar();setTimeout(openGuide,300);" style="color:var(--text-secondary)">
-      <span class="mobile-sidebar-item-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg></span>
-      <span>كيف تعمل المنصة؟</span>
-    </button>`;
-  const themePickBtn = `
-    <button class="mobile-sidebar-item" onclick="toggleAccentPicker(event)" style="color:var(--text-secondary)">
-      <span class="mobile-sidebar-item-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="15.5" r="2.5"/><circle cx="8.5" cy="15.5" r="2.5"/></svg></span>
-      <span>مظهر المنصة</span>
-    </button>`;
-  const themeToggle = `
-    <div class="mobile-sidebar-divider"></div>
-    ${guideBtn}
-    ${themePickBtn}
-    <button class="mobile-sidebar-item" onclick="toggleTheme()" style="color:var(--text-secondary)">
-      <span class="mobile-sidebar-item-icon">${themeIcon()}</span>
-      <span>${getTheme() === 'dark' ? 'الوضع الليلي' : getTheme() === 'light' ? 'الوضع الفاتح' : 'تلقائي'}</span>
-    </button>`;
-
   panel.innerHTML = `
     <div class="mobile-sidebar-header">
-      <span class="mobile-sidebar-brand"><span>USDT</span> P2P</span>
-      <button class="mobile-sidebar-close" onclick="closeMobileSidebar()" aria-label="إغلاق القائمة"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+      <span class="mobile-sidebar-brand"><span style="color:var(--primary,#00D6A0)">USDT</span> P2P</span>
+      <button class="mobile-sidebar-close" onclick="closeMobileSidebar()" aria-label="إغلاق">${ICO.close}</button>
     </div>
     <nav class="mobile-sidebar-nav">${navHtml}</nav>
     <div class="mobile-sidebar-footer">
       ${logoutHtml}
-      ${themeToggle}
+      <div class="mobile-sidebar-divider"></div>
+      <button class="mobile-sidebar-item" onclick="closeMobileSidebar();setTimeout(openGuide,300)" style="color:var(--text-secondary,#8A96A6)">
+        <span class="mobile-sidebar-item-icon">${ICO.guide}</span>
+        <span>كيف تعمل المنصة؟</span>
+      </button>
+      <button class="mobile-sidebar-item" onclick="toggleAccentPicker(event)" style="color:var(--text-secondary,#8A96A6)">
+        <span class="mobile-sidebar-item-icon">${ICO.palette}</span>
+        <span>لون الواجهة</span>
+      </button>
+      <button class="mobile-sidebar-item" onclick="toggleTheme()" style="color:var(--text-secondary,#8A96A6)">
+        <span class="mobile-sidebar-item-icon">${themeIcon()}</span>
+        <span>${getTheme() === 'dark' ? 'الوضع الليلي' : getTheme() === 'light' ? 'الوضع الفاتح' : 'تلقائي'}</span>
+      </button>
     </div>`;
-
-  document.body.appendChild(panel);
 }
 
-/* Sidebar open/close */
+function updateSidebarAdminItems(u) {
+  const panel = document.querySelector('.mobile-sidebar-panel');
+  if (!panel) return;
+  const nav = panel.querySelector('.mobile-sidebar-nav');
+  if (!nav) return;
+
+  // Check if admin item already exists
+  const existingAdmin = nav.querySelector('.sidebar-admin-item');
+  const shouldShow = isUserAdmin(u);
+
+  if (shouldShow && !existingAdmin) {
+    // Add admin item before logout
+    const adminLink = document.createElement('a');
+    adminLink.href = '/admin.html';
+    adminLink.className = 'mobile-sidebar-item sidebar-admin-item';
+    adminLink.innerHTML = `<span class="mobile-sidebar-item-icon">${ICO.admin}</span><span>لوحة الإدارة</span>`;
+    // Insert before the divider
+    const divider = nav.nextElementSibling;
+    if (divider) nav.parentElement.insertBefore(adminLink, divider);
+    else nav.parentElement.appendChild(adminLink);
+  } else if (!shouldShow && existingAdmin) {
+    existingAdmin.remove();
+  }
+}
+
 function openMobileSidebar() {
   const overlay = document.querySelector('.mobile-sidebar-overlay');
   const panel = document.querySelector('.mobile-sidebar-panel');
@@ -587,63 +476,43 @@ function openMobileSidebar() {
   document.body.style.overflow = 'hidden';
 }
 function closeMobileSidebar() {
-  const overlay = document.querySelector('.mobile-sidebar-overlay');
-  const panel = document.querySelector('.mobile-sidebar-panel');
+  document.querySelectorAll('.mobile-sidebar-overlay, .mobile-sidebar-panel').forEach(el => el.classList.remove('open'));
   const btn = document.querySelector('.mobile-header-menu');
-  if (overlay) overlay.classList.remove('open');
-  if (panel) panel.classList.remove('open');
   if (btn) btn.setAttribute('aria-expanded', 'false');
   document.body.style.overflow = '';
 }
 function toggleMobileSidebar() {
   const panel = document.querySelector('.mobile-sidebar-panel');
-  if (panel && panel.classList.contains('open')) closeMobileSidebar();
-  else openMobileSidebar();
+  panel && panel.classList.contains('open') ? closeMobileSidebar() : openMobileSidebar();
 }
-
-// Close sidebar on Escape
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') closeMobileSidebar();
-});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeMobileSidebar(); });
 
 /* ── Refresh user from server (updates isAdmin etc.) ── */
 async function refreshUserFromServer() {
-  // Skip if a tg_token exchange is in progress (it will reload)
   if (window.__tgLoginPending) return;
   try {
     const me = await fetch(API_BASE + '/auth/me', { credentials: 'include' }).then(r => r.json());
     if (me && me.authenticated) {
-      // Merge server data with cached data — server is source of truth for isAdmin
       const old = currentUser() || {};
       const merged = { ...old, ...me };
       saveUser(merged, me.csrf_token || _csrf);
-      // Clear tg_login_pending flag if it was set from a previous session
       try { sessionStorage.removeItem('tg_login_pending'); } catch {}
-      // Re-render nav with fresh data
       renderNav();
     } else if (me && me.authenticated === false) {
-      // Session expired — clear cached user
       clearUser();
     }
-  } catch {
-    // Network error — keep cached data
-  }
+  } catch {}
 }
 
-/* ── Init on load ──────────────────────────────────────────── */
+/* ── Init on load ─────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
   initTelegram();
   renderNav();
-  // Refresh user data from server to get latest isAdmin status
   refreshUserFromServer();
-  // In Telegram: hide desktop nav, use mobile shell only
   if (_isTelegram) {
     const nav = document.getElementById('nav');
     if (nav) nav.style.display = 'none';
     document.body.classList.add('tg-webapp');
   }
-  // Register service worker for PWA
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js').catch(() => {});
-  }
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
 });
