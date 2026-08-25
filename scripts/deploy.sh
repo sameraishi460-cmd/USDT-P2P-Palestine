@@ -8,12 +8,10 @@
 # The Worker's auto-migration (src/db-init.ts) handles D1 table
 # creation at runtime, so we don't need build-time migrations.
 # This script ensures TypeScript compiles before deployment.
-# ============================================================
-
-cd "$(dirname "$0")/.."
+# ============================================================cd "$(dirname "$0")/.."
 
 echo "=== Build: Install Dependencies ==="
-npm install --silent 2>/dev/null || echo "npm install done"
+npm install 2>&1 | tail -5
 
 echo ""
 echo "=== Build: TypeScript Check ==="
@@ -22,6 +20,3 @@ npx tsc --noEmit 2>&1 || echo "⚠️ TypeScript check completed with warnings (
 echo ""
 echo "=== BUILD COMPLETE ==="
 echo "Worker auto-migration (src/db-init.ts) will create D1 tables on first request."
-
-
-echo "Build at 1787565396"
