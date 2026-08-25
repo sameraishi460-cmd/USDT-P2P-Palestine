@@ -10,6 +10,7 @@
 import { Hono } from "hono";
 import type { AppEnv } from "../types";
 import { requireUser, requireAdmin, requireCsrf, rateLimit } from "../middleware/auth";
+import { auditLog } from "../utils/db";
 
 const uploads = new Hono<AppEnv>();
 
@@ -37,7 +38,7 @@ function detectRealType(buf: Uint8Array): string | null {
  */
 uploads.post("/:kind", requireUser, requireCsrf, rateLimit(10, 60), async (c) => {
   const kind = c.req.param("kind") ?? "";
-  if (!["payment-proof", "evidence"].includes(kind)) {
+  if (!["payment-proof", "evidence", "kyc-documents"].includes(kind)) {
     return c.json({ error: "نوع رفع غير معروف" }, 400);
   }
   const username = c.get("user")!.username;
@@ -78,6 +79,39 @@ uploads.post("/:kind", requireUser, requireCsrf, rateLimit(10, 60), async (c) =>
 });
 
 /**
+ * GET /api/uploads/kyc/:requestId — admin-only KYC document viewer.
+ * Streams the document attached to a verification request.
+ */
+uploads.get("/kyc/:requestId", requireAdmin, async (c) => {
+  const requestId = Number(c.req.param("requestId"));
+  if (!requestId) return c.json({ error: "Invalid request ID" }, 400);
+
+  const kycReq = await c.env.DB.prepare(
+    "SELECT upload_id, username, document_type FROM verification_requests WHERE id = ?"
+  ).bind(requestId).first<{ upload_id: string; username: string; document_type: string }>();
+  if (!kycReq) return c.json({ error: "طلب التوثيق غير موجود" }, 404);
+  if (!kycReq.upload_id) return c.json({ error: "لم يتم رفع وثيقة" }, 404);
+
+  const meta = await c.env.DB.prepare(
+    "SELECT key, owner, mime FROM uploads WHERE id = ?"
+  ).bind(kycReq.upload_id).first<{ key: string; owner: string; mime: string }>();
+  if (!meta) return c.json({ error: "الملف غير موجود" }, 404);
+  if (meta.owner !== kycReq.username) return c.json({ error: "ownship mismatch" }, 500);
+
+  const obj = await c.env.R2.get(meta.key);
+  if (!obj) return c.json({ error: "الملف غير موجود في التخزين" }, 404);
+
+  await auditLog(c, c.get("user")!.username, "admin", "KYC_DOC_VIEW", `kyc:${requestId}`, kycReq.username);
+  return new Response(obj.body, {
+    headers: {
+      "Content-Type": meta.mime,
+      "Content-Disposition": "inline",
+      "Cache-Control": "private, no-store",
+    },
+  });
+});
+
+/**
  * GET /api/uploads/:id — owner or admin only; streams privately from R2.
  */
 uploads.get("/:id", async (c) => {
@@ -95,6 +129,11 @@ uploads.get("/:id", async (c) => {
   const { verifySession } = await import("../utils/crypto");
   const session = await verifySession(sessionCookie.split("=")[1], c.env.SECRET_KEY);
   if (!session) return c.json({ error: "انتهت الجلسة" }, 401);
+  // Server-side session revocation check
+  const { isSessionActive } = await import("../middleware/auth");
+  if (!(await isSessionActive(c.env.DB, session))) {
+    return c.json({ error: "انتهت الجلسة" }, 401);
+  }
 
   const isAdmin = session.admin && (await c.env.DB.prepare(
     "SELECT status FROM users WHERE id = ?"

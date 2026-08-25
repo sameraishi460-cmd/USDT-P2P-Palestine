@@ -11,305 +11,435 @@
 <script>(function(){var t=localStorage.getItem("usp_theme")||"dark";if(t==="auto")t=window.matchMedia("(prefers-color-scheme:light)").matches?"light":"dark";document.documentElement.setAttribute("data-theme",t);})();</script>
 </head>
 <body>
-
-<!-- ===== Navbar ===== -->
-<nav class="navbar">
-  <div class="navbar-inner">
-    <a href="/" class="navbar-brand">🇵🇸 <span>USDT</span> P2P</a>
-    <div class="navbar-links">
-      <span style="color:var(--accent);font-weight:700;font-size:0.85rem;">⚙️ الإدارة</span>
-    </div>
+<nav class="navbar"><div class="navbar-inner"><a href="/" class="navbar-brand">🇵🇸 <span>USDT</span> P2P</a><div class="navbar-links"><span style="color:var(--accent);font-weight:700;font-size:0.85rem;">⚙️ الإدارة</span></div></div></nav>
+<!-- Mobile admin header (shown on small screens) -->
+<header class="mobile-header" id="adminMobileHeader" style="display:none;">
+  <div class="mobile-header-left">
+    <a href="/" style="color:var(--text-primary);text-decoration:none;font-size:0.85rem;">← الرئيسية</a>
+    <span class="mobile-header-title" style="color:var(--accent);">⚙️ الإدارة</span>
   </div>
-</nav>
-
-<main>
-<div class="container" style="padding-top:var(--sp-4);padding-bottom:var(--sp-8);">
-
-  <div id="loading" style="text-align:center;padding:var(--sp-8);">
-    <div class="spinner" style="margin:0 auto var(--sp-3);"></div>
-    <p style="color:var(--text-muted);">جاري تحميل لوحة الإدارة...</p>
-  </div>
-
-  <div id="admin-content" style="display:none">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--sp-4);">
-      <h1 style="font-size:1.3rem;font-weight:800;">⚙️ لوحة الإدارة</h1>
-      <a href="/" class="btn btn-ghost btn-sm">🏠 الرئيسية</a>
-    </div>
-
-    <!-- KPI Grid -->
-    <div id="kpi-grid" class="kpi-grid"></div>
-
-    <!-- Admin Tabs -->
-    <div class="admin-tabs" id="admin-tabs">
-      <button class="tab-btn active" onclick="showTab('overview',this)">📊 نظرة عامة</button>
-      <button class="tab-btn" onclick="showTab('users',this)">👥 المستخدمون</button>
-      <button class="tab-btn" onclick="showTab('trades',this)">📋 الصفقات</button>
-      <button class="tab-btn" onclick="showTab('deposits',this)">💵 الإيداعات</button>
-      <button class="tab-btn" onclick="showTab('withdrawals',this)">🏦 السحوبات</button>
-      <button class="tab-btn" onclick="showTab('disputes',this)">⚠️ النزاعات</button>
-      <button class="tab-btn" onclick="showTab('audit',this)">📝 سجل النشاط</button>
-    </div>
-
-    <!-- Overview Tab -->
-    <div id="tab-overview" class="admin-tab">
-      <div class="card" style="margin-bottom:var(--sp-3);">
-        <div style="padding:var(--sp-3);font-weight:700;font-size:0.9rem;border-bottom:1px solid var(--border);">📈 إحصائيات التداول</div>
-        <div id="stats-detail" style="padding:var(--sp-3);"></div>
-      </div>
-      <div class="card">
-        <div style="padding:var(--sp-3);font-weight:700;font-size:0.9rem;border-bottom:1px solid var(--border);">🔄 آخر النشاطات</div>
-        <div id="timeline-list"></div>
-      </div>
-    </div>
-
-    <!-- Users Tab -->
-    <div id="tab-users" class="admin-tab" style="display:none">
-      <div style="margin-bottom:var(--sp-3);">
-        <input class="form-input" type="text" id="user-search" placeholder="🔍 بحث عن مستخدم..." oninput="filterUsers()" style="width:100%">
-      </div>
-      <div id="users-list"></div>
-    </div>
-
-    <!-- Trades Tab -->
-    <div id="tab-trades" class="admin-tab" style="display:none"></div>
-
-    <!-- Deposits Tab -->
-    <div id="tab-deposits" class="admin-tab" style="display:none"></div>
-
-    <!-- Withdrawals Tab -->
-    <div id="tab-withdrawals" class="admin-tab" style="display:none"></div>
-
-    <!-- Disputes Tab -->
-    <div id="tab-disputes" class="admin-tab" style="display:none"></div>
-
-    <!-- Audit Log Tab -->
-    <div id="tab-audit" class="admin-tab" style="display:none"></div>
-  </div>
+  <button class="mobile-header-menu" onclick="toggleAdminSidebar()" aria-label="فتح القائمة">☰</button>
+</header>
+<div class="admin-overlay" id="adminOverlay" onclick="closeAdminSidebar()"></div>
+<div class="admin-layout">
+  <!-- Sidebar -->
+  <aside class="admin-sidebar" id="sidebar">
+    <div class="sidebar-header">⚙️ Control Center</div>
+    <nav class="sidebar-nav">
+      <a class="sidebar-link active" data-section="dashboard" onclick="go('dashboard',this)">📊 لوحة التحكم</a>
+      <a class="sidebar-link" data-section="users" onclick="go('users',this)">👥 المستخدمون</a>
+      <a class="sidebar-link" data-section="kyc" onclick="go('kyc',this)">🪪 التوثيق</a>
+      <a class="sidebar-link" data-section="trades" onclick="go('trades',this)">📋 الصفقات</a>
+      <a class="sidebar-link" data-section="disputes" onclick="go('disputes',this)">⚠️ النزاعات</a>
+      <a class="sidebar-link" data-section="deposits" onclick="go('deposits',this)">💳 الإيداعات</a>
+      <a class="sidebar-link" data-section="withdrawals" onclick="go('withdrawals',this)">🏦 السحوبات</a>
+      <a class="sidebar-link" data-section="ads" onclick="go('ads',this)">📢 الإعلانات</a>
+      <a class="sidebar-link" data-section="finance" onclick="go('finance',this)">💰 المالية</a>
+      <a class="sidebar-link" data-section="audit" onclick="go('audit',this)">📝 سجل النشاط</a>
+      <a class="sidebar-link" data-section="settings" onclick="go('settings',this)">⚙️ الإعدادات</a>
+    </nav>
+  </aside>
+  <!-- Main Content -->
+  <main class="admin-main">
+    <div id="loading" style="text-align:center;padding:var(--sp-8);"><div class="spinner" style="margin:0 auto var(--sp-3);"></div><p style="color:var(--text-muted);">جاري التحميل...</p></div>
+    <div id="content" style="display:none"></div>
+  </main>
 </div>
-</main>
-
-<div class="bottom-nav" id="bottomNav"></div>
 
 <script src="/assets/app.js"></script>
 <script>
-let _allUsers = [];
+let _D={};// data cache
+const E=s=>{const d=document.createElement('div');d.textContent=s??'';return d.innerHTML};
+const N=n=>Number(n||0).toLocaleString('ar');
+const D=d=>d?new Date(d).toLocaleDateString('ar',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
+/* Admin mobile sidebar */
+function toggleAdminSidebar(){
+  const s=document.getElementById('sidebar');
+  const o=document.getElementById('adminOverlay');
+  if(s&&s.classList.contains('open')){closeAdminSidebar();}else{if(s)s.classList.add('open');if(o)o.classList.add('open');document.body.style.overflow='hidden';}
+}
+function closeAdminSidebar(){
+  const s=document.getElementById('sidebar');
+  const o=document.getElementById('adminOverlay');
+  if(s)s.classList.remove('open');if(o)o.classList.remove('open');document.body.style.overflow='';
+}
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeAdminSidebar();});
+const ST={OPEN:'🟢 مفتوح',PENDING:'⏳ معلق',ACTIVE:'🟢 نشط',BANNED:'🔴 محظور',ADMIN:'👑 مدير',COMPLETED:'✅ مكتمل',CANCELLED:'❌ ملغي',DISPUTED:'⚠️ نزاع',CONFIRMED:'✅ مؤكد',REJECTED:'❌ مرفوض',PROCESSING:'🔄 معالجة',RELEASED:'🔓 محرر',REFUNDED:'↩️ مرجّع',APPROVED:'✅ معتمد',UNDER_REVIEW:'🔍 قيد المراجعة',DISABLED:'⚫ معطّل',PAUSED:'⏸️ متوقف'};
+const SC=s=>{const m={COMPLETED:'success',CANCELLED:'error',DISPUTED:'error',PENDING:'warning',ACTIVE:'success',BANNED:'error',ADMIN:'warning',CONFIRMED:'success',REJECTED:'error',PROCESSING:'info',OPEN:'success',UNDER_REVIEW:'warning',APPROVED:'success',REJECTED:'error',DISABLED:'error',PAUSED:'info'};return m[s]||'info'};
 
-(async function() {
-  const user = await requireAuth();
-  if (!user) return;
-  if (user.role !== 'admin') {
-    document.getElementById('loading').innerHTML = '<div style="text-align:center;padding:var(--sp-8);"><p style="font-size:1.2rem;margin-bottom:var(--sp-3);">🔒</p><p style="color:var(--error);font-weight:600;">غير مصرح — هذه الصفحة للمشرفين فقط</p></div>';
-    return;
-  }
+async function go(sec,el){
+  document.querySelectorAll('.sidebar-link').forEach(e=>e.classList.remove('active'));
+  const sl=document.querySelector(`.sidebar-link[data-section="${sec}"]`);
+  if(sl)sl.classList.add('active');
+  document.querySelectorAll('.mobile-sidebar-item, .admin-sidebar .sidebar-link').forEach(e=>e.classList.remove('active'));
+  if(el)el.classList.add('active');
+  if(sec==='dashboard')await loadDashboard();
+  else if(sec==='users')await loadUsers();
+  else if(sec==='kyc')await loadKYC();
+  else if(sec==='trades')await loadTrades();
+  else if(sec==='disputes')await loadDisputes();
+  else if(sec==='deposits')await loadDeposits();
+  else if(sec==='withdrawals')await loadWithdrawals();
+  else if(sec==='ads')await loadAds();
+  else if(sec==='finance')await loadFinance();
+  else if(sec==='audit')await loadAudit();
+  else if(sec==='settings')await loadSettings();
+}
 
-  // Fetch all data in parallel
-  const [analytics, timeline, users, trades, deposits, withdrawals, disputes, auditLog] = await Promise.all([
-    api('/v2/admin/analytics').catch(() => ({})),
-    api('/v2/admin/timeline').catch(() => ({ timeline: [] })),
-    api('/admin/users').catch(() => ({ users: [] })),
-    api('/admin/trades').catch(() => ({ trades: [] })),
-    api('/admin/deposits').catch(() => ({ deposits: [] })),
-    api('/admin/withdrawals').catch(() => ({ withdrawals: [] })),
-    api('/admin/disputes').catch(() => ({ disputes: [] })),
-    api('/admin/audit-log').catch(() => ({ logs: [] })),
-  ]);
-
-  const a = analytics || {};
-  const usersList = users.users || [];
-  const tradesList = trades.trades || [];
-  const depList = deposits.deposits || [];
-  const wdList = withdrawals.withdrawals || [];
-  const disList = disputes.disputes || [];
-  const logsList = auditLog.logs || [];
-
-  _allUsers = usersList;
-
-  const completedTrades = tradesList.filter(t => t.status === 'COMPLETED').length;
-  const cancelledTrades = tradesList.filter(t => t.status === 'CANCELLED').length;
-  const activeTrades = tradesList.filter(t => !['COMPLETED','CANCELLED'].includes(t.status)).length;
-  const totalVolume = a.total_volume || tradesList.reduce((s, t) => s + (parseFloat(t.amount) || 0) * (parseFloat(t.price) || 0), 0);
-  const activeDisputes = disList.filter(d => d.status === 'OPEN').length;
-  const pendingWithdrawals = wdList.filter(w => w.status === 'PENDING').length;
-  const pendingDeposits = depList.filter(d => d.status === 'PENDING').length;
-
-  // KPI Cards
-  document.getElementById('kpi-grid').innerHTML = `
-    <div class="kpi-card"><div class="kpi-value">${usersList.length}</div><div class="kpi-label">👥 المستخدمون</div></div>
-    <div class="kpi-card"><div class="kpi-value">${tradesList.length}</div><div class="kpi-label">📋 إجمالي الصفقات</div></div>
-    <div class="kpi-card"><div class="kpi-value" style="color:var(--success)">${completedTrades}</div><div class="kpi-label">✅ صفقات مكتملة</div></div>
-    <div class="kpi-card"><div class="kpi-value" style="color:var(--warning)">${activeTrades}</div><div class="kpi-label">⏳ صفقات جارية</div></div>
-    <div class="kpi-card"><div class="kpi-value" style="color:var(--text-primary)">${fmtNum(totalVolume)} ₪</div><div class="kpi-label">💰 حجم التداول</div></div>
-    <div class="kpi-card"><div class="kpi-value" style="color:var(--error)">${activeDisputes}</div><div class="kpi-label">⚠️ نزاعات نشطة</div></div>
-    <div class="kpi-card"><div class="kpi-value" style="color:var(--warning)">${pendingDeposits}</div><div class="kpi-label">💵 إيداعات معلقة</div></div>
-    <div class="kpi-card"><div class="kpi-value" style="color:var(--warning)">${pendingWithdrawals}</div><div class="kpi-label">🏦 سحوبات معلقة</div></div>
-  `;
-
-  // Overview: Stats detail
-  document.getElementById('stats-detail').innerHTML = `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3);">
-      <div><span style="color:var(--text-muted);font-size:0.8rem;">الصفقات الملغاة</span><div style="font-weight:700;">${cancelledTrades}</div></div>
-      <div><span style="color:var(--text-muted);font-size:0.8rem;">إجمالي الإيداعات</span><div style="font-weight:700;">${depList.length}</div></div>
-      <div><span style="color:var(--text-muted);font-size:0.8rem;">إجمالي السحوبات</span><div style="font-weight:700;">${wdList.length}</div></div>
-      <div><span style="color:var(--text-muted);font-size:0.8rem;">الإشعارات</span><div style="font-weight:700;">${a.total_notifications || '—'}</div></div>
+async function loadDashboard(){
+  const[k,p]=await Promise.all([api('/admin/kpis'),api('/admin/notifications')]);
+  const k2=k.kpis||{};const n=p.notifications||{};
+  _C(`
+    <h2 style="font-size:1.2rem;font-weight:800;margin-bottom:var(--sp-4);">📊 لوحة التحكم</h2>
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="kpi-value">${N(k2.total_users||0)}</div><div class="kpi-label">👥 المستخدمون</div></div>
+      <div class="kpi-card"><div class="kpi-value" style="color:var(--success)">${N(k2.active_users||0)}</div><div class="kpi-label">🟢 نشطون</div></div>
+      <div class="kpi-card"><div class="kpi-value">${N(k2.verified_users||0)}</div><div class="kpi-label">🪪 موثقون</div></div>
+      <div class="kpi-card"><div class="kpi-value" style="color:var(--warning)">${N(k2.pending_kyc||0)}</div><div class="kpi-label">🪪 KYC معلق</div></div>
+      <div class="kpi-card"><div class="kpi-value">${N(k2.total_trades||0)}</div><div class="kpi-label">📋 إجمالي الصفقات</div></div>
+      <div class="kpi-card"><div class="kpi-value" style="color:var(--success)">${N(k2.completed_trades||0)}</div><div class="kpi-label">✅ مكتملة</div></div>
+      <div class="kpi-card"><div class="kpi-value" style="color:var(--error)">${N(k2.open_disputes||0)}</div><div class="kpi-label">⚠️ نزاعات</div></div>
+      <div class="kpi-card"><div class="kpi-value">${N(k2.total_volume||0)} USDT</div><div class="kpi-label">💰 حجم التداول</div></div>
+      <div class="kpi-card"><div class="kpi-value">${N(k2.platform_fees||0)} USDT</div><div class="kpi-label">💵 العمولات</div></div>
+      <div class="kpi-card"><div class="kpi-value" style="color:var(--warning)">${N(k2.pending_deposits||0)}</div><div class="kpi-label">💳 إيداعات معلقة</div></div>
+      <div class="kpi-card"><div class="kpi-value" style="color:var(--warning)">${N(k2.pending_withdrawals||0)}</div><div class="kpi-label">🏦 سحوبات معلقة</div></div>
+      <div class="kpi-card"><div class="kpi-value">${N(k2.open_ads||0)}</div><div class="kpi-label">📢 إعلانات نشطة</div></div>
     </div>
-  `;
+    ${n.total_unread>0?`<div class="card" style="margin-top:var(--sp-3);padding:var(--sp-3);border-left:3px solid var(--warning);"><strong>🔔 تنبيهات:</strong> ${n.pending_kyc} KYC معلق · ${n.open_disputes} نزاعات · ${n.pending_deposits} إيداعات · ${n.pending_withdrawals} سحوبات</div>`:''}
+  `);
+}
 
-  // Timeline
-  renderTimeline(logsList.length ? logsList : (timeline.timeline || []));
+async function loadUsers(){
+  const r=await api('/admin/users');const users=r.users||[];
+  _C(`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--sp-3);flex-wrap:wrap;gap:var(--sp-2);">
+      <h2 style="font-size:1.2rem;font-weight:800;">👥 إدارة المستخدمين (${users.length})</h2>
+      <input class="form-input" type="search" placeholder="🔍 بحث..." id="usr-q" oninput="fUsers()" style="max-width:250px;font-size:0.8rem;">
+    </div>
+    <div class="card overflow-x"><table class="tbl"><thead><tr>
+      <th>المستخدم</th><th>البريد</th><th>الحالة</th><th>الرصيد</th><th>الصفقات</th><th>Telegram</th><th>الانضمام</th><th>إجراءات</th>
+    </tr></thead><tbody id="usr-tb"></tbody></table></div>
+  `);
+  _D._users=users;fUsers();
+}
+window.fUsers=function(){
+  const q=(document.getElementById('usr-q')?.value||'').toLowerCase();
+  const list=(_D._users||[]).filter(u=>!q||(u.username||'').toLowerCase().includes(q)||(u.email||'').toLowerCase().includes(q));
+  document.getElementById('usr-tb').innerHTML=list.map(u=>`<tr>
+    <td><strong>${E(u.username)}</strong></td><td style="font-size:0.75rem;">${E(u.email||'—')}</td>
+    <td><span class="badge badge-${SC(u.status)}">${ST[u.status]||u.status}</span></td>
+    <td>${N(u.balance||0)}</td><td>${u.trades_count||0}</td>
+    <td>${u.telegram_id?'🔗':'—'}</td><td style="font-size:0.75rem;">${D(u.created_at)}</td>
+    <td><button class="btn btn-ghost btn-xs" onclick="viewUser('${E(u.username)}')">👤</button>
+    ${u.status==='BANNED'?`<button class="btn btn-xs" style="color:var(--success)" onclick="act('/admin/users/${E(u.username)}/unban')">✅</button>`:
+    `<button class="btn btn-xs" style="color:var(--error)" onclick="act('/admin/users/${E(u.username)}/ban')">🚫</button>`}</td>
+  </tr>`).join('');
+};
 
-  // Users
-  renderUsers(usersList);
+async function viewUser(uname){
+  const r=await api('/admin/user/'+encodeURIComponent(uname));if(!r||!r.ok)return toast(r?.error||'خطأ');
+  const u=r.user,w=r.wallet||{};
+  _C(`
+    <div style="display:flex;align-items:center;gap:var(--sp-3);margin-bottom:var(--sp-4);flex-wrap:wrap;">
+      <button class="btn btn-ghost btn-sm" onclick="go('users')">→ رجوع</button>
+      <h2 style="font-size:1.2rem;font-weight:800;">👤 ${E(u.username)}</h2>
+      <span class="badge badge-${SC(u.status)}">${ST[u.status]||u.status}</span>
+      ${u.verified?'<span class="badge badge-success">✓ موثق</span>':''}
+    </div>
+    <div class="card" style="padding:var(--sp-3);margin-bottom:var(--sp-3);display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:var(--sp-3);">
+      <div><span style="color:var(--text-muted);font-size:0.75rem;">الرصيد</span><div style="font-weight:700;color:var(--accent);">${N(w.balance||0)} USDT</div></div>
+      <div><span style="color:var(--text-muted);font-size:0.75rem;">المقفل</span><div style="font-weight:700;">${N(w.locked||0)} USDT</div></div>
+      <div><span style="color:var(--text-muted);font-size:0.75rem;">البريد</span><div>${E(u.email||'—')}</div></div>
+      <div><span style="color:var(--text-muted);font-size:0.75rem;">Telegram</span><div>${u.telegram_id?'🔗 مرتبط':'—'}</div></div>
+      <div><span style="color:var(--text-muted);font-size:0.75rem;">التقييم</span><div>⭐ ${u.rating||'—'}</div></div>
+      <div><span style="color:var(--text-muted);font-size:0.75rem;">الصفقات</span><div>${u.trades_count||0}</div></div>
+    </div>
+    <h3 style="font-size:0.9rem;font-weight:700;margin:var(--sp-3) 0 var(--sp-2);">📋 آخر الصفقات (${(r.trades||[]).length})</h3>
+    <div class="card overflow-x"><table class="tbl"><thead><tr><th>#</th><th>المشتري</th><th>البائع</th><th>المبلغ</th><th>الحالة</th><th>التاريخ</th></tr></thead><tbody>
+    ${(r.trades||[]).map(t=>`<tr><td>${t.id}</td><td>${E(t.buyer)}</td><td>${E(t.seller)}</td><td>${t.amount}</td><td><span class="badge badge-${SC(t.status)}">${ST[t.status]||t.status}</span></td><td style="font-size:0.75rem;">${D(t.created)}</td></tr>`).join('')}
+    </tbody></table></div>
+    ${(r.kyc||[]).length?`<h3 style="font-size:0.9rem;font-weight:700;margin:var(--sp-3) 0 var(--sp-2);">🪪 KYC</h3>
+    <div class="card" style="padding:var(--sp-3);">${r.kyc.map(k=>`<div style="padding:var(--sp-2) 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;"><span>${k.document_type} — ${E(k.full_name||'')}</span><span class="badge badge-${SC(k.status)}">${ST[k.status]||k.status}</span></div>`).join('')}</div>`:''}
+    <h3 style="font-size:0.9rem;font-weight:700;margin:var(--sp-3) 0 var(--sp-2);">📝 نشاط الأمان</h3>
+    <div class="card" style="padding:var(--sp-3);">${(r.activity||[]).map(a=>`<div style="padding:var(--sp-2) 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;font-size:0.8rem;"><span>${E(a.action)}</span><span style="color:var(--text-muted);">${D(a.created_at)}</span></div>`).join('')||'<p style="color:var(--text-muted);">لا يوجد نشاط</p>'}</div>
+  `);
+}
 
-  // Trades
-  renderTrades(tradesList);
+async function loadKYC(){
+  const r=await api('/v2/admin/verifications');const reqs=r.requests||[];
+  _C(`
+    <h2 style="font-size:1.2rem;font-weight:800;margin-bottom:var(--sp-3);">🪪 مركز التوثيق (${reqs.length})</h2>
+    <div class="card overflow-x"><table class="tbl"><thead><tr>
+      <th>المستخدم</th><th>الاسم</th><th>النوع</th><th>الحالة</th><th>الوثائق</th><th>التاريخ</th><th>إجراءات</th>
+    </tr></thead><tbody>
+    ${reqs.map(r=>`<tr>
+      <td><strong>${E(r.username)}</strong></td><td>${E(r.full_name||'—')}</td>
+      <td>${E(r.document_type||'—')}</td>
+      <td><span class="badge badge-${SC(r.status)}">${ST[r.status]||r.status}</span></td>
+      <td>${r.upload_id?`<a href="/api/uploads/kyc/${r.id}" target="_blank" class="btn btn-ghost btn-xs">📎 عرض</a>`:'—'}</td>
+      <td style="font-size:0.75rem;">${D(r.created_at)}</td>
+      <td>${r.status==='PENDING'?`
+        <button class="btn btn-xs" style="color:var(--success)" onclick="act('/v2/admin/verify/${r.id}/approve')">✅</button>
+        <button class="btn btn-xs" style="color:var(--error)" onclick="rejectKYC(${r.id})">❌</button>
+      `:'—'}</td>
+    </tr>`).join('')}
+    </tbody></table></div>
+  `);
+}
+window.rejectKYC=async function(id){
+  const reason=prompt('سبب الرفض (إلزامي):');if(!reason)return;
+  const r=await api(`/v2/admin/verify/${id}/reject`,{method:'POST',body:{note:reason}});
+  if(r?.ok){toast('تم رفض الطلب');loadKYC();}else toast(r?.error||'خطأ');
+};
 
-  // Deposits
-  renderDeposits(depList);
+async function loadTrades(){
+  const r=await api('/admin/trades');const trades=r.trades||[];
+  _C(`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--sp-3);flex-wrap:wrap;gap:var(--sp-2);">
+      <h2 style="font-size:1.2rem;font-weight:800;">📋 الصفقات (${trades.length})</h2>
+      <div style="display:flex;gap:var(--sp-2);flex-wrap:wrap;">
+        <select class="form-input" style="font-size:0.8rem;max-width:150px;" onchange="fTrades(this.value)">
+          <option value="">الكل</option><option value="PENDING">معلقة</option><option value="PAYMENT_SENT">دفع</option>
+          <option value="COMPLETED">مكتملة</option><option value="DISPUTED">نزاع</option><option value="CANCELLED">ملغاة</option>
+        </select>
+      </div>
+    </div>
+    <div class="card overflow-x"><table class="tbl"><thead><tr>
+      <th>#</th><th>المشتري</th><th>البائع</th><th>المبلغ</th><th>العمولة</th><th>الحالة</th><th>التاريخ</th>
+    </tr></thead><tbody id="tr-tb"></tbody></table></div>
+  `);_D._trades=trades;fTrades('');
+};
+window.fTrades=function(status){
+  const list=(_D._trades||[]).filter(t=>!status||t.status===status);
+  document.getElementById('tr-tb').innerHTML=list.map(t=>`<tr>
+    <td>${t.id}</td><td>${E(t.buyer)}</td><td>${E(t.seller)}</td>
+    <td>${t.amount} USDT</td><td>${t.platform_fee||0}</td>
+    <td><span class="badge badge-${SC(t.status)}">${ST[t.status]||t.status}</span></td>
+    <td style="font-size:0.75rem;">${D(t.created)}</td>
+  </tr>`).join('');
+};
 
-  // Withdrawals
-  renderWithdrawals(wdList);
+async function loadDisputes(){
+  const r=await api('/admin/disputes/all');const list=r.disputes||[];
+  _C(`
+    <h2 style="font-size:1.2rem;font-weight:800;margin-bottom:var(--sp-3);">⚠️ النزاعات (${list.length})</h2>
+    <div class="card overflow-x"><table class="tbl"><thead><tr>
+      <th>#</th><th>الصفقة</th><th>المشتري</th><th>البائع</th><th>المبلغ</th><th>السبب</th><th>الحالة</th><th>إجراءات</th>
+    </tr></thead><tbody>
+    ${list.map(d=>`<tr>
+      <td>${d.id}</td><td>#${d.trade_id}</td><td>${E(d.buyer||'')}</td><td>${E(d.seller||'')}</td>
+      <td>${d.amount||'—'}</td>
+      <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.75rem;">${E(d.reason||'')}</td>
+      <td><span class="badge badge-${SC(d.status)}">${ST[d.status]||d.status}</span></td>
+      <td>${d.status==='OPEN'||d.status==='UNDER_REVIEW'?`
+        <button class="btn btn-xs" style="color:var(--success)" onclick="resolveDispute(${d.trade_id},'release')">🔓 تحرير</button>
+        <button class="btn btn-xs" style="color:var(--error)" onclick="resolveDispute(${d.trade_id},'refund')">↩️ إرجاع</button>
+      `:'—'}</td>
+    </tr>`).join('')}
+    </tbody></table></div>
+  `);
+}
+window.resolveDispute=async function(tradeId,action){
+  const reason=prompt('سبب القرار (إلزامي):');if(!reason)return;
+  const r=await api(`/admin/disputes/${tradeId}/resolve`,{method:'POST',body:{action,note:reason}});
+  if(r?.ok){toast('تم الحل');loadDisputes();}else toast(r?.error||'خطأ');
+};
 
-  // Disputes
-  renderDisputes(disList);
+async function loadDeposits(){
+  const r=await api('/admin/deposits');const list=r.deposits||[];
+  _C(`
+    <h2 style="font-size:1.2rem;font-weight:800;margin-bottom:var(--sp-3);">💳 الإيداعات (${list.length})</h2>
+    <div class="card overflow-x"><table class="tbl"><thead><tr>
+      <th>#</th><th>المستخدم</th><th>المبلغ</th><th>TX Hash</th><th>الحالة</th><th>التاريخ</th><th>إجراءات</th>
+    </tr></thead><tbody>
+    ${list.map(d=>`<tr>
+      <td>${d.id}</td><td>${E(d.username)}</td><td>${d.amount} USDT</td>
+      <td class="mono" style="font-size:0.7rem;">${E((d.tx_hash||'').substring(0,12))}…</td>
+      <td><span class="badge badge-${SC(d.status)}">${ST[d.status]||d.status}</span></td>
+      <td style="font-size:0.75rem;">${D(d.created)}</td>
+      <td>${d.status==='PENDING'?`
+        <button class="btn btn-xs" style="color:var(--success)" onclick="act('/admin/deposits/${d.id}/confirm')">✅</button>
+        <button class="btn btn-xs" style="color:var(--error)" onclick="act('/admin/deposits/${d.id}/reject')">❌</button>
+      `:'—'}</td>
+    </tr>`).join('')}
+    </tbody></table></div>
+  `);
+}
 
-  // Audit
-  renderAudit(logsList);
+async function loadWithdrawals(){
+  const r=await api('/admin/withdrawals');const list=r.withdrawals||[];
+  _C(`
+    <h2 style="font-size:1.2rem;font-weight:800;margin-bottom:var(--sp-3);">🏦 السحوبات (${list.length})</h2>
+    <div class="card overflow-x"><table class="tbl"><thead><tr>
+      <th>#</th><th>المستخدم</th><th>المبلغ</th><th>العنوان</th><th>الحالة</th><th>التاريخ</th><th>إجراءات</th>
+    </tr></thead><tbody>
+    ${list.map(w=>`<tr>
+      <td>${w.id}</td><td>${E(w.username)}</td><td>${w.amount} USDT</td>
+      <td class="mono" style="font-size:0.7rem;max-width:120px;overflow:hidden;text-overflow:ellipsis;">${E(w.wallet||'')}</td>
+      <td><span class="badge badge-${SC(w.status)}">${ST[w.status]||w.status}</span></td>
+      <td style="font-size:0.75rem;">${D(w.created)}</td>
+      <td>${w.status==='PENDING'?`
+        <button class="btn btn-xs" style="color:var(--success)" onclick="act('/admin/withdrawals/${w.id}/approve')">✅</button>
+        <button class="btn btn-xs" style="color:var(--error)" onclick="act('/admin/withdrawals/${w.id}/reject')">❌</button>
+      `:'—'}</td>
+    </tr>`).join('')}
+    </tbody></table></div>
+  `);
+}
 
-  document.getElementById('loading').style.display = 'none';
-  document.getElementById('admin-content').style.display = 'block';
+async function loadAds(){
+  const r=await api('/admin/ads');const list=r.ads||[];
+  _C(`
+    <h2 style="font-size:1.2rem;font-weight:800;margin-bottom:var(--sp-3);">📢 الإعلانات (${list.length})</h2>
+    <div class="card overflow-x"><table class="tbl"><thead><tr>
+      <th>#</th><th>التاجر</th><th>النوع</th><th>السعر</th><th>المتاح</th><th>طريقة الدفع</th><th>الحالة</th><th>إجراءات</th>
+    </tr></thead><tbody>
+    ${list.map(a=>`<tr>
+      <td>${a.id}</td><td>${E(a.user)}</td>
+      <td><span class="badge badge-${a.type==='SELL'?'sell':'buy'}">${a.type==='SELL'?'💰 بيع':'🛒 شراء'}</span></td>
+      <td>${a.price} ₪</td><td>${a.amount}</td><td style="font-size:0.75rem;">${E(a.payment||'')}</td>
+      <td><span class="badge badge-${SC(a.status)}">${ST[a.status]||a.status}</span></td>
+      <td>${a.status==='OPEN'?`
+        <button class="btn btn-xs" style="color:var(--warning)" onclick="act('/admin/ads/${a.id}/pause')">⏸️</button>
+        <button class="btn btn-xs" style="color:var(--error)" onclick="act('/admin/ads/${a.id}/remove')">🗑️</button>
+      `:a.status==='PAUSED'?`
+        <button class="btn btn-xs" style="color:var(--success)" onclick="act('/admin/ads/${a.id}/activate')">▶️</button>
+        <button class="btn btn-xs" style="color:var(--error)" onclick="act('/admin/ads/${a.id}/remove')">🗑️</button>
+      `:'—'}</td>
+    </tr>`).join('')}
+    </tbody></table></div>
+  `);
+}
+
+async function loadFinance(){
+  const r=await api('/admin/finance');const f=r.finance||{};
+  _C(`
+    <h2 style="font-size:1.2rem;font-weight:800;margin-bottom:var(--sp-3);">💰 الإحصائيات المالية</h2>
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="kpi-value">${N(f.total_volume||0)}</div><div class="kpi-label">💰 إجمالي التداول</div></div>
+      <div class="kpi-card"><div class="kpi-value">${N(f.platform_fees||0)}</div><div class="kpi-label">💵 إجمالي العمولات</div></div>
+      <div class="kpi-card"><div class="kpi-value" style="color:var(--success)">${N(f.deposit_volume||0)}</div><div class="kpi-label">💳 حجم الإيداعات</div></div>
+      <div class="kpi-card"><div class="kpi-value" style="color:var(--warning)">${N(f.withdrawal_volume||0)}</div><div class="kpi-label">🏦 حجم السحوبات</div></div>
+      <div class="kpi-card"><div class="kpi-value">${N(f.today_volume||0)}</div><div class="kpi-label">📅 حجم اليوم</div></div>
+      <div class="kpi-card"><div class="kpi-value">${N(f.week_volume||0)}</div><div class="kpi-label">📅 حجم الأسبوع</div></div>
+      <div class="kpi-card"><div class="kpi-value">${N(f.month_volume||0)}</div><div class="kpi-label">📅 حجم الشهر</div></div>
+    </div>
+  `);
+}
+
+async function loadAudit(){
+  const r=await api('/admin/audit-log');const list=r.logs||[];
+  _C(`
+    <h2 style="font-size:1.2rem;font-weight:800;margin-bottom:var(--sp-3);">📝 سجل النشاط الإداري (${list.length})</h2>
+    <div class="card" style="padding:0;">
+    ${list.slice(0,100).map(l=>`<div style="display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3);border-bottom:1px solid var(--border);">
+      <div style="width:8px;height:8px;border-radius:50%;background:${l.actor_role==='admin'?'var(--warning)':'var(--primary)'};flex-shrink:0;"></div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:0.85rem;">${E(l.action)} <span style="color:var(--text-muted);font-size:0.75rem;">→ ${E(l.target||'')}</span></div>
+        <div style="font-size:0.7rem;color:var(--text-muted);">${E(l.actor)} · ${E(l.actor_role)} · ${D(l.created)} ${l.details?`· ${E(l.details)}`:''}</div>
+      </div>
+    </div>`).join('')||'<p style="text-align:center;color:var(--text-muted);padding:var(--sp-4);">لا يوجد سجل</p>'}
+    </div>
+  `);
+}
+
+async function loadSettings(){
+  const r=await api('/admin/settings');const s=r.settings||{};
+  _C(`
+    <h2 style="font-size:1.2rem;font-weight:800;margin-bottom:var(--sp-3);">⚙️ إعدادات المنصة</h2>
+    <div class="card" style="padding:var(--sp-4);">
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:var(--sp-3);">
+        <div class="form-group"><label class="form-label">عمولة P2P (%)</label><input class="form-input" id="s-p2p_fee" value="${E(s.p2p_fee_percent||'1.0')}"></div>
+        <div class="form-group"><label class="form-label">عمولة Cash (%)</label><input class="form-input" id="s-cash_fee" value="${E(s.cash_fee_percent||'1.0')}"></div>
+        <div class="form-group"><label class="form-label">الحد الأدنى للرسوم</label><input class="form-input" id="s-min_fee" value="${E(s.min_fee||'0.1')}"></div>
+        <div class="form-group"><label class="form-label">الحد الأقصى للرسوم</label><input class="form-input" id="s-max_fee" value="${E(s.max_fee||'100')}"></div>
+        <div class="form-group"><label class="form-label">الحد الأدنى للصفقة</label><input class="form-input" id="s-min_trade" value="${E(s.min_trade||'')}"></div>
+        <div class="form-group"><label class="form-label">الحد الأقصى للصفقة</label><input class="form-input" id="s-max_trade" value="${E(s.max_trade||'')}"></div>
+        <div class="form-group"><label class="form-label">الحد الأدنى للسحب</label><input class="form-input" id="s-min_wd" value="${E(s.min_withdrawal||'')}"></div>
+        <div class="form-group"><label class="form-label">الحد الأقصى للسحب</label><input class="form-input" id="s-max_wd" value="${E(s.max_withdrawal||'')}"></div>
+        <div class="form-group"><label class="form-label">حد السحب اليومي</label><input class="form-input" id="s-daily_wd" value="${E(s.daily_withdrawal_limit||'')}"></div>
+        <div class="form-group"><label class="form-label">وضع الصيانة</label>
+          <select class="form-input" id="s-maintenance"><option value="0" ${s.maintenance_mode!=='1'?'selected':''}>معطّل</option><option value="1" ${s.maintenance_mode==='1'?'selected':''}>مفعّل</option></select>
+        </div>
+      </div>
+      <button class="btn btn-success" style="margin-top:var(--sp-3);" onclick="saveSettings()">💾 حفظ الإعدادات</button>
+    </div>
+  `);
+}
+window.saveSettings=async function(){
+  const body={
+    p2p_fee_percent:document.getElementById('s-p2p_fee').value,
+    cash_fee_percent:document.getElementById('s-cash_fee').value,
+    min_fee:document.getElementById('s-min_fee').value,
+    max_fee:document.getElementById('s-max_fee').value,
+    min_trade:document.getElementById('s-min_trade').value,
+    max_trade:document.getElementById('s-max_trade').value,
+    min_withdrawal:document.getElementById('s-min_wd').value,
+    max_withdrawal:document.getElementById('s-max_wd').value,
+    daily_withdrawal_limit:document.getElementById('s-daily_wd').value,
+    maintenance_mode:document.getElementById('s-maintenance').value,
+  };
+  const r=await api('/admin/settings',{method:'POST',body});
+  if(r?.ok){toast('تم الحفظ ✓');}else toast(r?.error||'خطأ');
+};
+
+// Generic action helper
+window.act=async function(path,body){
+  const r=await api(path,{method:'POST',body:body||{}});
+  if(r?.ok){toast('تم ✓');setTimeout(()=>go('dashboard'),500);}else toast(r?.error||'خطأ');
+};
+
+function _C(html){document.getElementById('content').innerHTML=html;document.getElementById('content').style.display='block';document.getElementById('loading').style.display='none';}
+
+// Init
+(async function(){
+  const user=await requireAuth();if(!user)return;
+  const me=await api('/auth/me');
+  if(!me?.isAdmin){document.getElementById('content').innerHTML='<div style="text-align:center;padding:var(--sp-8);"><h2>🔒 غير مصرح</h2><p style="color:var(--text-muted);">هذه الصفحة للمشرفين فقط</p></div>';document.getElementById('content').style.display='block';document.getElementById('loading').style.display='none';return;}
+  await loadDashboard();
 })();
-
-function renderTimeline(items) {
-  document.getElementById('timeline-list').innerHTML = items.length ?
-    items.slice(0, 30).map(e => `
-      <div class="timeline-item">
-        <div class="timeline-dot"></div>
-        <div class="timeline-body">
-          <div class="timeline-text">${esc(e.description || e.action || e.type || '')}</div>
-          <div class="timeline-meta">${esc(e.username || e.admin || 'نظام')} · ${fmtDate(e.created_at)}</div>
-        </div>
-      </div>
-    `).join('') : '<p style="text-align:center;color:var(--text-muted);padding:var(--sp-4);">لا توجد أحداث</p>';
-}
-
-function renderUsers(users) {
-  document.getElementById('users-list').innerHTML = users.length ?
-    `<div class="card">${users.map(u => `
-      <div style="display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-3);border-bottom:1px solid var(--border);">
-        <div class="avatar avatar-sm">${(u.username||'?')[0].toUpperCase()}</div>
-        <div style="flex:1;min-width:0;">
-          <div style="font-weight:600;font-size:0.85rem;">${esc(u.username)}</div>
-          <div style="font-size:0.7rem;color:var(--text-muted);">${esc(u.email || '—')} · ${u.trust_score || 0} ⭐</div>
-        </div>
-        <span class="badge ${u.status === 'ADMIN' ? 'badge-warning' : u.status === 'BANNED' ? 'badge-error' : 'badge-success'}">${u.status || 'ACTIVE'}</span>
-      </div>
-    `).join('')}</div>` : '<p style="text-align:center;color:var(--text-muted);padding:var(--sp-4);">لا يوجد مستخدمون</p>';
-}
-
-function renderTrades(trades) {
-  document.getElementById('tab-trades').innerHTML = trades.length ?
-    `<div class="card"><table class="table"><thead><tr><th>#</th><th>المشتري</th><th>البائع</th><th>المبلغ</th><th>السعر</th><th>الحالة</th></tr></thead><tbody>${trades.map(t => `
-      <tr>
-        <td>${t.id}</td>
-        <td>${esc(t.buyer)}</td>
-        <td>${esc(t.seller)}</td>
-        <td>${t.amount} USDT</td>
-        <td>${t.price || '—'} ₪</td>
-        <td><span class="badge badge-${t.status === 'COMPLETED' ? 'success' : t.status === 'CANCELLED' ? 'error' : 'warning'}">${t.status}</span></td>
-      </tr>
-    `).join('')}</tbody></table></div>` : '<p style="text-align:center;color:var(--text-muted);padding:var(--sp-4);">لا توجد صفقات</p>';
-}
-
-function renderDeposits(deps) {
-  document.getElementById('tab-deposits').innerHTML = deps.length ?
-    `<div class="card"><table class="table"><thead><tr><th>المستخدم</th><th>المبلغ</th><th>TX Hash</th><th>الحالة</th><th>التاريخ</th></tr></thead><tbody>${deps.map(d => `
-      <tr>
-        <td>${esc(d.username)}</td>
-        <td>${d.amount} USDT</td>
-        <td class="mono" style="font-size:0.7rem;">${esc((d.tx_hash||'—').substring(0,10))}...</td>
-        <td><span class="badge badge-${d.status === 'CONFIRMED' ? 'success' : d.status === 'REJECTED' ? 'error' : 'warning'}">${d.status}</span></td>
-        <td>${fmtDate(d.created_at)}</td>
-      </tr>
-    `).join('')}</tbody></table></div>` : '<p style="text-align:center;color:var(--text-muted);padding:var(--sp-4);">لا توجد إيداعات</p>';
-}
-
-function renderWithdrawals(wds) {
-  document.getElementById('tab-withdrawals').innerHTML = wds.length ?
-    `<div class="card"><table class="table"><thead><tr><th>المستخدم</th><th>المبلغ</th><th>العنوان</th><th>الحالة</th><th>التاريخ</th></tr></thead><tbody>${wds.map(w => `
-      <tr>
-        <td>${esc(w.username)}</td>
-        <td>${w.amount} USDT</td>
-        <td class="mono" style="font-size:0.7rem;">${esc((w.address||'').substring(0,12))}...</td>
-        <td><span class="badge badge-${w.status === 'COMPLETED' ? 'success' : w.status === 'REJECTED' ? 'error' : 'warning'}">${w.status}</span></td>
-        <td>${fmtDate(w.created_at)}</td>
-      </tr>
-    `).join('')}</tbody></table></div>` : '<p style="text-align:center;color:var(--text-muted);padding:var(--sp-4);">لا توجد سحوبات</p>';
-}
-
-function renderDisputes(diss) {
-  document.getElementById('tab-disputes').innerHTML = diss.length ?
-    `<div class="card"><table class="table"><thead><tr><th>#</th><th>الصفقة</th><th>المبلغ</th><th>السبب</th><th>الحالة</th><th>التاريخ</th></tr></thead><tbody>${diss.map(d => `
-      <tr>
-        <td>${d.id}</td>
-        <td>#${d.trade_id}</td>
-        <td>${d.amount || '—'}</td>
-        <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(d.reason || '—')}</td>
-        <td><span class="badge badge-${d.status === 'RESOLVED' ? 'success' : d.status === 'OPEN' ? 'error' : 'warning'}">${d.status}</span></td>
-        <td>${fmtDate(d.created_at)}</td>
-      </tr>
-    `).join('')}</tbody></table></div>` : '<p style="text-align:center;color:var(--text-muted);padding:var(--sp-4);">لا توجد نزاعات</p>';
-}
-
-function renderAudit(logs) {
-  document.getElementById('tab-audit').innerHTML = logs.length ?
-    `<div class="card">${logs.slice(0, 50).map(l => `
-      <div class="timeline-item">
-        <div class="timeline-dot" style="background:${l.type === 'admin' ? 'var(--warning)' : 'var(--primary)'}"></div>
-        <div class="timeline-body">
-          <div class="timeline-text">${esc(l.description || l.action || '')}</div>
-          <div class="timeline-meta">${esc(l.username || '—')} · ${esc(l.type || '')} · ${fmtDate(l.created_at)}</div>
-        </div>
-      </div>
-    `).join('')}</div>` : '<p style="text-align:center;color:var(--text-muted);padding:var(--sp-4);">لا يوجد سجل نشاط</p>';
-}
-
-window.filterUsers = function() {
-  const q = document.getElementById('user-search').value.toLowerCase();
-  const filtered = _allUsers.filter(u => (u.username||'').toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q));
-  renderUsers(filtered);
-};
-
-window.showTab = function(name, btn) {
-  document.querySelectorAll('.admin-tab').forEach(el => el.style.display = 'none');
-  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-  document.getElementById('tab-' + name).style.display = 'block';
-  btn.classList.add('active');
-};
-
-function esc(s) { const d = document.createElement('div'); d.textContent = s || ''; return d.innerHTML; }
-function fmtNum(n) { return Number(n || 0).toLocaleString('ar'); }
-function fmtDate(d) { if (!d) return '—'; return new Date(d).toLocaleDateString('ar', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); }
 </script>
 <style>
-  .kpi-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:var(--sp-2); margin-bottom:var(--sp-4); }
-  .kpi-card { text-align:center; padding:var(--sp-3); background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-sm); }
-  .kpi-value { font-size:1.3rem; font-weight:800; color:var(--text-primary); }
-  .kpi-label { font-size:0.7rem; color:var(--text-muted); margin-top:var(--sp-1); }
-  .admin-tabs { display:flex; gap:var(--sp-1); overflow-x:auto; margin-bottom:var(--sp-4); padding-bottom:var(--sp-2); -webkit-overflow-scrolling:touch; }
-  .tab-btn { padding:var(--sp-2) var(--sp-3); border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg-card); color:var(--text-muted); font-size:0.75rem; font-weight:600; cursor:pointer; white-space:nowrap; transition:all .15s; }
-  .tab-btn.active { background:var(--primary); color:#fff; border-color:var(--primary); }
-  .table { width:100%; font-size:0.75rem; border-collapse:collapse; }
-  .table th { text-align:right; padding:var(--sp-2) var(--sp-3); color:var(--text-muted); font-weight:600; border-bottom:2px solid var(--border); font-size:0.7rem; }
-  .table td { padding:var(--sp-2) var(--sp-3); border-bottom:1px solid var(--border); }
-  .table tr:hover { background:var(--bg-surface); }
-  .timeline-item { display:flex; gap:var(--sp-3); padding:var(--sp-3); border-bottom:1px solid var(--border); }
-  .timeline-dot { width:8px; height:8px; border-radius:50%; background:var(--primary); margin-top:6px; flex-shrink:0; }
-  .timeline-body { flex:1; min-width:0; }
-  .timeline-text { font-size:0.85rem; }
-  .timeline-meta { font-size:0.7rem; color:var(--text-muted); margin-top:var(--sp-1); }
-  .avatar-sm { width:32px; height:32px; border-radius:50%; background:var(--primary); color:#fff; display:flex; align-items:center; justify-content:center; font-size:0.8rem; font-weight:700; flex-shrink:0; }
-  .mono { font-family:monospace; direction:ltr; text-align:left; }
-  @media (min-width:640px) { .kpi-grid { grid-template-columns:repeat(4,1fr); } }
+.admin-layout{display:flex;min-height:calc(100vh - 60px);}
+.admin-sidebar{width:220px;background:var(--bg-card);border-left:1px solid var(--border);padding:var(--sp-4) 0;position:sticky;top:60px;height:calc(100vh - 60px);overflow-y:auto;flex-shrink:0;}
+.sidebar-header{padding:0 var(--sp-4) var(--sp-3);font-weight:800;font-size:0.85rem;color:var(--accent);border-bottom:1px solid var(--border);}
+.sidebar-nav{padding:var(--sp-2) 0;}
+.sidebar-link{display:block;padding:var(--sp-2) var(--sp-4);font-size:0.8rem;color:var(--text-muted);text-decoration:none;cursor:pointer;transition:all .15s;border-right:3px solid transparent;}
+.sidebar-link:hover{background:var(--bg-card-hover);color:var(--text-primary);}
+.sidebar-link.active{background:var(--primary-dim);color:var(--primary);border-right-color:var(--primary);}
+.admin-main{flex:1;padding:var(--sp-4);overflow-x:hidden;min-width:0;}
+.kpi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:var(--sp-2);margin-bottom:var(--sp-4);}
+.kpi-card{text-align:center;padding:var(--sp-3);background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);}
+.kpi-value{font-size:1.2rem;font-weight:800;color:var(--text-primary);}
+.kpi-label{font-size:0.65rem;color:var(--text-muted);margin-top:var(--sp-1);}
+.tbl{width:100%;font-size:0.75rem;border-collapse:collapse;}
+.tbl th{text-align:right;padding:var(--sp-2) var(--sp-3);color:var(--text-muted);font-weight:600;border-bottom:2px solid var(--border);font-size:0.7rem;white-space:nowrap;}
+.tbl td{padding:var(--sp-2) var(--sp-3);border-bottom:1px solid var(--border);white-space:nowrap;}
+.tbl tr:hover{background:var(--bg-surface);}
+.overflow-x{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.mono{font-family:monospace;direction:ltr;text-align:left;}
+.btn-xs{padding:2px 6px;font-size:0.7rem;}
+/* Mobile admin header */
+@media(max-width:768px){
+  .navbar{display:none !important;}
+  #adminMobileHeader{display:flex !important;}
+  .admin-sidebar{
+    position:fixed;top:0;right:0;bottom:0;z-index:10002;
+    transform:translateX(100%);transition:transform 0.25s ease;
+    display:block !important;width:min(85vw,300px);
+    box-shadow:-4px 0 24px rgba(0,0,0,0.4);
+  }
+  .admin-sidebar.open{transform:translateX(0);}
+  .admin-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:10001;opacity:0;transition:opacity 0.25s;}
+  .admin-overlay.open{display:block;opacity:1;}
+  .admin-layout{flex-direction:column;}
+  .admin-main{padding:var(--sp-3);}
+  .kpi-grid{grid-template-columns:repeat(2,1fr);}
+  .tbl{font-size:0.7rem;}
+}
+@media(min-width:1024px){
+  .kpi-grid{grid-template-columns:repeat(4,1fr);}
+}
 </style>
 </body>
 </html>

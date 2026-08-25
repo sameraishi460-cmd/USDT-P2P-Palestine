@@ -175,8 +175,8 @@ trades.post("/:id/cancel", requireUser, requireCsrf, async (c) => {
   const username = c.get("user")!.username;
   const trade = await getTrade(c, id);
   if (!trade || !isParticipant(username, trade)) return c.json({ error: "غير مصرح" }, 403);
-  if (!["PENDING", "PAYMENT_SENT"].includes(trade.status)) {
-    return c.json({ error: `لا يمكن إلغاء صفقة بحالة ${trade.status}` }, 400);
+  if (trade.status !== "PENDING") {
+    return c.json({ error: `لا يمكن إلغاء صفقة بعد تأكيد الدفع. استخدم فتح نزاع.` }, 400);
   }
 
   // Refund locked funds to seller if they were locked
@@ -187,7 +187,7 @@ trades.post("/:id/cancel", requireUser, requireCsrf, async (c) => {
 
   await c.env.DB.prepare(
     `UPDATE trades SET status = 'CANCELLED', escrow_status = CASE WHEN escrow_status='LOCKED' THEN 'REFUNDED' ELSE 'CANCELLED' END
-     WHERE id = ? AND status IN ('PENDING','PAYMENT_SENT')`
+     WHERE id = ? AND status = 'PENDING'`
   ).bind(id).run();
 
   // Restore ad amount
@@ -209,8 +209,8 @@ trades.post("/:id/dispute", requireUser, requireCsrf, rateLimit(5, 300), async (
   const username = c.get("user")!.username;
   const trade = await getTrade(c, id);
   if (!trade || !isParticipant(username, trade)) return c.json({ error: "غير مصرح" }, 403);
-  if (!["PAYMENT_SENT", "PENDING"].includes(trade.status)) {
-    return c.json({ error: `لا يمكن فتح نزاع في هذه الحالة (${trade.status})` }, 400);
+  if (trade.status !== "PAYMENT_SENT") {
+    return c.json({ error: `لا يمكن فتح نزاع قبل تأكيد الدفع (الحالة: ${trade.status})` }, 400);
   }
 
   const body = await formBody(c);

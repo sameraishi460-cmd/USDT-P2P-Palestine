@@ -14,6 +14,12 @@ export type Bindings = {
   TELEGRAM_WEBHOOK_SECRET: string;
   ADMIN_PASSWORD: string;
 
+  // Optional secrets — email (Resend). Email features are disabled (honestly reported)
+  // when these are not configured.
+  RESEND_API_KEY?: string;
+  EMAIL_FROM?: string;
+  ADMIN_USERNAME?: string;
+
   // Vars
   ENVIRONMENT: string;
   PLATFORM_WALLET: string;
@@ -33,5 +39,7 @@ export type SessionUser = {
   username: string;
   isAdmin: boolean;
 };
+
+export type EmailResult = { sent: boolean; error?: string };
 
 export type AppEnv = { Bindings: Bindings; Variables: Variables };

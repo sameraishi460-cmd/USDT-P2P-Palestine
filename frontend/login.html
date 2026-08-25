@@ -34,9 +34,9 @@
   <!-- Regular Login Form -->
   <div id="loginForm">
     <div style="text-align:center;margin-bottom:var(--sp-8);">
-      <div style="font-size:3rem;margin-bottom:var(--sp-3);">🇵🇸</div>
-      <h1 style="font-size:1.8rem;">مرحباً بك</h1>
-      <p style="color:var(--text-muted);font-size:0.9rem;margin-top:var(--sp-2);">ادخل إلى حسابك في USDT P2P Palestine</p>
+      <div style="width:56px;height:56px;border-radius:var(--radius-lg);background:var(--primary-dim);display:flex;align-items:center;justify-content:center;margin:0 auto var(--sp-4);font-size:1.5rem;color:var(--primary);font-weight:900;">◈</div>
+      <h1 style="font-size:1.5rem;font-weight:800;">مرحباً بك</h1>
+      <p style="color:var(--text-muted);font-size:0.85rem;margin-top:var(--sp-2);">ادخل إلى حسابك في USDT P2P Palestine</p>
     </div>
 
     <!-- Telegram Login (manual link code for non-WebApp) -->
@@ -66,19 +66,22 @@
         <label class="form-label">🔒 كلمة المرور</label>
         <input class="form-input" type="password" id="password" placeholder="أدخل كلمة المرور" required autocomplete="current-password">
       </div>
-      <button type="submit" class="btn btn-success btn-block btn-lg" id="loginBtn">🚀 دخول</button>
+      <button type="submit" class="btn btn-primary btn-block btn-lg" id="loginBtn">دخول</button>
     </form>
 
     <div style="text-align:center;margin-top:var(--sp-6);">
       <p style="color:var(--text-muted);font-size:0.85rem;">
-        ليس لديك حساب؟ <a href="/register" style="color:var(--accent-light);font-weight:600;">سجل الآن</a>
+        <a href="/forgot_password" style="color:var(--text-muted);font-size:0.8rem;">نسيت كلمة المرور؟</a>
+      </p>
+      <p style="color:var(--text-muted);font-size:0.85rem;margin-top:var(--sp-2);">
+        ليس لديك حساب؟        <a href="/register" style="color:var(--primary);font-weight:600;">سجل الآن</a>
       </p>
     </div>
   </div>
 </div>
 </main>
 
-<div class="bottom-nav" id="bottomNav"></div>
+
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="/assets/app.js"></script>

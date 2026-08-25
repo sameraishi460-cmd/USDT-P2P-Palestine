@@ -67,29 +67,57 @@ export function registerV2Routes(app: Hono<AppEnv>) {
   // VERIFICATION SYSTEM
   // ============================================================
 
-  app.post("/api/v2/verify/request", requireUser, requireCsrf, async (c) => {
+  app.post("/api/v2/verify/request", requireUser, requireCsrf, rateLimit(3, 600), async (c) => {
     const username = c.get("user")!.username;
     const body = await formBody(c);
-    const docType = String(body.document_type ?? "id_card").trim();
-    const docKey = String(body.document_key ?? "").trim();
+    const docType = String(body.document_type ?? "").trim();
+    const uploadId = String(body.upload_id ?? "").trim();
+    const fullName = String(body.full_name ?? "").trim();
+    const country = String(body.country ?? "").trim();
+    const dob = String(body.dob ?? "").trim();
 
+    // Validate required fields
+    if (!docType || !['passport', 'national_id', 'driving_license'].includes(docType)) {
+      return c.json({ error: "نوع الوثيقة غير صالح" }, 400);
+    }
+    if (!uploadId) return c.json({ error: "يجب رفع صورة الوثيقة" }, 400);
+    if (!fullName || fullName.length < 3) return c.json({ error: "الاسم الكامل مطلوب" }, 400);
+    if (!country) return c.json({ error: "الدولة مطلوبة" }, 400);
+    if (!dob) return c.json({ error: "تاريخ الميلاد مطلوب" }, 400);
+
+    // Verify the upload belongs to this user
+    const upload = await c.env.DB.prepare(
+      "SELECT id, owner, kind FROM uploads WHERE id = ?"
+    ).bind(uploadId).first<{ id: string; owner: string; kind: string }>();
+    if (!upload || upload.owner !== username) {
+      return c.json({ error: "الملف غير صالح" }, 400);
+    }
+    if (upload.kind !== "kyc-documents") {
+      return c.json({ error: "يجب أن يكون الملف وثيقة هوية" }, 400);
+    }
+
+    // Check for existing PENDING request
     const existing = await c.env.DB.prepare(
       "SELECT id FROM verification_requests WHERE username = ? AND status = 'PENDING'"
     ).bind(username).first();
     if (existing) return c.json({ error: "لديك طلب توثيق قيد المراجعة بالفعل" }, 409);
 
     await c.env.DB.prepare(
-      "INSERT INTO verification_requests (username, document_type, document_key) VALUES (?, ?, ?)"
-    ).bind(username, docType, docKey).run();
+      `INSERT INTO verification_requests (username, document_type, upload_id, full_name, country, dob, status)
+       VALUES (?, ?, ?, ?, ?, ?, 'PENDING')`
+    ).bind(username, docType, uploadId, fullName, country, dob).run();
 
-    await auditLog(c, username, "user", "VERIFY_REQUEST", username, docType);
-    return c.json({ ok: true });
+    await auditLog(c, username, "user", "KYC_SUBMITTED", username, `${docType} by ${fullName}`);
+    await notify(c.env, username, "تم استلام طلب التوثيق 📋", "سيتم مراجعة وثيقتك من الإدارة.");
+    return c.json({ ok: true, message: "تم استلام طلب التوثيق بنجاح" });
   });
 
   app.get("/api/v2/verify/status", requireUser, async (c) => {
     const username = c.get("user")!.username;
     const req = await c.env.DB.prepare(
-      "SELECT id, status, document_type, created_at, reviewed_at FROM verification_requests WHERE username = ? ORDER BY id DESC LIMIT 1"
+      `SELECT id, status, document_type, upload_id, full_name, country, dob,
+              admin_note, reviewed_at, created_at
+       FROM verification_requests WHERE username = ? ORDER BY id DESC LIMIT 1`
     ).bind(username).first();
     const user = await c.env.DB.prepare("SELECT verified FROM users WHERE username = ?").bind(username).first<any>();
     return c.json({ ok: true, verified: user?.verified || 0, request: req || null });
@@ -192,9 +220,31 @@ export function registerV2Routes(app: Hono<AppEnv>) {
   // ADMIN: V2 Management
   // ============================================================
 
+  // ── Admin V2 routes all require verified ADMIN status ──────────
+  app.use("/api/v2/admin/*", async (c, next) => {
+    const { getCookie, isSessionActive } = await import("../middleware/auth");
+    const { verifySession } = await import("../utils/crypto");
+    const token = getCookie(c, "usdt_session");
+    if (!token) return c.json({ error: "غير مصرح" }, 401);
+    const session = await verifySession(token, c.env.SECRET_KEY);
+    if (!session) return c.json({ error: "انتهت الجلسة" }, 401);
+    // Server-side session revocation check
+    if (!(await isSessionActive(c.env.DB, session))) {
+      return c.json({ error: "انتهت الجلسة" }, 401);
+    }
+    const user = await c.env.DB.prepare("SELECT id, username, status FROM users WHERE id = ?")
+      .bind(session.sub).first<{ id: number; username: string; status: string }>();
+    if (!user || user.status !== "ADMIN") return c.json({ error: "غير مصرح لك بالوصول" }, 403);
+    c.set("user", { id: user.id, username: user.username, isAdmin: true });
+    await next();
+  });
+
   app.get("/api/v2/admin/verifications", async (c) => {
     const rows = await c.env.DB.prepare(
-      "SELECT * FROM verification_requests ORDER BY id DESC LIMIT 100"
+      `SELECT vr.*, u.email, u.verified AS user_verified
+       FROM verification_requests vr
+       LEFT JOIN users u ON vr.username = u.username
+       ORDER BY vr.id DESC LIMIT 100`
     ).all();
     return c.json({ ok: true, requests: rows.results ?? [] });
   });

@@ -3,6 +3,13 @@
  * Workers-native Web Crypto API only (no external deps).
  */
 
+/** Generate a cryptographically random session ID (24 hex chars). */
+export function randomSid(): string {
+  return [...crypto.getRandomValues(new Uint8Array(12))]
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
 const PBKDF2_ITERATIONS = 100_000;
 const HASH_LENGTH = 32; // bytes
 
@@ -86,6 +93,8 @@ export type SessionPayload = {
   sub: number;
   username: string;
   admin: boolean;
+  /** Server-side session id — lets us revoke sessions (logout, password change). */
+  sid?: string;
   iat: number;
   exp: number;
 };
@@ -121,6 +130,30 @@ export async function verifySession(token: string, secret: string): Promise<Sess
   } catch {
     return null;
   }
+}
+
+// ============================================================
+// TOKENS & HASHING HELPERS
+// ============================================================
+
+/** Cryptographically-secure random URL-safe token (default 32 bytes). */
+export function randomToken(bytes = 32): string {
+  const buf = crypto.getRandomValues(new Uint8Array(bytes));
+  return [...buf].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+/** SHA-256 hex digest — used to store email tokens hashed (never plaintext). */
+export async function sha256Hex(input: string): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(input));
+  return toHex(digest);
+}
+
+/** Constant-time string comparison. */
+export function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
 }
 
 // ============================================================

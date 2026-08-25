@@ -228,11 +228,64 @@ function copyText(t) { navigator.clipboard?.writeText(t); toast('تم النسخ
 /* ── Navigation ────────────────────────────────────────────── */
 function themeIcon() { const t = getTheme(); return t === 'dark' ? '🌙' : t === 'light' ? '☀️' : '⚙️'; }
 
+/* Page titles for mobile header */
+const PAGE_TITLES = {
+  '/': 'الرئيسية',
+  '/market': 'سوق USDT',
+  '/trades': 'الصفقات',
+  '/wallet': 'المحفظة',
+  '/profile': 'الملف الشخصي',
+  '/create_ad': 'إنشاء إعلان',
+  '/notifications': 'الإشعارات',
+  '/login': 'دخول',
+  '/register': 'حساب جديد',
+  '/admin_login': 'دخول الإدارة',
+  '/my_ads': 'إعلاناتي',
+  '/cash_market': 'سوق الكاش',
+  '/disputes': 'النزاعات',
+  '/forgot_password': 'نسيت كلمة المرور',
+  '/verify_email': 'تحقق من البريد',
+};
+
+/* Pages where back button is needed */
+const INNER_PAGES = ['/trade', '/trader', '/wallet', '/profile', '/create_ad', '/edit_ad',
+  '/notifications', '/my_ads', '/disputes', '/verify_email', '/forgot_password'];
+
+/* Pages with their own full layout (skip mobile header) */
+const STANDALONE_PAGES = ['/admin', '/admin_login', '/login', '/register'];
+
+function getPageTitle(p) {
+  // Check exact match first
+  if (PAGE_TITLES[p]) return PAGE_TITLES[p];
+  // Check dynamic pages
+  if (p.startsWith('/trade/')) return 'تفاصيل الصفقة';
+  if (p.startsWith('/trader/')) return 'البروفايل';
+  if (p.startsWith('/edit_ad/')) return 'تعديل الإعلان';
+  return 'USDT P2P';
+}
+
+function needsBackButton(p) {
+  return INNER_PAGES.some(pg => p.startsWith(pg) && p !== pg);
+}
+
+function isStandalonePage(p) {
+  return STANDALONE_PAGES.some(pg => p.startsWith(pg));
+}
+
 function renderNav() {
-  // Top navigation
+  const u = currentUser();
+  const p = location.pathname;
+
+  // Remove any stale bottom-nav elements from old implementations
+  document.querySelectorAll('.bottom-nav, #bottomNav, #bottom-nav, [id="bottom-nav"], .mobile-bottom-nav, #adminBottomNav').forEach(el => el.remove());
+  document.body.classList.remove('has-bottom-nav');
+
+  // Skip standalone pages (admin, login, register)
+  if (isStandalonePage(p)) return;
+
+  // ── Desktop Top Navbar ──
   const nav = document.getElementById('nav');
   if (nav) {
-    const u = currentUser();
     nav.innerHTML = `<div class="navbar-inner">
       <a href="/" class="navbar-brand">🇵🇸 <span>USDT</span> P2P</a>
       <div class="navbar-links">
@@ -253,36 +306,132 @@ function renderNav() {
     </div>`;
   }
 
-  // Bottom navigation (mobile)
-  const bn = document.getElementById('bottomNav');
-  if (bn) {
-    const u = currentUser();
-    const p = location.pathname;
-    if (u) {
-      bn.innerHTML = `
-        <a href="/" class="${p === '/' ? 'active' : ''}"><span class="nav-icon">🏠</span><span class="nav-label">الرئيسية</span></a>
-        <a href="/market" class="${p === '/market' ? 'active' : ''}"><span class="nav-icon">🛒</span><span class="nav-label">السوق</span></a>
-        <a href="/trades" class="${p === '/trades' ? 'active' : ''}"><span class="nav-icon">📋</span><span class="nav-label">الصفقات</span></a>
-        <a href="/profile" class="${p === '/profile' ? 'active' : ''}"><span class="nav-icon">👤</span><span class="nav-label">الحساب</span></a>
-      `;
-      bn.style.display = '';
-    } else {
-      bn.innerHTML = `
-        <a href="/" class="${p === '/' ? 'active' : ''}"><span class="nav-icon">🏠</span><span class="nav-label">الرئيسية</span></a>
-        <a href="/market" class="${p === '/market' ? 'active' : ''}"><span class="nav-icon">🛒</span><span class="nav-label">السوق</span></a>
-        <a href="/login" class="${p === '/login' ? 'active' : ''}"><span class="nav-icon">🔑</span><span class="nav-label">دخول</span></a>
-        <a href="/register" class="${p === '/register' ? 'active' : ''}"><span class="nav-icon">📝</span><span class="nav-label">حساب جديد</span></a>
-      `;
-      bn.style.display = '';
-    }
-  }
+  // ── Mobile Header + Sidebar (only on mobile, non-standalone pages) ──
+  buildMobileShell(u, p);
 }
+
+/* ── Mobile Sidebar Drawer ────────────────────────────────── */
+function buildMobileShell(u, p) {
+  // Prevent duplicate creation
+  if (document.querySelector('.mobile-header')) return;
+
+  const title = getPageTitle(p);
+  const showBack = needsBackButton(p);
+
+  // ── Mobile Header ──
+  const header = document.createElement('header');
+  header.className = 'mobile-header';
+  header.innerHTML = `<div class="mobile-header-left">
+      ${showBack ? '<button class="mobile-header-back" onclick="history.back()" aria-label="رجوع">←</button>' : ''}
+      <span class="mobile-header-title">${title}</span>
+    </div>
+    <button class="mobile-header-menu" onclick="toggleMobileSidebar()" aria-label="فتح القائمة" aria-expanded="false">☰</button>`;
+  document.body.prepend(header);
+
+  // ── Sidebar Overlay ──
+  const overlay = document.createElement('div');
+  overlay.className = 'mobile-sidebar-overlay';
+  overlay.onclick = closeMobileSidebar;
+  document.body.appendChild(overlay);
+
+  // ── Sidebar Panel ──
+  const panel = document.createElement('aside');
+  panel.className = 'mobile-sidebar-panel';
+  panel.setAttribute('role', 'navigation');
+  panel.setAttribute('aria-label', 'قائمة التنقل');
+
+  // Build sidebar items
+  const guestItems = [
+    { href: '/', icon: '◈', label: 'الرئيسية' },
+    { href: '/market', icon: '⇄', label: 'سوق USDT' },
+    { href: '/login', icon: '→', label: 'دخول' },
+    { href: '/register', icon: '+', label: 'حساب جديد' },
+  ];
+
+  const userItems = [
+    { href: '/', icon: '◈', label: 'الرئيسية' },
+    { href: '/market', icon: '⇄', label: 'سوق USDT' },
+    { href: '/trades', icon: '◎', label: 'الصفقات' },
+    { href: '/wallet', icon: '◉', label: 'المحفظة' },
+    { href: '/my_ads', icon: '♢', label: 'إعلاناتي' },
+    { href: '/create_ad', icon: '＋', label: 'إنشاء إعلان' },
+    { href: '/notifications', icon: '⬡', label: 'الإشعارات' },
+    { href: '/profile', icon: '○', label: 'الملف الشخصي' },
+  ];
+
+  const adminItem = u && u.isAdmin ? [{ href: '/admin', icon: '⚙', label: 'لوحة الإدارة' }] : [];
+  const items = u ? [...userItems, ...adminItem] : guestItems;
+
+  const navHtml = items.map(it => {
+    const active = p === it.href ? ' active' : '';
+    return `<a href="${it.href}" class="mobile-sidebar-item${active}">` +
+      `<span class="mobile-sidebar-item-icon">${it.icon}</span>` +
+      `<span>${it.label}</span></a>`;
+  }).join('');
+
+  const logoutHtml = u ? `
+    <div class="mobile-sidebar-divider"></div>
+    <button class="mobile-sidebar-item" onclick="doLogout()" style="color:var(--danger)">
+      <span class="mobile-sidebar-item-icon">←</span>
+      <span>تسجيل الخروج</span>
+    </button>` : '';
+
+  const themeToggle = `
+    <div class="mobile-sidebar-divider"></div>
+    <div class="mobile-sidebar-theme">
+      <button onclick="toggleTheme()" style="background:none;border:none;cursor:pointer;font-size:1.1rem;color:var(--text-primary);padding:4px 8px" title="تبديل المظهر">${themeIcon()}</button>
+      <span style="font-size:0.8rem;">تبديل المظهر</span>
+    </div>`;
+
+  panel.innerHTML = `
+    <div class="mobile-sidebar-header">
+      <span class="mobile-sidebar-brand">🇵🇸 <span>USDT</span> P2P</span>
+      <button class="mobile-sidebar-close" onclick="closeMobileSidebar()" aria-label="إغلاق القائمة">✕</button>
+    </div>
+    <nav class="mobile-sidebar-nav">${navHtml}</nav>
+    <div class="mobile-sidebar-footer">
+      ${logoutHtml}
+      ${themeToggle}
+    </div>`;
+
+  document.body.appendChild(panel);
+}
+
+/* Sidebar open/close */
+function openMobileSidebar() {
+  const overlay = document.querySelector('.mobile-sidebar-overlay');
+  const panel = document.querySelector('.mobile-sidebar-panel');
+  const btn = document.querySelector('.mobile-header-menu');
+  if (overlay) overlay.classList.add('open');
+  if (panel) panel.classList.add('open');
+  if (btn) btn.setAttribute('aria-expanded', 'true');
+  document.body.style.overflow = 'hidden';
+}
+function closeMobileSidebar() {
+  const overlay = document.querySelector('.mobile-sidebar-overlay');
+  const panel = document.querySelector('.mobile-sidebar-panel');
+  const btn = document.querySelector('.mobile-header-menu');
+  if (overlay) overlay.classList.remove('open');
+  if (panel) panel.classList.remove('open');
+  if (btn) btn.setAttribute('aria-expanded', 'false');
+  document.body.style.overflow = '';
+}
+function toggleMobileSidebar() {
+  const panel = document.querySelector('.mobile-sidebar-panel');
+  if (panel && panel.classList.contains('open')) closeMobileSidebar();
+  else openMobileSidebar();
+}
+
+// Close sidebar on Escape
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeMobileSidebar();
+});
 
 /* ── Init on load ──────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
   initTelegram();
   renderNav();
-  // In Telegram: hide desktop nav, show bottom nav only
+  // In Telegram: hide desktop nav, use mobile shell only
   if (_isTelegram) {
     const nav = document.getElementById('nav');
     if (nav) nav.style.display = 'none';

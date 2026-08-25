@@ -6,12 +6,15 @@ import type { AppEnv } from "../types";
 import {
   hashPassword, verifyPassword, signSession,
   generateCsrfToken, verifyTelegramInitData,
+  randomToken, sha256Hex, randomSid,
 } from "../utils/crypto";
 import {
   setSessionCookie, clearSessionCookie, SESSION_COOKIE, getCookie, rateLimit,
+  requireUser, requireCsrf,
 } from "../middleware/auth";
 import { formBody } from "../utils/body";
-import { ensureWallet, auditLog } from "../utils/db";
+import { ensureWallet, auditLog, notify } from "../utils/db";
+import { sendEmail, verificationEmailBody, resetPasswordEmailBody } from "../utils/email";
 
 const auth = new Hono<AppEnv>();
 
@@ -28,8 +31,8 @@ auth.post("/register", rateLimit(5, 300), async (c) => {
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return c.json({ error: "البريد الإلكتروني غير صالح" }, 400);
   }
-  if (password.length < 6) {
-    return c.json({ error: "كلمة المرور يجب أن تكون 6 أحرف على الأقل" }, 400);
+  if (password.length < 8) {
+    return c.json({ error: "كلمة المرور يجب أن تكون 8 أحرف على الأقل" }, 400);
   }
 
   const existing = await c.env.DB.prepare("SELECT id FROM users WHERE username = ?").bind(username).first();
@@ -76,13 +79,21 @@ auth.post("/register", rateLimit(5, 300), async (c) => {
 
   await ensureWallet(c.env, username);
 
+  const sid = randomSid();
   const token = await signSession(
-    { sub: Number(result.meta.last_row_id), username, admin: false },
+    { sub: Number(result.meta.last_row_id), username, admin: false, sid },
     c.env.SECRET_KEY
   );
   setSessionCookie(c, token);
+  // Persist session in DB for revocation support
+  try {
+    await c.env.DB.prepare(
+      "INSERT INTO user_sessions (id, username, user_agent, ip, created_at) VALUES (?, ?, ?, ?, datetime('now'))"
+    ).bind(sid, username, c.req.header("User-Agent")?.slice(0, 200) || "", c.req.header("CF-Connecting-IP") || "").run();
+  } catch { /* best effort */ }
 
   await auditLog(c, username, "user", "REGISTER", username);
+  await logActivity(c.env, username, "REGISTER", c);
   return c.json({ ok: true, csrf_token: await generateCsrfToken(token, c.env.SECRET_KEY) });
 });
 
@@ -119,13 +130,21 @@ auth.post("/login", rateLimit(10, 300), async (c) => {
     return c.json({ error: "هذا الحساب محظور" }, 403);
   }
 
+  const sid = randomSid();
   const token = await signSession(
-    { sub: user.id, username: user.username, admin: user.status === "ADMIN" },
+    { sub: user.id, username: user.username, admin: user.status === "ADMIN", sid },
     c.env.SECRET_KEY
   );
   setSessionCookie(c, token);
+  // Persist session in DB for revocation support
+  try {
+    await c.env.DB.prepare(
+      "INSERT INTO user_sessions (id, username, user_agent, ip, created_at) VALUES (?, ?, ?, ?, datetime('now'))"
+    ).bind(sid, user.username, c.req.header("User-Agent")?.slice(0, 200) || "", c.req.header("CF-Connecting-IP") || "").run();
+  } catch { /* best effort */ }
   await ensureWallet(c.env, user.username);
   await auditLog(c, user.username, "user", "LOGIN", user.username);
+  await logActivity(c.env, user.username, "LOGIN", c);
 
   return c.json({ ok: true, csrf_token: await generateCsrfToken(token, c.env.SECRET_KEY) });
 });
@@ -138,36 +157,60 @@ auth.post("/admin-login", rateLimit(5, 300), async (c) => {
 
   let adminUser: { id: number; username: string } | null = null;
 
-  if (c.env.ADMIN_PASSWORD && password === c.env.ADMIN_PASSWORD && username) {
-    const u = await c.env.DB.prepare("SELECT id, username FROM users WHERE username = ?").bind(username).first<{ id: number; username: string }>();
-    if (u) {
-      await c.env.DB.prepare("UPDATE users SET status='ADMIN' WHERE id=?").bind(u.id).run();
-      adminUser = u;
-    } else {
+  // Admin login: user must already be ADMIN in DB. Never auto-promote.
+  const u = await c.env.DB.prepare(
+    "SELECT id, username, password, status FROM users WHERE username = ? AND status = 'ADMIN'"
+  ).bind(username).first<{ id: number; username: string; password: string; status: string }>();
+  if (u && (await verifyPassword(password, u.password))) {
+    adminUser = { id: u.id, username: u.username };
+  }
+
+  // First-time bootstrap: if no ADMIN exists yet and ADMIN_PASSWORD matches, allow creation
+  if (!adminUser && c.env.ADMIN_PASSWORD && password === c.env.ADMIN_PASSWORD && username) {
+    const existingAdminCount = await c.env.DB.prepare(
+      "SELECT COUNT(*) AS cnt FROM users WHERE status = 'ADMIN'"
+    ).first<{ cnt: number }>();
+    if ((existingAdminCount?.cnt ?? 0) === 0) {
+      // Bootstrap: create the first admin user
       const hash = await hashPassword(crypto.randomUUID());
-      const res = await c.env.DB.prepare("INSERT INTO users (username, password, status) VALUES (?, ?, 'ADMIN')").bind(username, hash).run();
+      const res = await c.env.DB.prepare(
+        "INSERT INTO users (username, password, status) VALUES (?, ?, 'ADMIN')"
+      ).bind(username, hash).run();
       adminUser = { id: Number(res.meta.last_row_id), username };
-    }
-  } else {
-    const u = await c.env.DB.prepare(
-      "SELECT id, username, password, status FROM users WHERE username = ? AND status = 'ADMIN'"
-    ).bind(username).first<{ id: number; username: string; password: string; status: string }>();
-    if (u && (await verifyPassword(password, u.password))) {
-      adminUser = { id: u.id, username: u.username };
     }
   }
 
   if (!adminUser) return c.json({ error: "بيانات الدخول غير صحيحة" }, 401);
 
-  const token = await signSession({ sub: adminUser.id, username: adminUser.username, admin: true }, c.env.SECRET_KEY);
+  const sid = randomSid();
+  const token = await signSession({ sub: adminUser.id, username: adminUser.username, admin: true, sid }, c.env.SECRET_KEY);
   setSessionCookie(c, token);
+  try {
+    await c.env.DB.prepare(
+      "INSERT INTO user_sessions (id, username, user_agent, ip, created_at) VALUES (?, ?, ?, ?, datetime('now'))"
+    ).bind(sid, adminUser.username, c.req.header("User-Agent")?.slice(0, 200) || "", c.req.header("CF-Connecting-IP") || "").run();
+  } catch { /* best effort */ }
   await auditLog(c, adminUser.username, "admin", "ADMIN_LOGIN", adminUser.username);
+  await logActivity(c.env, adminUser.username, "ADMIN_LOGIN", c);
 
   return c.json({ ok: true, csrf_token: await generateCsrfToken(token, c.env.SECRET_KEY) });
 });
 
 // POST /api/auth/logout
-auth.post("/logout", async (c) => {
+auth.post("/logout", requireCsrf, async (c) => {
+  // Revoke server-side session if it has an SID
+  const token = getCookie(c, SESSION_COOKIE);
+  if (token) {
+    try {
+      const session = await (await import("../utils/crypto")).verifySession(token, c.env.SECRET_KEY);
+      if (session?.sid) {
+        await c.env.DB.prepare(
+          "UPDATE user_sessions SET revoked = 1 WHERE id = ?"
+        ).bind(session.sid).run();
+      }
+      await logActivity(c.env, session?.username || "unknown", "LOGOUT", c);
+    } catch { /* best effort */ }
+  }
   clearSessionCookie(c);
   return c.json({ ok: true });
 });
@@ -207,9 +250,16 @@ auth.post("/telegram", rateLimit(10, 60), async (c) => {
   if (user.status === "BANNED") return c.json({ error: "هذا الحساب محظور" }, 403);
 
   await ensureWallet(c.env, user.username);
-  const token = await signSession({ sub: user.id, username: user.username, admin: user.status === "ADMIN" }, c.env.SECRET_KEY);
+  const sid = randomSid();
+  const token = await signSession({ sub: user.id, username: user.username, admin: user.status === "ADMIN", sid }, c.env.SECRET_KEY);
   setSessionCookie(c, token);
+  try {
+    await c.env.DB.prepare(
+      "INSERT INTO user_sessions (id, username, user_agent, ip, created_at) VALUES (?, ?, ?, ?, datetime('now'))"
+    ).bind(sid, user.username, c.req.header("User-Agent")?.slice(0, 200) || "", c.req.header("CF-Connecting-IP") || "").run();
+  } catch { /* best effort */ }
   await auditLog(c, user.username, "user", "TELEGRAM_AUTH", `tg:${tgId}`);
+  await logActivity(c.env, user.username, "TELEGRAM_LOGIN", c);
 
   return c.json({ ok: true, csrf_token: await generateCsrfToken(token, c.env.SECRET_KEY) });
 });
@@ -327,5 +377,218 @@ auth.post("/telegram/link/verify", rateLimit(10, 60), async (c) => {
 
   return c.json({ error: "نوع كود غير معروف" }, 400);
 });
+
+// ============================================================
+// POST /api/auth/change-password — authenticated password change
+// ============================================================
+auth.post("/change-password", requireUser, requireCsrf, rateLimit(5, 300), async (c) => {
+  const username = c.get("user")!.username;
+  const body = await formBody(c);
+  const currentPassword = String(body.current_password ?? "");
+  const newPassword = String(body.new_password ?? "");
+
+  if (!currentPassword || !newPassword) {
+    return c.json({ error: "أدخل كلمة المرور الحالية والجديدة" }, 400);
+  }
+  if (newPassword.length < 8) {
+    return c.json({ error: "كلمة المرور الجديدة يجب أن تكون 8 أحرف على الأقل" }, 400);
+  }
+
+  const user = await c.env.DB.prepare(
+    "SELECT id, username, password FROM users WHERE username = ?"
+  ).bind(username).first<{ id: number; username: string; password: string }>();
+  if (!user) return c.json({ error: "المستخدم غير موجود" }, 404);
+
+  if (!(await verifyPassword(currentPassword, user.password))) {
+    return c.json({ error: "كلمة المرور الحالية غير صحيحة" }, 401);
+  }
+
+  const hash = await hashPassword(newPassword);
+  await c.env.DB.prepare("UPDATE users SET password = ? WHERE id = ?")
+    .bind(hash, user.id).run();
+
+  // Invalidate other sessions (keep current one)
+  const token = getCookie(c, SESSION_COOKIE);
+  if (token) {
+    const { verifySession } = await import("../utils/crypto");
+    const session = await verifySession(token, c.env.SECRET_KEY);
+    if (session?.sid) {
+      await c.env.DB.prepare(
+        "UPDATE user_sessions SET revoked = 1 WHERE username = ? AND id != ?"
+      ).bind(username, session.sid).run();
+    } else {
+      await c.env.DB.prepare(
+        "UPDATE user_sessions SET revoked = 1 WHERE username = ?"
+      ).bind(username).run();
+    }
+  }
+
+  await logActivity(c.env, username, "PASSWORD_CHANGED", c);
+  await auditLog(c, username, "user", "PASSWORD_CHANGED", username);
+  return c.json({ ok: true, message: "تم تغيير كلمة المرور بنجاح" });
+});
+
+// ============================================================
+// POST /api/auth/forgot-password — send reset email
+// ============================================================
+auth.post("/forgot-password", rateLimit(3, 300), async (c) => {
+  const body = await formBody(c);
+  const email = String(body.email ?? "").trim().toLowerCase();
+
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return c.json({ error: "البريد الإلكتروني غير صالح" }, 400);
+  }
+
+  // Always return success to prevent user enumeration
+  const user = await c.env.DB.prepare(
+    "SELECT id, username, email FROM users WHERE email = ?"
+  ).bind(email).first<{ id: number; username: string; email: string }>();
+
+  if (user && user.email) {
+    // Rate limit: max 3 reset requests per hour
+    const recentResets = await c.env.DB.prepare(
+      "SELECT COUNT(*) AS cnt FROM auth_tokens WHERE type = 'password_reset' AND username = ? AND created_at > datetime('now', '-1 hour')"
+    ).bind(user.username).first<{ cnt: number }>();
+    if ((recentResets?.cnt ?? 0) >= 3) {
+      // Still return success to prevent enumeration
+      return c.json({ ok: true, message: "إذا كان البريد مسجلاً، ستتلقى رسالة." });
+    }
+
+    const rawToken = randomToken(32);
+    const tokenHash = await sha256Hex(rawToken);
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString(); // 1 hour
+
+    await c.env.DB.prepare(
+      "INSERT INTO auth_tokens (token_hash, type, username, expires_at) VALUES (?, 'password_reset', ?, ?)"
+    ).bind(tokenHash, user.username, expiresAt).run();
+
+    const appUrl = c.env.APP_URL || "https://usdt-p2p-palestine.sameraishi460.workers.dev";
+    const resetLink = `${appUrl}/reset_password?token=${rawToken}`;
+    await sendEmail(c.env, user.email, "إعادة تعيين كلمة المرور", resetPasswordEmailBody(resetLink));
+    await logActivity(c.env, user.username, "PASSWORD_RESET_REQUESTED", c);
+  }
+
+  return c.json({ ok: true, message: "إذا كان البريد مسجلاً، ستتلقى رسالة." });
+});
+
+// ============================================================
+// POST /api/auth/reset-password — apply reset token
+// ============================================================
+auth.post("/reset-password", rateLimit(5, 300), async (c) => {
+  const body = await formBody(c);
+  const rawToken = String(body.token ?? "").trim();
+  const newPassword = String(body.new_password ?? "");
+  const confirmPassword = String(body.confirm_password ?? "");
+
+  if (!rawToken) return c.json({ error: "الرابط غير صالح" }, 400);
+  if (newPassword.length < 8) return c.json({ error: "كلمة المرور يجب أن تكون 8 أحرف على الأقل" }, 400);
+  if (newPassword !== confirmPassword) return c.json({ error: "كلمتا المرور غير متطابقتين" }, 400);
+
+  const tokenHash = await sha256Hex(rawToken);
+  const tokenRow = await c.env.DB.prepare(
+    "SELECT id, username, used, expires_at FROM auth_tokens WHERE token_hash = ? AND type = 'password_reset'"
+  ).bind(tokenHash).first<{ id: number; username: string; used: number; expires_at: string }>();
+
+  if (!tokenRow) return c.json({ error: "الرابط غير صالح أو منتهي" }, 400);
+  if (tokenRow.used) return c.json({ error: "تم استخدام هذا الرابط بالفعل" }, 409);
+  if (new Date(tokenRow.expires_at) < new Date()) return c.json({ error: "انتهت صلاحية الرابط" }, 410);
+
+  // Mark token as used + apply new password
+  const hash = await hashPassword(newPassword);
+  await c.env.DB.batch([
+    c.env.DB.prepare("UPDATE auth_tokens SET used = 1 WHERE id = ?").bind(tokenRow.id),
+    c.env.DB.prepare("UPDATE users SET password = ? WHERE username = ?").bind(hash, tokenRow.username),
+  ]);
+
+  // Invalidate all sessions for this user
+  await c.env.DB.prepare("UPDATE user_sessions SET revoked = 1 WHERE username = ?")
+    .bind(tokenRow.username).run();
+
+  await logActivity(c.env, tokenRow.username, "PASSWORD_RESET", c);
+  await auditLog(c, tokenRow.username, "user", "PASSWORD_RESET", tokenRow.username);
+  return c.json({ ok: true, message: "تم إعادة تعيين كلمة المرور بنجاح. سجّل الدخول مرة أخرى." });
+});
+
+// ============================================================
+// POST /api/auth/send-verification — send email verification
+// ============================================================
+auth.post("/send-verification", requireUser, rateLimit(3, 600), async (c) => {
+  const username = c.get("user")!.username;
+  const user = await c.env.DB.prepare(
+    "SELECT id, username, email, email_verified FROM users WHERE username = ?"
+  ).bind(username).first<{ id: number; username: string; email: string; email_verified: number }>();
+
+  if (!user) return c.json({ error: "المستخدم غير موجود" }, 404);
+  if (!user.email) return c.json({ error: "لم تُسجل بريداً إلكترونياً بعد" }, 400);
+  if (user.email_verified) return c.json({ ok: true, message: "البريد موثق بالفعل" });
+
+  // Rate limit: max 3 per hour
+  const recent = await c.env.DB.prepare(
+    "SELECT COUNT(*) AS cnt FROM auth_tokens WHERE type = 'email_verify' AND username = ? AND created_at > datetime('now', '-1 hour')"
+  ).bind(username).first<{ cnt: number }>();
+  if ((recent?.cnt ?? 0) >= 3) {
+    return c.json({ error: "انتظر ساعة قبل إعادة الإرسال" }, 429);
+  }
+
+  const rawToken = randomToken(32);
+  const tokenHash = await sha256Hex(rawToken);
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(); // 24 hours
+
+  await c.env.DB.prepare(
+    "INSERT INTO auth_tokens (token_hash, type, username, expires_at) VALUES (?, 'email_verify', ?, ?)"
+  ).bind(tokenHash, username, expiresAt).run();
+
+  const appUrl = c.env.APP_URL || "https://usdt-p2p-palestine.sameraishi460.workers.dev";
+  const verifyLink = `${appUrl}/verify_email?token=${rawToken}`;
+  const result = await sendEmail(c.env, user.email, "توثيق البريد الإلكتروني", verificationEmailBody(verifyLink));
+
+  if (!result.sent) {
+    return c.json({ error: "البريد غير مهيأ في الخادم. تواصل مع الإدارة." }, 503);
+  }
+
+  await logActivity(c.env, username, "EMAIL_VERIFY_SENT", c);
+  return c.json({ ok: true, message: "تم إرسال رسالة التوثيق" });
+});
+
+// ============================================================
+// POST /api/auth/verify-email — apply email verification token
+// ============================================================
+auth.post("/verify-email", rateLimit(5, 300), async (c) => {
+  const body = await formBody(c);
+  const rawToken = String(body.token ?? "").trim();
+
+  if (!rawToken) return c.json({ error: "الرابط غير صالح" }, 400);
+
+  const tokenHash = await sha256Hex(rawToken);
+  const tokenRow = await c.env.DB.prepare(
+    "SELECT id, username, used, expires_at FROM auth_tokens WHERE token_hash = ? AND type = 'email_verify'"
+  ).bind(tokenHash).first<{ id: number; username: string; used: number; expires_at: string }>();
+
+  if (!tokenRow) return c.json({ error: "الرابط غير صالح أو منتهي" }, 400);
+  if (tokenRow.used) return c.json({ error: "تم استخدام هذا الرابط بالفعل" }, 409);
+  if (new Date(tokenRow.expires_at) < new Date()) return c.json({ error: "انتهت صلاحية الرابط" }, 410);
+
+  await c.env.DB.batch([
+    c.env.DB.prepare("UPDATE auth_tokens SET used = 1 WHERE id = ?").bind(tokenRow.id),
+    c.env.DB.prepare("UPDATE users SET email_verified = 1 WHERE username = ?").bind(tokenRow.username),
+  ]);
+
+  await logActivity(c.env, tokenRow.username, "EMAIL_VERIFIED", c);
+  await auditLog(c, tokenRow.username, "user", "EMAIL_VERIFIED", tokenRow.username);
+  return c.json({ ok: true, message: "تم توثيق البريد الإلكتروني بنجاح" });
+});
+
+// ============================================================
+// Helper: log activity
+// ============================================================
+async function logActivity(env: AppEnv["Bindings"], username: string, action: string, c: any): Promise<void> {
+  try {
+    const ip = c.req?.header?.("CF-Connecting-IP") || "";
+    const ua = c.req?.header?.("User-Agent") || "";
+    await env.DB.prepare(
+      "INSERT INTO login_activity (username, action, ip, user_agent) VALUES (?, ?, ?, ?)"
+    ).bind(username, action, ip, ua.slice(0, 200)).run();
+  } catch { /* best effort */ }
+}
 
 export default auth;

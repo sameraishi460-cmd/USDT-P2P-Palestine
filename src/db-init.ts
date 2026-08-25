@@ -553,6 +553,14 @@ async function runAlterMigrations(db: D1Database): Promise<void> {
     "ALTER TABLE users ADD COLUMN email TEXT DEFAULT ''",
     "ALTER TABLE users ADD COLUMN first_name TEXT DEFAULT ''",
     "ALTER TABLE users ADD COLUMN referred_by TEXT DEFAULT ''",
+    // Phase 3 — email verification
+    "ALTER TABLE users ADD COLUMN email_verified INTEGER DEFAULT 0",
+    // Phase 3 — KYC submission data on verification_requests
+    "ALTER TABLE verification_requests ADD COLUMN full_name TEXT DEFAULT ''",
+    "ALTER TABLE verification_requests ADD COLUMN country TEXT DEFAULT ''",
+    "ALTER TABLE verification_requests ADD COLUMN dob TEXT DEFAULT ''",
+    "ALTER TABLE verification_requests ADD COLUMN upload_id TEXT DEFAULT ''",
+    "ALTER TABLE verification_requests ADD COLUMN reject_reason TEXT DEFAULT ''",
   ];
   for (const sql of ALTERS) {
     try {
@@ -817,6 +825,28 @@ const V2_TABLES: string[] = [
     expires_at TEXT NOT NULL
   )`,
 
+  // Phase 3 — server-side revocable sessions (active sessions / logout-all)
+  `CREATE TABLE IF NOT EXISTS user_sessions (
+    id TEXT PRIMARY KEY,
+    username TEXT NOT NULL,
+    user_agent TEXT DEFAULT '',
+    ip TEXT DEFAULT '',
+    revoked INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now')),
+    last_active TEXT DEFAULT (datetime('now'))
+  )`,
+
+  // Phase 3 — hashed, expiring, single-use auth tokens (email verify + password reset)
+  `CREATE TABLE IF NOT EXISTS auth_tokens (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    token_hash TEXT NOT NULL UNIQUE,
+    type TEXT NOT NULL,
+    username TEXT NOT NULL,
+    used INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now')),
+    expires_at TEXT NOT NULL
+  )`,
+
   // Telegram notification preferences per user
   `CREATE TABLE IF NOT EXISTS telegram_prefs (
     username TEXT PRIMARY KEY,
@@ -826,11 +856,24 @@ const V2_TABLES: string[] = [
     notify_system INTEGER DEFAULT 1,
     updated_at TEXT DEFAULT (datetime('now'))
   )`,
+
+  // Phase 3 — login / security activity trail
+  `CREATE TABLE IF NOT EXISTS login_activity (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT NOT NULL,
+    action TEXT NOT NULL,
+    ip TEXT DEFAULT '',
+    user_agent TEXT DEFAULT '',
+    created_at TEXT DEFAULT (datetime('now')),
+    FOREIGN KEY (username) REFERENCES users(username)
+  )`,
 ];
 
 const V2_INDEXES: string[] = [
+  `CREATE INDEX IF NOT EXISTS idx_user_sessions_username ON user_sessions(username, revoked)`,
+  `CREATE INDEX IF NOT EXISTS idx_auth_tokens_type ON auth_tokens(type, username)`,
+  `CREATE INDEX IF NOT EXISTS idx_verify_req_status ON verification_requests(status, created_at)`,
   `CREATE INDEX IF NOT EXISTS idx_trust_score ON user_trust(trust_score DESC)`,
-  `CREATE INDEX IF NOT EXISTS idx_trust_username ON user_trust(username)`,
   `CREATE INDEX IF NOT EXISTS idx_verify_status ON verification_requests(username, status)`,
   `CREATE INDEX IF NOT EXISTS idx_fraud_user ON fraud_log(username, created_at)`,
   `CREATE INDEX IF NOT EXISTS idx_fraud_level ON fraud_log(risk_level)`,
@@ -847,4 +890,5 @@ const V2_INDEXES: string[] = [
   `CREATE INDEX IF NOT EXISTS idx_tg_auth_code ON telegram_auth_codes(code)`,
   `CREATE INDEX IF NOT EXISTS idx_tg_auth_user ON telegram_auth_codes(telegram_user_id)`,
   `CREATE INDEX IF NOT EXISTS idx_tg_prefs_user ON telegram_prefs(username)`,
+  `CREATE INDEX IF NOT EXISTS idx_login_activity_user ON login_activity(username, created_at)`,
 ];

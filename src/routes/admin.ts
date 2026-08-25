@@ -18,16 +18,38 @@ const admin = new Hono<AppEnv>();
 // All routes below require verified ADMIN status (server-side)
 admin.use("*", async (c, next) => {
   // Inline auth to avoid double-import cycles; same logic as requireAdmin
-  const { getCookie } = await import("../middleware/auth");
-  const { verifySession } = await import("../utils/crypto");
+  const { getCookie, isSessionActive } = await import("../middleware/auth");
+  const { verifySession, verifyCsrfToken } = await import("../utils/crypto");
   const token = getCookie(c, "usdt_session");
   if (!token) return c.json({ error: "غير مصرح" }, 401);
   const session = await verifySession(token, c.env.SECRET_KEY);
   if (!session) return c.json({ error: "انتهت الجلسة" }, 401);
+  // Server-side session revocation check
+  if (!(await isSessionActive(c.env.DB, session))) {
+    return c.json({ error: "انتهت الجلسة" }, 401);
+  }
   const user = await c.env.DB.prepare("SELECT id, username, status FROM users WHERE id = ?")
     .bind(session.sub).first<{ id: number; username: string; status: string }>();
   if (!user || user.status !== "ADMIN") return c.json({ error: "غير مصرح لك بالوصول" }, 403);
   c.set("user", { id: user.id, username: user.username, isAdmin: true });
+
+  // CSRF protection for all state-changing admin requests
+  if (["POST", "PUT", "DELETE"].includes(c.req.method)) {
+    const headerToken = c.req.header("X-CSRF-Token") || "";
+    let bodyToken = "";
+    try {
+      const ct = c.req.header("Content-Type") || "";
+      if (ct.includes("application/x-www-form-urlencoded")) {
+        const form = await c.req.parseBody();
+        bodyToken = typeof form["_csrf_token"] === "string" ? form["_csrf_token"] : "";
+      }
+    } catch { /* not a form */ }
+    const csrfToken = headerToken || bodyToken;
+    if (!csrfToken || !await verifyCsrfToken(csrfToken, token, c.env.SECRET_KEY)) {
+      return c.json({ error: "CSRF token invalid" }, 403);
+    }
+  }
+
   await next();
 });
 
@@ -364,6 +386,203 @@ admin.get("/audit-log", async (c) => {
     "SELECT * FROM audit_log ORDER BY id DESC LIMIT 200"
   ).all();
   return c.json({ ok: true, logs: rows.results ?? [] });
+});
+
+// ============================================================
+// Enhanced KPIs (Phase 4 — verified users, pending KYC, etc.)
+// ============================================================
+admin.get("/kpis", async (c) => {
+  const db = c.env.DB;
+  const [totalUsers, activeUsers, verifiedUsers, bannedUsers, totalTrades,
+    activeTrades, completedTrades, disputedTrades, totalVolume, totalFees,
+    pendingDeposits, confirmedDeposits, pendingWithdrawals, completedWithdrawals,
+    pendingKYC, totalAds, openAds, totalDisputes, openDisputes] = await Promise.all([
+    db.prepare("SELECT COUNT(*) FROM users").first<number>(),
+    db.prepare("SELECT COUNT(*) FROM users WHERE status='ACTIVE'").first<number>(),
+    db.prepare("SELECT COUNT(*) FROM users WHERE verified=1").first<number>(),
+    db.prepare("SELECT COUNT(*) FROM users WHERE status='BANNED'").first<number>(),
+    db.prepare("SELECT COUNT(*) FROM trades").first<number>(),
+    db.prepare("SELECT COUNT(*) FROM trades WHERE status IN ('PENDING','PAYMENT_SENT','DISPUTED')").first<number>(),
+    db.prepare("SELECT COUNT(*) FROM trades WHERE status='COMPLETED'").first<number>(),
+    db.prepare("SELECT COUNT(*) FROM trades WHERE status='DISPUTED'").first<number>(),
+    db.prepare("SELECT COALESCE(SUM(amount),0) FROM trades WHERE status='COMPLETED'").first<number>(),
+    db.prepare("SELECT COALESCE(SUM(platform_fee),0) FROM trades WHERE status='COMPLETED'").first<number>(),
+    db.prepare("SELECT COUNT(*) FROM usdt_deposits WHERE status='PENDING'").first<number>(),
+    db.prepare("SELECT COUNT(*) FROM usdt_deposits WHERE status='CONFIRMED'").first<number>(),
+    db.prepare("SELECT COUNT(*) FROM withdraw_requests WHERE status='PENDING'").first<number>(),
+    db.prepare("SELECT COUNT(*) FROM withdraw_requests WHERE status='COMPLETED'").first<number>(),
+    db.prepare("SELECT COUNT(*) FROM verification_requests WHERE status='PENDING'").first<number>(),
+    db.prepare("SELECT COUNT(*) FROM ads").first<number>(),
+    db.prepare("SELECT COUNT(*) FROM ads WHERE status='OPEN'").first<number>(),
+    db.prepare("SELECT COUNT(*) FROM disputes").first<number>(),
+    db.prepare("SELECT COUNT(*) FROM disputes WHERE status IN ('OPEN','UNDER_REVIEW')").first<number>(),
+  ]);
+
+  return c.json({ ok: true, kpis: {
+    total_users: totalUsers, active_users: activeUsers, verified_users: verifiedUsers, banned_users: bannedUsers,
+    total_trades: totalTrades, active_trades: activeTrades, completed_trades: completedTrades, disputed_trades: disputedTrades,
+    total_volume: totalVolume, platform_fees: totalFees,
+    pending_deposits: pendingDeposits, confirmed_deposits: confirmedDeposits,
+    pending_withdrawals: pendingWithdrawals, completed_withdrawals: completedWithdrawals,
+    pending_kyc: pendingKYC,
+    total_ads: totalAds, open_ads: openAds,
+    total_disputes: totalDisputes, open_disputes: openDisputes,
+  }});
+});
+
+// ============================================================
+// User Detail
+// ============================================================
+admin.get("/user/:username", async (c) => {
+  const username = c.req.param("username");
+  const [user, wallet, trades, deposits, withdrawals, kyc, activity] = await Promise.all([
+    c.env.DB.prepare(
+      `SELECT id, username, email, email_verified, first_name, phone, status, verified,
+              rating, trades_count, telegram_id, created_at
+       FROM users WHERE username=?`
+    ).bind(username).first(),
+    c.env.DB.prepare("SELECT balance, locked FROM wallets WHERE username=?").bind(username).first(),
+    c.env.DB.prepare("SELECT * FROM trades WHERE buyer=? OR seller=? ORDER BY id DESC LIMIT 50").bind(username, username).all(),
+    c.env.DB.prepare("SELECT * FROM usdt_deposits WHERE username=? ORDER BY id DESC LIMIT 20").bind(username).all(),
+    c.env.DB.prepare("SELECT * FROM withdraw_requests WHERE username=? ORDER BY id DESC LIMIT 20").bind(username).all(),
+    c.env.DB.prepare("SELECT * FROM verification_requests WHERE username=? ORDER BY id DESC LIMIT 5").bind(username).all(),
+    c.env.DB.prepare("SELECT * FROM login_activity WHERE username=? ORDER BY id DESC LIMIT 20").bind(username).all(),
+  ]);
+  if (!user) return c.json({ error: "المستخدم غير موجود" }, 404);
+  return c.json({ ok: true, user, wallet: wallet || { balance: 0, locked: 0 },
+    trades: trades.results ?? [], deposits: deposits.results ?? [],
+    withdrawals: withdrawals.results ?? [], kyc: kyc.results ?? [], activity: activity.results ?? [] });
+});
+
+// ============================================================
+// Platform Settings
+// ============================================================
+admin.get("/settings", async (c) => {
+  const keys = [
+    "p2p_fee_percent", "cash_fee_percent", "min_fee", "max_fee",
+    "min_trade", "max_trade", "min_withdrawal", "max_withdrawal",
+    "daily_withdrawal_limit", "maintenance_mode",
+  ];
+  const settings: Record<string, string> = {};
+  for (const k of keys) settings[k] = await getConfig(c.env, k, "");
+  return c.json({ ok: true, settings });
+});
+
+admin.post("/settings", requireCsrf, async (c) => {
+  const body = await formBody(c);
+  const allowedKeys = [
+    "p2p_fee_percent", "cash_fee_percent", "min_fee", "max_fee",
+    "min_trade", "max_trade", "min_withdrawal", "max_withdrawal",
+    "daily_withdrawal_limit", "maintenance_mode",
+  ];
+  let changed = 0;
+  for (const k of allowedKeys) {
+    if (body[k] !== undefined) {
+      await setConfig(c.env, k, String(body[k]));
+      changed++;
+    }
+  }
+  await auditLog(c, c.get("user")!.username, "admin", "SETTINGS_UPDATE", "platform_config", `${changed} keys`);
+  return c.json({ ok: true, changed });
+});
+
+// ============================================================
+// Ads Management
+// ============================================================
+admin.get("/ads", async (c) => {
+  const status = c.req.query("status");
+  let sql = "SELECT a.*, u.verified FROM ads a LEFT JOIN users u ON a.user=u.username";
+  const params: any[] = [];
+  if (status) { sql += " WHERE a.status=?"; params.push(status); }
+  sql += " ORDER BY a.id DESC LIMIT 200";
+  const rows = await c.env.DB.prepare(sql).bind(...params).all();
+  return c.json({ ok: true, ads: rows.results ?? [] });
+});
+
+admin.post("/ads/:id/pause", requireCsrf, async (c) => {
+  const id = Number(c.req.param("id"));
+  await c.env.DB.prepare("UPDATE ads SET status='PAUSED' WHERE id=? AND status='OPEN'").bind(id).run();
+  await auditLog(c, c.get("user")!.username, "admin", "AD_PAUSE", `ad:${id}`);
+  return c.json({ ok: true });
+});
+
+admin.post("/ads/:id/activate", requireCsrf, async (c) => {
+  const id = Number(c.req.param("id"));
+  await c.env.DB.prepare("UPDATE ads SET status='OPEN' WHERE id=? AND status IN ('PAUSED','DISABLED')").bind(id).run();
+  await auditLog(c, c.get("user")!.username, "admin", "AD_ACTIVATE", `ad:${id}`);
+  return c.json({ ok: true });
+});
+
+admin.post("/ads/:id/remove", requireCsrf, async (c) => {
+  const id = Number(c.req.param("id"));
+  await c.env.DB.prepare("UPDATE ads SET status='DISABLED' WHERE id=?").bind(id).run();
+  await auditLog(c, c.get("user")!.username, "admin", "AD_REMOVE", `ad:${id}`);
+  return c.json({ ok: true });
+});
+
+// ============================================================
+// Finance Stats
+// ============================================================
+admin.get("/finance", async (c) => {
+  const db = c.env.DB;
+  const [totalVolume, totalFees, depositVolume, withdrawalVolume,
+    todayVolume, weekVolume, monthVolume] = await Promise.all([
+    db.prepare("SELECT COALESCE(SUM(amount),0) FROM trades WHERE status='COMPLETED'").first<number>(),
+    db.prepare("SELECT COALESCE(SUM(platform_fee),0) FROM trades WHERE status='COMPLETED'").first<number>(),
+    db.prepare("SELECT COALESCE(SUM(amount),0) FROM usdt_deposits WHERE status='CONFIRMED'").first<number>(),
+    db.prepare("SELECT COALESCE(SUM(amount),0) FROM withdraw_requests WHERE status='COMPLETED'").first<number>(),
+    db.prepare("SELECT COALESCE(SUM(amount),0) FROM trades WHERE status='COMPLETED' AND completed_at >= date('now')").first<number>(),
+    db.prepare("SELECT COALESCE(SUM(amount),0) FROM trades WHERE status='COMPLETED' AND completed_at >= date('now','-7 days')").first<number>(),
+    db.prepare("SELECT COALESCE(SUM(amount),0) FROM trades WHERE status='COMPLETED' AND completed_at >= date('now','-30 days')").first<number>(),
+  ]);
+  return c.json({ ok: true, finance: {
+    total_volume: totalVolume, platform_fees: totalFees,
+    deposit_volume: depositVolume, withdrawal_volume: withdrawalVolume,
+    today_volume: todayVolume, week_volume: weekVolume, month_volume: monthVolume,
+  }});
+});
+
+// ============================================================
+// All Trades (for admin center)
+// ============================================================
+admin.get("/trades", async (c) => {
+  const status = c.req.query("status");
+  let sql = "SELECT t.*, a.title AS ad_title FROM trades t LEFT JOIN ads a ON t.ad_id=a.id";
+  const params: any[] = [];
+  if (status) { sql += " WHERE t.status=?"; params.push(status); }
+  sql += " ORDER BY t.id DESC LIMIT 200";
+  const rows = await c.env.DB.prepare(sql).bind(...params).all();
+  return c.json({ ok: true, trades: rows.results ?? [] });
+});
+
+// ============================================================
+// All Disputes (for admin center)
+// ============================================================
+admin.get("/disputes/all", async (c) => {
+  const rows = await c.env.DB.prepare(
+    `SELECT d.*, t.buyer, t.seller, t.amount, t.status AS trade_status
+     FROM disputes d LEFT JOIN trades t ON d.trade_id = t.id
+     ORDER BY d.id DESC LIMIT 100`
+  ).all();
+  return c.json({ ok: true, disputes: rows.results ?? [] });
+});
+
+// ============================================================
+// Admin Notifications (pending counts)
+// ============================================================
+admin.get("/notifications", async (c) => {
+  const db = c.env.DB;
+  const [pendingKYC, openDisputes, pendingDeposits, pendingWithdrawals] = await Promise.all([
+    db.prepare("SELECT COUNT(*) FROM verification_requests WHERE status='PENDING'").first<number>(),
+    db.prepare("SELECT COUNT(*) FROM disputes WHERE status IN ('OPEN','UNDER_REVIEW')").first<number>(),
+    db.prepare("SELECT COUNT(*) FROM usdt_deposits WHERE status='PENDING'").first<number>(),
+    db.prepare("SELECT COUNT(*) FROM withdraw_requests WHERE status='PENDING'").first<number>(),
+  ]);
+  return c.json({ ok: true, notifications: {
+    pending_kyc: pendingKYC, open_disputes: openDisputes,
+    pending_deposits: pendingDeposits, pending_withdrawals: pendingWithdrawals,
+    total_unread: (pendingKYC ?? 0) + (openDisputes ?? 0) + (pendingDeposits ?? 0) + (pendingWithdrawals ?? 0),
+  }});
 });
 
 export default admin;

@@ -3,7 +3,7 @@
  */
 import { Hono } from "hono";
 import type { AppEnv } from "../types";
-import { requireUser, requireCsrf, rateLimit } from "../middleware/auth";
+import { requireUser, requireCsrf, rateLimit, getCookie, SESSION_COOKIE } from "../middleware/auth";
 import { notify, auditLog, ensureWallet } from "../utils/db";
 import { formBody } from "../utils/body";
 
@@ -293,6 +293,84 @@ misc.post("/telegram/prefs", requireUser, requireCsrf, async (c) => {
   } catch {
     return c.json({ ok: true });
   }
+});
+
+// ============================================================
+// Security Center — Sessions, Activity, Logout-All
+// ============================================================
+
+misc.get("/security/sessions", requireUser, async (c) => {
+  const username = c.get("user")!.username;
+  const currentToken = getCookie(c, SESSION_COOKIE);
+  const { verifySession } = await import("../utils/crypto");
+  const currentSession = currentToken ? await verifySession(currentToken, c.env.SECRET_KEY) : null;
+  const currentSid = currentSession?.sid || "";
+
+  const rows = await c.env.DB.prepare(
+    "SELECT id, user_agent, ip, created_at, last_active, revoked FROM user_sessions WHERE username = ? ORDER BY created_at DESC LIMIT 20"
+  ).bind(username).all();
+
+  const sessions = (rows.results ?? []).map((s: any) => ({
+    ...s,
+    is_current: s.id === currentSid && !s.revoked,
+  }));
+
+  return c.json({ ok: true, sessions, current_sid: currentSid });
+});
+
+misc.post("/security/logout-all", requireUser, requireCsrf, async (c) => {
+  const username = c.get("user")!.username;
+  const token = getCookie(c, SESSION_COOKIE);
+  const { verifySession } = await import("../utils/crypto");
+  const session = token ? await verifySession(token, c.env.SECRET_KEY) : null;
+
+  if (session?.sid) {
+    // Keep current session, revoke all others
+    await c.env.DB.prepare(
+      "UPDATE user_sessions SET revoked = 1 WHERE username = ? AND id != ?"
+    ).bind(username, session.sid).run();
+  } else {
+    // No sid — revoke all
+    await c.env.DB.prepare(
+      "UPDATE user_sessions SET revoked = 1 WHERE username = ?"
+    ).bind(username).run();
+  }
+
+  await auditLog(c, username, "user", "LOGOUT_ALL", username);
+  return c.json({ ok: true, message: "تم تسجيل الخروج من جميع الأجهزة" });
+});
+
+misc.get("/security/activity", requireUser, async (c) => {
+  const username = c.get("user")!.username;
+  const limit = Math.min(Number(c.req.query("limit") || "20"), 50);
+  const rows = await c.env.DB.prepare(
+    "SELECT id, action, ip, created_at FROM login_activity WHERE username = ? ORDER BY id DESC LIMIT ?"
+  ).bind(username, limit).all();
+  return c.json({ ok: true, activity: rows.results ?? [] });
+});
+
+misc.get("/security/email-status", requireUser, async (c) => {
+  const username = c.get("user")!.username;
+  let emailVerified = 0;
+  let email = "";
+  try {
+    const user = await c.env.DB.prepare(
+      "SELECT email, email_verified FROM users WHERE username = ?"
+    ).bind(username).first<{ email: string; email_verified: number }>();
+    email = user?.email || "";
+    emailVerified = user?.email_verified || 0;
+  } catch { /* column may not exist */ }
+
+  const latestVerify = await c.env.DB.prepare(
+    "SELECT created_at FROM auth_tokens WHERE username = ? AND type = 'email_verify' AND used = 1 ORDER BY id DESC LIMIT 1"
+  ).bind(username).first<{ created_at: string }>();
+
+  return c.json({
+    ok: true,
+    email,
+    email_verified: emailVerified,
+    last_verified_at: latestVerify?.created_at || null,
+  });
 });
 
 export default misc;

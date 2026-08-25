@@ -30,46 +30,60 @@
 <main>
 <div class="container">
 
-  <!-- Hero Section -->
-  <section class="page-header animate-slideUp" style="background:linear-gradient(135deg,var(--bg-surface),rgba(34,197,94,0.06),var(--bg-elevated));padding:var(--sp-8) var(--sp-4);position:relative;overflow:hidden;border-radius:var(--radius-lg);margin-bottom:var(--sp-4);">
-    <div style="position:absolute;top:-40px;left:50%;transform:translateX(-50%);width:250px;height:250px;background:radial-gradient(circle,rgba(34,197,94,0.08),transparent 70%);pointer-events:none;"></div>
-    <div style="display:inline-flex;align-items:center;gap:var(--sp-2);background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-full);padding:var(--sp-2) var(--sp-3);margin-bottom:var(--sp-5);font-size:0.8rem;">
-      <span style="width:8px;height:8px;border-radius:50%;background:var(--accent);display:inline-block;animation:pulse 2s infinite;"></span>
-      <span style="color:var(--text-muted);">سعر مباشر</span>
-      <span style="color:var(--accent-light);font-weight:700;" id="livePrice">— ₪</span>
+  <!-- Balance Card (when logged in) -->
+  <div id="dashBalance" style="display:none;">
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:var(--sp-6);margin-bottom:var(--sp-4);position:relative;overflow:hidden;">
+      <div style="position:absolute;top:-30px;right:-30px;width:150px;height:150px;background:radial-gradient(circle,rgba(32,211,154,0.06),transparent 70%);pointer-events:none;"></div>
+      <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:var(--sp-2);">إجمالي الرصيد</div>
+      <div style="font-size:2rem;font-weight:900;color:var(--text-primary);margin-bottom:var(--sp-1);" id="dashTotal">— USDT</div>
+      <div style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:var(--sp-4);" id="dashUsd">≈ — USD</div>
+      <div style="display:flex;gap:var(--sp-3);">
+        <a href="/wallet" class="btn btn-primary" style="flex:1;">المحفظة</a>
+        <a href="/market" class="btn btn-ghost" style="flex:1;">السوق</a>
+      </div>
     </div>
-    <h1 style="font-size:1.8rem;font-weight:900;margin-bottom:var(--sp-3);">
-      شراء وبيع <span style="color:var(--accent);">USDT</span> بأمان 🇵🇸
+  </div>
+
+  <!-- Hero Section -->
+  <section class="page-header animate-slideUp" style="background:var(--bg-card);border:1px solid var(--border);padding:var(--sp-8) var(--sp-4);position:relative;overflow:hidden;border-radius:var(--radius-lg);margin-bottom:var(--sp-4);">
+    <div style="position:absolute;top:-40px;left:50%;transform:translateX(-50%);width:200px;height:200px;background:radial-gradient(circle,rgba(32,211,154,0.06),transparent 70%);pointer-events:none;"></div>
+    <div style="display:inline-flex;align-items:center;gap:var(--sp-2);background:var(--primary-dim);border:1px solid rgba(32,211,154,0.15);border-radius:var(--radius-full);padding:var(--sp-2) var(--sp-3);margin-bottom:var(--sp-5);font-size:0.8rem;">
+      <span style="width:7px;height:7px;border-radius:50%;background:var(--primary);display:inline-block;animation:pulse 2s infinite;"></span>
+      <span style="color:var(--text-muted);">سعر مباشر</span>
+      <span style="color:var(--primary);font-weight:700;" id="livePrice">— ₪</span>
+    </div>
+    <h1 style="font-size:1.7rem;font-weight:900;margin-bottom:var(--sp-3);line-height:1.4;">
+      شراء وبيع <span style="color:var(--primary);">USDT</span> بأمان
     </h1>
-    <p style="color:var(--text-secondary);font-size:0.95rem;margin:0 auto var(--sp-6);line-height:1.7;">
+    <p style="color:var(--text-secondary);font-size:0.9rem;margin:0 auto var(--sp-6);line-height:1.7;">
       منصة فلسطينية للتداول الآمن مع حماية Escrow والمقابلات الشخصية
     </p>
     <div style="display:flex;flex-wrap:wrap;gap:var(--sp-3);justify-content:center;">
-      <a href="/register" class="btn btn-success btn-lg">🚀 ابدأ الآن</a>
-      <a href="/market" class="btn btn-primary btn-lg">💰 تصفّح السوق</a>
+      <a href="/register" class="btn btn-primary btn-lg">ابدأ الآن</a>
+      <a href="/market" class="btn btn-ghost btn-lg">تصفّح السوق</a>
     </div>
   </section>
 
   <!-- Features -->
   <section style="display:grid;grid-template-columns:repeat(2,1fr);gap:var(--sp-3);margin-top:var(--sp-2);">
-    <div class="stat-card">
-      <span class="stat-icon">🔐</span>
-      <div style="font-weight:600;font-size:0.85rem;">حماية Escrow</div>
+    <div class="stat-card" style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);">
+      <div style="width:36px;height:36px;border-radius:var(--radius-sm);background:var(--primary-dim);display:flex;align-items:center;justify-content:center;margin:0 auto var(--sp-2);color:var(--primary);font-size:1rem;">◈</div>
+      <div style="font-weight:600;font-size:0.8rem;">حماية Escrow</div>
       <div style="font-size:0.7rem;color:var(--text-muted);">USDT محجوز بأمان</div>
     </div>
-    <div class="stat-card">
-      <span class="stat-icon">🤝</span>
-      <div style="font-weight:600;font-size:0.85rem;">مقابلات مباشرة</div>
-      <div style="font-size:0.7rem;color:var(--text-muted);">تداول شخصي آمن</div>
+    <div class="stat-card" style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);">
+      <div style="width:36px;height:36px;border-radius:var(--radius-sm);background:var(--primary-dim);display:flex;align-items:center;justify-content:center;margin:0 auto var(--sp-2);color:var(--primary);font-size:1rem;">◎</div>
+      <div style="font-weight:600;font-size:0.8rem;">تداول شخصي</div>
+      <div style="font-size:0.7rem;color:var(--text-muted);">مقابلات مباشرة آمنة</div>
     </div>
-    <div class="stat-card">
-      <span class="stat-icon">⚡</span>
-      <div style="font-weight:600;font-size:0.85rem;">سريع وموثوق</div>
+    <div class="stat-card" style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);">
+      <div style="width:36px;height:36px;border-radius:var(--radius-sm);background:var(--primary-dim);display:flex;align-items:center;justify-content:center;margin:0 auto var(--sp-2);color:var(--primary);font-size:1rem;">⚡</div>
+      <div style="font-weight:600;font-size:0.8rem;">سريع وموثوق</div>
       <div style="font-size:0.7rem;color:var(--text-muted);">تنفيذ فوري للصفقات</div>
     </div>
-    <div class="stat-card">
-      <span class="stat-icon">🇵🇸</span>
-      <div style="font-weight:600;font-size:0.85rem;">فلسطيني 100%</div>
+    <div class="stat-card" style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);">
+      <div style="width:36px;height:36px;border-radius:var(--radius-sm);background:var(--premium-dim,rgba(214,179,106,0.12));display:flex;align-items:center;justify-content:center;margin:0 auto var(--sp-2);color:var(--premium,#D6B36A);font-size:1rem;">◆</div>
+      <div style="font-weight:600;font-size:0.8rem;">فلسطيني 100%</div>
       <div style="font-size:0.7rem;color:var(--text-muted);">منصة محلية</div>
     </div>
   </section>
@@ -78,35 +92,35 @@
   <div class="section-title" style="margin-top:var(--sp-8);">كيف تعمل المنصة؟</div>
   <div style="display:grid;gap:var(--sp-3);">
     <div class="card" style="display:flex;align-items:center;gap:var(--sp-4);">
-      <div style="width:40px;height:40px;border-radius:var(--radius-full);background:var(--accent-dim);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;">1</div>
-      <div><div style="font-weight:600;font-size:0.9rem;">اختر العرض</div><div style="font-size:0.8rem;color:var(--text-muted);">تصفح أسعار USDT واختر أفضل عرض</div></div>
+      <div style="width:36px;height:36px;border-radius:var(--radius-sm);background:var(--primary-dim);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.85rem;color:var(--primary);flex-shrink:0;">1</div>
+      <div><div style="font-weight:600;font-size:0.85rem;">اختر العرض</div><div style="font-size:0.75rem;color:var(--text-muted);">تصفح أسعار USDT واختر أفضل عرض</div></div>
     </div>
     <div class="card" style="display:flex;align-items:center;gap:var(--sp-4);">
-      <div style="width:40px;height:40px;border-radius:var(--radius-full);background:var(--primary-dim);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;">2</div>
-      <div><div style="font-weight:600;font-size:0.9rem;">افتح الصفقة</div><div style="font-size:0.8rem;color:var(--text-muted);">ابدأ صفقة آمنة مع الضمان</div></div>
+      <div style="width:36px;height:36px;border-radius:var(--radius-sm);background:var(--primary-dim);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.85rem;color:var(--primary);flex-shrink:0;">2</div>
+      <div><div style="font-weight:600;font-size:0.85rem;">افتح الصفقة</div><div style="font-size:0.75rem;color:var(--text-muted);">ابدأ صفقة آمنة مع الضمان</div></div>
     </div>
     <div class="card" style="display:flex;align-items:center;gap:var(--sp-4);">
-      <div style="width:40px;height:40px;border-radius:var(--radius-full);background:var(--warning-dim);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;">3</div>
-      <div><div style="font-weight:600;font-size:0.9rem;">ادفع</div><div style="font-size:0.8rem;color:var(--text-muted);">أرسل الدفعة وأرفق الإيصال</div></div>
+      <div style="width:36px;height:36px;border-radius:var(--radius-sm);background:var(--warning-dim);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.85rem;color:var(--warning);flex-shrink:0;">3</div>
+      <div><div style="font-weight:600;font-size:0.85rem;">ادفع</div><div style="font-size:0.75rem;color:var(--text-muted);">أرسل الدفعة وأرفق الإيصال</div></div>
     </div>
     <div class="card" style="display:flex;align-items:center;gap:var(--sp-4);">
-      <div style="width:40px;height:40px;border-radius:var(--radius-full);background:var(--accent-dim);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;">4</div>
-      <div><div style="font-weight:600;font-size:0.9rem;">استلم USDT</div><div style="font-size:0.8rem;color:var(--text-muted);">يتم تحرير USDT لمحفظتك</div></div>
+      <div style="width:36px;height:36px;border-radius:var(--radius-sm);background:var(--primary-dim);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.85rem;color:var(--primary);flex-shrink:0;">4</div>
+      <div><div style="font-weight:600;font-size:0.85rem;">استلم USDT</div><div style="font-size:0.75rem;color:var(--text-muted);">يتم تحرير USDT لمحفظتك</div></div>
     </div>
   </div>
 
   <!-- CTA -->
   <div style="text-align:center;margin-top:var(--sp-8);padding:var(--sp-8) var(--sp-4);background:var(--bg-card);border-radius:var(--radius-lg);border:1px solid var(--border);">
-    <h2 style="font-size:1.3rem;font-weight:800;margin-bottom:var(--sp-3);">ابدأ التداول الآن</h2>
+    <h2 style="font-size:1.2rem;font-weight:800;margin-bottom:var(--sp-2);">ابدأ التداول الآن</h2>
     <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:var(--sp-5);">انضم إلى منصة USDT P2P Palestine</p>
-    <a href="/register" class="btn btn-success btn-lg btn-block">🚀 إنشاء حساب مجاني</a>
+    <a href="/register" class="btn btn-primary btn-lg btn-block">إنشاء حساب مجاني</a>
   </div>
 
 </div>
 </main>
 
 <!-- ===== Bottom Navigation ===== -->
-<div class="bottom-nav" id="bottomNav"></div>
+
 
 <!-- ===== Scripts ===== -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>

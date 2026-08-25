@@ -28,7 +28,7 @@
 </div>
 </main>
 
-<div class="bottom-nav" id="bottomNav"></div>
+
 
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="/assets/app.js"></script>
@@ -54,8 +54,8 @@
   const tgUsername = tgData?.username ? '@' + tgData.username : '';
   const isLinked = !!user.telegram_id;
 
-  const kycStatus = verifyStatus?.status || 'NONE';
-  const kycLabels = { 'NONE': '🔴 غير موثق', 'PENDING': '🟡 قيد المراجعة', 'APPROVED': '🟢 موثق', 'REJECTED': '🔴 مرفوض' };
+  const kycStatus = verifyStatus?.request?.status || 'NONE';
+  const kycLabels = { 'NONE': '🔴 غير موثق', 'PENDING': '🟡 قيد المراجعة', 'UNDER_REVIEW': '🟡 قيد المراجعة', 'APPROVED': '🟢 موثق', 'REJECTED': '🔴 مرفوض' };
 
   document.getElementById('profile-content').innerHTML = `
     <!-- Profile Header -->
@@ -120,13 +120,55 @@
         </div>
       </div>
 
-      <!-- KYC -->
+      <!-- KYC Verification -->
       <div style="padding:var(--sp-3) var(--sp-4);border-bottom:1px solid var(--border);">
         <div style="display:flex;justify-content:space-between;align-items:center;">
-          <span style="font-weight:600;font-size:0.85rem;">🪪 توثيق الحساب</span>
+          <span style="font-weight:600;font-size:0.85rem;">🪪 التوثيق الهويتي (KYC)</span>
           <span style="font-size:0.8rem;">${kycLabels[kycStatus] || '🔴 غير موثق'}</span>
         </div>
-        ${kycStatus === 'NONE' ? '<button onclick="startKYC()" class="btn btn-success btn-sm btn-block" style="margin-top:var(--sp-2);">طلب توثيق</button>' : ''}
+
+        ${kycStatus === 'NONE' || !verifyStatus?.request ? `
+        <div id="kyc-form-section" style="margin-top:var(--sp-3);">
+          <p style="font-size:0.75rem;color:var(--text-muted);margin-bottom:var(--sp-2);">أرسل صورة هويتك للمراجعة</p>
+          <div id="kyc-err" style="color:var(--danger);font-size:0.75rem;margin-bottom:var(--sp-2);display:none;"></div>
+          <div id="kyc-success" style="color:var(--accent);font-size:0.75rem;margin-bottom:var(--sp-2);display:none;"></div>
+
+          <div class="form-group">
+            <label class="form-label" style="font-size:0.75rem;">نوع الوثيقة</label>
+            <select class="form-input" id="kyc-doc-type" style="font-size:0.8rem;">
+              <option value="national_id">بطاقة هوية</option>
+              <option value="passport">جواز سفر</option>
+              <option value="driving_license">رخصة قيادة</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" style="font-size:0.75rem;">الاسم الكامل</label>
+            <input class="form-input" type="text" id="kyc-full-name" placeholder="كما هو مكتوب على الوثيقة" style="font-size:0.8rem;">
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-2);">
+            <div class="form-group">
+              <label class="form-label" style="font-size:0.75rem;">الدولة</label>
+              <input class="form-input" type="text" id="kyc-country" placeholder="فلسطين" style="font-size:0.8rem;">
+            </div>
+            <div class="form-group">
+              <label class="form-label" style="font-size:0.75rem;">تاريخ الميلاد</label>
+              <input class="form-input" type="date" id="kyc-dob" style="font-size:0.8rem;">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" style="font-size:0.75rem;">صورة الوثيقة (JPG/PNG/PDF، حد 5MB)</label>
+            <input type="file" id="kyc-file" accept="image/jpeg,image/png,image/webp,application/pdf" style="font-size:0.75rem;width:100%;color:var(--text-primary);">
+          </div>
+          <button onclick="submitKYC()" class="btn btn-success btn-sm btn-block" id="kyc-submit-btn">📤 إرسال طلب التوثيق</button>
+        </div>
+        ` : `
+        <div style="margin-top:var(--sp-2);font-size:0.75rem;">
+          <p>النوع: ${verifyStatus.request.document_type || '—'}</p>
+          ${verifyStatus.request.full_name ? `<p>الاسم: ${esc(verifyStatus.request.full_name)}</p>` : ''}
+          ${verifyStatus.request.admin_note ? `<p style="color:var(--danger);">سبب الرفض: ${esc(verifyStatus.request.admin_note)}</p>` : ''}
+          ${verifyStatus.request.status === 'REJECTED' ? '<button onclick="resetKYC()" class="btn btn-ghost btn-sm btn-block" style="margin-top:var(--sp-2);">🔄 إعادة الإرسال</button>' : ''}
+        </div>
+        `}
       </div>
 
       <!-- Telegram -->
@@ -138,20 +180,64 @@
         ${!isLinked ? '<button onclick="linkTelegram()" class="btn btn-ghost btn-sm btn-block" style="margin-top:var(--sp-2);">ربط حساب Telegram</button>' : ''}
       </div>
 
-      <!-- Security -->
+      <!-- Security Center -->
       <div style="padding:var(--sp-3) var(--sp-4);border-bottom:1px solid var(--border);">
         <div style="display:flex;justify-content:space-between;align-items:center;">
-          <span style="font-weight:600;font-size:0.85rem;">🔐 الأمان</span>
+          <span style="font-weight:600;font-size:0.85rem;">🔐 مركز الأمان</span>
         </div>
-        <div style="margin-top:var(--sp-2);display:flex;flex-direction:column;gap:var(--sp-2);">
-          <button onclick="showSection('pw-section')" class="btn btn-ghost btn-sm btn-block">🔑 تغيير كلمة المرور</button>
+
+        <!-- Email Verification -->
+        <div style="margin-top:var(--sp-3);padding:var(--sp-2) 0;border-bottom:1px solid var(--border);">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:0.8rem;">📧 البريد الإلكتروني</span>
+            <span style="font-size:0.75rem;" id="email-status-badge">${user.email_verified ? '✅ موثق' : (user.email ? '⚠️ غير موثق' : '⚪ بدون بريد')}</span>
+          </div>
+          ${user.email ? `<p style="font-size:0.7rem;color:var(--text-muted);margin-top:var(--sp-1);">${esc(user.email)}</p>` : ''}
+          ${user.email && !user.email_verified ? '<button onclick="sendVerification()" class="btn btn-ghost btn-sm btn-block" style="margin-top:var(--sp-2);" id="sendVerifyBtn">📨 إرسال رابط التوثيق</button>' : ''}
+          <div id="verify-msg" style="display:none;margin-top:var(--sp-2);font-size:0.75rem;"></div>
         </div>
-        <div id="pw-section" style="display:none;margin-top:var(--sp-3);">
-          <input class="form-input" type="password" id="current-pw" placeholder="كلمة المرور الحالية" style="margin-bottom:var(--sp-2);">
-          <input class="form-input" type="password" id="new-pw" placeholder="كلمة المرور الجديدة" style="margin-bottom:var(--sp-2);">
-          <input class="form-input" type="password" id="confirm-pw" placeholder="تأكيد كلمة المرور" style="margin-bottom:var(--sp-2);">
-          <div id="pw-err" style="color:var(--danger);font-size:0.8rem;margin-bottom:var(--sp-2);display:none;"></div>
-          <button onclick="changePassword()" class="btn btn-success btn-sm btn-block">💾 حفظ</button>
+
+        <!-- Password -->
+        <div style="margin-top:var(--sp-3);padding:var(--sp-2) 0;border-bottom:1px solid var(--border);">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:0.8rem;">🔑 كلمة المرور</span>
+            <button onclick="showSection('pw-section')" class="btn btn-ghost btn-sm">تغيير</button>
+          </div>
+          <div id="pw-section" style="display:none;margin-top:var(--sp-3);">
+            <input class="form-input" type="password" id="current-pw" placeholder="كلمة المرور الحالية" style="margin-bottom:var(--sp-2);">
+            <input class="form-input" type="password" id="new-pw" placeholder="كلمة المرور الجديدة" style="margin-bottom:var(--sp-2);">
+            <input class="form-input" type="password" id="confirm-pw" placeholder="تأكيد كلمة المرور" style="margin-bottom:var(--sp-2);">
+            <div id="pw-err" style="color:var(--danger);font-size:0.8rem;margin-bottom:var(--sp-2);display:none;"></div>
+            <button onclick="changePassword()" class="btn btn-success btn-sm btn-block">💾 حفظ</button>
+          </div>
+        </div>
+
+        <!-- Forgot Password -->
+        <div style="margin-top:var(--sp-3);padding:var(--sp-2) 0;border-bottom:1px solid var(--border);">
+          <a href="/forgot_password" style="font-size:0.8rem;color:var(--primary);text-decoration:none;">نسيت كلمة المرور؟</a>
+        </div>
+
+        <!-- Active Sessions -->
+        <div style="margin-top:var(--sp-3);padding:var(--sp-2) 0;border-bottom:1px solid var(--border);">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:0.8rem;">📱 الجلسات النشطة</span>
+            <button onclick="loadSessions()" class="btn btn-ghost btn-sm" id="sessionsToggle">عرض</button>
+          </div>
+          <div id="sessions-section" style="display:none;margin-top:var(--sp-2);">
+            <div id="sessions-list" style="font-size:0.75rem;color:var(--text-muted);">جاري التحميل...</div>
+            <button onclick="logoutAllSessions()" class="btn btn-ghost btn-sm btn-block" style="margin-top:var(--sp-2);color:var(--danger);">🚪 تسجيل الخروج من جميع الأجهزة</button>
+          </div>
+        </div>
+
+        <!-- Login Activity -->
+        <div style="margin-top:var(--sp-3);padding:var(--sp-2) 0;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:0.8rem;">📋 سجل النشاط</span>
+            <button onclick="loadActivity()" class="btn btn-ghost btn-sm" id="activityToggle">عرض</button>
+          </div>
+          <div id="activity-section" style="display:none;margin-top:var(--sp-2);">
+            <div id="activity-list" style="font-size:0.75rem;color:var(--text-muted);">جاري التحميل...</div>
+          </div>
         </div>
       </div>
 
@@ -207,13 +293,183 @@ window.changePassword = async function() {
   else { errEl.textContent = r?.error || 'خطأ'; errEl.style.display = 'block'; }
 };
 
-window.startKYC = function() {
-  const docType = prompt('نوع الوثيقة:\n1. جواز سفر\n2. رخصة قيادة\n3. بطاقة هوية');
-  const types = { '1': 'passport', '2': 'driving_license', '3': 'national_id' };
-  const type = types[docType];
-  if (!type) return;
-  api('/v2/verify/request', { method: 'POST', body: { document_type: type } })
-    .then(r => showToast(r?.ok ? 'تم إرسال الطلب' : (r?.error || 'خطأ')));
+window.submitKYC = async function() {
+  const docType = document.getElementById('kyc-doc-type').value;
+  const fullName = document.getElementById('kyc-full-name').value.trim();
+  const country = document.getElementById('kyc-country').value.trim();
+  const dob = document.getElementById('kyc-dob').value;
+  const fileInput = document.getElementById('kyc-file');
+  const errEl = document.getElementById('kyc-err');
+  const successEl = document.getElementById('kyc-success');
+  const btn = document.getElementById('kyc-submit-btn');
+
+  errEl.style.display = 'none';
+  successEl.style.display = 'none';
+
+  if (!fullName || fullName.length < 3) { errEl.textContent = 'أدخل الاسم الكامل'; errEl.style.display = 'block'; return; }
+  if (!country) { errEl.textContent = 'أدخل الدولة'; errEl.style.display = 'block'; return; }
+  if (!dob) { errEl.textContent = 'أدخل تاريخ الميلاد'; errEl.style.display = 'block'; return; }
+  if (!fileInput.files || !fileInput.files[0]) { errEl.textContent = 'ارفع صورة الوثيقة'; errEl.style.display = 'block'; return; }
+
+  btn.disabled = true;
+  btn.textContent = 'جاري الرفع...';
+
+  try {
+    // Step 1: Upload document to R2
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+    const csrf = localStorage.getItem('usp_csrf') || '';
+    const uploadRes = await fetch('/api/uploads/kyc-documents', {
+      method: 'POST',
+      headers: { 'X-CSRF-Token': csrf },
+      credentials: 'same-origin',
+      body: formData,
+    });
+    const uploadData = await uploadRes.json();
+
+    if (!uploadData.ok || !uploadData.upload_id) {
+      errEl.textContent = uploadData.error || 'فشل رفع الملف';
+      errEl.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = '📤 إرسال طلب التوثيق';
+      return;
+    }
+
+    // Step 2: Submit KYC request with upload_id
+    const kycRes = await api('/v2/verify/request', {
+      method: 'POST',
+      body: {
+        document_type: docType,
+        upload_id: uploadData.upload_id,
+        full_name: fullName,
+        country: country,
+        dob: dob,
+      },
+    });
+
+    if (kycRes && kycRes.ok) {
+      successEl.textContent = '✅ تم إرسال طلب التوثيق بنجاح — ستتلقى إشعاراً عند المراجعة.';
+      successEl.style.display = 'block';
+      document.getElementById('kyc-form-section').style.display = 'none';
+      hapticFeedback('success');
+    } else {
+      errEl.textContent = kycRes?.error || 'خطأ في الإرسال';
+      errEl.style.display = 'block';
+    }
+  } catch(e) {
+    errEl.textContent = 'خطأ في الاتصال';
+    errEl.style.display = 'block';
+  }
+  btn.disabled = false;
+  btn.textContent = '📤 إرسال طلب التوثيق';
+};
+
+window.resetKYC = function() {
+  // Allow resubmission by reloading the profile
+  location.reload();
+};
+
+// ============================================================
+// Security Center functions
+// ============================================================
+
+window.sendVerification = async function() {
+  const btn = document.getElementById('sendVerifyBtn');
+  const msg = document.getElementById('verify-msg');
+  btn.disabled = true;
+  btn.textContent = 'جاري الإرسال...';
+  const r = await api('/auth/send-verification', { method: 'POST' });
+  btn.disabled = false;
+  btn.textContent = '📨 إرسال رابط التوثيق';
+  if (r && r.ok) {
+    msg.textContent = '✅ ' + (r.message || 'تم الإرسال');
+    msg.style.color = 'var(--accent)';
+    msg.style.display = 'block';
+    btn.style.display = 'none';
+  } else {
+    msg.textContent = '❌ ' + (r?.error || 'خطأ');
+    msg.style.color = 'var(--danger)';
+    msg.style.display = 'block';
+  }
+};
+
+window.loadSessions = async function() {
+  const section = document.getElementById('sessions-section');
+  const list = document.getElementById('sessions-list');
+  if (section.style.display === 'none') {
+    section.style.display = 'block';
+    list.innerHTML = 'جاري التحميل...';
+    const r = await api('/security/sessions');
+    if (r && r.ok && r.sessions) {
+      if (r.sessions.length === 0) {
+        list.innerHTML = '<p>لا توجد جلسات مسجلة</p>';
+      } else {
+        list.innerHTML = r.sessions.map(s => {
+          const icon = (s.user_agent || '').includes('Mobile') ? '📱' : '💻';
+          const status = s.revoked ? '<span style="color:var(--danger);">مهملة</span>' : (s.is_current ? '<span style="color:var(--accent);">الحالية</span>' : '<span style="color:var(--text-muted);">نشطة</span>');
+          const time = s.last_active ? fmtDate(s.last_active) : fmtDate(s.created_at);
+          return `<div style="padding:var(--sp-2) 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+            <span>${icon} ${status}</span>
+            <span style="font-size:0.7rem;color:var(--text-muted);">${time}</span>
+          </div>`;
+        }).join('');
+      }
+    } else {
+      list.innerHTML = '<p>خطأ في التحميل</p>';
+    }
+  } else {
+    section.style.display = 'none';
+  }
+};
+
+window.logoutAllSessions = async function() {
+  if (!confirm('هل تريد تسجيل الخروج من جميع الأجهزة الأخرى؟')) return;
+  const r = await api('/security/logout-all', { method: 'POST' });
+  if (r && r.ok) {
+    showToast('تم تسجيل الخروج من جميع الأجهزة');
+    document.getElementById('sessions-section').style.display = 'none';
+  } else {
+    showToast(r?.error || 'خطأ', 4000);
+  }
+};
+
+window.loadActivity = async function() {
+  const section = document.getElementById('activity-section');
+  const list = document.getElementById('activity-list');
+  if (section.style.display === 'none') {
+    section.style.display = 'block';
+    list.innerHTML = 'جاري التحميل...';
+    const r = await api('/security/activity?limit=15');
+    if (r && r.ok && r.activity) {
+      if (r.activity.length === 0) {
+        list.innerHTML = '<p>لا يوجد نشاط مسجل</p>';
+      } else {
+        const actionLabels = {
+          'LOGIN': '🔑 تسجيل دخول',
+          'REGISTER': '📝 تسجيل حساب جديد',
+          'ADMIN_LOGIN': '⚙️ دخول الإدارة',
+          'TELEGRAM_LOGIN': '🤖 تسجيل عبر Telegram',
+          'PASSWORD_CHANGED': '🔑 تغيير كلمة المرور',
+          'PASSWORD_RESET': '🔑 إعادة تعيين كلمة المرور',
+          'PASSWORD_RESET_REQUESTED': '🔑 طلب إعادة تعيين',
+          'EMAIL_VERIFY_SENT': '📧 إرسال توثيق البريد',
+          'EMAIL_VERIFIED': '✅ توثيق البريد',
+          'LOGOUT_ALL': '🚪 تسجيل خروج شامل',
+        };
+        list.innerHTML = r.activity.map(a => {
+          const label = actionLabels[a.action] || a.action;
+          return `<div style="padding:var(--sp-2) 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+            <span>${label}</span>
+            <span style="font-size:0.7rem;color:var(--text-muted);">${fmtDate(a.created_at)}</span>
+          </div>`;
+        }).join('');
+      }
+    } else {
+      list.innerHTML = '<p>خطأ في التحميل</p>';
+    }
+  } else {
+    section.style.display = 'none';
+  }
 };
 </script>
 </body>

@@ -16,6 +16,10 @@ export async function requireUser(c: Context<AppEnv>, next: Next) {
   if (!token) return c.json({ error: "غير مسجل الدخول" }, 401);
   const session = await verifySession(token, c.env.SECRET_KEY);
   if (!session) return c.json({ error: "انتهت الجلسة، سجل الدخول مرة أخرى" }, 401);
+  // Server-side revocation check (logout / logout-all / password change).
+  if (!(await isSessionActive(c.env.DB, session))) {
+    return c.json({ error: "انتهت الجلسة، سجل الدخول مرة أخرى" }, 401);
+  }
   c.set("user", { id: session.sub, username: session.username, isAdmin: session.admin });
   await next();
 }
@@ -25,6 +29,10 @@ export async function requireAdmin(c: Context<AppEnv>, next: Next) {
   if (!token) return c.json({ error: "غير مصرح" }, 401);
   const session = await verifySession(token, c.env.SECRET_KEY);
   if (!session) return c.json({ error: "انتهت الجلسة" }, 401);
+  // Server-side revocation check.
+  if (!(await isSessionActive(c.env.DB, session))) {
+    return c.json({ error: "انتهت الجلسة" }, 401);
+  }
 
   // SERVER-SIDE admin enforcement: verify against DB, not just JWT claim.
   const user = await c.env.DB.prepare(
@@ -64,6 +72,26 @@ async function tryGetFormCsrf(c: Context<AppEnv>): Promise<string> {
     }
   } catch { /* not a form */ }
   return "";
+}
+
+// ============================================================
+// SERVER-SIDE SESSION STATE
+// ============================================================
+
+/** A signed token is only valid while its DB row exists and isn't revoked.
+ *  Tokens without sid (legacy pre-SID tokens) are ALWAYS rejected. */
+export async function isSessionActive(db: D1Database, session: { sid?: string }): Promise<boolean> {
+  // Every session MUST have a sid. Legacy tokens without sid are invalid.
+  if (!session.sid) return false;
+  try {
+    const row = await db.prepare(
+      "SELECT revoked FROM user_sessions WHERE id = ?"
+    ).bind(session.sid).first<{ revoked: number }>();
+    return !!row && !row.revoked;
+  } catch {
+    // Table error — fail closed. No sid = no access.
+    return false;
+  }
 }
 
 // ============================================================
