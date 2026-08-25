@@ -6,77 +6,191 @@
   <meta name="theme-color" content="#0a0e1a">
   <title>سوق USDT — USDT P2P Palestine</title>
   <link rel="stylesheet" href="/assets/design-system.css">
-<link rel="manifest" href="/manifest.json">
+  <link rel="manifest" href="/manifest.json">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<script>(function(){var t=localStorage.getItem("usp_theme")||"dark";if(t==="auto")t=window.matchMedia("(prefers-color-scheme:light)").matches?"light":"dark";document.documentElement.setAttribute("data-theme",t);})();</script>
+  <script>(function(){var t=localStorage.getItem("usp_theme")||"dark";if(t==="auto")t=window.matchMedia("(prefers-color-scheme:light)").matches?"light":"dark";document.documentElement.setAttribute("data-theme",t);})();</script>
 </head>
 <body>
-<nav class="navbar" id="nav"><div class="navbar-inner"><a href="/" class="navbar-brand">🇵🇸 <span>USDT</span> P2P</a><div class="navbar-links"></div></div></nav>
-<main><div class="container">
-  <div class="page-header">
-    <h2>💰 سوق USDT</h2>
-    <p style="color:var(--text-muted);font-size:0.85rem;">السعر الحالي: <span style="color:var(--accent-light);font-weight:700;" id="livePrice">— ₪</span></p>
-  </div>
-  <div class="card" style="padding:var(--sp-3);margin-bottom:var(--sp-3);">
-    <div style="display:flex;gap:var(--sp-2);flex-wrap:wrap;">
-      <input type="text" id="searchInput" placeholder="🔍 بحث..." class="form-input" style="flex:2;min-width:150px;" oninput="filterAds()">
-      <select id="typeFilter" class="form-input" style="flex:1;min-width:100px;" onchange="filterAds()">
-        <option value="">الكل</option><option value="BUY">شراء</option><option value="SELL">بيع</option>
-      </select>
-      <select id="sortFilter" class="form-input" style="flex:1;min-width:100px;" onchange="filterAds()">
-        <option value="newest">الأحدث</option><option value="price_low">أقل سعر</option><option value="price_high">أعلى سعر</option>
-      </select>
+  <nav class="navbar" id="nav"><div class="navbar-inner"><a href="/" class="navbar-brand">🇵🇸 <span>USDT</span> P2P</a><div class="navbar-links"></div></div></nav>
+  <main><div class="container">
+    <div class="page-header">
+      <h2>💰 سوق USDT</h2>
+      <p style="color:var(--text-muted);font-size:0.85rem;">السعر الحالي: <span style="color:var(--accent-light);font-weight:700;" id="livePrice">— ₪</span></p>
+    </div>
+    <!-- Filters -->
+    <div class="card" style="padding:var(--sp-3);margin-bottom:var(--sp-3);">
+      <div style="display:flex;gap:var(--sp-2);flex-wrap:wrap;">
+        <input type="text" id="searchInput" placeholder="🔍 بحث..." class="form-input" style="flex:2;min-width:120px;" oninput="filterAds()">
+        <select id="typeFilter" class="form-input" style="flex:1;min-width:90px;" onchange="filterAds()">
+          <option value="">الكل</option><option value="BUY">شراء</option><option value="SELL">بيع</option>
+        </select>
+        <select id="sortFilter" class="form-input" style="flex:1;min-width:90px;" onchange="filterAds()">
+          <option value="price">السعر</option><option value="rating">التقييم</option><option value="newest">الأحدث</option>
+        </select>
+      </div>
+    </div>
+    <!-- Ads List -->
+    <div id="adsList"><div class="skeleton" style="height:120px;"></div></div>
+    <div id="createAdBtn" style="display:none;margin-top:var(--sp-4);text-align:center;">
+      <a href="/create_ad" class="btn btn-accent btn-block">+ إنشاء إعلان</a>
+    </div>
+  </div></main>
+  <div id="bottom-nav"></div>
+
+  <!-- Buy Modal -->
+  <div id="buyModal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:var(--sp-3);" onclick="if(event.target===this)closeBuyModal()">
+    <div class="card" style="max-width:420px;width:100%;max-height:90vh;overflow-y:auto;">
+      <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;">
+        <h3 id="buyModalTitle">شراء USDT</h3>
+        <button class="btn btn-ghost btn-sm" onclick="closeBuyModal()" style="font-size:1.2rem;">✕</button>
+      </div>
+      <div class="card-body" id="buyModalBody"></div>
     </div>
   </div>
-  <div id="adsList"><div class="skeleton" style="height:120px;"></div></div>
-  <div id="createAdBtn" style="display:none;margin-top:var(--sp-4);text-align:center;">
-    <a href="/create_ad" class="btn btn-accent btn-block">+ إنشاء إعلان</a>
-  </div>
-</div></main>
-<div class="bottom-nav" id="bottomNav"></div>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script src="/assets/app.js"></script>
-<script>
-let allAds = [];
-async function load() {
-  const [market, priceResp] = await Promise.all([api('/market'), api('/market/price')]);
-  allAds = (market?.ads || []).filter(a => a.status === 'OPEN');
-  const price = priceResp?.usdt_ils || priceResp?.price || 3.7;
-  document.getElementById('livePrice').textContent = fmtNum(price, 2) + ' ₪';
-  if (isLoggedIn()) document.getElementById('createAdBtn').style.display = 'block';
-  filterAds();
-}
-function filterAds() {
-  const q = document.getElementById('searchInput').value.trim().toLowerCase();
-  const type = document.getElementById('typeFilter').value;
-  const sort = document.getElementById('sortFilter').value;
-  let filtered = allAds;
-  if (q) filtered = filtered.filter(a => (a.user||'').toLowerCase().includes(q) || (a.title||'').toLowerCase().includes(q) || (a.payment||'').toLowerCase().includes(q));
-  if (type) filtered = filtered.filter(a => a.type === type);
-  if (sort === 'price_low') filtered.sort((a,b) => a.price - b.price);
-  else if (sort === 'price_high') filtered.sort((a,b) => b.price - a.price);
-  else filtered.sort((a,b) => (b.id||0) - (a.id||0));
-  const list = document.getElementById('adsList');
-  if (!filtered.length) { list.innerHTML = '<div class="card" style="text-align:center;padding:var(--sp-8);"><div style="font-size:2rem;margin-bottom:var(--sp-2);">📭</div><div style="color:var(--text-muted);">لا توجد إعلانات</div></div>'; return; }
-  list.innerHTML = filtered.map(a => `
-    <div class="ad-card" style="cursor:pointer;" onclick="location.href='/trade?ad=${a.id}'">
-      <div class="ad-card-seller">
-        <div class="avatar avatar-sm">${(a.user||'?')[0].toUpperCase()}</div>
-        <div style="flex:1;"><div style="font-weight:700;font-size:0.9rem;">${esc(a.user)}</div><div style="font-size:0.7rem;color:var(--text-muted);">${esc(a.payment || '')}</div></div>
-        <span class="badge ${a.type==='BUY'?'badge-success':'badge-primary'}">${a.type==='BUY'?'شراء':'بيع'}</span>
-      </div>
-      <div style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:var(--sp-3);">📝 ${esc(a.title || a.type + ' USDT')}</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-3);margin-bottom:var(--sp-3);">
-        <div style="background:var(--bg-input);border-radius:var(--radius-sm);padding:var(--sp-3);text-align:center;"><div style="font-size:0.7rem;color:var(--text-muted);">💰 الكمية</div><div style="font-weight:700;color:var(--accent-light);">${fmtNum(a.amount)} USDT</div></div>
-        <div style="background:var(--bg-input);border-radius:var(--radius-sm);padding:var(--sp-3);text-align:center;"><div style="font-size:0.7rem;color:var(--text-muted);">💲 السعر</div><div style="font-weight:700;color:var(--text-primary);font-size:1.1rem;">${fmtNum(a.price)} ₪</div></div>
-      </div>
-      <div style="display:flex;gap:var(--sp-2);">
-        <a href="/trade?ad=${a.id}" class="btn ${a.type==='BUY'?'btn-success':'btn-primary'} btn-block" onclick="event.stopPropagation();haptic('success')">${a.type==='BUY'?'🛒 شراء':'💰 بيع'} ${fmtNum(a.amount)} USDT</a>
-      </div>
-    </div>`).join('');
-}
-load();
-</script>
+
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="/assets/app.js"></script>
+  <script>
+    let allAds = [];
+
+    async function load() {
+      const [market, priceResp] = await Promise.all([api('/market'), api('/market/price')]);
+      allAds = (market?.ads || []).filter(a => a.status === 'OPEN');
+      const price = priceResp?.price?.usdt_ils || priceResp?.usdt_ils || 3.7;
+      document.getElementById('livePrice').textContent = fmtNum(price, 2) + ' ₪';
+      if (isLoggedIn()) document.getElementById('createAdBtn').style.display = 'block';
+      filterAds();
+    }
+
+    function filterAds() {
+      const q = document.getElementById('searchInput').value.trim().toLowerCase();
+      const type = document.getElementById('typeFilter').value;
+      const sort = document.getElementById('sortFilter').value;
+      let filtered = allAds;
+      if (q) filtered = filtered.filter(a => (a.user||'').toLowerCase().includes(q) || (a.title||'').toLowerCase().includes(q) || (a.payment||'').toLowerCase().includes(q));
+      if (type) filtered = filtered.filter(a => a.type === type);
+      if (sort === 'price') filtered.sort((a,b) => a.type === 'SELL' ? a.price - b.price : b.price - a.price);
+      else if (sort === 'rating') filtered.sort((a,b) => (b.rating||0) - (a.rating||0));
+      else filtered.sort((a,b) => (b.id||0) - (a.id||0));
+
+      const list = document.getElementById('adsList');
+      if (!filtered.length) {
+        list.innerHTML = '<div class="card" style="text-align:center;padding:var(--sp-8);"><div style="font-size:2rem;margin-bottom:var(--sp-2);">📭</div><div style="color:var(--text-muted);">لا توجد إعلانات حالياً</div></div>';
+        return;
+      }
+      list.innerHTML = filtered.map(a => {
+        const isSell = a.type === 'SELL';
+        const tradeCount = a.trades_count || 0;
+        const rating = a.rating ? fmtNum(a.rating, 1) : '—';
+        const verified = a.verified ? ' <span style="color:var(--success);">✓</span>' : '';
+        const minLabel = a.min_amount ? `${fmtNum(a.min_amount)} USDT` : '—';
+        const maxLabel = a.max_amount ? `${fmtNum(a.max_amount)} USDT` : fmtNum(a.amount);
+        return `
+        <div class="ad-card" style="margin-bottom:var(--sp-3);">
+          <div class="ad-card-seller">
+            <div class="avatar avatar-sm">${(a.user||'?')[0].toUpperCase()}</div>
+            <div style="flex:1;">
+              <div style="font-weight:700;font-size:0.9rem;">${esc(a.user)}${verified}</div>
+              <div style="font-size:0.7rem;color:var(--text-muted);">${esc(a.payment || '')} · ⭐ ${rating} · ${tradeCount} صفقة</div>
+            </div>
+            <span class="badge ${isSell?'badge-primary':'badge-success'}">${isSell?'💰 بيع':'🛒 شراء'}</span>
+          </div>
+          <div style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:var(--sp-2);">📝 ${esc(a.title || a.type + ' USDT')}</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--sp-2);margin-bottom:var(--sp-3);">
+            <div style="background:var(--bg-input);border-radius:var(--radius-sm);padding:var(--sp-2);text-align:center;">
+              <div style="font-size:0.65rem;color:var(--text-muted);">💰 الكمية</div>
+              <div style="font-weight:700;color:var(--accent-light);font-size:.85rem;">${fmtNum(a.amount)}</div>
+            </div>
+            <div style="background:var(--bg-input);border-radius:var(--radius-sm);padding:var(--sp-2);text-align:center;">
+              <div style="font-size:0.65rem;color:var(--text-muted);">💲 السعر</div>
+              <div style="font-weight:700;color:var(--text);font-size:.9rem;">${fmtNum(a.price)} ₪</div>
+            </div>
+            <div style="background:var(--bg-input);border-radius:var(--radius-sm);padding:var(--sp-2);text-align:center;">
+              <div style="font-size:0.65rem;color:var(--text-muted);">📊 الحد</div>
+              <div style="font-weight:600;color:var(--text-secondary);font-size:.75rem;">${minLabel} - ${maxLabel}</div>
+            </div>
+          </div>
+          <button class="btn ${isSell?'btn-primary':'btn-success'} btn-block" onclick="openBuyModal(${a.id}, '${isSell?'SELL':'BUY'}', ${a.amount}, ${a.price}, '${esc(a.user)}', ${a.min_amount||0}, ${a.max_amount||a.amount})">
+            ${isSell?'🛒 شراء':'💰 بيع'} USDT
+          </button>
+        </div>`;
+      }).join('');
+    }
+
+    // ── Buy Modal ──
+    window.openBuyModal = function(adId, type, maxAmount, price, seller, minAmount, maxAmountLimit) {
+      if (!isLoggedIn()) { window.location.href = '/login?returnTo=' + encodeURIComponent('/market'); return; }
+      const isSell = type === 'SELL';
+      const title = isSell ? '🛒 شراء USDT' : '💰 بيع USDT';
+      document.getElementById('buyModalTitle').textContent = title;
+      document.getElementById('buyModalBody').innerHTML = `
+        <div style="margin-bottom:var(--sp-3);">
+          <div style="font-size:.85rem;color:var(--text-muted);margin-bottom:.25rem;">التاجر</div>
+          <div style="font-weight:700;">${esc(seller)} <span style="color:var(--text-muted);font-weight:400;">— ${fmtNum(price)} ₪/USDT</span></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">المبلغ (USDT)</label>
+          <input type="number" id="buyAmount" class="form-input" min="${minAmount}" max="${maxAmountLimit}" step="0.01" value="${Math.min(maxAmount, maxAmountLimit)}" placeholder="أدخل المبلغ">
+          <div style="font-size:.75rem;color:var(--text-muted);margin-top:.25rem;">الحد: ${fmtNum(minAmount)} - ${fmtNum(maxAmountLimit)} USDT</div>
+        </div>
+        <div id="buyTotal" style="background:var(--bg-input);border-radius:var(--radius-sm);padding:var(--sp-3);margin-bottom:var(--sp-3);text-align:center;">
+          <div style="font-size:.75rem;color:var(--text-muted);">الإجمالي</div>
+          <div style="font-size:1.2rem;font-weight:700;color:var(--accent-light);">${fmtNum((Math.min(maxAmount, maxAmountLimit) * price).toFixed(2))} ₪</div>
+        </div>
+        <button class="btn ${isSell?'btn-primary':'btn-success'} btn-block" onclick="executeBuy(${adId})" id="buyBtn">
+          تأكيد ${isSell?'الشراء':'البيع'}
+        </button>
+        <div id="buyError" style="color:var(--error);font-size:.8rem;margin-top:var(--sp-2);display:none;"></div>
+      `;
+
+      // Update total on amount change
+      document.getElementById('buyAmount').addEventListener('input', function() {
+        const amt = parseFloat(this.value) || 0;
+        const total = (amt * price).toFixed(2);
+        document.getElementById('buyTotal').innerHTML = `
+          <div style="font-size:.75rem;color:var(--text-muted);">الإجمالي</div>
+          <div style="font-size:1.2rem;font-weight:700;color:var(--accent-light);">${fmtNum(total)} ₪</div>`;
+      });
+
+      const modal = document.getElementById('buyModal');
+      modal.style.display = 'flex';
+    };
+
+    window.closeBuyModal = function() {
+      document.getElementById('buyModal').style.display = 'none';
+    };
+
+    window.executeBuy = async function(adId) {
+      const btn = document.getElementById('buyBtn');
+      const errEl = document.getElementById('buyError');
+      const amount = parseFloat(document.getElementById('buyAmount').value);
+      if (!amount || amount <= 0) { errEl.textContent = 'أدخل مبلغ صحيح'; errEl.style.display = 'block'; return; }
+
+      btn.disabled = true;
+      btn.textContent = 'جاري المعالجة...';
+      errEl.style.display = 'none';
+
+      try {
+        const res = await api(`/market/trades/buy/${adId}`, 'POST', { amount });
+        if (res.error) {
+          errEl.textContent = res.error;
+          errEl.style.display = 'block';
+          btn.disabled = false;
+          btn.textContent = 'تأكيد الشراء';
+          return;
+        }
+        closeBuyModal();
+        window.location.href = `/trade?id=${res.trade_id}`;
+      } catch(e) {
+        errEl.textContent = 'حدث خطأ، حاول مرة أخرى';
+        errEl.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'تأكيد الشراء';
+      }
+    };
+
+    load();
+  </script>
 </body>
 </html>

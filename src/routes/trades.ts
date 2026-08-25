@@ -16,7 +16,7 @@ const trades = new Hono<AppEnv>();
 
 async function getTrade(c: any, tradeId: number) {
   return c.env.DB.prepare(`
-    SELECT t.*, a.title AS ad_title
+    SELECT t.*, a.title AS ad_title, a.payment AS payment_method
     FROM trades t LEFT JOIN ads a ON t.ad_id = a.id
     WHERE t.id = ?
   `).bind(tradeId).first();
