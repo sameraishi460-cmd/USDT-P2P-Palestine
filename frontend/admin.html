@@ -480,11 +480,27 @@ window.act=async function(path,body){
 
 function _C(html){document.getElementById('content').innerHTML=html;document.getElementById('content').style.display='block';document.getElementById('loading').style.display='none';}
 
-// Init
+// Init — handle tg_token race condition
 (async function(){
+  // If a Telegram token exchange is in progress, wait for it to complete
+  if (window.__tgLoginPending || sessionStorage.getItem('tg_login_pending')) {
+    // Wait up to 5 seconds for the exchange to finish
+    for (let i = 0; i < 50; i++) {
+      await new Promise(r => setTimeout(r, 100));
+      if (!window.__tgLoginPending && !sessionStorage.getItem('tg_login_pending')) break;
+    }
+    // If exchange finished, page should reload — if we're still here, proceed
+  }
   const user=await requireAuth();if(!user)return;
+  // Fetch fresh auth data from server (isAdmin comes from DB)
   const me=await api('/auth/me');
-  if(!me?.isAdmin){document.getElementById('content').innerHTML='<div style="text-align:center;padding:var(--sp-8);"><h2>🔒 غير مصرح</h2><p style="color:var(--text-muted);">هذه الصفحة للمشرفين فقط</p></div>';document.getElementById('content').style.display='block';document.getElementById('loading').style.display='none';return;}
+  if(!me?.isAdmin){
+    // Show unauthorized with option to try logging in again
+    document.getElementById('content').innerHTML='<div style="text-align:center;padding:var(--sp-8);"><h2>🔒 غير مصرح بالوصول</h2><p style="color:var(--text-muted);margin-bottom:var(--sp-3);">هذه الصفحة للمشرفين فقط.</p><p style="color:var(--text-muted);font-size:0.8rem;margin-bottom:var(--sp-3);">إذا كنت مدير النظام، تأكد من تسجيل الدخول بحساب الإدارة الصحيح.</p><a href="/login?returnTo=/admin.html" class="btn btn-primary" style="display:inline-block;padding:8px 24px;">تسجيل الدخول</a></div>';
+    document.getElementById('content').style.display='block';
+    document.getElementById('loading').style.display='none';
+    return;
+  }
   await loadDashboard();
 })();
 </script>

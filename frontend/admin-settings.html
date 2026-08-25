@@ -631,8 +631,15 @@
       document.getElementById('overrideWarning').style.display = this.checked ? 'block' : 'none';
     });
 
-    // Auth check
+    // Auth check — wait for tg_token exchange if pending
     async function checkAdminAuth() {
+      // If a Telegram token exchange is in progress, wait for it to complete
+      if (window.__tgLoginPending || sessionStorage.getItem('tg_login_pending')) {
+        for (let i = 0; i < 50; i++) {
+          await new Promise(r => setTimeout(r, 100));
+          if (!window.__tgLoginPending && !sessionStorage.getItem('tg_login_pending')) break;
+        }
+      }
       try {
         const res = await fetch(API_BASE + '/auth/me', { credentials: 'include' });
         const data = await res.json();
@@ -642,7 +649,8 @@
               <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2" style="margin-bottom:16px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
               <h2 style="color:var(--text-primary);margin-bottom:8px;">غير مصرح بالوصول</h2>
               <p style="color:var(--text-secondary);margin-bottom:24px;">هذه الصفحة للمشرفين فقط. تحقق من صلاحيات حساب الإدارة.</p>
-              <a href="/admin.html" class="btn-primary" style="display:inline-block;text-decoration:none;">العودة للوحة الإدارة</a>
+              <a href="/login?returnTo=/admin-settings.html" style="display:inline-block;text-decoration:none;padding:8px 24px;background:var(--primary);color:#07090D;border-radius:10px;font-weight:600;">تسجيل الدخول</a>
+              <a href="/admin.html" style="display:inline-block;text-decoration:none;padding:8px 24px;background:var(--bg-card-hover);color:var(--text-primary);border-radius:10px;font-weight:600;margin-right:8px;">العودة للوحة الإدارة</a>
             </div>
           `;
           return;

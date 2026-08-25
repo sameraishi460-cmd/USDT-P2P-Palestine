@@ -8,10 +8,14 @@ const API_BASE = location.origin + '/api';
 /* ── Telegram Deep-Link Login ──────────────────────────
    When user clicks a bot URL button with ?tg_token=XXX,
    exchange it for a proper web session cookie. */
+window.__tgLoginPending = false;
 (function() {
   const params = new URLSearchParams(location.search);
   const tgToken = params.get('tg_token');
   if (!tgToken) return;
+  // Signal to other scripts that a login exchange is in progress
+  window.__tgLoginPending = true;
+  try { sessionStorage.setItem('tg_login_pending', '1'); } catch {}
   // Remove token from URL immediately (prevent re-use/bookmark)
   params.delete('tg_token');
   const cleanUrl = location.pathname + (params.toString() ? '?' + params.toString() : '') + location.hash;
@@ -28,13 +32,26 @@ const API_BASE = location.origin + '/api';
       if (data.csrf_token) {
         try { localStorage.setItem('csrf_token', data.csrf_token); } catch {}
       }
-      // Reload to pick up the new session
-      location.reload();
+      // Also fetch /api/auth/me to update the cached user with correct isAdmin
+      fetch(API_BASE + '/auth/me', { credentials: 'include' })
+        .then(r => r.json()).then(me => {
+          if (me && me.authenticated) {
+            try { localStorage.setItem(USER_KEY, JSON.stringify(me)); } catch {}
+          }
+          // Reload to pick up the new session and refreshed user data
+          location.reload();
+        }).catch(() => {
+          location.reload();
+        });
     } else {
       console.warn('[tg-login] Token exchange failed:', data.error);
+      window.__tgLoginPending = false;
+      try { sessionStorage.removeItem('tg_login_pending'); } catch {}
     }
   }).catch(err => {
     console.error('[tg-login] Network error:', err);
+    window.__tgLoginPending = false;
+    try { sessionStorage.removeItem('tg_login_pending'); } catch {}
   });
 })();
 
@@ -589,10 +606,36 @@ document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') closeMobileSidebar();
 });
 
+/* ── Refresh user from server (updates isAdmin etc.) ── */
+async function refreshUserFromServer() {
+  // Skip if a tg_token exchange is in progress (it will reload)
+  if (window.__tgLoginPending) return;
+  try {
+    const me = await fetch(API_BASE + '/auth/me', { credentials: 'include' }).then(r => r.json());
+    if (me && me.authenticated) {
+      // Merge server data with cached data — server is source of truth for isAdmin
+      const old = currentUser() || {};
+      const merged = { ...old, ...me };
+      saveUser(merged, me.csrf_token || _csrf);
+      // Clear tg_login_pending flag if it was set from a previous session
+      try { sessionStorage.removeItem('tg_login_pending'); } catch {}
+      // Re-render nav with fresh data
+      renderNav();
+    } else if (me && me.authenticated === false) {
+      // Session expired — clear cached user
+      clearUser();
+    }
+  } catch {
+    // Network error — keep cached data
+  }
+}
+
 /* ── Init on load ──────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', () => {
   initTelegram();
   renderNav();
+  // Refresh user data from server to get latest isAdmin status
+  refreshUserFromServer();
   // In Telegram: hide desktop nav, use mobile shell only
   if (_isTelegram) {
     const nav = document.getElementById('nav');
