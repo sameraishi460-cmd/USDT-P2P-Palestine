@@ -8,15 +8,15 @@
   <link rel="manifest" href="/manifest.json">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<script>(function(){var t=localStorage.getItem("usp_theme")||"dark";if(t==="auto")t=window.matchMedia("(prefers-color-scheme:light)").matches?"light":"dark";document.documentElement.setAttribute("data-theme",t);})();</script>
+<script>(function(){var t=localStorage.getItem("usp_theme")||"dark";if(t==="auto")t=window.matchMedia("(prefers-color-scheme:light)").matches?"light":"dark";document.documentElement.setAttribute("data-theme",t);var a=localStorage.getItem("usp_accent")||"green";document.documentElement.setAttribute("data-accent",a);})();</script>
 </head>
 <body>
-<nav class="navbar"><div class="navbar-inner"><a href="/" class="navbar-brand"><span>USDT</span> P2P</a><div class="navbar-links"><span style="color:var(--accent);font-weight:700;font-size:0.85rem;">⚙️ الإدارة</span></div></div></nav>
+<nav class="navbar"><div class="navbar-inner"><a href="/" class="navbar-brand"><span>USDT</span> P2P</a><div class="navbar-links"><span style="color:var(--primary);font-weight:700;font-size:0.85rem;display:inline-flex;align-items:center;gap:4px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> لوحة الإدارة</span><a href="/admin-settings.html" style="font-size:0.8rem;">إعدادات</a></div></div></nav>
 <!-- Mobile admin header (shown on small screens) -->
 <header class="mobile-header" id="adminMobileHeader" style="display:none;">
   <div class="mobile-header-left">
     <a href="/" style="color:var(--text-primary);text-decoration:none;font-size:0.85rem;">← الرئيسية</a>
-    <span class="mobile-header-title" style="color:var(--accent);">⚙️ الإدارة</span>
+    <span class="mobile-header-title" style="color:var(--primary);">لوحة الإدارة</span>
   </div>
   <button class="mobile-header-menu" onclick="toggleAdminSidebar()" aria-label="فتح القائمة">☰</button>
 </header>
@@ -24,7 +24,7 @@
 <div class="admin-layout">
   <!-- Sidebar -->
   <aside class="admin-sidebar" id="sidebar">
-    <div class="sidebar-header">⚙️ Control Center</div>
+    <div class="sidebar-header"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> Control Center</div>
     <nav class="sidebar-nav">
       <a class="sidebar-link active" data-section="dashboard" onclick="go('dashboard',this)">📊 لوحة التحكم</a>
       <a class="sidebar-link" data-section="users" onclick="go('users',this)">👥 المستخدمون</a>

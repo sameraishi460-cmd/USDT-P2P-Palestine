@@ -118,6 +118,7 @@ function currentUser() { return _user; }
 
 /* ── Theme (Dark/Light) ──────────────────────────────── */
 const THEME_KEY = 'usp_theme';
+const ACCENT_KEY = 'usp_accent';
 function getTheme() { return localStorage.getItem(THEME_KEY) || 'dark'; }
 function setTheme(t) {
   localStorage.setItem(THEME_KEY, t);
@@ -136,6 +137,100 @@ function toggleTheme() {
   setTheme(next);
   toast(next === 'dark' ? '🌙 الوضع الليلي' : next === 'light' ? '☀️ الوضع الفاتح' : '⚙️ تلقائي حسب الجهاز');
 }
+
+/* ── Accent Color Theme Switcher ─────────────────────── */
+const ACCENTS = [
+  { id: 'green', label: 'أخضر', color: '#00D6A0' },
+  { id: 'yellow', label: 'أصفر', color: '#F5C542' },
+  { id: 'blue', label: 'أزرق', color: '#3B82F6' },
+  { id: 'red', label: 'أحمر', color: '#EF4444' },
+];
+function getAccent() { return localStorage.getItem(ACCENT_KEY) || 'green'; }
+function setAccent(id) {
+  localStorage.setItem(ACCENT_KEY, id);
+  document.documentElement.setAttribute('data-accent', id);
+}
+function applyAccent() {
+  document.documentElement.setAttribute('data-accent', getAccent());
+}
+applyAccent();
+function toggleAccentPicker(ev) {
+  ev.stopPropagation();
+  let pop = document.getElementById('accent-picker');
+  if (!pop) {
+    pop = document.createElement('div');
+    pop.id = 'accent-picker';
+    pop.className = 'theme-picker-popover';
+    pop.innerHTML = `<div class="theme-picker-title">لون الواجهة</div><div class="theme-picker-options"></div>`;
+    document.body.appendChild(pop);
+    const opts = pop.querySelector('.theme-picker-options');
+    ACCENTS.forEach(a => {
+      const btn = document.createElement('button');
+      btn.className = 'theme-picker-opt' + (getAccent() === a.id ? ' selected' : '');
+      btn.innerHTML = `<span class="theme-picker-swatch" style="background:${a.color}"></span><span>${a.label}</span><svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>`;
+      btn.onclick = (e) => { e.stopPropagation(); setAccent(a.id); opts.querySelectorAll('.theme-picker-opt').forEach(o => o.classList.remove('selected')); btn.classList.add('selected'); toast('تم تغيير لون الواجهة'); };
+      opts.appendChild(btn);
+    });
+    document.addEventListener('click', () => pop.classList.remove('open'));
+  }
+  pop.classList.toggle('open');
+}
+
+/* ── How It Works Interactive Guide ──────────────────── */
+const GUIDE_KEY = 'usp_guide_done';
+const GUIDE_STEPS = [
+  { icon: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>', title: 'إنشاء حساب', desc: 'أنشئ حسابك الخاص بشكل آمن وسريع. اختر اسم مستخدم وكلمة مرور قوية، وابدأ رحلتك في عالم تداول USDT.' },
+  { icon: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>', title: 'اختر شراء أو بيع USDT', desc: 'تصفح سوق USDT واختر أفضل عرض شراء أو بيع يناسبك. السعر实时 من السوق و_singular瞬间.' },
+  { icon: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>', title: 'اختر العرض المناسب', desc: 'كل عرض يُظهر السعر وطريقة الدفع والمبلغ المتاح. اختر البائع أو المشتري الأفضل من حيث السعر والسمعة.' },
+  { icon: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>', title: 'الدفع والحماية', desc: 'تُدخل الصفقة في نظام الحماية الضمانية. USDT محمية في حساب الضمان حتى يتم تأكيد الدفع.' },
+  { icon: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg>', title: 'تأكيد العملية', desc: 'بعد الدفع، يقوم البائع بتأكيد استلام المبلغ ثم يُحرر USDT لك. كل خطوة محمية ومُوثقة.' },
+  { icon: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>', title: 'المحفظة', desc: 'أدر محفظتك: أودع USDT أو اسحبه، وتابع رصيدك المتاح والمحجوز وسجل المعاملات.' },
+  { icon: '<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>', title: 'مراقبة السعر', desc: 'تابع سعر USDT في الوقت الحقيقي مع الرسم البياني والتاريخي. أطلق تنبيهات سعر لكي لا تفوتك أي فرصة.' },
+];
+let _guideStep = 0;
+function openGuide() {
+  _guideStep = 0;
+  renderGuideStep();
+  let overlay = document.getElementById('guide-overlay');
+  if (overlay) overlay.classList.add('open');
+}
+function closeGuide() {
+  const overlay = document.getElementById('guide-overlay');
+  if (overlay) overlay.classList.remove('open');
+  localStorage.setItem(GUIDE_KEY, '1');
+}
+function guideNext() { if (_guideStep < GUIDE_STEPS.length - 1) { _guideStep++; renderGuideStep(); } else { renderGuideFinal(); } }
+function guidePrev() { if (_guideStep > 0) { _guideStep--; renderGuideStep(); } }
+function renderGuideStep() {
+  const step = GUIDE_STEPS[_guideStep];
+  const body = document.querySelector('.guide-body');
+  const footer = document.querySelector('.guide-footer');
+  const prog = document.querySelector('.guide-progress');
+  if (!body) return;
+  body.innerHTML = `<div class="guide-step-icon">${step.icon}</div><div class="guide-step-title">${step.title}</div><div class="guide-step-desc">${step.desc}</div>`;
+  if (prog) prog.innerHTML = GUIDE_STEPS.map((_, i) => `<div class="guide-progress-dot${i === _guideStep ? ' active' : ''}"></div>`).join('');
+  if (footer) footer.innerHTML = `<button class="guide-btn guide-btn-ghost" onclick="guidePrev()" ${_guideStep === 0 ? 'style="visibility:hidden"' : ''}>السابق</button><button class="guide-skip" onclick="closeGuide()">تخطي</button><button class="guide-btn guide-btn-primary" onclick="guideNext()">${_guideStep === GUIDE_STEPS.length - 1 ? 'جاهز!' : 'التالي'}</button>`;
+}
+function renderGuideFinal() {
+  const body = document.querySelector('.guide-body');
+  const footer = document.querySelector('.guide-footer');
+  const prog = document.querySelector('.guide-progress');
+  if (!body) return;
+  body.innerHTML = `<div class="guide-step-icon" style="background:var(--primary-light);"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><path d="M22 4L12 14.01l-3-3"/></svg></div><div class="guide-step-title">جاهز للبدء؟</div><div class="guide-step-desc">أنت الآن جاهز لاستخدام المنصة. ابدأ بالشراء أو البيع الآن!</div><div class="guide-final-actions"><a href="/market" class="guide-btn guide-btn-primary">شراء USDT</a><a href="/market?tab=sell" class="guide-btn" style="background:var(--bg-card-hover);color:var(--text);">بيع USDT</a></div>`;
+  if (prog) prog.innerHTML = GUIDE_STEPS.map((_, i) => `<div class="guide-progress-dot active"></div>`).join('');
+  if (footer) footer.innerHTML = `<button class="guide-btn guide-btn-ghost" onclick="guidePrev()">السابق</button><button class="guide-btn guide-btn-primary" onclick="closeGuide()">إغلاق</button>`;
+}
+function createGuideOverlay() {
+  if (document.getElementById('guide-overlay')) return;
+  const overlay = document.createElement('div');
+  overlay.id = 'guide-overlay';
+  overlay.className = 'guide-overlay';
+  overlay.innerHTML = `<div class="guide-modal"><div class="guide-header"><span class="guide-header-title">كيف تعمل المنصة؟</span><button class="guide-close" onclick="closeGuide()" aria-label="إغلاق"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div><div class="guide-body"></div><div class="guide-progress"></div><div class="guide-footer"></div></div>`;
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) closeGuide(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeGuide(); });
+  document.body.appendChild(overlay);
+}
+createGuideOverlay();
 
 /* ── Toast ─────────────────────────────────────────────────── */
 let _tt;
@@ -329,11 +424,13 @@ function renderNav() {
           <a href="/create_ad">إنشاء إعلان</a>
           <a href="/notifications">الإشعارات</a>
           <a href="/profile">حسابي</a>
-          ${u.isAdmin ? '<a href="/admin">⚙️ الإدارة</a>' : ''}
+          ${u.isAdmin ? '<a href="/admin">لوحة الإدارة</a>' : ''}
         ` : `
           <a href="/login" class="btn-nav">دخول</a>
           <a href="/register" class="btn-nav-accent btn-nav">حساب جديد</a>
         `}
+        <button onclick="openGuide()" style="background:none;border:none;cursor:pointer;padding:4px 8px;color:var(--text-secondary)" title="كيف تعمل المنصة؟"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg></button>
+        <button onclick="toggleAccentPicker(event)" style="background:none;border:none;cursor:pointer;padding:4px 8px;color:var(--text-secondary)" title="مظهر المنصة"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="15.5" r="2.5"/><circle cx="8.5" cy="15.5" r="2.5"/></svg></button>
         <button onclick="toggleTheme()" style="background:none;border:none;cursor:pointer;font-size:1.1rem;padding:4px 8px" title="تبديل المظهر">${themeIcon()}</button>
       </div>
     </div>`;
@@ -428,12 +525,25 @@ function buildMobileShell(u, p) {
       <span>تسجيل الخروج</span>
     </button>` : '';
 
+  const guideBtn = `
+    <div class="mobile-sidebar-divider"></div>
+    <button class="mobile-sidebar-item" onclick="closeMobileSidebar();setTimeout(openGuide,300);" style="color:var(--text-secondary)">
+      <span class="mobile-sidebar-item-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg></span>
+      <span>كيف تعمل المنصة؟</span>
+    </button>`;
+  const themePickBtn = `
+    <button class="mobile-sidebar-item" onclick="toggleAccentPicker(event)" style="color:var(--text-secondary)">
+      <span class="mobile-sidebar-item-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="15.5" r="2.5"/><circle cx="8.5" cy="15.5" r="2.5"/></svg></span>
+      <span>مظهر المنصة</span>
+    </button>`;
   const themeToggle = `
     <div class="mobile-sidebar-divider"></div>
-    <div class="mobile-sidebar-theme">
-      <button onclick="toggleTheme()" style="background:none;border:none;cursor:pointer;color:var(--text-primary);padding:4px 8px;display:flex;align-items:center;" title="تبديل المظهر">${themeIcon()}</button>
-      <span style="font-size:0.8rem;">تبديل المظهر</span>
-    </div>`;
+    ${guideBtn}
+    ${themePickBtn}
+    <button class="mobile-sidebar-item" onclick="toggleTheme()" style="color:var(--text-secondary)">
+      <span class="mobile-sidebar-item-icon">${themeIcon()}</span>
+      <span>${getTheme() === 'dark' ? 'الوضع الليلي' : getTheme() === 'light' ? 'الوضع الفاتح' : 'تلقائي'}</span>
+    </button>`;
 
   panel.innerHTML = `
     <div class="mobile-sidebar-header">
